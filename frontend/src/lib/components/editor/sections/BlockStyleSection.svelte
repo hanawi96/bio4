@@ -51,7 +51,14 @@
 
 <style>
 	/* Custom Slider Styles */
+	.slider {
+		-webkit-appearance: none;
+		appearance: none;
+		background: transparent;
+	}
+
 	.slider::-webkit-slider-thumb {
+		-webkit-appearance: none;
 		appearance: none;
 		width: 20px;
 		height: 20px;
@@ -60,6 +67,7 @@
 		cursor: pointer;
 		box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
 		transition: all 0.2s;
+		margin-top: -6px; /* Center the thumb on the track */
 	}
 
 	.slider::-webkit-slider-thumb:hover {
@@ -84,14 +92,16 @@
 	}
 
 	.slider::-webkit-slider-runnable-track {
-		background: linear-gradient(to right, #3b82f6 0%, #3b82f6 var(--value), #e5e7eb var(--value), #e5e7eb 100%);
+		width: 100%;
 		height: 8px;
+		background: #e5e7eb;
 		border-radius: 4px;
 	}
 
 	.slider::-moz-range-track {
-		background: #e5e7eb;
+		width: 100%;
 		height: 8px;
+		background: #e5e7eb;
 		border-radius: 4px;
 	}
 
@@ -182,54 +192,16 @@
 			</div>
 			
 			<!-- Slider -->
-			<div class="space-y-4">
-				<div class="relative">
-					<input
-						type="range"
-						min="0"
-						max="32"
-						step="2"
-						value={currentTheme.borderRadius}
-						on:input={(e) => theme.update(t => t ? { ...t, borderRadius: parseInt(e.currentTarget.value) } : { ...DEFAULT_THEME, borderRadius: parseInt(e.currentTarget.value) })}
-						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-					/>
-				</div>
-
-				<!-- Preview Box -->
-				<div class="flex items-center justify-center p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl">
-					<div 
-						class="w-32 h-12 bg-blue-600 shadow-lg transition-all duration-300"
-						style="border-radius: {currentTheme.borderRadius}px;"
-					></div>
-				</div>
-
-				<!-- Quick Presets -->
-				<div class="flex items-center gap-2">
-					<button
-						on:click={() => theme.update(t => t ? { ...t, borderRadius: 0 } : { ...DEFAULT_THEME, borderRadius: 0 })}
-						class="flex-1 py-2 px-3 text-xs font-medium border-2 rounded-lg transition-all {currentTheme.borderRadius === 0 ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						None (0px)
-					</button>
-					<button
-						on:click={() => theme.update(t => t ? { ...t, borderRadius: 8 } : { ...DEFAULT_THEME, borderRadius: 8 })}
-						class="flex-1 py-2 px-3 text-xs font-medium border-2 rounded-lg transition-all {currentTheme.borderRadius === 8 ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						Small (8px)
-					</button>
-					<button
-						on:click={() => theme.update(t => t ? { ...t, borderRadius: 16 } : { ...DEFAULT_THEME, borderRadius: 16 })}
-						class="flex-1 py-2 px-3 text-xs font-medium border-2 rounded-lg transition-all {currentTheme.borderRadius === 16 ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						Medium (16px)
-					</button>
-					<button
-						on:click={() => theme.update(t => t ? { ...t, borderRadius: 32 } : { ...DEFAULT_THEME, borderRadius: 32 })}
-						class="flex-1 py-2 px-3 text-xs font-medium border-2 rounded-lg transition-all {currentTheme.borderRadius === 32 ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						Full (32px)
-					</button>
-				</div>
+			<div class="relative">
+				<input
+					type="range"
+					min="0"
+					max="32"
+					step="2"
+					value={currentTheme.borderRadius}
+					on:input={(e) => theme.update(t => t ? { ...t, borderRadius: parseInt(e.currentTarget.value) } : { ...DEFAULT_THEME, borderRadius: parseInt(e.currentTarget.value) })}
+					class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+				/>
 			</div>
 		</div>
 

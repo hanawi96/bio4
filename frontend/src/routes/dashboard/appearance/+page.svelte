@@ -9,7 +9,6 @@
 	import BlockStyleSection from '$lib/components/editor/sections/BlockStyleSection.svelte';
 	import FontSection from '$lib/components/editor/sections/FontSection.svelte';
 	import ColorSection from '$lib/components/editor/sections/ColorSection.svelte';
-	import ContrastSection from '$lib/components/editor/sections/ContrastSection.svelte';
 	import SpacingSection from '$lib/components/editor/sections/SpacingSection.svelte';
 	import PageSettingsSection from '$lib/components/editor/sections/PageSettingsSection.svelte';
 
@@ -21,15 +20,14 @@
 
 	// Navigation items
 	const navItems = [
-		{ id: 'theme', label: 'Themes', icon: '🎭' },
-		{ id: 'colors', label: 'Colors', icon: '🎨' },
-		{ id: 'fonts', label: 'Fonts', icon: '✍️' },
-		{ id: 'contrast', label: 'Text Contrast', icon: '📊' },
-		{ id: 'header', label: 'Header', icon: '👤' },
-		{ id: 'blocks', label: 'Block Style', icon: '📦' },
-		{ id: 'spacing', label: 'Spacing', icon: '📏' },
-		{ id: 'background', label: 'Background', icon: '🖼️' },
-		{ id: 'settings', label: 'Page Settings', icon: '⚙️' }
+		{ id: 'theme', label: 'Themes' },
+		{ id: 'colors', label: 'Colors' },
+		{ id: 'fonts', label: 'Fonts' },
+		{ id: 'header', label: 'Header' },
+		{ id: 'blocks', label: 'Block Style' },
+		{ id: 'spacing', label: 'Spacing' },
+		{ id: 'background', label: 'Background' },
+		{ id: 'settings', label: 'Page Settings' }
 	];
 
 	onMount(async () => {
@@ -109,14 +107,13 @@
 				{#each navItems as item}
 					<button
 						on:click={() => scrollToSection(item.id)}
-						class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all {activeSection === item.id 
+						class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all {activeSection === item.id 
 							? 'bg-blue-50 text-blue-700' 
 							: 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}"
 					>
-						<span class="text-lg">{item.icon}</span>
 						<span>{item.label}</span>
 						{#if activeSection === item.id}
-							<div class="ml-auto w-1 h-6 bg-blue-600 rounded-full"></div>
+							<div class="w-1 h-6 bg-blue-600 rounded-full"></div>
 						{/if}
 					</button>
 				{/each}
@@ -166,11 +163,6 @@
 					<!-- Font Section -->
 					<section id="fonts" class="scroll-mt-6">
 						<FontSection />
-					</section>
-
-					<!-- Text Contrast Section -->
-					<section id="contrast" class="scroll-mt-6">
-						<ContrastSection />
 					</section>
 
 					<!-- Header Section -->

@@ -3,10 +3,10 @@
 	import { DEFAULT_THEME } from '$lib/stores/appearance';
 
 	const bgTypes = [
-		{ id: 'solid', name: 'Solid Color', icon: '🎨', description: 'Single color' },
-		{ id: 'gradient', name: 'Gradient', icon: '🌈', description: 'Color blend' },
-		{ id: 'image', name: 'Image', icon: '🖼️', description: 'Custom photo' },
-		{ id: 'pattern', name: 'Pattern', icon: '⬛', description: 'Repeating design' }
+		{ id: 'solid', name: 'Solid Color', description: 'Single color' },
+		{ id: 'gradient', name: 'Gradient', description: 'Color blend' },
+		{ id: 'image', name: 'Image', description: 'Custom photo' },
+		{ id: 'pattern', name: 'Pattern', description: 'Repeating design' }
 	];
 
 	const solidColors = [
@@ -59,10 +59,33 @@
 			{#each bgTypes as type}
 				<button
 					on:click={() => selectType(type.id)}
-					class="p-4 rounded-xl border-2 transition-all hover:scale-105 {selectedType === type.id ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}"
+					class="p-4 rounded-xl border-2 transition-all hover:scale-105 {selectedType === type.id ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 				>
-					<div class="text-3xl mb-2">{type.icon}</div>
-					<p class="text-sm font-medium text-gray-900">{type.name}</p>
+					<!-- Icon -->
+					<div class="w-12 h-12 mx-auto mb-3 rounded-lg flex items-center justify-center {selectedType === type.id ? 'bg-blue-100' : 'bg-gray-100'}">
+						{#if type.id === 'solid'}
+							<!-- Palette Icon -->
+							<svg class="w-6 h-6 {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+							</svg>
+						{:else if type.id === 'gradient'}
+							<!-- Sparkles Icon -->
+							<svg class="w-6 h-6 {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+							</svg>
+						{:else if type.id === 'image'}
+							<!-- Image Icon -->
+							<svg class="w-6 h-6 {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+							</svg>
+						{:else}
+							<!-- Grid Pattern Icon -->
+							<svg class="w-6 h-6 {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+							</svg>
+						{/if}
+					</div>
+					<p class="text-sm font-semibold text-gray-900">{type.name}</p>
 					<p class="text-xs text-gray-500 mt-1">{type.description}</p>
 				</button>
 			{/each}
