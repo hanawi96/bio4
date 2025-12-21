@@ -30,23 +30,25 @@
 			</a>
 
 			<a 
-				href="/dashboard/editor" 
-				class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/editor' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+				href="/dashboard/profile" 
+				class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/profile' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 			>
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
 				</svg>
-				Editor
+				Profile
 			</a>
 
+
+
 			<a 
-				href="/dashboard/links" 
-				class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/links' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+				href="/dashboard/bio" 
+				class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/bio' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 			>
 				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
 				</svg>
-				Links
+				My Bio
 			</a>
 
 			<a 
@@ -105,10 +107,10 @@
 				<h1 class="text-lg font-semibold text-gray-900">
 					{#if currentPath === '/dashboard'}
 						Overview
-					{:else if currentPath === '/dashboard/editor'}
-						Editor
-					{:else if currentPath === '/dashboard/links'}
-						Links
+					{:else if currentPath === '/dashboard/profile'}
+						Profile
+					{:else if currentPath === '/dashboard/bio'}
+						My Bio
 					{:else if currentPath === '/dashboard/appearance'}
 						Appearance
 					{:else if currentPath === '/dashboard/analytics'}
@@ -118,7 +120,40 @@
 					{/if}
 				</h1>
 			</div>
-			<div class="flex items-center gap-4">
+			<div class="flex items-center gap-3">
+				<!-- Live Preview Badge (Only on Appearance page) -->
+				{#if currentPath === '/dashboard/appearance'}
+					<!-- Live Preview Indicator -->
+					<div class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg shadow-sm">
+						<div class="relative flex items-center justify-center">
+							<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+							<div class="absolute w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+						</div>
+						<span class="text-xs font-semibold text-green-700">Live</span>
+					</div>
+
+					<!-- URL Display with Copy -->
+					<div class="flex items-center gap-0 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:border-gray-300 transition-colors">
+						<div class="flex items-center gap-2 px-3 py-2">
+							<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+							</svg>
+							<span class="text-xs text-gray-500">biolink.com/</span>
+							<span class="text-xs font-bold text-gray-900">demo</span>
+						</div>
+						<button 
+							class="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-200 transition-colors group" 
+							title="Copy link"
+						>
+							<svg class="w-4 h-4 text-gray-400 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+							</svg>
+						</button>
+					</div>
+
+					<div class="w-px h-6 bg-gray-200"></div>
+				{/if}
+
 				<a 
 					href="/demo" 
 					target="_blank" 
@@ -129,7 +164,7 @@
 					</svg>
 					View Page
 				</a>
-				<button class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+				<button class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
 					Publish
 				</button>
 			</div>

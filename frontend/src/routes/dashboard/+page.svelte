@@ -123,7 +123,7 @@
 							</div>
 						</div>
 						<div class="mt-6 flex gap-3">
-							<a href="/dashboard/editor" class="flex-1 px-4 py-2.5 bg-blue-600 text-white text-center text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+							<a href="/dashboard/appearance" class="flex-1 px-4 py-2.5 bg-blue-600 text-white text-center text-sm font-medium rounded-lg hover:bg-blue-700 transition">
 								Edit Page
 							</a>
 							<a href="/{$pageStore?.username}" target="_blank" class="px-4 py-2.5 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition">
@@ -192,7 +192,7 @@
 							<span class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">🎨</span>
 							Change Theme
 						</a>
-						<a href="/dashboard/editor" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600">
+						<a href="/dashboard/appearance" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-sm text-gray-600">
 							<span class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">✏️</span>
 							Edit Profile
 						</a>
