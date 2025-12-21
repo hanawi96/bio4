@@ -1,0 +1,16 @@
+{
+    "extends": "./.svelte-kit/tsconfig.json",
+    "compilerOptions": {
+        "strict": true,
+        "noEmit": true,
+        "allowJs": true
+    },
+    "exclude": [
+        "node_modules",
+        ".svelte-kit",
+        "postcss.config.js",
+        "svelte.config.js",
+        "tailwind.config.js",
+        "vite.config.js"
+    ]
+}

@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+	/* CSS variables for theme preview */
+	--bg-color: #ffffff;
+	--text-color: #000000;
+	--primary-color: #3b82f6;
+	--font-family: system-ui, -apple-system, sans-serif;
+}
