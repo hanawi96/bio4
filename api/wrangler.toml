@@ -3,7 +3,14 @@ main = "src/index.ts"
 compatibility_date = "2023-12-01"
 
 [vars]
-R2_PUBLIC_URL = "https://your-r2-domain.com"
+R2_PUBLIC_URL = "https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev"
+
+[env.production]
+vars = { R2_PUBLIC_URL = "https://pub-35e639ff2ac9486c871668c1077e74ae.r2.dev" }
+
+[env.production.r2_buckets]
+binding = "STORAGE"
+bucket_name = "bio-link-images"
 
 [[d1_databases]]
 binding = "DB"
@@ -12,6 +19,7 @@ database_id = "4932ed51-7d36-4999-a8fe-b7cb14531959"
 # Use same database for dev and production
 preview_database_id = "4932ed51-7d36-4999-a8fe-b7cb14531959"
 
-# [[r2_buckets]]
-# binding = "STORAGE"
-# bucket_name = "bio-link-images"
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "bio-link-images"
+preview_bucket_name = "bio-link-images-dev"

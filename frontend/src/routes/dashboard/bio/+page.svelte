@@ -82,17 +82,13 @@
 		[newGroups[currentIndex], newGroups[targetIndex]] = [newGroups[targetIndex], newGroups[currentIndex]];
 		groups.set(newGroups);
 
-		// Update sort_order in background
+		// Update sort_order in background (no reload needed - optimistic update is correct)
 		try {
-			// Update both groups' sort_order
 			await Promise.all([
 				api.updateGroup(newGroups[currentIndex].id, { sort_order: currentIndex }),
 				api.updateGroup(newGroups[targetIndex].id, { sort_order: targetIndex })
 			]);
-
-			// Reload data silently to sync
-			const data = await api.getEditorData(username);
-			loadEditorData(data);
+			// Success - no action needed, optimistic update is already correct
 		} catch (e: any) {
 			// Revert on error
 			groups.set($groups);

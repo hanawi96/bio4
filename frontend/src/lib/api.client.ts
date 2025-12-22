@@ -189,6 +189,31 @@ class ApiClient {
 		if (!res.ok) throw new Error('Failed to delete image');
 		return res.json();
 	}
+
+	// ============ AVATAR ============
+
+	async uploadAvatar(username: string, file: File): Promise<{ url: string; storage_key: string }> {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const res = await fetch(`${this.baseUrl}/upload/avatar/${username}`, {
+			method: 'POST',
+			body: formData
+		});
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Failed to upload avatar');
+		}
+		return res.json();
+	}
+
+	async removeAvatar(username: string): Promise<{ success: boolean }> {
+		const res = await fetch(`${this.baseUrl}/upload/avatar/${username}`, {
+			method: 'DELETE'
+		});
+		if (!res.ok) throw new Error('Failed to remove avatar');
+		return res.json();
+	}
 }
 
 export const api = new ApiClient(API_BASE_URL);

@@ -41,7 +41,7 @@
 
 <button
 	on:click={handleClick}
-	class="w-full bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all text-left group"
+	class="w-full bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 hover:shadow-sm transition-all duration-200 text-left group"
 >
 	<div class="flex items-start gap-3">
 		<!-- Move Up/Down Buttons -->
@@ -49,7 +49,7 @@
 			<button
 				on:click={handleMoveUp}
 				disabled={isFirst}
-				class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
+				class="p-1 text-gray-400 rounded transition-all duration-200 ease-in-out disabled:opacity-30 disabled:cursor-not-allowed {isFirst ? '' : 'hover:text-gray-600 hover:bg-gray-100'}"
 				title="Move up"
 			>
 				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@
 			<button
 				on:click={handleMoveDown}
 				disabled={isLast}
-				class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
+				class="p-1 text-gray-400 rounded transition-all duration-200 ease-in-out disabled:opacity-30 disabled:cursor-not-allowed {isLast ? '' : 'hover:text-gray-600 hover:bg-gray-100'}"
 				title="Move down"
 			>
 				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -7,6 +7,8 @@
 	let loading = true;
 	let error = '';
 	let saving = false;
+	let uploadingAvatar = false;
+	let fileInput: HTMLInputElement;
 
 	// Form data
 	let displayName = '';
@@ -20,6 +22,11 @@
 		youtube: '',
 		tiktok: ''
 	};
+
+	// Toast
+	let toastMessage = '';
+	let toastType: 'success' | 'error' = 'success';
+	let toastVisible = false;
 
 	onMount(async () => {
 		try {
@@ -43,19 +50,68 @@
 		try {
 			await api.updatePage(username, {
 				title: displayName,
-				bio: bio,
-				avatar_url: avatarUrl
+				bio: bio
 			});
+			showToast('Changes saved!', 'success');
 		} catch (e) {
 			console.error('Save failed:', e);
+			showToast('Failed to save changes', 'error');
 		} finally {
 			saving = false;
 		}
 	}
 
-	function handleAvatarUpload() {
-		// TODO: Implement file upload
-		alert('Avatar upload coming soon');
+	async function handleAvatarUpload(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (!file) return;
+
+		// Validate
+		const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+		if (!allowedTypes.includes(file.type)) {
+			showToast('Invalid file type. Use JPG, PNG, WebP or GIF', 'error');
+			return;
+		}
+
+		if (file.size > 5 * 1024 * 1024) {
+			showToast('File too large. Max 5MB', 'error');
+			return;
+		}
+
+		uploadingAvatar = true;
+		try {
+			const result = await api.uploadAvatar(username, file);
+			console.log('Upload result:', result);
+			
+			// Update local state immediately
+			avatarUrl = result.url;
+			
+			// Update store
+			if ($pageStore) {
+				$pageStore.avatar_url = result.url;
+			}
+			
+			// Force re-render by adding timestamp to avoid cache
+			avatarUrl = `${result.url}?t=${Date.now()}`;
+			
+			showToast('Avatar updated!', 'success');
+		} catch (e: any) {
+			console.error('Upload failed:', e);
+			showToast(e.message || 'Failed to upload avatar', 'error');
+		} finally {
+			uploadingAvatar = false;
+			// Reset input
+			if (target) target.value = '';
+		}
+	}
+
+	function showToast(message: string, type: 'success' | 'error' = 'success') {
+		toastMessage = message;
+		toastType = type;
+		toastVisible = true;
+		setTimeout(() => {
+			toastVisible = false;
+		}, 3000);
 	}
 </script>
 
@@ -79,7 +135,11 @@
 				<section class="bg-white rounded-xl border border-gray-200 p-6">
 					<h2 class="font-semibold text-gray-900 mb-4">Profile Picture</h2>
 					<div class="flex items-center gap-6">
-						{#if avatarUrl}
+						{#if uploadingAvatar}
+							<div class="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center ring-4 ring-gray-100">
+								<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+							</div>
+						{:else if avatarUrl}
 							<img src={avatarUrl} alt="Avatar" class="w-24 h-24 rounded-full object-cover ring-4 ring-gray-100" />
 						{:else}
 							<div class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ring-4 ring-gray-100">
@@ -87,21 +147,21 @@
 							</div>
 						{/if}
 						<div class="flex-1">
+							<input 
+								type="file"
+								accept="image/*"
+								bind:this={fileInput}
+								on:change={handleAvatarUpload}
+								class="hidden"
+							/>
 							<button 
-								on:click={handleAvatarUpload}
-								class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+								on:click={() => fileInput.click()}
+								disabled={uploadingAvatar}
+								class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
 							>
-								Upload Photo
+								{uploadingAvatar ? 'Uploading...' : (avatarUrl ? 'Change Avatar' : 'Upload Photo')}
 							</button>
-							{#if avatarUrl}
-								<button 
-									on:click={() => avatarUrl = ''}
-									class="ml-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
-								>
-									Remove
-								</button>
-							{/if}
-							<p class="text-xs text-gray-500 mt-2">JPG, PNG or GIF. Max 5MB.</p>
+							<p class="text-xs text-gray-500 mt-2">JPG, PNG, WebP or GIF. Max 5MB.</p>
 						</div>
 					</div>
 				</section>
@@ -118,6 +178,7 @@
 								type="text"
 								bind:value={displayName}
 								placeholder="Your name"
+								maxlength="100"
 								class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
 							/>
 							<p class="text-xs text-gray-500 mt-1">This is how your name will appear on your bio page</p>
@@ -130,10 +191,12 @@
 							<textarea 
 								bind:value={bio}
 								rows="4"
+								maxlength="200"
 								placeholder="Tell people about yourself..."
 								class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition"
 							></textarea>
-							<div class="flex justify-between items-center mt-1">
+							
+<div class="flex justify-between items-center mt-1">
 								<p class="text-xs text-gray-500">Keep it short and memorable</p>
 								<span class="text-xs text-gray-400">{bio.length}/200</span>
 							</div>
@@ -256,12 +319,11 @@
 				</section>
 
 				<!-- Save Button -->
-				<div class="flex items-center justify-between pt-4">
-					<p class="text-sm text-gray-500">Changes are saved automatically</p>
+				<div class="flex items-center justify-end pt-4">
 					<button 
 						on:click={handleSave}
-						disabled={saving}
-						class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+						disabled={saving || !displayName.trim()}
+						class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
 					>
 						{saving ? 'Saving...' : 'Save Changes'}
 					</button>
@@ -270,3 +332,21 @@
 		{/if}
 	</div>
 </div>
+
+<!-- Toast Notification -->
+{#if toastVisible}
+	<div class="fixed bottom-8 right-8 z-50 animate-in slide-in-from-bottom-5">
+		<div class="px-6 py-4 rounded-lg shadow-lg {toastType === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white flex items-center gap-3">
+			{#if toastType === 'success'}
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+				</svg>
+			{:else}
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+				</svg>
+			{/if}
+			<span class="font-medium">{toastMessage}</span>
+		</div>
+	</div>
+{/if}

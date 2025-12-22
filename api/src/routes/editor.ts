@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
-import { 
-	getPageByUsername, 
+import {
+	getPageByUsername,
 	saveDraft,
 	publishDraft,
 	getFullPageData
