@@ -350,4 +350,152 @@ app.delete('/cover/:username', async (c) => {
 	}
 });
 
+// POST /upload/background/:username - Upload background image
+app.post('/background/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+		const formData = await c.req.formData();
+		const fileEntry = formData.get('file');
+
+		if (!fileEntry || typeof fileEntry === 'string') {
+			return c.json({ error: 'No file provided' }, 400);
+		}
+
+		const file = fileEntry as File;
+
+		if (!ALLOWED_TYPES.includes(file.type)) {
+			return c.json({ error: 'Invalid file type. Allowed: jpg, png, webp, gif' }, 400);
+		}
+
+		if (file.size > MAX_SIZE) {
+			return c.json({ error: 'File too large. Max 5MB' }, 400);
+		}
+
+		// Get page with draft_appearance
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete old background from R2 if exists
+		const oldBgValue = draftAppearance.customTheme?.backgroundColor;
+		if (oldBgValue && oldBgValue.includes('url(')) {
+			const urlMatch = oldBgValue.match(/url\(['"]?([^'"]+)['"]?\)/);
+			if (urlMatch) {
+				const oldUrl = urlMatch[1];
+				const urlParts = oldUrl.split('/');
+				const storageKey = urlParts[urlParts.length - 1];
+
+				if (storageKey && oldUrl.includes('/backgrounds/')) {
+					try {
+						await c.env.STORAGE.delete(`backgrounds/${storageKey}`);
+					} catch (e) {
+						console.error('Failed to delete old background:', e);
+					}
+				}
+			}
+		}
+
+		// Generate unique filename
+		const ext = file.name.split('.').pop() || 'jpg';
+		const storageKey = `backgrounds/${username}-${Date.now()}.${ext}`;
+
+		// Upload to R2
+		const arrayBuffer = await file.arrayBuffer();
+		await c.env.STORAGE.put(storageKey, arrayBuffer, {
+			httpMetadata: {
+				contentType: file.type
+			}
+		});
+
+		// Build public URL
+		const url = `${c.env.R2_PUBLIC_URL}/${storageKey}`;
+
+		// Update draft_appearance with new background
+		if (!draftAppearance.customTheme) {
+			draftAppearance.customTheme = {};
+		}
+		
+		draftAppearance.customTheme.backgroundColor = `url('${url}')`;
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ url, storage_key: storageKey });
+	} catch (error) {
+		console.error('Background upload error:', error);
+		return c.json({ error: 'Background upload failed' }, 500);
+	}
+});
+
+// DELETE /upload/background/:username - Remove background image
+app.delete('/background/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+
+		// Get page with draft_appearance
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete from R2 if exists
+		const bgValue = draftAppearance.customTheme?.backgroundColor;
+		if (bgValue && bgValue.includes('url(')) {
+			const urlMatch = bgValue.match(/url\(['"]?([^'"]+)['"]?\)/);
+			if (urlMatch) {
+				const oldUrl = urlMatch[1];
+				const urlParts = oldUrl.split('/');
+				const storageKey = urlParts[urlParts.length - 1];
+
+				if (storageKey && oldUrl.includes('/backgrounds/')) {
+					try {
+						await c.env.STORAGE.delete(`backgrounds/${storageKey}`);
+					} catch (e) {
+						console.error('Failed to delete background:', e);
+					}
+				}
+			}
+		}
+
+		// Reset to white
+		if (!draftAppearance.customTheme) {
+			draftAppearance.customTheme = {};
+		}
+		draftAppearance.customTheme.backgroundColor = '#ffffff';
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ success: true });
+	} catch (error) {
+		console.error('Background remove error:', error);
+		return c.json({ error: 'Background remove failed' }, 500);
+	}
+});
+
 export default app;

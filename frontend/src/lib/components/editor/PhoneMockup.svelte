@@ -53,7 +53,9 @@
 			<div 
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content"
 				style="
-					background: {tokens?.backgroundColor || '#ffffff'};
+					{tokens?.backgroundColor?.includes('url(') 
+						? `background: ${tokens.backgroundColor} center/cover no-repeat;` 
+						: `background: ${tokens?.backgroundColor || '#ffffff'};`}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 				"
