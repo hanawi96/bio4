@@ -3,6 +3,7 @@
 	import { api } from '$lib/api.client';
 	import { page } from '$lib/stores/page';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
+	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import type { HeaderPreset, PageAppearanceState, HeaderOverrides } from '$lib/appearance/types';
 
 	const username = 'demo';
@@ -17,6 +18,10 @@
 	let gradientStart = '#667eea';
 	let gradientEnd = '#764ba2';
 	let coverImageUrl = '';
+
+	// Crop modal state
+	let showCropModal = false;
+	let tempImageUrl = '';
 
 	// Debounce timer
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -162,13 +167,7 @@
 		const file = input.files?.[0];
 		if (!file) return;
 
-		await uploadCoverFile(file);
-		
-		// Reset input
-		input.value = '';
-	}
-
-	async function uploadCoverFile(file: File) {
+		// Validate
 		if (!file.type.startsWith('image/')) {
 			alert('Please upload an image file (JPG, PNG, WebP)');
 			return;
@@ -179,16 +178,32 @@
 			return;
 		}
 
+		// Create temporary URL and show crop modal
+		tempImageUrl = URL.createObjectURL(file);
+		showCropModal = true;
+
+		// Reset input
+		input.value = '';
+	}
+
+	async function handleCropAccept(event: CustomEvent<Blob>) {
+		const croppedBlob = event.detail;
 		uploading = true;
 
 		try {
-			const result = await api.uploadCover(username, file);
+			// Create file from blob
+			const croppedFile = new File([croppedBlob], 'cover.jpg', {
+				type: 'image/jpeg'
+			});
+
+			// Upload to server
+			const result = await api.uploadCover(username, croppedFile);
 			coverImageUrl = result.url;
 			coverType = 'image';
-			
+
 			// Update state immediately
 			if (!pageState) return;
-			
+
 			const newOverrides: HeaderOverrides = {
 				...currentOverrides,
 				coverType: 'image',
@@ -206,12 +221,23 @@
 			pageState = newState;
 			currentOverrides = newOverrides;
 			updateAppearance(newState);
+
+			// Close modal and cleanup
+			showCropModal = false;
+			URL.revokeObjectURL(tempImageUrl);
+			tempImageUrl = '';
 		} catch (e) {
 			console.error('Failed to upload cover:', e);
 			alert('Failed to upload image. Please try again.');
 		} finally {
 			uploading = false;
 		}
+	}
+
+	function handleCropCancel() {
+		showCropModal = false;
+		URL.revokeObjectURL(tempImageUrl);
+		tempImageUrl = '';
 	}
 
 	async function handleRemoveCover() {
@@ -250,7 +276,20 @@
 
 		const file = event.dataTransfer?.files[0];
 		if (file) {
-			await uploadCoverFile(file);
+			// Validate
+			if (!file.type.startsWith('image/')) {
+				alert('Please upload an image file (JPG, PNG, WebP)');
+				return;
+			}
+
+			if (file.size > 5 * 1024 * 1024) {
+				alert('Image must be less than 5MB');
+				return;
+			}
+
+			// Create temporary URL and show crop modal
+			tempImageUrl = URL.createObjectURL(file);
+			showCropModal = true;
 		}
 	}
 
@@ -594,3 +633,16 @@
 		{/if}
 	</div>
 </section>
+
+<!-- Crop Modal -->
+{#if showCropModal}
+	<ImageCropModal
+		imageUrl={tempImageUrl}
+		aspectRatio={3}
+		outputWidth={1200}
+		outputHeight={400}
+		title="Adjust Cover Image"
+		on:accept={handleCropAccept}
+		on:cancel={handleCropCancel}
+	/>
+{/if}
