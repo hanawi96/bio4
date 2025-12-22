@@ -206,4 +206,148 @@ app.delete('/avatar/:username', async (c) => {
 	}
 });
 
+// POST /upload/cover/:username - Upload cover image
+app.post('/cover/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+		const formData = await c.req.formData();
+		const fileEntry = formData.get('file');
+
+		if (!fileEntry || typeof fileEntry === 'string') {
+			return c.json({ error: 'No file provided' }, 400);
+		}
+
+		const file = fileEntry as File;
+
+		if (!ALLOWED_TYPES.includes(file.type)) {
+			return c.json({ error: 'Invalid file type. Allowed: jpg, png, webp, gif' }, 400);
+		}
+
+		if (file.size > MAX_SIZE) {
+			return c.json({ error: 'File too large. Max 5MB' }, 400);
+		}
+
+		// Get page with draft_appearance
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete old cover from R2 if exists
+		const oldCoverValue = draftAppearance.headerStyle?.overrides?.coverValue;
+		if (oldCoverValue && oldCoverValue.startsWith('http')) {
+			const urlParts = oldCoverValue.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+
+			if (storageKey && oldCoverValue.includes('/covers/')) {
+				try {
+					await c.env.STORAGE.delete(`covers/${storageKey}`);
+				} catch (e) {
+					console.error('Failed to delete old cover:', e);
+				}
+			}
+		}
+
+		// Generate unique filename
+		const ext = file.name.split('.').pop() || 'jpg';
+		const storageKey = `covers/${username}-${Date.now()}.${ext}`;
+
+		// Upload to R2
+		const arrayBuffer = await file.arrayBuffer();
+		await c.env.STORAGE.put(storageKey, arrayBuffer, {
+			httpMetadata: {
+				contentType: file.type
+			}
+		});
+
+		// Build public URL
+		const url = `${c.env.R2_PUBLIC_URL}/${storageKey}`;
+
+		// Update draft_appearance with new cover
+		if (!draftAppearance.headerStyle) {
+			draftAppearance.headerStyle = {};
+		}
+		if (!draftAppearance.headerStyle.overrides) {
+			draftAppearance.headerStyle.overrides = {};
+		}
+		
+		draftAppearance.headerStyle.overrides.coverType = 'image';
+		draftAppearance.headerStyle.overrides.coverValue = url;
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ url, storage_key: storageKey });
+	} catch (error) {
+		console.error('Cover upload error:', error);
+		return c.json({ error: 'Cover upload failed' }, 500);
+	}
+});
+
+// DELETE /upload/cover/:username - Remove cover image
+app.delete('/cover/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+
+		// Get page with draft_appearance
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete from R2 if exists
+		const coverValue = draftAppearance.headerStyle?.overrides?.coverValue;
+		if (coverValue && coverValue.startsWith('http')) {
+			const urlParts = coverValue.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+
+			if (storageKey && coverValue.includes('/covers/')) {
+				try {
+					await c.env.STORAGE.delete(`covers/${storageKey}`);
+				} catch (e) {
+					console.error('Failed to delete cover:', e);
+				}
+			}
+		}
+
+		// Reset to gradient
+		if (draftAppearance.headerStyle?.overrides) {
+			draftAppearance.headerStyle.overrides.coverType = 'gradient';
+			draftAppearance.headerStyle.overrides.coverValue = 'linear-gradient(135deg, #667eea, #764ba2)';
+		}
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ success: true });
+	} catch (error) {
+		console.error('Cover remove error:', error);
+		return c.json({ error: 'Cover remove failed' }, 500);
+	}
+});
+
 export default app;

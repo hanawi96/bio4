@@ -10,9 +10,32 @@ export const lastSaved = writable<Date | null>(null);
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 let lastSavedData: string = '';
+let isInitialized = false;
+
+// Initialize last saved data (call this after loading data)
+export function initializeAutosave() {
+	const currentPage = get(page);
+	const currentTheme = get(theme);
+	if (!currentPage) return;
+
+	lastSavedData = JSON.stringify({
+		profile: {
+			title: currentPage.title,
+			bio: currentPage.bio,
+			avatar_url: currentPage.avatar_url
+		},
+		theme: currentTheme
+	});
+	isInitialized = true;
+}
 
 // Debounced autosave function
 export function triggerAutosave(username: string) {
+	// Skip if not initialized yet (initial load)
+	if (!isInitialized) {
+		return;
+	}
+
 	// Clear existing timeout
 	if (saveTimeout) {
 		clearTimeout(saveTimeout);
@@ -41,6 +64,11 @@ export function triggerAutosave(username: string) {
 			// Skip if data hasn't changed
 			if (dataToSave === lastSavedData) {
 				saveStatus.set('saved');
+				setTimeout(() => {
+					if (get(saveStatus) === 'saved') {
+						saveStatus.set('idle');
+					}
+				}, 1000);
 				return;
 			}
 

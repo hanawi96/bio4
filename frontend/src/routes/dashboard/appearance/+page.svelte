@@ -2,7 +2,7 @@
 	import { onMount, afterUpdate, onDestroy } from 'svelte';
 	import { api } from '$lib/api.client';
 	import { loadEditorData, setAutosaveTrigger } from '$lib/stores/page';
-	import { triggerAutosave } from '$lib/stores/autosave';
+	import { triggerAutosave, initializeAutosave } from '$lib/stores/autosave';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 	import ThemeSection from '$lib/components/editor/sections/ThemeSection.svelte';
 	import HeaderSection from '$lib/components/editor/sections/HeaderSection.svelte';
@@ -69,12 +69,16 @@
 
 	// Setup autosave trigger
 	onMount(async () => {
-		// Connect autosave to store changes
-		setAutosaveTrigger(() => triggerAutosave(username));
-
 		try {
 			const data = await api.getEditorData(username);
 			loadEditorData(data);
+			
+			// Initialize autosave with current data (prevent initial save)
+			initializeAutosave();
+			
+			// Connect autosave to store changes
+			setAutosaveTrigger(() => triggerAutosave(username));
+			
 			setupIntersectionObserver();
 		} catch (e) {
 			error = 'Failed to load data';
