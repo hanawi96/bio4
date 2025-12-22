@@ -399,7 +399,9 @@ export async function getFullPageData(db: D1Database, username: string, useDraft
 		bio: profileData.bio ?? null,
 		avatar_url: profileData.avatar_url ?? null,
 		social_links: profileData.social_links ?? null,
-		show_social_icons: profileData.show_social_icons ?? true // Default true
+		show_social_icons: profileData.show_social_icons ?? true, // Default true
+		draft_appearance: page.draft_appearance, // Include raw JSON for frontend
+		published_appearance: page.published_appearance
 	};
 
 	return {

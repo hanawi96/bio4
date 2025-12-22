@@ -54,27 +54,6 @@
 			{/each}
 		</div>
 
-		<!-- Font Size Options -->
-		<div class="mt-6 pt-6 border-t border-gray-100">
-			<div class="flex items-center justify-between mb-3">
-				<div>
-					<p class="text-sm font-medium text-gray-900">Font Size</p>
-					<p class="text-xs text-gray-500">Adjust text size</p>
-				</div>
-			</div>
-			<div class="flex items-center gap-3">
-				<button class="flex-1 py-2 px-3 text-xs border-2 border-gray-300 rounded-lg hover:border-blue-500 transition">
-					Small
-				</button>
-				<button class="flex-1 py-2 px-3 text-sm border-2 border-blue-500 bg-blue-50 rounded-lg font-medium">
-					Medium
-				</button>
-				<button class="flex-1 py-2 px-3 text-base border-2 border-gray-300 rounded-lg hover:border-blue-500 transition">
-					Large
-				</button>
-			</div>
-		</div>
-
 		<!-- Text Color -->
 		<div class="mt-6 pt-6 border-t border-gray-100">
 			<div class="flex items-center justify-between mb-3">

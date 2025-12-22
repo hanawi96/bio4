@@ -4,10 +4,10 @@
 	import { loadEditorData, setAutosaveTrigger } from '$lib/stores/page';
 	import { triggerAutosave } from '$lib/stores/autosave';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
-	import SaveIndicator from '$lib/components/SaveIndicator.svelte';
 	import ThemeSection from '$lib/components/editor/sections/ThemeSection.svelte';
 	import HeaderSection from '$lib/components/editor/sections/HeaderSection.svelte';
 	import BackgroundSection from '$lib/components/editor/sections/BackgroundSection.svelte';
+	import AppearanceDebug from '$lib/components/debug/AppearanceDebug.svelte';
 
 	export let params = {};
 	import BlockStyleSection from '$lib/components/editor/sections/BlockStyleSection.svelte';
@@ -31,6 +31,21 @@
 			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>`
 		},
 		{ 
+			id: 'header', 
+			label: 'Header',
+			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>`
+		},
+		{ 
+			id: 'background', 
+			label: 'Background',
+			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`
+		},
+		{ 
+			id: 'blocks', 
+			label: 'Block Style',
+			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>`
+		},
+		{ 
 			id: 'colors', 
 			label: 'Colors',
 			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>`
@@ -41,24 +56,9 @@
 			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>`
 		},
 		{ 
-			id: 'header', 
-			label: 'Header',
-			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>`
-		},
-		{ 
-			id: 'blocks', 
-			label: 'Block Style',
-			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>`
-		},
-		{ 
 			id: 'spacing', 
 			label: 'Spacing',
 			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>`
-		},
-		{ 
-			id: 'background', 
-			label: 'Background',
-			icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`
 		},
 		{ 
 			id: 'settings', 
@@ -193,11 +193,6 @@
 	<!-- Middle: Content Area (Scrollable) -->
 	<div class="flex-1 overflow-y-auto scrollbar-hide" bind:this={contentContainer}>
 		<div class="max-w-3xl mx-auto p-8">
-			<!-- Save Indicator (Sticky Top) -->
-			<div class="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200 -mx-8 px-8 py-4 mb-6">
-				<SaveIndicator {username} />
-			</div>
-
 			{#if loading}
 				<div class="flex items-center justify-center py-20">
 					<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
@@ -229,6 +224,21 @@
 						<ThemeSection />
 					</section>
 
+					<!-- Header Section -->
+					<section id="header" class="scroll-mt-6">
+						<HeaderSection />
+					</section>
+
+					<!-- Background Section -->
+					<section id="background" class="scroll-mt-6">
+						<BackgroundSection />
+					</section>
+
+					<!-- Block Style Section -->
+					<section id="blocks" class="scroll-mt-6">
+						<BlockStyleSection />
+					</section>
+
 					<!-- Color Section -->
 					<section id="colors" class="scroll-mt-6">
 						<ColorSection />
@@ -239,24 +249,9 @@
 						<FontSection />
 					</section>
 
-					<!-- Header Section -->
-					<section id="header" class="scroll-mt-6">
-						<HeaderSection />
-					</section>
-
-					<!-- Block Style Section -->
-					<section id="blocks" class="scroll-mt-6">
-						<BlockStyleSection />
-					</section>
-
 					<!-- Spacing Section -->
 					<section id="spacing" class="scroll-mt-6">
 						<SpacingSection />
-					</section>
-
-					<!-- Background Section -->
-					<section id="background" class="scroll-mt-6">
-						<BackgroundSection />
 					</section>
 
 					<!-- Page Settings Section -->
@@ -272,12 +267,55 @@
 	</div>
 
 	<!-- Right: Preview (Sticky) -->
-	<aside class="w-[440px] bg-white border-l border-gray-200 flex-shrink-0">
+	<aside class="w-[520px] bg-white border-l border-gray-200 flex-shrink-0">
 		<div class="sticky top-0 h-[calc(100vh-64px)] flex flex-col">
+			<!-- Selected Domain Section (Fixed at top) -->
+			<div class="p-6 pb-4">
+				<p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Selected Domain</p>
+				
+				<div class="flex items-center gap-2">
+					<!-- URL Display (Shorter) -->
+					<div class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg flex-1">
+						<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+						</svg>
+						<span class="text-sm font-medium text-gray-900 truncate">biolink.com/{username}</span>
+					</div>
+
+					<!-- Copy Button -->
+					<button 
+						class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+						title="Copy link"
+					>
+						<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+						</svg>
+					</button>
+
+					<!-- External Link Button -->
+					<button 
+						class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+						title="Open in new tab"
+					>
+						<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+						</svg>
+					</button>
+
+					<!-- Share Button -->
+					<button class="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">
+						SHARE
+					</button>
+				</div>
+			</div>
+
 			<!-- Phone Mockup Container -->
-			<div class="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 overflow-hidden">
+			<div class="flex-1 flex items-center justify-center px-6 pb-6">
 				<PhoneMockup />
 			</div>
 		</div>
 	</aside>
+
+	<!-- Debug Panel -->
+	<AppearanceDebug />
 </div>

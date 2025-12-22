@@ -1,18 +1,8 @@
 <script lang="ts">
-	import { saveStatus, lastSaved, publishChanges } from '$lib/stores/autosave';
+	import { saveStatus, lastSaved } from '$lib/stores/autosave';
 	import { fade } from 'svelte/transition';
 
 	export let username: string;
-
-	let showPublishSuccess = false;
-
-	async function handlePublish() {
-		const success = await publishChanges(username);
-		if (success) {
-			showPublishSuccess = true;
-			setTimeout(() => showPublishSuccess = false, 3000);
-		}
-	}
 
 	$: statusText = {
 		idle: '',
@@ -48,28 +38,6 @@
 				</svg>
 			{/if}
 			<span class="text-sm font-medium">{statusText}</span>
-		</div>
-	{/if}
-
-	<!-- Publish Button -->
-	<button
-		on:click={handlePublish}
-		disabled={$saveStatus === 'saving'}
-		class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-	>
-		Xuất bản
-	</button>
-
-	<!-- Publish Success Toast -->
-	{#if showPublishSuccess}
-		<div 
-			class="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50"
-			transition:fade={{ duration: 200 }}
-		>
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-			</svg>
-			<span class="font-medium">Đã xuất bản thành công!</span>
 		</div>
 	{/if}
 </div>

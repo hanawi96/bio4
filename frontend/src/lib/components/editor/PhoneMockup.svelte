@@ -1,115 +1,179 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { page, groups, theme, DEFAULT_THEME, applyCSSVariables } from '$lib/stores/page';
+	import { page, groups } from '$lib/stores/page';
+	import { appearance } from '$lib/stores/appearance';
 
-	let screenElement: HTMLElement;
+	// Subscribe to derived store - auto updates on any change!
+	$: tokens = $appearance?.tokens;
+	$: header = $appearance?.header;
 
-	// Apply CSS variables directly to DOM when theme changes
-	$: if (screenElement && $theme) {
-		applyCSSVariables(screenElement, $theme);
-	}
+	// Avatar size mapping
+	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };
+	$: avatarSize = header ? avatarSizes[header.avatarSize] : 80;
 
-	// Initialize with default theme on mount
-	onMount(() => {
-		if (screenElement) {
-			applyCSSVariables(screenElement, $theme || DEFAULT_THEME);
+	// Cover height mapping
+	const coverHeights = { sm: 120, md: 160, lg: 200 };
+	$: coverHeight = header?.coverHeight ? coverHeights[header.coverHeight] : 160;
+
+	// Get cover background style
+	$: coverStyle = (() => {
+		if (!header?.hasCover) return '';
+		
+		const overrides = $appearance?.header;
+		const coverValue = overrides?.coverValue;
+		
+		if (!coverValue) {
+			return 'background: linear-gradient(135deg, #667eea, #764ba2);';
 		}
-	});
-	
-	// Social platform configs (compact version for mockup)
-	const socialPlatforms = {
-		twitter: { icon: 'M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z', url: 'https://twitter.com/', color: '#1DA1F2' },
-		instagram: { icon: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z', url: 'https://instagram.com/', color: '#E4405F' },
-		facebook: { icon: 'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z', url: 'https://facebook.com/', color: '#1877F2' },
-		linkedin: { icon: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z', url: 'https://linkedin.com/in/', color: '#0A66C2' },
-		youtube: { icon: 'M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z', url: 'https://youtube.com/@', color: '#FF0000' },
-		tiktok: { icon: 'M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z', url: 'https://tiktok.com/@', color: '#000000' }
-	};
-	
-	$: activeSocialLinks = $page?.social_links ? 
-		Object.entries($page.social_links)
-			.filter(([_, value]) => value && value.trim())
-			.map(([platform, username]) => ({
-				platform,
-				username,
-				...socialPlatforms[platform as keyof typeof socialPlatforms]
-			})) : [];
+		
+		if (coverValue.startsWith('http')) {
+			return `background: url('${coverValue}') center/cover;`;
+		}
+		
+		return `background: ${coverValue};`;
+	})();
+
+	// Active links
+	$: activeLinks = $groups.flatMap(g => g.links.filter(l => l.is_active === 1));
 </script>
 
 <!-- Phone Frame -->
 <div class="relative scale-125">
-	<!-- Phone Shell -->
 	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
-		<!-- Screen -->
-		<div 
-			bind:this={screenElement}
-			class="w-full h-full rounded-[36px] overflow-hidden relative"
-		>
+		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
 			<!-- Notch -->
 			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
 
 			<!-- Content -->
 			<div 
-				class="w-full h-full overflow-y-auto scrollbar-hide"
-				style="background: var(--bg-color); color: var(--text-color); font-family: var(--font-family), sans-serif;"
+				class="w-full h-full overflow-y-auto scrollbar-hide phone-content"
+				style="
+					background: {tokens?.backgroundColor || '#ffffff'};
+					color: {tokens?.textColor || '#000000'};
+					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
+				"
 			>
 				<div class="pt-10 pb-8 px-4">
-					<!-- Avatar -->
-					<div class="flex flex-col items-center mb-6">
-						{#if $page?.avatar_url}
-							<img 
-								src={$page.avatar_url} 
-								alt="" 
-								class="w-20 h-20 rounded-full object-cover mb-3 ring-4 ring-white/20"
-							/>
-						{:else}
+					<!-- Header with Cover -->
+					{#if header?.hasCover}
+						<div class="relative -mx-4 -mt-10 mb-6 header-cover">
+							<!-- Cover Image/Gradient -->
 							<div 
-								class="w-20 h-20 rounded-full mb-3 flex items-center justify-center text-3xl"
-								style="background: var(--primary-color); color: white;"
-							>
-								{($page?.title || 'U').charAt(0).toUpperCase()}
-							</div>
-						{/if}
-						<h1 class="text-lg font-bold text-center">{$page?.title || 'Your Name'}</h1>
-						{#if $page?.bio}
-							<p class="text-sm opacity-70 text-center mt-1 px-4">{$page.bio}</p>
-						{/if}
+								class="w-full"
+								style="{coverStyle} height: {coverHeight}px;"
+							></div>
+							
+							<!-- Avatar (Overlapping) -->
+							{#if header.avatarPosition === 'overlap'}
+								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarSize / 2}px;">
+									{#if $page?.avatar_url}
+										<img 
+											src={$page.avatar_url} 
+											alt="Avatar" 
+											class="header-avatar rounded-full object-cover border-4"
+											style="
+												width: {avatarSize}px;
+												height: {avatarSize}px;
+												border-color: {tokens?.backgroundColor || '#fff'};
+												border-radius: {header.avatarShape === 'circle' ? '50%' : header.avatarShape === 'rounded' ? '20%' : '0'};
+											"
+										/>
+									{:else}
+										<div 
+											class="header-avatar flex items-center justify-center text-white font-bold border-4"
+											style="
+												width: {avatarSize}px;
+												height: {avatarSize}px;
+												background: {tokens?.primaryColor || '#3b82f6'};
+												border-color: {tokens?.backgroundColor || '#fff'};
+												border-radius: {header.avatarShape === 'circle' ? '50%' : header.avatarShape === 'rounded' ? '20%' : '0'};
+												font-size: {avatarSize / 2.5}px;
+											"
+										>
+											{($page?.title || 'U').charAt(0).toUpperCase()}
+										</div>
+									{/if}
+								</div>
+							{/if}
+						</div>
 						
-						<!-- Social Icons (Compact) -->
-						{#if $page?.show_social_icons && activeSocialLinks.length > 0}
-							<div class="flex items-center gap-2.5 mt-3">
-								{#each activeSocialLinks as social}
-									<div 
-										class="transition-all hover:scale-110"
-										title={social.platform}
-									>
-										<svg class="w-5 h-5 opacity-70 hover:opacity-100" fill={social.color} viewBox="0 0 24 24">
-											<path d={social.icon}/>
-										</svg>
-									</div>
-								{/each}
-							</div>
-						{/if}
-					</div>
-
-					<!-- Links -->
-					<div class="space-y-3">
-						{#each $groups as group}
-							{#each group.links.filter(l => l.is_active === 1) as link}
-								<a 
-									href={link.url}
-									target="_blank"
-									rel="noopener"
-									class="block w-full py-3 px-4 text-center text-sm font-medium rounded-xl transition-transform hover:scale-[1.02]"
+						<!-- Content below cover -->
+						<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarSize / 2 + 16 : 0}px; text-align: {header.contentAlign};">
+							<h1 class="text-lg font-bold">{$page?.title || 'Your Name'}</h1>
+							{#if header.showBio && $page?.bio}
+								<p 
+									class="bio-text text-sm opacity-70 mt-1 px-4"
 									style="
-										background: var(--primary-color);
-										color: white;
-										border-radius: var(--border-radius);
+										display: -webkit-box;
+										-webkit-line-clamp: {header.bioMaxLines};
+										-webkit-box-orient: vertical;
+										overflow: hidden;
 									"
 								>
-									{link.title}
-								</a>
-							{/each}
+									{$page.bio}
+								</p>
+							{/if}
+						</div>
+					{:else}
+						<!-- No Cover - Simple Header -->
+						<div class="header-content mb-6" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
+							{#if $page?.avatar_url}
+								<img 
+									src={$page.avatar_url} 
+									alt="Avatar" 
+									class="header-avatar object-cover mb-3 ring-4 ring-white/20"
+									style="
+										width: {avatarSize}px;
+										height: {avatarSize}px;
+										border-radius: {header?.avatarShape === 'circle' ? '50%' : header?.avatarShape === 'rounded' ? '20%' : '0'};
+									"
+								/>
+							{:else}
+								<div 
+									class="header-avatar mb-3 flex items-center justify-center text-white font-bold"
+									style="
+										width: {avatarSize}px;
+										height: {avatarSize}px;
+										background: {tokens?.primaryColor || '#3b82f6'};
+										border-radius: {header?.avatarShape === 'circle' ? '50%' : header?.avatarShape === 'rounded' ? '20%' : '0'};
+										font-size: {avatarSize / 2.5}px;
+									"
+								>
+									{($page?.title || 'U').charAt(0).toUpperCase()}
+								</div>
+							{/if}
+							<h1 class="text-lg font-bold">{$page?.title || 'Your Name'}</h1>
+							{#if header?.showBio && $page?.bio}
+								<p 
+									class="bio-text text-sm opacity-70 mt-1 px-4"
+									style="
+										display: -webkit-box;
+										-webkit-line-clamp: {header.bioMaxLines};
+										-webkit-box-orient: vertical;
+										overflow: hidden;
+									"
+								>
+									{$page.bio}
+								</p>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- Links -->
+					<div class="space-y-3 mt-6">
+						{#each activeLinks as link}
+							<a 
+								href={link.url}
+								target="_blank"
+								rel="noopener"
+								class="link-button block w-full py-3 px-4 text-center text-sm font-medium transition-transform hover:scale-[1.02]"
+								style="
+									background: {tokens?.primaryColor || '#3b82f6'};
+									color: white;
+									border-radius: {tokens?.borderRadius || 8}px;
+								"
+							>
+								{link.title}
+							</a>
 						{:else}
 							<div class="text-center py-8 opacity-50">
 								<p class="text-sm">No links yet</p>

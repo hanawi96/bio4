@@ -1,11 +1,33 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { publishChanges, saveStatus } from '$lib/stores/autosave';
 	
 	// Suppress params warning
 	export let params = {};
 	
 	$: currentPath = $page.url.pathname;
 	let sidebarCollapsed = false;
+	let publishing = false;
+	let showPublishSuccess = false;
+
+	async function handlePublish() {
+		if (publishing) return;
+		
+		publishing = true;
+		try {
+			const success = await publishChanges('demo');
+			if (success) {
+				showPublishSuccess = true;
+				setTimeout(() => showPublishSuccess = false, 3000);
+			}
+		} finally {
+			publishing = false;
+		}
+	}
+
+	// Button text based on status
+	$: buttonText = publishing ? 'Publishing...' : $saveStatus === 'saving' ? 'Saving...' : 'Publish';
+	$: buttonDisabled = publishing || $saveStatus === 'saving';
 </script>
 
 <div class="min-h-screen bg-gray-50 flex">
@@ -161,37 +183,21 @@
 				</h1>
 			</div>
 			<div class="flex items-center gap-3">
-				<!-- Live Preview Badge (Only on Appearance page) -->
-				{#if currentPath === '/dashboard/appearance'}
-					<!-- Live Preview Indicator -->
-					<div class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg shadow-sm">
-						<div class="relative flex items-center justify-center">
-							<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-							<div class="absolute w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-						</div>
-						<span class="text-xs font-semibold text-green-700">Live</span>
+				<!-- Save Status Indicator -->
+				{#if $saveStatus === 'saved'}
+					<div class="flex items-center gap-2 text-green-600 text-sm">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+						</svg>
+						<span class="font-medium">Saved</span>
 					</div>
-
-					<!-- URL Display with Copy -->
-					<div class="flex items-center gap-0 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:border-gray-300 transition-colors">
-						<div class="flex items-center gap-2 px-3 py-2">
-							<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-							</svg>
-							<span class="text-xs text-gray-500">biolink.com/</span>
-							<span class="text-xs font-bold text-gray-900">demo</span>
-						</div>
-						<button 
-							class="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-200 transition-colors group" 
-							title="Copy link"
-						>
-							<svg class="w-4 h-4 text-gray-400 group-hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-							</svg>
-						</button>
+				{:else if $saveStatus === 'error'}
+					<div class="flex items-center gap-2 text-red-600 text-sm">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+						<span class="font-medium">Error</span>
 					</div>
-
-					<div class="w-px h-6 bg-gray-200"></div>
 				{/if}
 
 				<a 
@@ -204,11 +210,33 @@
 					</svg>
 					View Page
 				</a>
-				<button class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
-					Publish
+				<button 
+					on:click={handlePublish}
+					disabled={buttonDisabled}
+					class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[100px] justify-center"
+				>
+					{#if publishing || $saveStatus === 'saving'}
+						<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+						</svg>
+					{/if}
+					{buttonText}
 				</button>
 			</div>
 		</header>
+
+		<!-- Publish Success Toast -->
+		{#if showPublishSuccess}
+			<div 
+				class="fixed top-20 right-8 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50"
+			>
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+				</svg>
+				<span class="font-medium">Published successfully!</span>
+			</div>
+		{/if}
 
 		<!-- Page Content -->
 		<main>

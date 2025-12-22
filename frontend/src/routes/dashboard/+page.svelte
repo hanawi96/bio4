@@ -7,28 +7,65 @@
 	const username = 'demo';
 	let loading = true;
 	let error = '';
+	let retrying = false;
 	let stats = { views: 0, clicks: 0, links: 0 };
 
 	onMount(async () => {
+		await loadData();
+	});
+
+	async function loadData() {
+		loading = true;
+		error = '';
+		retrying = false;
+		
 		try {
 			const data = await api.getEditorData(username);
 			loadEditorData(data);
 			stats.links = data.groups.reduce((acc, g) => acc + g.links.length, 0);
-		} catch (e) {
-			error = 'Failed to load data';
+		} catch (e: any) {
+			console.error('Failed to load dashboard:', e);
+			error = e.message || 'Failed to load data. API server may be restarting...';
 		} finally {
 			loading = false;
 		}
-	});
+	}
+
+	async function retry() {
+		retrying = true;
+		await loadData();
+	}
 </script>
 
 <div class="p-8">
 	{#if loading}
-		<div class="flex items-center justify-center py-12">
+		<div class="flex flex-col items-center justify-center py-12 gap-3">
 			<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+			<p class="text-sm text-gray-500">Loading dashboard...</p>
 		</div>
 	{:else if error}
-		<div class="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
+		<div class="max-w-md mx-auto">
+			<div class="bg-red-50 border border-red-200 rounded-xl p-6">
+				<div class="flex items-start gap-3">
+					<div class="flex-shrink-0">
+						<svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+						</svg>
+					</div>
+					<div class="flex-1">
+						<h3 class="text-sm font-semibold text-red-900 mb-1">Connection Error</h3>
+						<p class="text-sm text-red-700 mb-4">{error}</p>
+						<button
+							on:click={retry}
+							disabled={retrying}
+							class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							{retrying ? 'Retrying...' : 'Retry Connection'}
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	{:else}
 		<!-- Stats Grid -->
 		<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

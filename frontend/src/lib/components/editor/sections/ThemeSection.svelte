@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
-	import { page, theme } from '$lib/stores/page';
+	import { page } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
 
+	const username = 'demo';
 	let themes: ThemePreset[] = [];
 	let loading = true;
+	let selecting = false;
 	let activeTab = 'Classic';
 
 	const tabs = ['Classic', 'Vibrant', 'Cozy', 'Bold'];
@@ -21,9 +23,40 @@
 		}
 	});
 
-	function selectTheme(preset: ThemePreset) {
-		page.update(p => p ? { ...p, theme_preset_key: preset.key } : p);
-		theme.set(preset.config);
+	async function selectTheme(preset: ThemePreset) {
+		if (selecting) return;
+		selecting = true;
+
+		try {
+			// Update store immediately for instant preview
+			page.update(p => {
+				if (!p) return p;
+				
+				// Parse current appearance
+				const currentAppearance = JSON.parse(p.draft_appearance || '{}');
+				
+				// Update theme key in appearance
+				const newAppearance = {
+					...currentAppearance,
+					themeKey: preset.key
+				};
+				
+				return {
+					...p,
+					theme_preset_key: preset.key,
+					draft_appearance: JSON.stringify(newAppearance)
+				};
+			});
+
+			// Save to API (debounced by autosave)
+			await api.saveDraft(username, {
+				theme_preset_key: preset.key
+			});
+		} catch (e) {
+			console.error('Failed to save theme:', e);
+		} finally {
+			selecting = false;
+		}
 	}
 </script>
 
@@ -57,13 +90,21 @@
 				{#each themes as preset}
 					<button
 						on:click={() => selectTheme(preset)}
-						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 transition-all hover:scale-105 {$page?.theme_preset_key === preset.key ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}"
+						disabled={selecting}
+						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed {$page?.theme_preset_key === preset.key ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}"
 					>
 						<!-- Preview -->
 						<div 
-							class="h-40 p-3 flex flex-col"
+							class="h-40 p-3 flex flex-col relative"
 							style="background: {preset.config.backgroundColor}; color: {preset.config.textColor};"
 						>
+							<!-- Loading overlay -->
+							{#if selecting && $page?.theme_preset_key === preset.key}
+								<div class="absolute inset-0 bg-white/50 flex items-center justify-center">
+									<div class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+								</div>
+							{/if}
+
 							<!-- Mini avatar -->
 							<div 
 								class="w-8 h-8 rounded-full mx-auto mb-2"

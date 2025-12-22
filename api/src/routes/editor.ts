@@ -11,14 +11,19 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 // GET /editor/:username - Get full editor data (draft)
 app.get('/:username', async (c) => {
-	const username = c.req.param('username');
-	const data = await getFullPageData(c.env.DB, username, true); // useDraft = true
+	try {
+		const username = c.req.param('username');
+		const data = await getFullPageData(c.env.DB, username, true); // useDraft = true
 
-	if (!data) {
-		return c.json({ error: 'Page not found' }, 404);
+		if (!data) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		return c.json(data);
+	} catch (error: any) {
+		console.error('Error in GET /editor/:username:', error);
+		return c.json({ error: error.message || 'Internal server error' }, 500);
 	}
-
-	return c.json(data);
 });
 
 // PUT /editor/:username/draft - Save draft (autosave)
@@ -35,7 +40,6 @@ app.put('/:username/draft', async (c) => {
 	const draftData: { profile?: any; appearance?: any } = {};
 
 	// Profile data (title, bio, social_links, show_social_icons)
-	// Note: avatar_url is handled separately by upload endpoint
 	if (body.title !== undefined || body.bio !== undefined || body.social_links !== undefined || body.show_social_icons !== undefined) {
 		const profileData: any = {};
 		
@@ -47,8 +51,12 @@ app.put('/:username/draft', async (c) => {
 		draftData.profile = profileData;
 	}
 
-	// Appearance data (theme)
-	if (body.theme !== undefined || body.themePresetKey !== undefined) {
+	// Appearance data - Handle both old and new format
+	if (body.draft_appearance !== undefined) {
+		// New format: full appearance state as JSON string
+		draftData.appearance = JSON.parse(body.draft_appearance);
+	} else if (body.theme !== undefined || body.themePresetKey !== undefined) {
+		// Old format: individual theme fields
 		const appearanceData: any = {};
 		
 		if (body.themePresetKey !== undefined) appearanceData.themePresetKey = body.themePresetKey;

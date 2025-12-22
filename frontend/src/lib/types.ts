@@ -11,6 +11,9 @@ export interface BioPage {
 	theme_preset_key: string;
 	theme_mode: 'light' | 'dark' | 'compact';
 	settings: string;
+	draft_appearance: string; // JSON string
+	published_appearance: string; // JSON string
+	theme?: string; // JSON string (for backward compatibility)
 	created_at: string;
 	updated_at: string;
 }
