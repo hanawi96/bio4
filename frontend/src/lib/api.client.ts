@@ -34,6 +34,25 @@ class ApiClient {
 		return res.json();
 	}
 
+	async saveDraft(username: string, data: any): Promise<{ success: boolean }> {
+		const res = await fetch(`${this.baseUrl}/editor/${username}/draft`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(data)
+		});
+		if (!res.ok) throw new Error('Failed to save draft');
+		return res.json();
+	}
+
+	async publishPage(username: string): Promise<{ success: boolean }> {
+		const res = await fetch(`${this.baseUrl}/editor/${username}/publish`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' }
+		});
+		if (!res.ok) throw new Error('Failed to publish');
+		return res.json();
+	}
+
 	// ============ LINKS ============
 
 	async getGroups(username: string): Promise<{ groups: LinkGroup[] }> {

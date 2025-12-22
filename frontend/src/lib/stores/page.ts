@@ -1,8 +1,31 @@
 import { writable, derived } from 'svelte/store';
 import type { BioPage, LinkGroup, Block, ThemeConfig } from '../types';
 
-// Page data store
-export const page = writable<BioPage | null>(null);
+// Autosave trigger callback (set by appearance page)
+let autosaveTrigger: (() => void) | null = null;
+
+export function setAutosaveTrigger(callback: (() => void) | null) {
+	autosaveTrigger = callback;
+}
+
+// Page data store with autosave trigger
+function createPageStore() {
+	const { subscribe, set, update } = writable<BioPage | null>(null);
+
+	return {
+		subscribe,
+		set: (value: BioPage | null) => {
+			set(value);
+			if (autosaveTrigger) autosaveTrigger();
+		},
+		update: (fn: (value: BioPage | null) => BioPage | null) => {
+			update(fn);
+			if (autosaveTrigger) autosaveTrigger();
+		}
+	};
+}
+
+export const page = createPageStore();
 
 // Link groups with links
 export const groups = writable<LinkGroup[]>([]);
@@ -10,8 +33,24 @@ export const groups = writable<LinkGroup[]>([]);
 // Content blocks
 export const blocks = writable<Block[]>([]);
 
-// Current theme config
-export const theme = writable<ThemeConfig | null>(null);
+// Current theme config with autosave trigger
+function createThemeStore() {
+	const { subscribe, set, update } = writable<ThemeConfig | null>(null);
+
+	return {
+		subscribe,
+		set: (value: ThemeConfig | null) => {
+			set(value);
+			if (autosaveTrigger) autosaveTrigger();
+		},
+		update: (fn: (value: ThemeConfig | null) => ThemeConfig | null) => {
+			update(fn);
+			if (autosaveTrigger) autosaveTrigger();
+		}
+	};
+}
+
+export const theme = createThemeStore();
 
 // Derived: all links flat
 export const allLinks = derived(groups, ($groups) => {

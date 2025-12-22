@@ -1,0 +1,85 @@
+import { writable, derived, get } from 'svelte/store';
+import { page } from './page';
+import { api } from '$lib/api.client';
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+// Save status store
+export const saveStatus = writable<SaveStatus>('idle');
+export const lastSaved = writable<Date | null>(null);
+
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+let lastSavedData: string = '';
+
+// Debounced autosave function
+export function triggerAutosave(username: string) {
+	// Clear existing timeout
+	if (saveTimeout) {
+		clearTimeout(saveTimeout);
+	}
+
+	// Set saving status
+	saveStatus.set('saving');
+
+	// Debounce 1000ms
+	saveTimeout = setTimeout(async () => {
+		try {
+			const currentPage = get(page);
+			if (!currentPage) return;
+
+			// Serialize current state
+			const dataToSave = JSON.stringify({
+				title: currentPage.title,
+				bio: currentPage.bio,
+				avatar_url: currentPage.avatar_url,
+				theme_preset_key: currentPage.theme_preset_key,
+				theme_mode: currentPage.theme_mode,
+				settings: currentPage.settings
+			});
+
+			// Skip if data hasn't changed
+			if (dataToSave === lastSavedData) {
+				saveStatus.set('saved');
+				return;
+			}
+
+			// Save draft
+			await api.saveDraft(username, {
+				title: currentPage.title,
+				bio: currentPage.bio,
+				avatar_url: currentPage.avatar_url,
+				theme_preset_key: currentPage.theme_preset_key,
+				theme_mode: currentPage.theme_mode,
+				settings: currentPage.settings
+			});
+
+			lastSavedData = dataToSave;
+			lastSaved.set(new Date());
+			saveStatus.set('saved');
+
+			// Reset to idle after 2s
+			setTimeout(() => {
+				if (get(saveStatus) === 'saved') {
+					saveStatus.set('idle');
+				}
+			}, 2000);
+		} catch (error) {
+			console.error('Autosave failed:', error);
+			saveStatus.set('error');
+		}
+	}, 1000);
+}
+
+// Publish function
+export async function publishChanges(username: string): Promise<boolean> {
+	try {
+		saveStatus.set('saving');
+		await api.publishPage(username);
+		saveStatus.set('saved');
+		return true;
+	} catch (error) {
+		console.error('Publish failed:', error);
+		saveStatus.set('error');
+		return false;
+	}
+}

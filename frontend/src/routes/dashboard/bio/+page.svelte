@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
 	import { loadEditorData, groups } from '$lib/stores/page';
+	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 
 	const username = 'demo';
 	let loading = true;
@@ -19,8 +20,10 @@
 	});
 </script>
 
-<div class="p-8">
-	<div class="max-w-3xl">
+<div class="flex h-[calc(100vh-64px)] bg-gray-50">
+	<!-- Left: Content Area -->
+	<div class="flex-1 overflow-y-auto p-8">
+		<div class="max-w-3xl mx-auto">
 		<!-- Header -->
 		<div class="flex items-center justify-between mb-6">
 			<div>
@@ -121,5 +124,16 @@
 				{/each}
 			</div>
 		{/if}
+		</div>
 	</div>
+
+	<!-- Right: Preview (Sticky) -->
+	<aside class="w-[440px] bg-white border-l border-gray-200 flex-shrink-0">
+		<div class="sticky top-0 h-[calc(100vh-64px)] flex flex-col">
+			<!-- Phone Mockup Container -->
+			<div class="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 overflow-hidden">
+				<PhoneMockup />
+			</div>
+		</div>
+	</aside>
 </div>

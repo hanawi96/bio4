@@ -3,6 +3,8 @@ import type { Bindings } from '../types';
 import { 
 	getPageByUsername, 
 	updatePage, 
+	saveDraft,
+	publishDraft,
 	getGroupsByPageId,
 	getLinksByGroupId,
 	getBlocksByPageId,
@@ -65,6 +67,38 @@ app.put('/:username', async (c) => {
 		settings: body.settings ? JSON.stringify(body.settings) : undefined,
 		status: body.status
 	});
+
+	return c.json({ success: true });
+});
+
+// PUT /editor/:username/draft - Save draft (autosave)
+app.put('/:username/draft', async (c) => {
+	const username = c.req.param('username');
+	const body = await c.req.json();
+
+	const page = await getPageByUsername(c.env.DB, username);
+	if (!page) {
+		return c.json({ error: 'Page not found' }, 404);
+	}
+
+	await saveDraft(c.env.DB, page.id, body);
+
+	return c.json({ success: true });
+});
+
+// POST /editor/:username/publish - Publish draft
+app.post('/:username/publish', async (c) => {
+	const username = c.req.param('username');
+
+	const page = await getPageByUsername(c.env.DB, username);
+	if (!page) {
+		return c.json({ error: 'Page not found' }, 404);
+	}
+
+	await publishDraft(c.env.DB, page.id);
+
+	// TODO: Invalidate cache if using Cloudflare Cache API
+	// await c.env.CACHE?.delete(`bio:${username}`);
 
 	return c.json({ success: true });
 });

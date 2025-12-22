@@ -63,6 +63,32 @@ export async function updatePage(
 		.run();
 }
 
+// Save draft (autosave)
+export async function saveDraft(
+	db: D1Database,
+	pageId: number,
+	draftData: any
+) {
+	await db
+		.prepare('UPDATE bio_pages SET draft_settings = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+		.bind(JSON.stringify(draftData), pageId)
+		.run();
+}
+
+// Publish: copy draft to published
+export async function publishDraft(db: D1Database, pageId: number) {
+	await db
+		.prepare(`
+			UPDATE bio_pages 
+			SET settings = draft_settings, 
+				status = 'published',
+				updated_at = CURRENT_TIMESTAMP 
+			WHERE id = ?
+		`)
+		.bind(pageId)
+		.run();
+}
+
 
 // ============ LINK GROUPS ============
 
