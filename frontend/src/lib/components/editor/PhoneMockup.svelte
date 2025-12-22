@@ -6,6 +6,9 @@
 	$: tokens = $appearance?.tokens;
 	$: header = $appearance?.header;
 	
+	// Loading state - true when page data is not yet loaded
+	$: isLoading = !$page || !tokens;
+	
 	$: {
 		console.log('[PhoneMockup] appearance changed:', $appearance);
 		console.log('[PhoneMockup] tokens:', tokens);
@@ -60,6 +63,15 @@
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 				"
 			>
+				{#if isLoading}
+					<!-- Loading State -->
+					<div class="w-full h-full flex items-center justify-center">
+						<div class="flex flex-col items-center gap-3">
+							<div class="animate-spin w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+							<p class="text-xs text-gray-500">Loading preview...</p>
+						</div>
+					</div>
+				{:else}
 				<div class="pt-10 pb-8 px-4">
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
@@ -196,6 +208,7 @@
 						<p class="text-xs opacity-40">Made with Bio Link</p>
 					</div>
 				</div>
+				{/if}
 			</div>
 		</div>
 	</div>
