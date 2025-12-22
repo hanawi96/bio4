@@ -224,6 +224,8 @@ export interface HeaderPreset {
 	avatarSize: 'sm' | 'md' | 'lg' | 'xl'; // 64px, 80px, 96px, 120px
 	avatarShape: 'circle' | 'rounded' | 'square';
 	avatarPosition: 'center' | 'overlap'; // overlap = nửa trên cover, nửa dưới
+	avatarBorder?: boolean; // Has border or not
+	avatarBorderColor?: string; // Border color (default: white)
 	
 	// Content layout
 	contentAlign: 'center' | 'left';
@@ -255,6 +257,8 @@ export interface HeaderOverrides {
 	avatarSize?: 'sm' | 'md' | 'lg' | 'xl';
 	avatarShape?: 'circle' | 'rounded' | 'square';
 	avatarPosition?: 'center' | 'overlap';
+	avatarBorder?: boolean; // Override border visibility
+	avatarBorderColor?: string; // Override border color
 	contentAlign?: 'center' | 'left';
 	showBio?: boolean;
 	spacing?: 'compact' | 'comfortable' | 'spacious';

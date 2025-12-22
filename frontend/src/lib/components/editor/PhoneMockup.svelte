@@ -75,22 +75,22 @@
 										<img 
 											src={$page.avatar_url} 
 											alt="Avatar" 
-											class="header-avatar rounded-full object-cover border-4"
+											class="header-avatar rounded-full object-cover {header.avatarBorder !== false ? 'border-4' : ''}"
 											style="
 												width: {avatarSize}px;
 												height: {avatarSize}px;
-												border-color: {tokens?.backgroundColor || '#fff'};
+												{header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''}
 												border-radius: {header.avatarShape === 'circle' ? '50%' : header.avatarShape === 'rounded' ? '20%' : '0'};
 											"
 										/>
 									{:else}
 										<div 
-											class="header-avatar flex items-center justify-center text-white font-bold border-4"
+											class="header-avatar flex items-center justify-center text-white font-bold {header.avatarBorder !== false ? 'border-4' : ''}"
 											style="
 												width: {avatarSize}px;
 												height: {avatarSize}px;
 												background: {tokens?.primaryColor || '#3b82f6'};
-												border-color: {tokens?.backgroundColor || '#fff'};
+												{header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''}
 												border-radius: {header.avatarShape === 'circle' ? '50%' : header.avatarShape === 'rounded' ? '20%' : '0'};
 												font-size: {avatarSize / 2.5}px;
 											"
@@ -126,20 +126,22 @@
 								<img 
 									src={$page.avatar_url} 
 									alt="Avatar" 
-									class="header-avatar object-cover mb-3 ring-4 ring-white/20"
+									class="header-avatar object-cover mb-3 {header?.avatarBorder !== false ? 'border-4' : ''}"
 									style="
 										width: {avatarSize}px;
 										height: {avatarSize}px;
+										{header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''}
 										border-radius: {header?.avatarShape === 'circle' ? '50%' : header?.avatarShape === 'rounded' ? '20%' : '0'};
 									"
 								/>
 							{:else}
 								<div 
-									class="header-avatar mb-3 flex items-center justify-center text-white font-bold"
+									class="header-avatar mb-3 flex items-center justify-center text-white font-bold {header?.avatarBorder !== false ? 'border-4' : ''}"
 									style="
 										width: {avatarSize}px;
 										height: {avatarSize}px;
 										background: {tokens?.primaryColor || '#3b82f6'};
+										{header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''}
 										border-radius: {header?.avatarShape === 'circle' ? '50%' : header?.avatarShape === 'rounded' ? '20%' : '0'};
 										font-size: {avatarSize / 2.5}px;
 									"

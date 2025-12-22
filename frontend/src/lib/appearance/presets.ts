@@ -69,6 +69,8 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		avatarSize: 'lg',
 		avatarShape: 'circle',
 		avatarPosition: 'overlap',
+		avatarBorder: true, // Has border to stand out on cover
+		avatarBorderColor: '#ffffff',
 		contentAlign: 'center',
 		showBio: true,
 		bioMaxLines: 3,
@@ -83,6 +85,7 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		avatarSize: 'lg',
 		avatarShape: 'circle',
 		avatarPosition: 'center',
+		avatarBorder: false, // No border for clean look
 		contentAlign: 'center',
 		showBio: true,
 		bioMaxLines: 3,

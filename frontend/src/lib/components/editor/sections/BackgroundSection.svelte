@@ -24,14 +24,14 @@
 	];
 
 	const gradients = [
-		{ name: 'Sunset', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-		{ name: 'Ocean', gradient: 'linear-gradient(135deg, #667eea 0%, #00d4ff 100%)' },
-		{ name: 'Forest', gradient: 'linear-gradient(135deg, #0ba360 0%, #3cba92 100%)' },
-		{ name: 'Fire', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-		{ name: 'Sky', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-		{ name: 'Peach', gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
-		{ name: 'Night', gradient: 'linear-gradient(135deg, #2c3e50 0%, #000000 100%)' },
-		{ name: 'Aurora', gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' }
+		{ name: 'Sunset', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', from: '#667eea', to: '#764ba2', direction: '135deg' },
+		{ name: 'Ocean', gradient: 'linear-gradient(135deg, #667eea 0%, #00d4ff 100%)', from: '#667eea', to: '#00d4ff', direction: '135deg' },
+		{ name: 'Forest', gradient: 'linear-gradient(135deg, #0ba360 0%, #3cba92 100%)', from: '#0ba360', to: '#3cba92', direction: '135deg' },
+		{ name: 'Fire', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', from: '#f093fb', to: '#f5576c', direction: '135deg' },
+		{ name: 'Sky', gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', from: '#4facfe', to: '#00f2fe', direction: '135deg' },
+		{ name: 'Peach', gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', from: '#fa709a', to: '#fee140', direction: '135deg' },
+		{ name: 'Night', gradient: 'linear-gradient(135deg, #2c3e50 0%, #000000 100%)', from: '#2c3e50', to: '#000000', direction: '135deg' },
+		{ name: 'Aurora', gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', from: '#a8edea', to: '#fed6e3', direction: '135deg' }
 	];
 
 	let selectedType = 'solid';
@@ -39,6 +39,16 @@
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
 	let isUserUpdate = false;
 	let lastSyncedThemeKey = '';
+	
+	// Custom gradient state
+	let showCustomGradient = false;
+	let gradientFromColor = '#667eea';
+	let gradientToColor = '#764ba2';
+	let gradientDirection = '135deg'; // Default diagonal
+	let gradientType = 'linear'; // 'linear' or 'radial'
+	
+	// Custom solid color state
+	let showCustomColor = false;
 
 	// Reactive: Sync with appearance tokens (only when theme changes)
 	$: if ($appearance?.tokens?.backgroundColor && !isUserUpdate) {
@@ -73,6 +83,15 @@
 	function selectType(type: string) {
 		selectedType = type;
 		console.log('[BackgroundSection] User manually selected type:', type);
+		
+		// Reset to appropriate default color when switching types
+		if (type === 'solid' && currentBgColor.includes('gradient')) {
+			// If switching to solid from gradient, use white as default
+			updateBgColor('#ffffff');
+		} else if (type === 'gradient' && !currentBgColor.includes('gradient')) {
+			// If switching to gradient from solid, use default gradient
+			updateBgGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg');
+		}
 	}
 
 	async function updateBgColor(color: string) {
@@ -135,8 +154,34 @@
 		}, 300);
 	}
 
-	function updateBgGradient(gradient: string) {
+	function updateBgGradient(gradient: string, fromColor?: string, toColor?: string, direction?: string) {
+		// Sync gradient colors and type if provided
+		if (fromColor) gradientFromColor = fromColor;
+		if (toColor) gradientToColor = toColor;
+		if (direction) gradientDirection = direction;
+		
+		// Set gradient type to linear since all presets are linear
+		gradientType = 'linear';
+		
 		updateBgColor(gradient);
+	}
+	
+	function toggleCustomGradient() {
+		showCustomGradient = !showCustomGradient;
+	}
+	
+	function toggleCustomColor() {
+		showCustomColor = !showCustomColor;
+	}
+	
+	function updateCustomGradient() {
+		let customGradient;
+		if (gradientType === 'radial') {
+			customGradient = `radial-gradient(circle, ${gradientFromColor}, ${gradientToColor})`;
+		} else {
+			customGradient = `linear-gradient(${gradientDirection}, ${gradientFromColor}, ${gradientToColor})`;
+		}
+		updateBgColor(customGradient);
 	}
 </script>
 
@@ -188,69 +233,261 @@
 		{#if selectedType === 'solid'}
 			<div class="space-y-4">
 				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-3">Preset Colors</label>
-					<div class="grid grid-cols-8 gap-2">
+					<label class="block text-sm font-medium text-gray-700 mb-2">Preset Colors</label>
+					<div class="grid grid-cols-9 gap-1.5">
 						{#each solidColors as color}
 							<button
 								on:click={() => updateBgColor(color.color)}
-								class="group relative aspect-square rounded-lg transition-all hover:scale-110 border-2 {currentBgColor === color.color ? 'border-blue-500 ring-2 ring-offset-2 ring-blue-200' : 'border-gray-200'}"
+								class="group relative aspect-square rounded-md transition-all hover:scale-105 border {currentBgColor === color.color ? 'border-blue-500 ring-1 ring-blue-100' : 'border-gray-200'}"
 								style="background: {color.color};"
 								title={color.name}
 							>
 								{#if currentBgColor === color.color}
-									<svg class="absolute inset-0 m-auto w-5 h-5 {color.color === '#ffffff' || color.color === '#f3f4f6' ? 'text-gray-900' : 'text-white'}" fill="currentColor" viewBox="0 0 20 20">
+									<svg class="absolute inset-0 m-auto w-3 h-3 {color.color === '#ffffff' || color.color === '#f3f4f6' ? 'text-gray-900' : 'text-white'}" fill="currentColor" viewBox="0 0 20 20">
 										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
 									</svg>
 								{/if}
 							</button>
 						{/each}
+						
+						<!-- Custom Color Button -->
+						<button
+							on:click={toggleCustomColor}
+							class="group relative aspect-square rounded-md transition-all hover:scale-105 border {showCustomColor ? 'border-blue-500 ring-1 ring-blue-100 bg-blue-50' : 'border-dashed border-gray-300 hover:border-blue-400 bg-white'}"
+							title="Custom Color"
+						>
+							<div class="absolute inset-0 flex items-center justify-center">
+								<svg class="w-4 h-4 {showCustomColor ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+								</svg>
+							</div>
+						</button>
 					</div>
 				</div>
 
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Custom Color</label>
-					<div class="flex items-center gap-3">
-						<input 
-							type="color" 
-							value={currentBgColor}
-							on:input={(e) => updateBgColor(e.currentTarget.value)}
-							class="w-16 h-16 rounded-lg cursor-pointer border-2 border-gray-200"
-						/>
-						<input 
-							type="text"
-							value={currentBgColor}
-							on:input={(e) => updateBgColor(e.currentTarget.value)}
-							class="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm font-mono"
-							placeholder="#ffffff"
-						/>
+				<!-- Custom Color Controls -->
+				{#if showCustomColor}
+					<div class="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl space-y-3">
+						<div class="flex items-center justify-between">
+							<h4 class="text-sm font-semibold text-gray-900">Custom Color</h4>
+							<button
+								on:click={toggleCustomColor}
+								class="p-1 hover:bg-white/50 rounded transition"
+								title="Close"
+							>
+								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						</div>
+
+						<div class="flex items-center gap-3">
+							<div class="relative">
+								<input 
+									type="color" 
+									value={currentBgColor}
+									on:input={(e) => updateBgColor(e.currentTarget.value)}
+									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+								/>
+								<div 
+									class="w-12 h-12 rounded-lg border-2 border-white shadow-sm cursor-pointer"
+									style="background-color: {currentBgColor};"
+								></div>
+							</div>
+							<input 
+								type="text"
+								value={currentBgColor}
+								on:input={(e) => updateBgColor(e.currentTarget.value)}
+								class="flex-1 px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm font-mono bg-white"
+								placeholder="#ffffff"
+							/>
+						</div>
 					</div>
-				</div>
+				{/if}
 			</div>
 		{/if}
 
 		<!-- Gradient Options -->
 		{#if selectedType === 'gradient'}
-			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-3">Gradient Presets</label>
-				<div class="grid grid-cols-4 gap-3">
-					{#each gradients as grad}
+			<div class="space-y-4">
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">Gradient Presets</label>
+					<div class="grid grid-cols-9 gap-1.5">
+						{#each gradients as grad}
+							<button
+								on:click={() => updateBgGradient(grad.gradient, grad.from, grad.to, grad.direction)}
+								class="group relative aspect-square rounded-md transition-all hover:scale-105 border {currentBgColor === grad.gradient ? 'border-blue-500 ring-1 ring-blue-100' : 'border-gray-200'}"
+								style="background: {grad.gradient};"
+								title={grad.name}
+							>
+								{#if currentBgColor === grad.gradient}
+									<svg class="absolute inset-0 m-auto w-3 h-3 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+									</svg>
+								{/if}
+							</button>
+						{/each}
+						
+						<!-- Custom Gradient Button -->
 						<button
-							on:click={() => updateBgGradient(grad.gradient)}
-							class="group relative aspect-square rounded-xl transition-all hover:scale-105 border-2 {currentBgColor === grad.gradient ? 'border-blue-500 ring-2 ring-offset-2 ring-blue-200' : 'border-gray-200'}"
-							style="background: {grad.gradient};"
-							title={grad.name}
+							on:click={toggleCustomGradient}
+							class="group relative aspect-square rounded-md transition-all hover:scale-105 border {showCustomGradient ? 'border-blue-500 ring-1 ring-blue-100 bg-blue-50' : 'border-dashed border-gray-300 hover:border-blue-400 bg-white'}"
+							title="Custom Gradient"
 						>
-							{#if currentBgColor === grad.gradient}
-								<svg class="absolute inset-0 m-auto w-6 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-									<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+							<div class="absolute inset-0 flex items-center justify-center">
+								<svg class="w-4 h-4 {showCustomGradient ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 								</svg>
-							{/if}
-							<div class="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm text-white text-xs py-1 px-2 rounded-b-xl opacity-0 group-hover:opacity-100 transition">
-								{grad.name}
 							</div>
 						</button>
-					{/each}
+					</div>
 				</div>
+
+				<!-- Custom Gradient Controls -->
+				{#if showCustomGradient}
+					<div class="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl space-y-4">
+						<div class="flex items-center justify-between mb-2">
+							<h4 class="text-sm font-semibold text-gray-900">Custom Gradient</h4>
+							<button
+								on:click={toggleCustomGradient}
+								class="p-1 hover:bg-white/50 rounded transition"
+								title="Close"
+							>
+								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						</div>
+
+						<!-- Color Pickers -->
+						<div class="grid grid-cols-2 gap-3">
+							<div>
+								<label class="block text-xs font-medium text-gray-700 mb-2">From Color</label>
+								<div class="relative">
+									<input
+										type="color"
+										bind:value={gradientFromColor}
+										on:input={updateCustomGradient}
+										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+									/>
+									<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
+										<div 
+											class="w-8 h-8 rounded border-2 border-white shadow-sm"
+											style="background-color: {gradientFromColor};"
+										></div>
+										<p class="text-xs font-mono text-gray-900">{gradientFromColor}</p>
+									</div>
+								</div>
+							</div>
+							<div>
+								<label class="block text-xs font-medium text-gray-700 mb-2">To Color</label>
+								<div class="relative">
+									<input
+										type="color"
+										bind:value={gradientToColor}
+										on:input={updateCustomGradient}
+										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+									/>
+									<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
+										<div 
+											class="w-8 h-8 rounded border-2 border-white shadow-sm"
+											style="background-color: {gradientToColor};"
+										></div>
+										<p class="text-xs font-mono text-gray-900">{gradientToColor}</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Gradient Type Selector -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-2">Gradient Type</label>
+							<div class="grid grid-cols-2 gap-2">
+								<button
+									on:click={() => { gradientType = 'linear'; updateCustomGradient(); }}
+									class="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition {gradientType === 'linear' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+								>
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+									</svg>
+									<span class="text-xs font-medium">Linear</span>
+								</button>
+								<button
+									on:click={() => { gradientType = 'radial'; updateCustomGradient(); }}
+									class="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition {gradientType === 'radial' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+								>
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<circle cx="12" cy="12" r="10" stroke-width="2"/>
+										<circle cx="12" cy="12" r="6" stroke-width="2"/>
+										<circle cx="12" cy="12" r="2" stroke-width="2"/>
+									</svg>
+									<span class="text-xs font-medium">Radial</span>
+								</button>
+							</div>
+						</div>
+
+						<!-- Direction Selector (only for linear) -->
+						{#if gradientType === 'linear'}
+							<div>
+								<label class="block text-xs font-medium text-gray-700 mb-2">Direction</label>
+								<div class="grid grid-cols-4 gap-2">
+									<!-- Top to Bottom -->
+									<button
+										on:click={() => { gradientDirection = '0deg'; updateCustomGradient(); }}
+										class="flex items-center justify-center px-3 py-2.5 rounded-lg transition {gradientDirection === '0deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+										title="Top to Bottom"
+									>
+										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+										</svg>
+									</button>
+									
+									<!-- Left to Right -->
+									<button
+										on:click={() => { gradientDirection = '90deg'; updateCustomGradient(); }}
+										class="flex items-center justify-center px-3 py-2.5 rounded-lg transition {gradientDirection === '90deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+										title="Left to Right"
+									>
+										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+										</svg>
+									</button>
+									
+									<!-- Diagonal (Top-Left to Bottom-Right) -->
+									<button
+										on:click={() => { gradientDirection = '135deg'; updateCustomGradient(); }}
+										class="flex items-center justify-center px-3 py-2.5 rounded-lg transition {gradientDirection === '135deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+										title="Diagonal"
+									>
+										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M19 19L5 5m14 0v14" />
+										</svg>
+									</button>
+									
+									<!-- Bottom to Top -->
+									<button
+										on:click={() => { gradientDirection = '180deg'; updateCustomGradient(); }}
+										class="flex items-center justify-center px-3 py-2.5 rounded-lg transition {gradientDirection === '180deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+										title="Bottom to Top"
+									>
+										<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+										</svg>
+									</button>
+								</div>
+							</div>
+						{/if}
+
+						<!-- Preview -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-2">Preview</label>
+							<div 
+								class="h-20 rounded-lg border-2 border-white shadow-sm"
+								style="background: {gradientType === 'radial' ? `radial-gradient(circle, ${gradientFromColor}, ${gradientToColor})` : `linear-gradient(${gradientDirection}, ${gradientFromColor}, ${gradientToColor})`};"
+							></div>
+						</div>
+					</div>
+				{/if}
 			</div>
 		{/if}
 
