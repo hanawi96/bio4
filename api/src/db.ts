@@ -27,12 +27,71 @@ export async function saveDraft(
 	const values: any[] = [];
 
 	if (draftData.profile !== undefined) {
+		// Get current draft_profile to merge
+		const currentPage = await db
+			.prepare('SELECT draft_profile FROM bio_pages WHERE id = ?')
+			.bind(pageId)
+			.first<{ draft_profile: string }>();
+		
+		let currentProfile: any = {};
+		if (currentPage?.draft_profile) {
+			try {
+				currentProfile = JSON.parse(currentPage.draft_profile);
+			} catch (e) {
+				console.error('Failed to parse draft_profile:', e);
+			}
+		}
+		
+		// Filter out undefined values from new data
+		const cleanedProfile: any = {};
+		Object.entries(draftData.profile).forEach(([key, value]) => {
+			if (value !== undefined) {
+				cleanedProfile[key] = value;
+			}
+		});
+		
+		// Merge new data with existing data (only defined values)
+		const mergedProfile = {
+			...currentProfile,
+			...cleanedProfile
+		};
+		
 		fields.push('draft_profile = ?');
-		values.push(JSON.stringify(draftData.profile));
+		values.push(JSON.stringify(mergedProfile));
 	}
+	
 	if (draftData.appearance !== undefined) {
+		// Get current draft_appearance to merge
+		const currentPage = await db
+			.prepare('SELECT draft_appearance FROM bio_pages WHERE id = ?')
+			.bind(pageId)
+			.first<{ draft_appearance: string }>();
+		
+		let currentAppearance: any = {};
+		if (currentPage?.draft_appearance) {
+			try {
+				currentAppearance = JSON.parse(currentPage.draft_appearance);
+			} catch (e) {
+				console.error('Failed to parse draft_appearance:', e);
+			}
+		}
+		
+		// Filter out undefined values from new data
+		const cleanedAppearance: any = {};
+		Object.entries(draftData.appearance).forEach(([key, value]) => {
+			if (value !== undefined) {
+				cleanedAppearance[key] = value;
+			}
+		});
+		
+		// Merge new data with existing data (only defined values)
+		const mergedAppearance = {
+			...currentAppearance,
+			...cleanedAppearance
+		};
+		
 		fields.push('draft_appearance = ?');
-		values.push(JSON.stringify(draftData.appearance));
+		values.push(JSON.stringify(mergedAppearance));
 	}
 
 	if (fields.length === 0) return;
@@ -338,7 +397,9 @@ export async function getFullPageData(db: D1Database, username: string, useDraft
 		...page,
 		title: profileData.title ?? null,
 		bio: profileData.bio ?? null,
-		avatar_url: profileData.avatar_url ?? null
+		avatar_url: profileData.avatar_url ?? null,
+		social_links: profileData.social_links ?? null,
+		show_social_icons: profileData.show_social_icons ?? true // Default true
 	};
 
 	return {

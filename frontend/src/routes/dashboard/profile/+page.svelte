@@ -14,6 +14,7 @@
 	let displayName = '';
 	let bio = '';
 	let avatarUrl = '';
+	let showSocialIcons = true; // Default: show icons
 	let socialLinks = {
 		twitter: '',
 		instagram: '',
@@ -23,10 +24,37 @@
 		tiktok: ''
 	};
 
+	// Track original values for change detection
+	let originalData = {
+		displayName: '',
+		bio: '',
+		showSocialIcons: true,
+		socialLinks: {
+			twitter: '',
+			instagram: '',
+			facebook: '',
+			linkedin: '',
+			youtube: '',
+			tiktok: ''
+		}
+	};
+
 	// Toast
 	let toastMessage = '';
 	let toastType: 'success' | 'error' = 'success';
 	let toastVisible = false;
+
+	// Check if form has changes
+	$: hasChanges = 
+		displayName !== originalData.displayName ||
+		bio !== originalData.bio ||
+		showSocialIcons !== originalData.showSocialIcons ||
+		socialLinks.twitter !== originalData.socialLinks.twitter ||
+		socialLinks.instagram !== originalData.socialLinks.instagram ||
+		socialLinks.facebook !== originalData.socialLinks.facebook ||
+		socialLinks.linkedin !== originalData.socialLinks.linkedin ||
+		socialLinks.youtube !== originalData.socialLinks.youtube ||
+		socialLinks.tiktok !== originalData.socialLinks.tiktok;
 
 	onMount(async () => {
 		try {
@@ -37,6 +65,27 @@
 			displayName = data.page.title || '';
 			bio = data.page.bio || '';
 			avatarUrl = data.page.avatar_url || '';
+			showSocialIcons = data.page.show_social_icons ?? true; // Default true
+			
+			// Load social links from draft_profile if exists
+			if (data.page.social_links) {
+				socialLinks = {
+					twitter: data.page.social_links.twitter || '',
+					instagram: data.page.social_links.instagram || '',
+					facebook: data.page.social_links.facebook || '',
+					linkedin: data.page.social_links.linkedin || '',
+					youtube: data.page.social_links.youtube || '',
+					tiktok: data.page.social_links.tiktok || ''
+				};
+			}
+			
+			// Store original values
+			originalData = {
+				displayName,
+				bio,
+				showSocialIcons,
+				socialLinks: { ...socialLinks }
+			};
 		} catch (e) {
 			error = 'Failed to load data';
 		} finally {
@@ -46,12 +95,53 @@
 
 	async function handleSave() {
 		if (!$pageStore) return;
+		
+		// Validate
+		if (!displayName.trim()) {
+			showToast('Display name is required', 'error');
+			return;
+		}
+		
+		if (bio.length > 200) {
+			showToast('Bio must be 200 characters or less', 'error');
+			return;
+		}
+		
 		saving = true;
 		try {
-			await api.updatePage(username, {
-				title: displayName,
-				bio: bio
+			// Clean and validate social links
+			const cleanedSocialLinks: any = {};
+			
+			Object.entries(socialLinks).forEach(([platform, url]) => {
+				const trimmedUrl = url.trim();
+				if (trimmedUrl) {
+					// Remove protocol if exists
+					let cleanUrl = trimmedUrl.replace(/^https?:\/\//, '');
+					// Remove www. if exists
+					cleanUrl = cleanUrl.replace(/^www\./, '');
+					// Remove trailing slash
+					cleanUrl = cleanUrl.replace(/\/$/, '');
+					
+					cleanedSocialLinks[platform] = cleanUrl;
+				}
 			});
+			
+			// Save to draft
+			await api.saveDraft(username, {
+				title: displayName.trim(),
+				bio: bio.trim(),
+				show_social_icons: showSocialIcons,
+				social_links: cleanedSocialLinks
+			});
+			
+			// Update original data after successful save
+			originalData = {
+				displayName,
+				bio,
+				showSocialIcons,
+				socialLinks: { ...socialLinks }
+			};
+			
 			showToast('Changes saved!', 'success');
 		} catch (e) {
 			console.error('Save failed:', e);
@@ -211,6 +301,19 @@
 							<h2 class="font-semibold text-gray-900">Social Links</h2>
 							<p class="text-sm text-gray-500 mt-1">Connect your social media accounts</p>
 						</div>
+						
+						<!-- Toggle Switch -->
+						<label class="flex items-center gap-3 cursor-pointer">
+							<span class="text-sm font-medium text-gray-700">Show icons on bio page</span>
+							<div class="relative">
+								<input 
+									type="checkbox" 
+									bind:checked={showSocialIcons}
+									class="sr-only peer"
+								/>
+								<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+							</div>
+						</label>
 					</div>
 					
 					<div class="space-y-4">
@@ -319,10 +422,20 @@
 				</section>
 
 				<!-- Save Button -->
-				<div class="flex items-center justify-end pt-4">
+				<div class="flex items-center justify-between pt-4">
+					{#if hasChanges && !saving}
+						<p class="text-sm text-amber-600 flex items-center gap-2">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+							</svg>
+							You have unsaved changes
+						</p>
+					{:else}
+						<p class="text-sm text-gray-500">All changes saved</p>
+					{/if}
 					<button 
 						on:click={handleSave}
-						disabled={saving || !displayName.trim()}
+						disabled={saving || !displayName.trim() || !hasChanges}
 						class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
 					>
 						{saving ? 'Saving...' : 'Save Changes'}

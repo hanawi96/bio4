@@ -34,21 +34,27 @@ app.put('/:username/draft', async (c) => {
 	// Separate profile and appearance data
 	const draftData: { profile?: any; appearance?: any } = {};
 
-	// Profile data
-	if (body.title !== undefined || body.bio !== undefined || body.avatar_url !== undefined) {
-		draftData.profile = {
-			title: body.title,
-			bio: body.bio,
-			avatar_url: body.avatar_url
-		};
+	// Profile data (title, bio, social_links, show_social_icons)
+	// Note: avatar_url is handled separately by upload endpoint
+	if (body.title !== undefined || body.bio !== undefined || body.social_links !== undefined || body.show_social_icons !== undefined) {
+		const profileData: any = {};
+		
+		if (body.title !== undefined) profileData.title = body.title;
+		if (body.bio !== undefined) profileData.bio = body.bio;
+		if (body.social_links !== undefined) profileData.social_links = body.social_links;
+		if (body.show_social_icons !== undefined) profileData.show_social_icons = body.show_social_icons;
+		
+		draftData.profile = profileData;
 	}
 
 	// Appearance data (theme)
 	if (body.theme !== undefined || body.themePresetKey !== undefined) {
-		draftData.appearance = {
-			themePresetKey: body.themePresetKey,
-			customTheme: body.theme // Custom theme overrides
-		};
+		const appearanceData: any = {};
+		
+		if (body.themePresetKey !== undefined) appearanceData.themePresetKey = body.themePresetKey;
+		if (body.theme !== undefined) appearanceData.customTheme = body.theme;
+		
+		draftData.appearance = appearanceData;
 	}
 
 	await saveDraft(c.env.DB, page.id, draftData);
