@@ -5,6 +5,12 @@
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
 	$: header = $appearance?.header;
+	
+	$: {
+		console.log('[PhoneMockup] appearance changed:', $appearance);
+		console.log('[PhoneMockup] tokens:', tokens);
+		console.log('[PhoneMockup] tokens.backgroundColor:', tokens?.backgroundColor);
+	}
 
 	// Avatar size mapping
 	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };

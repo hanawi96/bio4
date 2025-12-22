@@ -28,6 +28,8 @@
 		selecting = true;
 
 		try {
+			console.log('[ThemeSection] Selecting theme:', preset.key);
+			
 			// Update store immediately for instant preview
 			page.update(p => {
 				if (!p) return p;
@@ -35,11 +37,14 @@
 				// Parse current appearance
 				const currentAppearance = JSON.parse(p.draft_appearance || '{}');
 				
-				// Update theme key in appearance
+				// Update theme key and REMOVE customTheme to use theme preset
 				const newAppearance = {
 					...currentAppearance,
-					themeKey: preset.key
+					themeKey: preset.key,
+					customTheme: undefined  // Remove customTheme to use theme preset
 				};
+				
+				console.log('[ThemeSection] New appearance (customTheme removed):', newAppearance);
 				
 				return {
 					...p,
@@ -52,8 +57,10 @@
 			await api.saveDraft(username, {
 				theme_preset_key: preset.key
 			});
+			
+			console.log('[ThemeSection] Theme saved successfully');
 		} catch (e) {
-			console.error('Failed to save theme:', e);
+			console.error('[ThemeSection] Failed to save theme:', e);
 		} finally {
 			selecting = false;
 		}

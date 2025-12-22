@@ -49,17 +49,24 @@ export function resolveAppearance(
 	theme: Theme | null,
 	pageState: PageAppearanceState
 ): ResolvedAppearance {
-	// Get theme config (from DB theme or customTheme)
+	// Get theme config (priority: customTheme > theme > default)
 	let themeConfig: ThemeConfig;
 	let themeName = 'Custom';
 	
-	if (theme) {
+	// Priority 1: customTheme (user customizations)
+	if (pageState.customTheme) {
+		themeConfig = pageState.customTheme;
+		themeName = 'Custom';
+		console.log('[resolver] Using customTheme:', themeConfig);
+	}
+	// Priority 2: theme from DB
+	else if (theme) {
 		themeConfig = theme.config;
 		themeName = theme.name;
-	} else if (pageState.customTheme) {
-		themeConfig = pageState.customTheme;
-	} else {
-		// Fallback default
+		console.log('[resolver] Using theme from DB:', themeName, themeConfig);
+	}
+	// Priority 3: fallback default
+	else {
 		themeConfig = {
 			backgroundColor: '#ffffff',
 			textColor: '#000000',
@@ -68,9 +75,11 @@ export function resolveAppearance(
 			borderRadius: 12,
 			spacing: 16
 		};
+		console.log('[resolver] Using fallback default');
 	}
 	
 	const tokens = expandThemeTokens(themeConfig);
+	console.log('[resolver] Expanded tokens:', tokens);
 	
 	// Get header preset
 	const defaultHeaderId = theme?.defaultHeaderPresetId || 'no-cover';

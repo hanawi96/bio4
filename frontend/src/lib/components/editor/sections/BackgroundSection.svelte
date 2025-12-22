@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { theme, DEFAULT_THEME } from '$lib/stores/page';
+	import { page } from '$lib/stores/page';
+	import { appearance } from '$lib/stores/appearance';
+	import { api } from '$lib/api.client';
+
+	const username = 'demo';
 
 	const bgTypes = [
 		{ id: 'solid', name: 'Solid Color', description: 'Single color' },
@@ -31,18 +35,108 @@
 	];
 
 	let selectedType = 'solid';
-	$: currentTheme = $theme || DEFAULT_THEME;
+	let currentBgColor = '#ffffff';
+	let saveTimer: ReturnType<typeof setTimeout> | null = null;
+	let isUserUpdate = false;
+	let lastSyncedThemeKey = '';
+
+	// Reactive: Sync with appearance tokens (only when theme changes)
+	$: if ($appearance?.tokens?.backgroundColor && !isUserUpdate) {
+		const bgColor = $appearance.tokens.backgroundColor;
+		const currentThemeKey = $page?.theme_preset_key || '';
+		
+		// Only auto-detect type when theme changes (not on every appearance update)
+		const isThemeChange = currentThemeKey !== lastSyncedThemeKey;
+		
+		if (isThemeChange) {
+			console.log('[BackgroundSection] Theme changed, syncing with tokens.backgroundColor:', bgColor);
+			
+			currentBgColor = bgColor;
+			lastSyncedThemeKey = currentThemeKey;
+			
+			// Auto-detect type only on theme change
+			if (bgColor.includes('gradient')) {
+				selectedType = 'gradient';
+			} else if (bgColor.startsWith('http') || bgColor.startsWith('url(')) {
+				selectedType = 'image';
+			} else {
+				selectedType = 'solid';
+			}
+			
+			console.log('[BackgroundSection] Auto-detected type:', selectedType);
+		} else {
+			// Just sync color, don't change type
+			currentBgColor = bgColor;
+		}
+	}
 
 	function selectType(type: string) {
 		selectedType = type;
+		console.log('[BackgroundSection] User manually selected type:', type);
 	}
 
-	function updateBgColor(color: string) {
-		theme.update(t => t ? { ...t, backgroundColor: color } : { ...DEFAULT_THEME, backgroundColor: color });
+	async function updateBgColor(color: string) {
+		console.log('[BackgroundSection] updateBgColor called with:', color);
+		isUserUpdate = true;
+		currentBgColor = color;
+
+		// Update page store immediately (optimistic)
+		page.update(p => {
+			if (!p) {
+				console.log('[BackgroundSection] No page in store');
+				return p;
+			}
+
+			console.log('[BackgroundSection] Current draft_appearance:', p.draft_appearance);
+			const appearance = JSON.parse(p.draft_appearance || '{}');
+
+			// Update customTheme
+			if (!appearance.customTheme) {
+				appearance.customTheme = {
+					backgroundColor: color,
+					textColor: '#000000',
+					primaryColor: '#3b82f6',
+					fontFamily: 'Inter',
+					borderRadius: 12,
+					spacing: 16
+				};
+				console.log('[BackgroundSection] Created new customTheme:', appearance.customTheme);
+			} else {
+				appearance.customTheme.backgroundColor = color;
+				console.log('[BackgroundSection] Updated customTheme.backgroundColor:', color);
+			}
+
+			const newDraftAppearance = JSON.stringify(appearance);
+			console.log('[BackgroundSection] New draft_appearance:', newDraftAppearance);
+
+			return {
+				...p,
+				draft_appearance: newDraftAppearance
+			};
+		});
+
+		// Debounce save to API
+		if (saveTimer) clearTimeout(saveTimer);
+		saveTimer = setTimeout(async () => {
+			try {
+				const currentPage = $page;
+				if (!currentPage) return;
+
+				console.log('[BackgroundSection] Saving to API...');
+				await api.saveDraft(username, {
+					draft_appearance: currentPage.draft_appearance
+				});
+				console.log('[BackgroundSection] Saved successfully');
+			} catch (e) {
+				console.error('[BackgroundSection] Failed to save background:', e);
+			} finally {
+				isUserUpdate = false;
+			}
+		}, 300);
 	}
 
 	function updateBgGradient(gradient: string) {
-		theme.update(t => t ? { ...t, backgroundColor: gradient } : { ...DEFAULT_THEME, backgroundColor: gradient });
+		updateBgColor(gradient);
 	}
 </script>
 
@@ -99,11 +193,11 @@
 						{#each solidColors as color}
 							<button
 								on:click={() => updateBgColor(color.color)}
-								class="group relative aspect-square rounded-lg transition-all hover:scale-110 border-2 {currentTheme.backgroundColor === color.color ? 'border-blue-500 ring-2 ring-offset-2 ring-blue-200' : 'border-gray-200'}"
+								class="group relative aspect-square rounded-lg transition-all hover:scale-110 border-2 {currentBgColor === color.color ? 'border-blue-500 ring-2 ring-offset-2 ring-blue-200' : 'border-gray-200'}"
 								style="background: {color.color};"
 								title={color.name}
 							>
-								{#if currentTheme.backgroundColor === color.color}
+								{#if currentBgColor === color.color}
 									<svg class="absolute inset-0 m-auto w-5 h-5 {color.color === '#ffffff' || color.color === '#f3f4f6' ? 'text-gray-900' : 'text-white'}" fill="currentColor" viewBox="0 0 20 20">
 										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
 									</svg>
@@ -118,13 +212,13 @@
 					<div class="flex items-center gap-3">
 						<input 
 							type="color" 
-							value={currentTheme.backgroundColor}
+							value={currentBgColor}
 							on:input={(e) => updateBgColor(e.currentTarget.value)}
 							class="w-16 h-16 rounded-lg cursor-pointer border-2 border-gray-200"
 						/>
 						<input 
 							type="text"
-							value={currentTheme.backgroundColor}
+							value={currentBgColor}
 							on:input={(e) => updateBgColor(e.currentTarget.value)}
 							class="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm font-mono"
 							placeholder="#ffffff"
@@ -142,11 +236,11 @@
 					{#each gradients as grad}
 						<button
 							on:click={() => updateBgGradient(grad.gradient)}
-							class="group relative aspect-square rounded-xl transition-all hover:scale-105 border-2 {currentTheme.backgroundColor === grad.gradient ? 'border-blue-500 ring-2 ring-offset-2 ring-blue-200' : 'border-gray-200'}"
+							class="group relative aspect-square rounded-xl transition-all hover:scale-105 border-2 {currentBgColor === grad.gradient ? 'border-blue-500 ring-2 ring-offset-2 ring-blue-200' : 'border-gray-200'}"
 							style="background: {grad.gradient};"
 							title={grad.name}
 						>
-							{#if currentTheme.backgroundColor === grad.gradient}
+							{#if currentBgColor === grad.gradient}
 								<svg class="absolute inset-0 m-auto w-6 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
 									<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
 								</svg>
