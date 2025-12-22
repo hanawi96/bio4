@@ -3,6 +3,8 @@
 	import { api } from '$lib/api.client';
 	import { loadEditorData, page as pageStore } from '$lib/stores/page';
 
+	export let params = {};
+
 	const username = 'demo';
 	let loading = true;
 	let error = '';

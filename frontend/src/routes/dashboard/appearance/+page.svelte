@@ -8,6 +8,8 @@
 	import ThemeSection from '$lib/components/editor/sections/ThemeSection.svelte';
 	import HeaderSection from '$lib/components/editor/sections/HeaderSection.svelte';
 	import BackgroundSection from '$lib/components/editor/sections/BackgroundSection.svelte';
+
+	export let params = {};
 	import BlockStyleSection from '$lib/components/editor/sections/BlockStyleSection.svelte';
 	import FontSection from '$lib/components/editor/sections/FontSection.svelte';
 	import ColorSection from '$lib/components/editor/sections/ColorSection.svelte';

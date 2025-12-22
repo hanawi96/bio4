@@ -3,6 +3,8 @@
 	import { api } from '$lib/api.client';
 	import { loadEditorData, groups } from '$lib/stores/page';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
+
+	export let params = {};
 	import AddBlockModal from '$lib/components/modals/AddBlockModal.svelte';
 	import LinksEditor from '$lib/components/editor/LinksEditor.svelte';
 	import BlockCard from '$lib/components/editor/BlockCard.svelte';

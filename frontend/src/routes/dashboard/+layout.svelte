@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	
+	// Suppress params warning
+	export let params = {};
+	
 	$: currentPath = $page.url.pathname;
 	let sidebarCollapsed = false;
 </script>

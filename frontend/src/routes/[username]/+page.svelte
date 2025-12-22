@@ -3,6 +3,7 @@
 	import { loadEditorData } from '$lib/stores/page';
 	import type { PageData } from './$types';
 	
+	export let params = {};
 	export let data: PageData;
 	
 	// Load data into stores
