@@ -1,16 +1,20 @@
 <script lang="ts">
-	import { page, groups, theme } from '$lib/stores/page';
-	import { DEFAULT_THEME } from '$lib/stores/appearance';
+	import { onMount } from 'svelte';
+	import { page, groups, theme, DEFAULT_THEME, applyCSSVariables } from '$lib/stores/page';
 
-	$: currentTheme = $theme || DEFAULT_THEME;
-	$: cssVars = `
-		--bg-color: ${currentTheme.backgroundColor};
-		--text-color: ${currentTheme.textColor};
-		--primary-color: ${currentTheme.primaryColor};
-		--font-family: ${currentTheme.fontFamily};
-		--border-radius: ${currentTheme.borderRadius}px;
-		--spacing: ${currentTheme.spacing}px;
-	`;
+	let screenElement: HTMLElement;
+
+	// Apply CSS variables directly to DOM when theme changes
+	$: if (screenElement && $theme) {
+		applyCSSVariables(screenElement, $theme);
+	}
+
+	// Initialize with default theme on mount
+	onMount(() => {
+		if (screenElement) {
+			applyCSSVariables(screenElement, $theme || DEFAULT_THEME);
+		}
+	});
 </script>
 
 <!-- Phone Frame -->
@@ -19,8 +23,8 @@
 	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
 		<!-- Screen -->
 		<div 
+			bind:this={screenElement}
 			class="w-full h-full rounded-[36px] overflow-hidden relative"
-			style={cssVars}
 		>
 			<!-- Notch -->
 			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>

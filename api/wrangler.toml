@@ -9,7 +9,9 @@ R2_PUBLIC_URL = "https://your-r2-domain.com"
 binding = "DB"
 database_name = "bio-link-db"
 database_id = "4932ed51-7d36-4999-a8fe-b7cb14531959"
+# Use same database for dev and production
+preview_database_id = "4932ed51-7d36-4999-a8fe-b7cb14531959"
 
-[[r2_buckets]]
-binding = "STORAGE"
-bucket_name = "bio-link-images"
+# [[r2_buckets]]
+# binding = "STORAGE"
+# bucket_name = "bio-link-images"

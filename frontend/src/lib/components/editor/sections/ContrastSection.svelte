@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { theme } from '$lib/stores/page';
-	import { DEFAULT_THEME } from '$lib/stores/appearance';
+	import { theme, DEFAULT_THEME } from '$lib/stores/page';
 
 	const contrastLevels = [
 		{ id: 'soft', name: 'Soft', textColor: '#6b7280', description: 'Subtle, easy on eyes' },

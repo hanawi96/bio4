@@ -23,15 +23,22 @@ export interface BioPage {
 	id: number;
 	user_id: number;
 	username: string;
-	title: string | null;
-	bio: string | null;
-	avatar_url: string | null;
-	status: 'draft' | 'published';
-	theme_preset_key: string;
-	theme_mode: 'light' | 'dark' | 'compact';
-	settings: string;
+	
+	// Schema V2: Draft and Published data as JSON
+	draft_profile: string;        // JSON: {title, bio, avatar_url}
+	draft_appearance: string;     // JSON: {themePresetKey, customTheme}
+	published_profile: string;    // JSON: {title, bio, avatar_url}
+	published_appearance: string; // JSON: {themePresetKey, customTheme}
+	published_at: string | null;
+	
+	// Metadata
 	created_at: string;
 	updated_at: string;
+	
+	// Virtual fields (populated from JSON)
+	title?: string | null;
+	bio?: string | null;
+	avatar_url?: string | null;
 }
 
 export interface ThemePreset {

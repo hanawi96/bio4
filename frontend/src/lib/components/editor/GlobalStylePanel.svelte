@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { theme } from '$lib/stores/page';
-	import { DEFAULT_THEME } from '$lib/stores/appearance';
+	import { theme, DEFAULT_THEME } from '$lib/stores/page';
 	import ColorPicker from '../ui/ColorPicker.svelte';
 	import FontSelector from '../ui/FontSelector.svelte';
 	import Slider from '../ui/Slider.svelte';

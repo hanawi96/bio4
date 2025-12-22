@@ -11,11 +11,14 @@ import themesRoutes from './routes/themes';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// CORS middleware
-app.use('/*', cors({
-	origin: '*',
+// CORS middleware - Must be before routes
+app.use('*', cors({
+	origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:8787', 'http://127.0.0.1:8787'],
 	allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-	allowHeaders: ['Content-Type', 'Authorization']
+	allowHeaders: ['Content-Type', 'Authorization'],
+	exposeHeaders: ['Content-Length'],
+	maxAge: 600,
+	credentials: true
 }));
 
 // Routes

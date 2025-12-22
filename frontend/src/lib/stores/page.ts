@@ -1,11 +1,33 @@
 import { writable, derived } from 'svelte/store';
 import type { BioPage, LinkGroup, Block, ThemeConfig } from '../types';
 
+// Default theme config
+export const DEFAULT_THEME: ThemeConfig = {
+	backgroundColor: '#ffffff',
+	textColor: '#000000',
+	primaryColor: '#3b82f6',
+	fontFamily: 'Inter',
+	borderRadius: 8,
+	spacing: 16
+};
+
 // Autosave trigger callback (set by appearance page)
 let autosaveTrigger: (() => void) | null = null;
 
 export function setAutosaveTrigger(callback: (() => void) | null) {
 	autosaveTrigger = callback;
+}
+
+// Helper: Apply CSS variables to DOM element
+export function applyCSSVariables(element: HTMLElement, theme: ThemeConfig) {
+	if (!element || !theme) return;
+	
+	element.style.setProperty('--bg-color', theme.backgroundColor);
+	element.style.setProperty('--text-color', theme.textColor);
+	element.style.setProperty('--primary-color', theme.primaryColor);
+	element.style.setProperty('--font-family', theme.fontFamily);
+	element.style.setProperty('--border-radius', `${theme.borderRadius}px`);
+	element.style.setProperty('--spacing', `${theme.spacing}px`);
 }
 
 // Page data store with autosave trigger

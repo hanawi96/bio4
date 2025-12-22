@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import { page } from './page';
+import { page, theme } from './page';
 import { api } from '$lib/api.client';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -25,16 +25,17 @@ export function triggerAutosave(username: string) {
 	saveTimeout = setTimeout(async () => {
 		try {
 			const currentPage = get(page);
+			const currentTheme = get(theme);
 			if (!currentPage) return;
 
-			// Serialize current state
+			// Serialize current state (profile + appearance)
 			const dataToSave = JSON.stringify({
-				title: currentPage.title,
-				bio: currentPage.bio,
-				avatar_url: currentPage.avatar_url,
-				theme_preset_key: currentPage.theme_preset_key,
-				theme_mode: currentPage.theme_mode,
-				settings: currentPage.settings
+				profile: {
+					title: currentPage.title,
+					bio: currentPage.bio,
+					avatar_url: currentPage.avatar_url
+				},
+				theme: currentTheme
 			});
 
 			// Skip if data hasn't changed
@@ -43,14 +44,12 @@ export function triggerAutosave(username: string) {
 				return;
 			}
 
-			// Save draft
+			// Save draft (profile + theme)
 			await api.saveDraft(username, {
 				title: currentPage.title,
 				bio: currentPage.bio,
 				avatar_url: currentPage.avatar_url,
-				theme_preset_key: currentPage.theme_preset_key,
-				theme_mode: currentPage.theme_mode,
-				settings: currentPage.settings
+				theme: currentTheme
 			});
 
 			lastSavedData = dataToSave;

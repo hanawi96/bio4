@@ -17,42 +17,25 @@ export async function getPageById(db: D1Database, pageId: number) {
 		.first<BioPage>();
 }
 
-export async function updatePage(
+// Save draft (autosave) - Schema V2
+export async function saveDraft(
 	db: D1Database,
 	pageId: number,
-	data: Partial<BioPage>
+	draftData: { profile?: any; appearance?: any }
 ) {
 	const fields: string[] = [];
 	const values: any[] = [];
 
-	if (data.title !== undefined) {
-		fields.push('title = ?');
-		values.push(data.title);
+	if (draftData.profile !== undefined) {
+		fields.push('draft_profile = ?');
+		values.push(JSON.stringify(draftData.profile));
 	}
-	if (data.bio !== undefined) {
-		fields.push('bio = ?');
-		values.push(data.bio);
+	if (draftData.appearance !== undefined) {
+		fields.push('draft_appearance = ?');
+		values.push(JSON.stringify(draftData.appearance));
 	}
-	if (data.avatar_url !== undefined) {
-		fields.push('avatar_url = ?');
-		values.push(data.avatar_url);
-	}
-	if (data.theme_preset_key !== undefined) {
-		fields.push('theme_preset_key = ?');
-		values.push(data.theme_preset_key);
-	}
-	if (data.theme_mode !== undefined) {
-		fields.push('theme_mode = ?');
-		values.push(data.theme_mode);
-	}
-	if (data.settings !== undefined) {
-		fields.push('settings = ?');
-		values.push(data.settings);
-	}
-	if (data.status !== undefined) {
-		fields.push('status = ?');
-		values.push(data.status);
-	}
+
+	if (fields.length === 0) return;
 
 	fields.push('updated_at = CURRENT_TIMESTAMP');
 	values.push(pageId);
@@ -63,25 +46,14 @@ export async function updatePage(
 		.run();
 }
 
-// Save draft (autosave)
-export async function saveDraft(
-	db: D1Database,
-	pageId: number,
-	draftData: any
-) {
-	await db
-		.prepare('UPDATE bio_pages SET draft_settings = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-		.bind(JSON.stringify(draftData), pageId)
-		.run();
-}
-
-// Publish: copy draft to published
+// Publish: copy draft to published - Schema V2
 export async function publishDraft(db: D1Database, pageId: number) {
 	await db
 		.prepare(`
 			UPDATE bio_pages 
-			SET settings = draft_settings, 
-				status = 'published',
+			SET published_profile = draft_profile,
+				published_appearance = draft_appearance,
+				published_at = CURRENT_TIMESTAMP,
 				updated_at = CURRENT_TIMESTAMP 
 			WHERE id = ?
 		`)
@@ -317,16 +289,37 @@ export async function deleteAsset(db: D1Database, assetId: number) {
 	await db.prepare('DELETE FROM assets WHERE id = ?').bind(assetId).run();
 }
 
-// ============ FULL PAGE DATA (for public bio) ============
+// ============ FULL PAGE DATA (for editor & public) ============
 
-export async function getFullPageData(db: D1Database, username: string) {
+export async function getFullPageData(db: D1Database, username: string, useDraft = false) {
 	const page = await getPageByUsername(db, username);
 	if (!page) return null;
 
-	const [groupsResult, blocksResult, theme] = await Promise.all([
+	// Parse profile data
+	const profileData = useDraft 
+		? (page.draft_profile ? JSON.parse(page.draft_profile) : {})
+		: (page.published_profile ? JSON.parse(page.published_profile) : {});
+
+	// Parse appearance data
+	const appearanceData = useDraft
+		? (page.draft_appearance ? JSON.parse(page.draft_appearance) : {})
+		: (page.published_appearance ? JSON.parse(page.published_appearance) : {});
+
+	// Get theme: custom theme from appearance or preset
+	let theme = null;
+	if (appearanceData.customTheme) {
+		// User has customized theme
+		theme = appearanceData.customTheme;
+	} else if (appearanceData.themePresetKey) {
+		// Load from preset
+		const preset = await getThemePresetByKey(db, appearanceData.themePresetKey);
+		theme = preset ? JSON.parse(preset.config) : null;
+	}
+
+	// Get groups, blocks
+	const [groupsResult, blocksResult] = await Promise.all([
 		getGroupsByPageId(db, page.id),
-		getBlocksByPageId(db, page.id),
-		getThemePresetByKey(db, page.theme_preset_key)
+		getBlocksByPageId(db, page.id)
 	]);
 
 	// Get links for each group
@@ -340,10 +333,18 @@ export async function getFullPageData(db: D1Database, username: string) {
 		})
 	);
 
+	// Merge profile data into page object
+	const pageWithProfile = {
+		...page,
+		title: profileData.title ?? null,
+		bio: profileData.bio ?? null,
+		avatar_url: profileData.avatar_url ?? null
+	};
+
 	return {
-		page,
+		page: pageWithProfile,
 		groups,
 		blocks: blocksResult.results || [],
-		theme: theme ? JSON.parse(theme.config) : null
+		theme
 	};
 }

@@ -1,8 +1,23 @@
 <script lang="ts">
-	import { cssVarsString } from '$lib/stores/appearance';
+	import { onMount } from 'svelte';
+	import { theme, DEFAULT_THEME, applyCSSVariables } from '$lib/stores/page';
+
+	let wrapperElement: HTMLElement;
+
+	// Apply CSS variables directly to DOM when theme changes
+	$: if (wrapperElement && $theme) {
+		applyCSSVariables(wrapperElement, $theme);
+	}
+
+	// Initialize with default theme on mount
+	onMount(() => {
+		if (wrapperElement) {
+			applyCSSVariables(wrapperElement, $theme || DEFAULT_THEME);
+		}
+	});
 </script>
 
-<div class="theme-wrapper min-h-screen" style={$cssVarsString}>
+<div bind:this={wrapperElement} class="theme-wrapper min-h-screen">
 	<slot />
 </div>
 
