@@ -2,6 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import { api } from '$lib/api.client';
 	import { page } from '$lib/stores/page';
+	import { appearance } from '$lib/stores/appearance';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import type { HeaderPreset, PageAppearanceState, HeaderOverrides } from '$lib/appearance/types';
@@ -36,7 +37,11 @@
 		try {
 			const appearance = JSON.parse($page.draft_appearance || '{}');
 			pageState = appearance;
-			selectedPresetId = appearance.headerStyle?.presetId || 'no-cover';
+			
+			// Get default header preset from theme
+			const defaultHeaderId = $appearance?.theme?.defaultHeaderPresetId || 'no-cover';
+			selectedPresetId = appearance.headerStyle?.presetId || defaultHeaderId;
+			
 			currentOverrides = appearance.headerStyle?.overrides || {};
 
 			if (currentOverrides.coverType) {

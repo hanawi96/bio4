@@ -57,13 +57,11 @@ export function resolveAppearance(
 	if (pageState.customTheme) {
 		themeConfig = pageState.customTheme;
 		themeName = 'Custom';
-		console.log('[resolver] Using customTheme:', themeConfig);
 	}
 	// Priority 2: theme from DB
 	else if (theme) {
 		themeConfig = theme.config;
 		themeName = theme.name;
-		console.log('[resolver] Using theme from DB:', themeName, themeConfig);
 	}
 	// Priority 3: fallback default
 	else {
@@ -75,11 +73,9 @@ export function resolveAppearance(
 			borderRadius: 12,
 			spacing: 16
 		};
-		console.log('[resolver] Using fallback default');
 	}
 	
 	const tokens = expandThemeTokens(themeConfig);
-	console.log('[resolver] Expanded tokens:', tokens);
 	
 	// Get header preset
 	const defaultHeaderId = theme?.defaultHeaderPresetId || 'no-cover';

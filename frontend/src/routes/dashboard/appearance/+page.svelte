@@ -76,8 +76,8 @@
 			// Initialize autosave with current data (prevent initial save)
 			initializeAutosave();
 			
-			// Connect autosave to store changes
-			setAutosaveTrigger(() => triggerAutosave(username));
+			// DON'T connect autosave - sections handle their own saves
+			// setAutosaveTrigger(() => triggerAutosave(username));
 			
 			setupIntersectionObserver();
 		} catch (e) {

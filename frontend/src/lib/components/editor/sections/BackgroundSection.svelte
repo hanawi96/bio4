@@ -130,11 +130,12 @@
 	$: previewPatternColors = (() => {
 		let baseColor = currentBgColor;
 		
-		// If gradient, use the first color
+		// If gradient, use the FIRST color (foreground color)
 		if (baseColor && baseColor.includes('gradient')) {
-			const match = baseColor.match(/#[0-9a-fA-F]{6}/);
-			if (match) {
-				baseColor = match[0];
+			const matches = baseColor.match(/#[0-9a-fA-F]{6}/g);
+			if (matches && matches.length > 0) {
+				// For pattern with gradient, use the FIRST color (foreground color)
+				baseColor = matches[0];
 			}
 		}
 		
@@ -180,6 +181,11 @@
 			patternBgColor = patternColors.bgColor;
 			patternColor = patternColors.inkColor;
 		}
+	}
+	
+	// Reactive: Update pattern when selectedPattern changes (but keep current colors)
+	$: if (selectedPattern && selectedType === 'pattern' && !isUserUpdate) {
+		updatePattern();
 	}
 
 	// Reactive: Sync backgroundHistory from DB when draft_appearance changes
@@ -723,7 +729,6 @@
 	
 	function getPatternStyle(patternId: string, color: string, bgColor: string): string {
 		const pattern = patterns.find(p => p.id === patternId);
-		console.log('[getPatternStyle] patternId:', patternId, 'pattern:', pattern);
 		
 		if (!pattern) return `background: ${bgColor};`;
 		
@@ -731,15 +736,11 @@
 			// SVG pattern - encode as data URI
 			const svg = pattern.svg.replace(/currentColor/g, color);
 			const encoded = btoa(svg);
-			const result = `background: url('data:image/svg+xml;base64,${encoded}') repeat, ${bgColor};`;
-			console.log('[getPatternStyle] SVG result:', result);
-			return result;
+			return `background: url('data:image/svg+xml;base64,${encoded}') repeat, ${bgColor};`;
 		} else {
 			// CSS pattern
 			const css = pattern.css!.replace(/currentColor/g, color);
-			const result = `background: ${css}, ${bgColor}; background-size: ${pattern.size};`;
-			console.log('[getPatternStyle] CSS result:', result);
-			return result;
+			return `background: ${css}, ${bgColor}; background-size: ${pattern.size};`;
 		}
 	}
 	
@@ -1326,31 +1327,10 @@
 						{#each patterns as pattern}
 							<button
 								on:click={() => { 
-									console.log('[PATTERN-CLICK] Clicked pattern:', pattern.id, 'currentBgColor:', currentBgColor);
+									console.log('[PATTERN-CLICK] Clicked pattern:', pattern.id);
+									
+									// Just change the selected pattern - don't update colors yet
 									selectedPattern = pattern.id;
-									// Re-enable auto-sync when changing pattern type
-									isPatternAutoSync = true;
-									
-									// Extract base color for pattern generation
-									let baseColor = currentBgColor;
-									
-									// If currentBgColor is a pattern/gradient, use solid history
-									if (!baseColor.match(/^#[0-9a-fA-F]{6}$/)) {
-										console.log('[PATTERN-CLICK] currentBgColor is not hex, using backgroundHistory.solid:', backgroundHistory.solid);
-										baseColor = backgroundHistory.solid || '#ffffff';
-									}
-									
-									// Trigger auto-sync immediately - USE pattern.id NOT selectedPattern!
-									if (baseColor.match(/^#[0-9a-fA-F]{6}$/)) {
-										console.log('[PATTERN-CLICK] Generating colors for pattern:', pattern.id, 'with baseColor:', baseColor);
-										const patternColors = generatePatternColors(baseColor, pattern.id);
-										console.log('[PATTERN-CLICK] Generated colors:', patternColors);
-										patternBgColor = patternColors.bgColor;
-										patternColor = patternColors.inkColor;
-									} else {
-										console.log('[PATTERN-CLICK] Still not hex after fallback, using defaults');
-									}
-									updatePattern();
 								}}
 								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
 								title={pattern.name}

@@ -42,22 +42,6 @@
 		video.preload = 'auto';
 		video.src = DEFAULT_VIDEO;
 	});
-	
-	$: {
-		console.log('[PhoneMockup] appearance changed:', $appearance);
-		console.log('[PhoneMockup] tokens:', tokens);
-		console.log('[PhoneMockup] tokens.backgroundColor:', tokens?.backgroundColor);
-		console.log('[PhoneMockup] backgroundVideo:', backgroundVideo);
-		
-		// Check if backgroundColor is a pattern
-		if (tokens?.backgroundColor) {
-			const isPattern = tokens.backgroundColor.includes('background:');
-			console.log('[PhoneMockup] Is pattern?', isPattern);
-			if (isPattern) {
-				console.log('[PhoneMockup] Pattern detected! Full value:', tokens.backgroundColor);
-			}
-		}
-	}
 
 	// Avatar size mapping
 	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };

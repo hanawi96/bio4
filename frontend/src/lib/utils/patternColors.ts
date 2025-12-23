@@ -49,8 +49,6 @@ export function generatePatternColors(
 	// Normalize pattern type
 	const normalizedType = patternType as PatternType;
 	
-	console.log('[generatePatternColors] Input:', { bgColor, patternType: normalizedType });
-	
 	// Convert to OKLCH
 	const bgOklch = oklch(bgColor);
 	
@@ -163,13 +161,9 @@ export function generatePatternColors(
 	
 	const opacity = baseOpacity * (patternMultipliers[normalizedType] || 1.0);
 	
-	const result = {
+	return {
 		bgColor,
 		inkColor,
 		opacity: Math.max(0.1, Math.min(0.35, opacity)) // Clamp opacity
 	};
-	
-	console.log('[generatePatternColors] Output:', result);
-	
-	return result;
 }

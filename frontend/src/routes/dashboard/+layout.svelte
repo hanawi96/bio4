@@ -1,6 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { themes } from '$lib/stores/themes';
 	import { publishChanges, saveStatus } from '$lib/stores/autosave';
+	
+	// Load themes on mount
+	onMount(() => {
+		themes.load();
+	});
 	
 	// Suppress params warning
 	export let params = {};

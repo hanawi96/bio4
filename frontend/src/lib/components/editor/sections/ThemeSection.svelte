@@ -34,18 +34,17 @@
 			page.update(p => {
 				if (!p) return p;
 				
-				// Parse current appearance
-				const currentAppearance = JSON.parse(p.draft_appearance || '{}');
-				
-				// Update theme key and REMOVE customTheme to use theme preset
-				// Use null to explicitly delete customTheme
+				// RESET ALL CUSTOMIZATIONS - use ONLY theme preset
+				// Set all custom fields to null to delete them
 				const newAppearance = {
-					...currentAppearance,
 					themeKey: preset.key,
-					customTheme: null  // null = delete customTheme
+					customTheme: null,   // Delete custom theme (includes backgrounds, backgroundVideo)
+					headerStyle: null,   // Delete header customization
+					blockStyle: null     // Delete block customization
 				};
 				
-				console.log('[ThemeSection] New appearance (customTheme deleted):', newAppearance);
+				console.log('[ThemeSection] Reset to theme preset:', preset.key);
+				console.log('[ThemeSection] Cleared appearance:', newAppearance);
 				
 				return {
 					...p,
@@ -63,7 +62,7 @@
 				});
 			}
 			
-			console.log('[ThemeSection] Theme saved successfully');
+			console.log('[ThemeSection] Theme saved successfully - all customizations reset');
 		} catch (e) {
 			console.error('[ThemeSection] Failed to save theme:', e);
 		} finally {
