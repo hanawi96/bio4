@@ -302,6 +302,9 @@
 		if (preset.hasCover) {
 			return 'with-cover';
 		}
+		if (preset.id === 'centered-large') {
+			return 'centered-large';
+		}
 		return 'no-cover';
 	}
 
@@ -336,7 +339,7 @@
 			</div>
 		{:else}
 			<!-- Header Presets Grid -->
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-3 gap-4">
 			{#each presets as preset}
 				<button
 					on:click={() => selectPreset(preset.id)}
@@ -358,6 +361,17 @@
 								<div class="h-3 bg-gray-300 rounded-full w-24 mx-auto mb-2"></div>
 								<div class="h-2 bg-gray-200 rounded-full w-32 mx-auto mb-1"></div>
 								<div class="h-2 bg-gray-200 rounded-full w-28 mx-auto"></div>
+							</div>
+						{:else if getPresetPreview(preset) === 'centered-large'}
+							<!-- Centered Large - Extra large oval avatar -->
+							<div class="mt-6">
+								<div class="w-32 h-40 bg-gradient-to-br from-gray-300 to-gray-400 rounded-[50%] shadow-lg"></div>
+							</div>
+							
+							<div class="mt-5 text-center w-full px-4">
+								<div class="h-3.5 bg-gray-300 rounded-full w-28 mx-auto mb-2.5"></div>
+								<div class="h-2 bg-gray-200 rounded-full w-36 mx-auto mb-1.5"></div>
+								<div class="h-2 bg-gray-200 rounded-full w-32 mx-auto"></div>
 							</div>
 						{:else}
 							<!-- No Cover -->

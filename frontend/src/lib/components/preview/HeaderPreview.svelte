@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { page } from '$lib/stores/page';
+	import { HEADER_PRESETS } from '$lib/appearance/presets';
+	import type { HeaderPreset } from '$lib/appearance/types';
 	
 	// Social platform configs
 	const socialPlatforms = {
@@ -19,6 +21,81 @@
 				username,
 				...socialPlatforms[platform as keyof typeof socialPlatforms]
 			})) : [];
+	
+	// Get header preset from appearance state
+	$: headerPreset = (() => {
+		console.log('[HeaderPreview] Computing headerPreset...');
+		console.log('[HeaderPreview] $page:', $page);
+		console.log('[HeaderPreview] draft_appearance:', $page?.draft_appearance);
+		
+		try {
+			if ($page?.draft_appearance) {
+				const appearance = JSON.parse($page.draft_appearance);
+				console.log('[HeaderPreview] Parsed appearance:', appearance);
+				
+				const presetId = appearance.headerStyle?.presetId || 'no-cover';
+				console.log('[HeaderPreview] presetId:', presetId);
+				
+				const preset = HEADER_PRESETS[presetId];
+				console.log('[HeaderPreview] preset from HEADER_PRESETS:', preset);
+				
+				const overrides = appearance.headerStyle?.overrides || {};
+				console.log('[HeaderPreview] overrides:', overrides);
+				
+				// Merge preset with overrides
+				const merged = {
+					...preset,
+					...overrides
+				};
+				console.log('[HeaderPreview] Merged headerPreset:', merged);
+				
+				return merged;
+			}
+		} catch (e) {
+			console.error('[HeaderPreview] Failed to parse header preset:', e);
+		}
+		
+		// Fallback to default
+		console.log('[HeaderPreview] Using fallback preset: no-cover');
+		return HEADER_PRESETS['no-cover'];
+	})();
+	
+	// Map avatarSize to Tailwind classes
+	function getAvatarSizeClasses(size: 'sm' | 'md' | 'lg' | 'xl' = 'lg') {
+		const sizeMap = {
+			sm: 'w-16 h-16',
+			md: 'w-20 h-20',
+			lg: 'w-24 h-24',
+			xl: 'w-32 h-40' // Oval: wider width, taller height
+		};
+		const result = sizeMap[size] || sizeMap.lg;
+		console.log('[HeaderPreview] getAvatarSizeClasses:', { size, result });
+		return result;
+	}
+	
+	// Map avatarShape to Tailwind classes
+	function getAvatarShapeClasses(shape: 'circle' | 'rounded' | 'square' | 'oval' = 'circle') {
+		const shapeMap = {
+			circle: 'rounded-full',
+			rounded: 'rounded-2xl',
+			square: 'rounded-none',
+			oval: 'rounded-[50%]' // Oval shape
+		};
+		const result = shapeMap[shape] || shapeMap.circle;
+		console.log('[HeaderPreview] getAvatarShapeClasses:', { shape, result });
+		return result;
+	}
+	
+	$: {
+		console.log('[HeaderPreview] Computing avatarClasses...');
+		console.log('[HeaderPreview] headerPreset:', headerPreset);
+		console.log('[HeaderPreview] avatarSize:', headerPreset?.avatarSize);
+		console.log('[HeaderPreview] avatarShape:', headerPreset?.avatarShape);
+	}
+	
+	$: avatarClasses = `${getAvatarSizeClasses(headerPreset?.avatarSize)} ${getAvatarShapeClasses(headerPreset?.avatarShape)} object-cover`;
+	
+	$: console.log('[HeaderPreview] Final avatarClasses:', avatarClasses);
 </script>
 
 <div class="flex flex-col items-center gap-4 p-8">
@@ -26,10 +103,10 @@
 		<img 
 			src={$page.avatar_url} 
 			alt={$page.title || 'Avatar'}
-			class="w-24 h-24 rounded-full object-cover"
+			class={avatarClasses}
 		/>
 	{:else}
-		<div class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+		<div class="{avatarClasses} bg-gray-200 flex items-center justify-center">
 			<span class="text-2xl text-gray-400">👤</span>
 		</div>
 	{/if}

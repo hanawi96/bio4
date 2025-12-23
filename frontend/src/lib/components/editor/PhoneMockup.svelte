@@ -46,10 +46,22 @@
 	// Avatar size mapping
 	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };
 	$: avatarSize = header ? avatarSizes[header.avatarSize] : 80;
+	
+	// Avatar dimensions for oval shape (xl size)
+	$: avatarWidth = header?.avatarShape === 'oval' && header?.avatarSize === 'xl' ? 128 : avatarSize;
+	$: avatarHeight = header?.avatarShape === 'oval' && header?.avatarSize === 'xl' ? 160 : avatarSize;
 
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
 	$: coverHeight = header?.coverHeight ? coverHeights[header.coverHeight] : 160;
+	
+	// Helper: Get border radius for avatar shape
+	function getAvatarBorderRadius(shape: string | undefined): string {
+		if (shape === 'circle') return '50%';
+		if (shape === 'rounded') return '20%';
+		if (shape === 'oval') return '50%';
+		return '0';
+	}
 
 	// Get cover background style
 	$: coverStyle = (() => {
@@ -128,28 +140,28 @@
 							
 							<!-- Avatar (Overlapping) -->
 							{#if header.avatarPosition === 'overlap'}
-								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarSize / 2}px;">
+								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarHeight / 2}px;">
 									{#if $page?.avatar_url}
 										<img 
 											src={$page.avatar_url} 
 											alt="Avatar" 
-											class="header-avatar rounded-full object-cover {header.avatarBorder !== false ? 'border-4' : ''}"
+											class="header-avatar object-cover {header.avatarBorder !== false ? 'border-4' : ''}"
 											style="
-												width: {avatarSize}px;
-												height: {avatarSize}px;
+												width: {avatarWidth}px;
+												height: {avatarHeight}px;
 												{header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''}
-												border-radius: {header.avatarShape === 'circle' ? '50%' : header.avatarShape === 'rounded' ? '20%' : '0'};
+												border-radius: {getAvatarBorderRadius(header.avatarShape)};
 											"
 										/>
 									{:else}
 										<div 
 											class="header-avatar flex items-center justify-center text-white font-bold {header.avatarBorder !== false ? 'border-4' : ''}"
 											style="
-												width: {avatarSize}px;
-												height: {avatarSize}px;
+												width: {avatarWidth}px;
+												height: {avatarHeight}px;
 												background: {tokens?.primaryColor || '#3b82f6'};
 												{header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''}
-												border-radius: {header.avatarShape === 'circle' ? '50%' : header.avatarShape === 'rounded' ? '20%' : '0'};
+												border-radius: {getAvatarBorderRadius(header.avatarShape)};
 												font-size: {avatarSize / 2.5}px;
 											"
 										>
@@ -161,7 +173,7 @@
 						</div>
 						
 						<!-- Content below cover -->
-						<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarSize / 2 + 16 : 0}px; text-align: {header.contentAlign};">
+						<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 16 : 0}px; text-align: {header.contentAlign};">
 							<h1 class="text-lg font-bold">{$page?.title || 'Your Name'}</h1>
 							{#if header.showBio && $page?.bio}
 								<p 
@@ -186,21 +198,21 @@
 									alt="Avatar" 
 									class="header-avatar object-cover mb-3 {header?.avatarBorder !== false ? 'border-4' : ''}"
 									style="
-										width: {avatarSize}px;
-										height: {avatarSize}px;
+										width: {avatarWidth}px;
+										height: {avatarHeight}px;
 										{header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''}
-										border-radius: {header?.avatarShape === 'circle' ? '50%' : header?.avatarShape === 'rounded' ? '20%' : '0'};
+										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
 									"
 								/>
 							{:else}
 								<div 
 									class="header-avatar mb-3 flex items-center justify-center text-white font-bold {header?.avatarBorder !== false ? 'border-4' : ''}"
 									style="
-										width: {avatarSize}px;
-										height: {avatarSize}px;
+										width: {avatarWidth}px;
+										height: {avatarHeight}px;
 										background: {tokens?.primaryColor || '#3b82f6'};
 										{header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''}
-										border-radius: {header?.avatarShape === 'circle' ? '50%' : header?.avatarShape === 'rounded' ? '20%' : '0'};
+										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
 										font-size: {avatarSize / 2.5}px;
 									"
 								>

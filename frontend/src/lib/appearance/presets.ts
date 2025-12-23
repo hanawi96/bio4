@@ -90,6 +90,21 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		showBio: true,
 		bioMaxLines: 3,
 		spacing: 'comfortable'
+	},
+
+	'centered-large': {
+		id: 'centered-large',
+		name: 'Centered Large',
+		description: 'Large oval avatar with spacious layout',
+		hasCover: false,
+		avatarSize: 'xl',
+		avatarShape: 'oval',
+		avatarPosition: 'center',
+		avatarBorder: false,
+		contentAlign: 'center',
+		showBio: true,
+		bioMaxLines: 3,
+		spacing: 'spacious'
 	}
 };
 

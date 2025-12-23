@@ -222,7 +222,7 @@ export interface HeaderPreset {
 	
 	// Avatar settings
 	avatarSize: 'sm' | 'md' | 'lg' | 'xl'; // 64px, 80px, 96px, 120px
-	avatarShape: 'circle' | 'rounded' | 'square';
+	avatarShape: 'circle' | 'rounded' | 'square' | 'oval';
 	avatarPosition: 'center' | 'overlap'; // overlap = nửa trên cover, nửa dưới
 	avatarBorder?: boolean; // Has border or not
 	avatarBorderColor?: string; // Border color (default: white)
@@ -255,7 +255,7 @@ export interface HeaderOverrides {
 	coverType?: 'solid' | 'gradient' | 'image'; // Type of cover
 	coverValue?: string; // Color hex, gradient CSS, or image URL
 	avatarSize?: 'sm' | 'md' | 'lg' | 'xl';
-	avatarShape?: 'circle' | 'rounded' | 'square';
+	avatarShape?: 'circle' | 'rounded' | 'square' | 'oval';
 	avatarPosition?: 'center' | 'overlap';
 	avatarBorder?: boolean; // Override border visibility
 	avatarBorderColor?: string; // Override border color
