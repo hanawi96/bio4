@@ -202,6 +202,31 @@
 				selectedType = 'pattern';
 				currentBgColor = bgColor;
 				
+				// Detect pattern type từ CSS string
+				if (bgColor.includes('radial-gradient(circle')) {
+					selectedPattern = 'dots';
+				} else if (bgColor.includes('repeating-linear-gradient(45deg')) {
+					selectedPattern = 'diagonal';
+				} else if (bgColor.includes('linear-gradient(135deg')) {
+					selectedPattern = 'zigzag';
+				} else if (bgColor.includes('linear-gradient') && bgColor.includes('90deg')) {
+					// Check if it's grid or cross
+					if (bgColor.includes('2px')) {
+						selectedPattern = 'cross';
+					} else {
+						selectedPattern = 'grid';
+					}
+				} else if (bgColor.includes('url(') && bgColor.includes('svg')) {
+					// SVG pattern - detect by content
+					if (bgColor.includes('feTurbulence')) {
+						selectedPattern = 'noise';
+					} else if (bgColor.includes('path') && bgColor.includes('Q')) {
+						selectedPattern = 'waves';
+					} else {
+						selectedPattern = 'organic';
+					}
+				}
+				
 				// Sync pattern colors từ baseThemeColor
 				const patternColors = generatePatternColors(baseThemeColor, selectedPattern);
 				patternBgColor = patternColors.bgColor;
