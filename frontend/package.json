@@ -12,6 +12,7 @@
     "@sveltejs/adapter-cloudflare": "^4.0.0",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@types/culori": "^4.0.1",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
     "svelte": "^4.2.0",
@@ -21,6 +22,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "culori": "^4.0.2",
     "lucide-svelte": "^0.562.0",
     "zod": "^3.22.4"
   },

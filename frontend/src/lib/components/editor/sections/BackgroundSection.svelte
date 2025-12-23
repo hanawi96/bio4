@@ -3,6 +3,7 @@
 	import { appearance } from '$lib/stores/appearance';
 	import { api } from '$lib/api.client';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
+	import { generatePatternColors, type PatternType } from '$lib/utils/patternColors';
 
 	const username = 'demo';
 
@@ -123,6 +124,7 @@
 	let selectedPattern = 'dots';
 	let patternColor = '#e5e7eb';
 	let patternBgColor = '#ffffff';
+	let isPatternAutoSync = true; // Flag to enable/disable auto-sync
 	
 	// Background history (session-only, not saved to DB)
 	let backgroundHistory = {
@@ -133,6 +135,38 @@
 		pattern: ''
 	};
 
+	// Reactive: Auto-sync pattern colors when background color changes
+	$: if (isPatternAutoSync && !isUserUpdate && currentBgColor) {
+		console.log('[AUTO-SYNC] Triggered:', {
+			isPatternAutoSync,
+			isUserUpdate,
+			currentBgColor,
+			selectedPattern
+		});
+		
+		// Extract base color for pattern sync
+		let baseColor = currentBgColor;
+		
+		// If gradient, use the first color
+		if (baseColor.includes('gradient')) {
+			const match = baseColor.match(/#[0-9a-fA-F]{6}/);
+			if (match) {
+				baseColor = match[0];
+			}
+		}
+		
+		// If solid color (hex), auto-generate pattern colors
+		if (baseColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			console.log('[AUTO-SYNC] Generating pattern colors for:', baseColor);
+			const patternColors = generatePatternColors(baseColor, selectedPattern);
+			console.log('[AUTO-SYNC] Generated:', patternColors);
+			patternBgColor = patternColors.bgColor;
+			patternColor = patternColors.inkColor;
+		} else {
+			console.log('[AUTO-SYNC] Skipped - not a hex color:', baseColor);
+		}
+	}
+
 	// Reactive: Sync backgroundHistory from DB when draft_appearance changes
 	$: if ($page?.draft_appearance && !isUserUpdate) {
 		try {
@@ -140,6 +174,7 @@
 			const savedBackgrounds = appearance.customTheme?.backgrounds;
 			
 			if (savedBackgrounds) {
+				console.log('[SYNC-FROM-DB] Syncing backgroundHistory:', savedBackgrounds);
 				const newHistory = {
 					solid: savedBackgrounds.solid || '#ffffff',
 					gradient: savedBackgrounds.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -149,6 +184,7 @@
 				};
 				
 				backgroundHistory = newHistory;
+				console.log('[SYNC-FROM-DB] Updated backgroundHistory:', backgroundHistory);
 				
 				// Clear local URLs if history is empty
 				if (!newHistory.image) {
@@ -368,11 +404,28 @@
 				});
 			}
 		} else if (type === 'pattern') {
+			console.log('[SELECT-TYPE] Switching to pattern:', {
+				currentBgColor,
+				backgroundHistory: backgroundHistory.pattern,
+				selectedPattern
+			});
+			
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			
-			if (backgroundHistory.pattern) {
-				updateBgColor(backgroundHistory.pattern);
+			// Re-enable auto-sync when switching to pattern type
+			isPatternAutoSync = true;
+			console.log('[SELECT-TYPE] Re-enabled auto-sync');
+			
+			// Always generate fresh pattern colors from current background
+			// Don't use history to avoid loading old pattern colors
+			console.log('[SELECT-TYPE] Generating fresh pattern colors from currentBgColor:', currentBgColor);
+			if (currentBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+				const patternColors = generatePatternColors(currentBgColor, selectedPattern);
+				console.log('[SELECT-TYPE] Generated pattern colors:', patternColors);
+				patternBgColor = patternColors.bgColor;
+				patternColor = patternColors.inkColor;
+				updatePattern();
 			}
 		}
 		
@@ -382,12 +435,14 @@
 	}
 
 	async function updateBgColor(color: string) {
+		console.log('[UPDATE-BG-COLOR] Called with:', color, 'selectedType:', selectedType);
 		isUserUpdate = true;
 		currentBgColor = color;
 		
 		// Update history
 		if (selectedType === 'solid' || selectedType === 'gradient' || selectedType === 'pattern') {
 			backgroundHistory[selectedType] = color;
+			console.log('[UPDATE-BG-COLOR] Updated history:', backgroundHistory);
 		}
 
 		// Update page store immediately (optimistic)
@@ -688,9 +743,13 @@
 	}
 	
 	function updatePattern() {
-		console.log('[updatePattern] selectedPattern:', selectedPattern, 'patternColor:', patternColor, 'patternBgColor:', patternBgColor);
+		console.log('[UPDATE-PATTERN] Called - Disabling auto-sync');
+		// Disable auto-sync when user manually changes pattern colors
+		isPatternAutoSync = false;
+		
+		console.log('[UPDATE-PATTERN] selectedPattern:', selectedPattern, 'patternColor:', patternColor, 'patternBgColor:', patternBgColor);
 		const patternStyle = getPatternStyle(selectedPattern, patternColor, patternBgColor);
-		console.log('[updatePattern] patternStyle:', patternStyle);
+		console.log('[UPDATE-PATTERN] patternStyle:', patternStyle);
 		updateBgColor(patternStyle);
 	}
 	
@@ -1268,7 +1327,18 @@
 					<div class="grid grid-cols-4 gap-2">
 						{#each patterns as pattern}
 							<button
-								on:click={() => { selectedPattern = pattern.id; updatePattern(); }}
+								on:click={() => { 
+									selectedPattern = pattern.id;
+									// Re-enable auto-sync when changing pattern type
+									isPatternAutoSync = true;
+									// Trigger auto-sync immediately
+									if (currentBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+										const patternColors = generatePatternColors(currentBgColor, selectedPattern);
+										patternBgColor = patternColors.bgColor;
+										patternColor = patternColors.inkColor;
+									}
+									updatePattern();
+								}}
 								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
 								title={pattern.name}
 							>
@@ -1332,15 +1402,6 @@
 								</div>
 							</div>
 						</div>
-					</div>
-
-					<!-- Preview -->
-					<div>
-						<label class="block text-xs font-medium text-gray-700 mb-2">Preview</label>
-						<div 
-							class="h-24 rounded-lg border-2 border-white shadow-sm"
-							style={getPatternStyle(selectedPattern, patternColor, patternBgColor)}
-						></div>
 					</div>
 				</div>
 			</div>
