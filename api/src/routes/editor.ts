@@ -128,6 +128,13 @@ app.post('/:username/publish', async (c) => {
 			
 			// Clear from history
 			backgrounds[type] = '';
+			
+			// CRITICAL: If backgroundColor contains the deleted URL, reset it
+			if (type === 'image' && backgroundColor.includes(url)) {
+				// Reset to solid color or gradient from history
+				appearance.customTheme.backgroundColor = backgrounds.solid || backgrounds.gradient || '#ffffff';
+				console.log(`[Publish] Reset backgroundColor from deleted image URL to:`, appearance.customTheme.backgroundColor);
+			}
 		} catch (e) {
 			console.error(`[Publish] Failed to delete ${type}:`, e);
 		}

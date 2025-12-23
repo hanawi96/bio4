@@ -134,13 +134,23 @@
 			const savedBackgrounds = appearance.customTheme?.backgrounds;
 			
 			if (savedBackgrounds) {
-				backgroundHistory = {
+				const newHistory = {
 					solid: savedBackgrounds.solid || '#ffffff',
 					gradient: savedBackgrounds.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
 					image: (savedBackgrounds.image && savedBackgrounds.image.trim()) ? savedBackgrounds.image : '',
 					video: (savedBackgrounds.video && savedBackgrounds.video.trim()) ? savedBackgrounds.video : '',
 					pattern: savedBackgrounds.pattern || ''
 				};
+				
+				backgroundHistory = newHistory;
+				
+				// Clear local URLs if history is empty
+				if (!newHistory.image) {
+					backgroundImageUrl = '';
+				}
+				if (!newHistory.video) {
+					backgroundVideoUrl = '';
+				}
 			}
 		} catch (e) {
 			console.error('[BackgroundSection] Failed to parse draft_appearance:', e);
@@ -194,20 +204,6 @@
 			// Just sync color, don't change type
 			currentBgColor = bgColor;
 			
-			// Sync image URL if type is image (only if bgColor matches)
-			if (selectedType === 'image' && bgColor.includes('url(')) {
-				const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
-				if (urlMatch && urlMatch[1].trim()) {
-					const newImageUrl = urlMatch[1];
-					if (backgroundImageUrl !== newImageUrl) {
-						backgroundImageUrl = newImageUrl;
-					}
-				}
-			} else if (selectedType === 'image' && !bgColor.includes('url(')) {
-				// If type is image but bgColor is not url, clear image
-				backgroundImageUrl = '';
-			}
-			
 			// Sync video URL if type is video
 			if (selectedType === 'video') {
 				const appearance = JSON.parse($page?.draft_appearance || '{}');
@@ -217,7 +213,6 @@
 						backgroundVideoUrl = videoUrl;
 					}
 				} else {
-					// If type is video but no videoUrl, clear video
 					backgroundVideoUrl = '';
 				}
 			}
