@@ -150,6 +150,12 @@
 	// Fixed pattern colors for preset previews - dùng baseThemeColor
 	$: fixedPreviewColors = generatePatternColors(baseThemeColor, 'grid');
 	
+	// Reactive: Log backgroundImageUrl changes
+	$: if (selectedType === 'image') {
+		console.log('🖼️ [REACTIVE] backgroundImageUrl changed:', backgroundImageUrl);
+		console.log('🖼️ [REACTIVE] Should show:', backgroundImageUrl ? 'IMAGE' : 'UPLOAD BOX');
+	}
+	
 	// Background history (session-only, not saved to DB)
 	let backgroundHistory = {
 		solid: '#ffffff',
@@ -176,13 +182,8 @@
 				
 				backgroundHistory = newHistory;
 				
-				// Clear local URLs if history is empty
-				if (!newHistory.image) {
-					backgroundImageUrl = '';
-				}
-				if (!newHistory.video) {
-					backgroundVideoUrl = '';
-				}
+				// KHÔNG clear backgroundImageUrl nếu đang ở image type
+				// Vì detect logic đã set nó từ backgroundColor
 			}
 		} catch (e) {
 			console.error('[BackgroundSection] Failed to parse draft_appearance:', e);
@@ -234,12 +235,30 @@
 				currentBgColor = bgColor;
 			}
 		} else if (bgColor.includes('url(')) {
+			// Image background
+			console.log('🖼️ [IMAGE] Detected image background');
+			console.log('🖼️ [IMAGE] bgColor:', bgColor);
+			console.log('🖼️ [IMAGE] Current selectedType:', selectedType);
+			console.log('🖼️ [IMAGE] Current backgroundImageUrl:', backgroundImageUrl);
+			
 			if (selectedType !== 'image') {
 				selectedType = 'image';
+				currentBgColor = bgColor;
+				
+				// Extract image URL
 				const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
-				if (urlMatch) {
+				console.log('🖼️ [IMAGE] URL match:', urlMatch);
+				
+				if (urlMatch && urlMatch[1]) {
 					backgroundImageUrl = urlMatch[1];
+					console.log('🖼️ [IMAGE] Set backgroundImageUrl to:', backgroundImageUrl);
+				} else {
+					// Fallback to default if can't extract
+					backgroundImageUrl = DEFAULT_IMAGE_BG;
+					console.log('🖼️ [IMAGE] Fallback to default:', DEFAULT_IMAGE_BG);
 				}
+			} else {
+				console.log('🖼️ [IMAGE] Already image type, skipping');
 			}
 		} else if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
 			if (selectedType !== 'solid') {
@@ -362,12 +381,17 @@
 		} else if (type === 'image') {
 			backgroundVideoUrl = '';
 			
+			console.log('🖼️ [SELECT] Switching to image type');
+			console.log('🖼️ [SELECT] backgroundHistory.image:', backgroundHistory.image);
+			
 			if (backgroundHistory.image && backgroundHistory.image.trim()) {
 				backgroundImageUrl = backgroundHistory.image;
+				console.log('🖼️ [SELECT] Restored from history:', backgroundImageUrl);
 				updateBgColor(`url('${backgroundHistory.image}')`);
 			} else {
 				// Use default image when no custom image uploaded
 				backgroundImageUrl = DEFAULT_IMAGE_BG;
+				console.log('🖼️ [SELECT] Using default image:', DEFAULT_IMAGE_BG);
 				updateBgColor(`url('${DEFAULT_IMAGE_BG}')`);
 			}
 		} else if (type === 'video') {
