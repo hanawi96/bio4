@@ -271,65 +271,99 @@
 	$: if ($appearance?.tokens?.backgroundColor && !isUserUpdate) {
 		const bgColor = $appearance.tokens.backgroundColor;
 		
-		// Detect type từ backgroundColor
-		if (bgColor.startsWith('background:') || bgColor.startsWith('background ')) {
-			// Pattern CSS string
-			if (selectedType !== 'pattern') {
-				selectedType = 'pattern';
-				currentBgColor = bgColor;
-				
-				// Detect pattern type từ CSS string
-				if (bgColor.includes('radial-gradient(circle')) {
-					selectedPattern = 'dots';
-				} else if (bgColor.includes('repeating-linear-gradient(45deg')) {
-					selectedPattern = 'diagonal';
-				} else if (bgColor.includes('linear-gradient') && bgColor.includes('90deg')) {
-					// Grid pattern (chỉ còn grid, không có cross nữa)
-					selectedPattern = 'grid';
-				} else if (bgColor.includes('url(') && bgColor.includes('svg')) {
-					// SVG pattern - detect by content
-					if (bgColor.includes('path') && bgColor.includes('Q')) {
-						selectedPattern = 'waves';
-					} else if (bgColor.includes('path') && bgColor.includes('L28 0L0 16')) {
-						selectedPattern = 'zigzag'; // Hexagon pattern
-					} else if (bgColor.includes('stroke="currentColor"') && bgColor.includes('fill="none"')) {
-						selectedPattern = 'noise'; // Topography pattern
-					} else if (bgColor.includes('circle') && bgColor.includes('line') && bgColor.includes('rect')) {
-						selectedPattern = 'cross'; // Circuit pattern
-					} else {
-						selectedPattern = 'organic';
+		console.log('[BackgroundSection] Detect type reactive:', {
+			bgColor,
+			selectedType,
+			isUserUpdate,
+			backgroundVideoUrl,
+			backgroundImageUrl
+		});
+		
+		// Check if there's a backgroundVideo first (priority)
+		let hasBackgroundVideo = false;
+		try {
+			if ($page?.draft_appearance) {
+				const appearance = JSON.parse($page.draft_appearance);
+				if (appearance.customTheme?.backgroundVideo) {
+					hasBackgroundVideo = true;
+					if (selectedType !== 'video') {
+						console.log('[BackgroundSection] Switching to video (detected backgroundVideo)');
+						selectedType = 'video';
+						backgroundVideoUrl = appearance.customTheme.backgroundVideo;
+						currentBgColor = bgColor; // Keep the placeholder color
 					}
 				}
-				
-				// Sync pattern colors từ baseThemeColor
-				const patternColors = generatePatternColors(baseThemeColor, selectedPattern);
-				patternBgColor = patternColors.bgColor;
-				patternColor = patternColors.inkColor;
 			}
-		} else if (bgColor.includes('gradient')) {
-			if (selectedType !== 'gradient') {
-				selectedType = 'gradient';
-				currentBgColor = bgColor;
-			}
-		} else if (bgColor.includes('url(')) {
-			// Image background
-			if (selectedType !== 'image') {
-				selectedType = 'image';
-				currentBgColor = bgColor;
-				
-				// Extract image URL
-				const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
-				if (urlMatch && urlMatch[1]) {
-					backgroundImageUrl = urlMatch[1];
-				} else {
-					// Fallback to default if can't extract
-					backgroundImageUrl = DEFAULT_IMAGE_BG;
+		} catch (e) {
+			console.error('[BackgroundSection] Failed to parse draft_appearance:', e);
+		}
+		
+		// Only detect other types if no backgroundVideo
+		if (!hasBackgroundVideo) {
+			// Detect type từ backgroundColor
+			if (bgColor.startsWith('background:') || bgColor.startsWith('background ')) {
+				// Pattern CSS string
+				if (selectedType !== 'pattern') {
+					console.log('[BackgroundSection] Switching to pattern');
+					selectedType = 'pattern';
+					currentBgColor = bgColor;
+					
+					// Detect pattern type từ CSS string
+					if (bgColor.includes('radial-gradient(circle')) {
+						selectedPattern = 'dots';
+					} else if (bgColor.includes('repeating-linear-gradient(45deg')) {
+						selectedPattern = 'diagonal';
+					} else if (bgColor.includes('linear-gradient') && bgColor.includes('90deg')) {
+						// Grid pattern (chỉ còn grid, không có cross nữa)
+						selectedPattern = 'grid';
+					} else if (bgColor.includes('url(') && bgColor.includes('svg')) {
+						// SVG pattern - detect by content
+						if (bgColor.includes('path') && bgColor.includes('Q')) {
+							selectedPattern = 'waves';
+						} else if (bgColor.includes('path') && bgColor.includes('L28 0L0 16')) {
+							selectedPattern = 'zigzag'; // Hexagon pattern
+						} else if (bgColor.includes('stroke="currentColor"') && bgColor.includes('fill="none"')) {
+							selectedPattern = 'noise'; // Topography pattern
+						} else if (bgColor.includes('circle') && bgColor.includes('line') && bgColor.includes('rect')) {
+							selectedPattern = 'cross'; // Circuit pattern
+						} else {
+							selectedPattern = 'organic';
+						}
+					}
+					
+					// Sync pattern colors từ baseThemeColor
+					const patternColors = generatePatternColors(baseThemeColor, selectedPattern);
+					patternBgColor = patternColors.bgColor;
+					patternColor = patternColors.inkColor;
 				}
-			}
-		} else if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-			if (selectedType !== 'solid') {
-				selectedType = 'solid';
-				currentBgColor = bgColor;
+			} else if (bgColor.includes('gradient')) {
+				if (selectedType !== 'gradient') {
+					console.log('[BackgroundSection] Switching to gradient');
+					selectedType = 'gradient';
+					currentBgColor = bgColor;
+				}
+			} else if (bgColor.includes('url(')) {
+				// Image background
+				if (selectedType !== 'image') {
+					console.log('[BackgroundSection] Switching to image');
+					selectedType = 'image';
+					currentBgColor = bgColor;
+					
+					// Extract image URL
+					const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
+					if (urlMatch && urlMatch[1]) {
+						backgroundImageUrl = urlMatch[1];
+					} else {
+						// Fallback to default if can't extract
+						backgroundImageUrl = DEFAULT_IMAGE_BG;
+					}
+				}
+			} else if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+				if (selectedType !== 'solid') {
+					console.log('[BackgroundSection] Switching to solid');
+					selectedType = 'solid';
+					currentBgColor = bgColor;
+				}
 			}
 		}
 	}
@@ -382,12 +416,15 @@
 		}
 	}
 
-	// Reactive: Ensure default video is set when video type is selected
-	$: if (selectedType === 'video' && !backgroundVideoUrl && !isUserUpdate) {
-		backgroundVideoUrl = DEFAULT_VIDEO_BG;
-	}
-
 	function selectType(type: string) {
+		console.log('[BackgroundSection] selectType called:', {
+			from: selectedType,
+			to: type,
+			backgroundVideoUrl,
+			backgroundImageUrl,
+			currentBgColor
+		});
+		
 		isUserUpdate = true;
 		
 		// Save current state to history before switching
@@ -403,7 +440,11 @@
 			backgroundHistory.pattern = currentBgColor;
 		}
 		
+		console.log('[BackgroundSection] Saved history:', backgroundHistory);
+		
 		selectedType = type;
+		
+		console.log('[BackgroundSection] selectedType changed to:', type);
 		
 		// Clear video from store when switching away from video (non-blocking)
 		if (type !== 'video' && $page) {
@@ -432,6 +473,7 @@
 		
 		// Load from history and update URLs
 		if (type === 'solid') {
+			console.log('[BackgroundSection] Loading solid from history');
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			
@@ -441,6 +483,7 @@
 				updateBgColor('#ffffff');
 			}
 		} else if (type === 'gradient') {
+			console.log('[BackgroundSection] Loading gradient from history');
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			
@@ -456,6 +499,7 @@
 				updateBgGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg', 'linear');
 			}
 		} else if (type === 'image') {
+			console.log('[BackgroundSection] Loading image from history');
 			backgroundVideoUrl = '';
 			
 			if (backgroundHistory.image && backgroundHistory.image.trim()) {
@@ -467,9 +511,11 @@
 				updateBgColor(`url('${DEFAULT_IMAGE_BG}')`);
 			}
 		} else if (type === 'video') {
+			console.log('[BackgroundSection] Loading video from history:', backgroundHistory.video);
 			backgroundImageUrl = '';
 			
 			if (backgroundHistory.video && backgroundHistory.video.trim()) {
+				console.log('[BackgroundSection] Using custom video from history');
 				backgroundVideoUrl = backgroundHistory.video;
 				
 				if (!$page) {
@@ -480,12 +526,17 @@
 				const appearance = JSON.parse($page.draft_appearance || '{}');
 				if (!appearance.customTheme) appearance.customTheme = {};
 				
+				// Set backgroundColor to a placeholder for video type
+				appearance.customTheme.backgroundColor = '#000000'; // Placeholder for video
 				appearance.customTheme.backgroundVideo = backgroundHistory.video;
 				
 				if (!appearance.customTheme.backgrounds) {
 					appearance.customTheme.backgrounds = {};
 				}
 				appearance.customTheme.backgrounds.video = backgroundHistory.video;
+				
+				// Update currentBgColor to match
+				currentBgColor = '#000000';
 				
 				page.update(p => p ? {
 					...p,
@@ -500,6 +551,7 @@
 				});
 			} else {
 				// Use default video when no custom video uploaded
+				console.log('[BackgroundSection] Using default video');
 				backgroundVideoUrl = DEFAULT_VIDEO_BG;
 				
 				if (!$page) {
@@ -510,12 +562,17 @@
 				const appearance = JSON.parse($page.draft_appearance || '{}');
 				if (!appearance.customTheme) appearance.customTheme = {};
 				
+				// Set backgroundColor to a placeholder for video type
+				appearance.customTheme.backgroundColor = '#000000'; // Placeholder for video
 				appearance.customTheme.backgroundVideo = DEFAULT_VIDEO_BG;
 				
 				if (!appearance.customTheme.backgrounds) {
 					appearance.customTheme.backgrounds = {};
 				}
 				appearance.customTheme.backgrounds.video = DEFAULT_VIDEO_BG;
+				
+				// Update currentBgColor to match
+				currentBgColor = '#000000';
 				
 				page.update(p => p ? {
 					...p,
@@ -530,6 +587,7 @@
 				});
 			}
 		} else if (type === 'pattern') {
+			console.log('[BackgroundSection] Loading pattern from history');
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			
@@ -543,7 +601,10 @@
 			updateBgColor(patternStyle);
 		}
 		
+		console.log('[BackgroundSection] selectType completed, setting timeout to clear isUserUpdate');
+		
 		setTimeout(() => {
+			console.log('[BackgroundSection] Clearing isUserUpdate flag');
 			isUserUpdate = false;
 		}, 500);
 	}
@@ -557,6 +618,12 @@
 	}
 	
 	async function updateBgColor(color: string) {
+		console.log('[BackgroundSection] updateBgColor called:', {
+			color,
+			selectedType,
+			isUserUpdate
+		});
+		
 		isUserUpdate = true;
 		currentBgColor = color;
 		
@@ -589,6 +656,11 @@
 			appearance.customTheme.backgrounds = { ...backgroundHistory };
 
 			const newDraftAppearance = JSON.stringify(appearance);
+			
+			console.log('[BackgroundSection] Updated appearance:', {
+				backgroundColor: color,
+				backgrounds: appearance.customTheme.backgrounds
+			});
 
 			return {
 				...p,
@@ -606,9 +678,12 @@
 				await api.saveDraft(username, {
 					draft_appearance: currentPage.draft_appearance
 				});
+				
+				console.log('[BackgroundSection] Saved to DB successfully');
 			} catch (e) {
 				console.error('[BackgroundSection] Failed to save background:', e);
 			} finally {
+				console.log('[BackgroundSection] Setting isUserUpdate to false');
 				isUserUpdate = false;
 			}
 		}, 300);
