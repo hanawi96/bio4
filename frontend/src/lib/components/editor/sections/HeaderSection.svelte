@@ -299,6 +299,9 @@
 	}
 
 	function getPresetPreview(preset: HeaderPreset) {
+		if (preset.id === 'avatar-cover') {
+			return 'avatar-cover';
+		}
 		if (preset.hasCover) {
 			return 'with-cover';
 		}
@@ -347,7 +350,17 @@
 				>
 					<!-- Preview -->
 					<div class="aspect-[4/5] bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 p-6 flex flex-col items-center relative overflow-hidden">
-						{#if getPresetPreview(preset) === 'with-cover'}
+						{#if getPresetPreview(preset) === 'avatar-cover'}
+							<!-- Avatar Cover - Full screen avatar with text overlay -->
+							<div class="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400"></div>
+							<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+							
+							<div class="absolute bottom-6 left-0 right-0 z-10 text-center px-4">
+								<div class="h-3.5 bg-white/90 rounded-full w-28 mx-auto mb-2"></div>
+								<div class="h-2 bg-white/70 rounded-full w-36 mx-auto mb-1"></div>
+								<div class="h-2 bg-white/70 rounded-full w-32 mx-auto"></div>
+							</div>
+						{:else if getPresetPreview(preset) === 'with-cover'}
 							<!-- With Cover -->
 							<div class="absolute top-0 left-0 right-0 h-24 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400"></div>
 							

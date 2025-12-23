@@ -105,6 +105,22 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		showBio: true,
 		bioMaxLines: 3,
 		spacing: 'spacious'
+	},
+
+	'avatar-cover': {
+		id: 'avatar-cover',
+		name: 'Avatar Cover',
+		description: 'Full-screen avatar with text overlay',
+		hasCover: true, // Use cover system but source from avatar
+		coverHeight: 'lg',
+		avatarSize: 'sm', // Hidden, not displayed
+		avatarShape: 'circle',
+		avatarPosition: 'center',
+		avatarBorder: false,
+		contentAlign: 'center',
+		showBio: true,
+		bioMaxLines: 2,
+		spacing: 'comfortable'
 	}
 };
 

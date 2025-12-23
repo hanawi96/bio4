@@ -67,6 +67,22 @@
 	$: coverStyle = (() => {
 		if (!header?.hasCover) return '';
 		
+		// Check if this is avatar-cover preset
+		const presetId = (() => {
+			try {
+				if ($page?.draft_appearance) {
+					const appearance = JSON.parse($page.draft_appearance);
+					return appearance.headerStyle?.presetId;
+				}
+			} catch (e) {}
+			return null;
+		})();
+		
+		// If avatar-cover preset, use avatar as cover
+		if (presetId === 'avatar-cover' && $page?.avatar_url) {
+			return `background: url('${$page.avatar_url}') center/cover;`;
+		}
+		
 		const overrides = $appearance?.header;
 		const coverValue = overrides?.coverValue;
 		
@@ -79,6 +95,47 @@
 		}
 		
 		return `background: ${coverValue};`;
+	})();
+	
+	// Check if avatar-cover preset (hide avatar, show text overlay)
+	$: isAvatarCover = (() => {
+		try {
+			if ($page?.draft_appearance) {
+				const appearance = JSON.parse($page.draft_appearance);
+				return appearance.headerStyle?.presetId === 'avatar-cover';
+			}
+		} catch (e) {}
+		return false;
+	})();
+	
+	// Get background color for gradient overlay (for avatar-cover)
+	$: overlayGradientColor = (() => {
+		const bgColor = tokens?.backgroundColor;
+		if (!bgColor) return 'rgba(0, 0, 0, 0.7)';
+		
+		// If solid color, use it
+		if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			// Convert hex to rgb for opacity
+			const r = parseInt(bgColor.slice(1, 3), 16);
+			const g = parseInt(bgColor.slice(3, 5), 16);
+			const b = parseInt(bgColor.slice(5, 7), 16);
+			return `rgba(${r}, ${g}, ${b}, 0.95)`;
+		}
+		
+		// If gradient, extract first color
+		if (bgColor.includes('gradient')) {
+			const match = bgColor.match(/#[0-9a-fA-F]{6}/);
+			if (match) {
+				const hex = match[0];
+				const r = parseInt(hex.slice(1, 3), 16);
+				const g = parseInt(hex.slice(3, 5), 16);
+				const b = parseInt(hex.slice(5, 7), 16);
+				return `rgba(${r}, ${g}, ${b}, 0.95)`;
+			}
+		}
+		
+		// Fallback to black
+		return 'rgba(0, 0, 0, 0.7)';
 	})();
 
 	// Active links
@@ -132,14 +189,47 @@
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
 						<div class="relative -mx-4 -mt-10 mb-6 header-cover">
-							<!-- Cover Image/Gradient -->
+							<!-- Cover Image/Gradient with text overlay for avatar-cover -->
 							<div 
-								class="w-full"
+								class="w-full relative"
 								style="{coverStyle} height: {coverHeight}px;"
-							></div>
+							>
+								<!-- Double gradient overlay for avatar-cover -->
+								{#if isAvatarCover}
+									<!-- DEBUG: Gradient 1 - Avatar bottom fade -->
+									<div 
+										class="absolute inset-0" 
+										style="background: linear-gradient(to bottom, transparent 0%, transparent 30%, {overlayGradientColor} 100%); border: 2px solid red;"
+									></div>
+									
+									<!-- DEBUG: Gradient 2 - Darken middle -->
+									<div 
+										class="absolute inset-0" 
+										style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%); border: 2px solid blue;"
+									></div>
+									
+									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
+									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-6">
+										<h1 class="text-lg font-bold text-white drop-shadow-lg">{$page?.title || 'Your Name'}</h1>
+										{#if header.showBio && $page?.bio}
+											<p 
+												class="bio-text text-sm text-white/90 mt-2 drop-shadow-md"
+												style="
+													display: -webkit-box;
+													-webkit-line-clamp: {header.bioMaxLines};
+													-webkit-box-orient: vertical;
+													overflow: hidden;
+												"
+											>
+												{$page.bio}
+											</p>
+										{/if}
+									</div>
+								{/if}
+							</div>
 							
-							<!-- Avatar (Overlapping) -->
-							{#if header.avatarPosition === 'overlap'}
+							<!-- Avatar (Overlapping) - Hidden for avatar-cover -->
+							{#if header.avatarPosition === 'overlap' && !isAvatarCover}
 								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarHeight / 2}px;">
 									{#if $page?.avatar_url}
 										<img 
@@ -172,23 +262,25 @@
 							{/if}
 						</div>
 						
-						<!-- Content below cover -->
-						<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 16 : 0}px; text-align: {header.contentAlign};">
-							<h1 class="text-lg font-bold">{$page?.title || 'Your Name'}</h1>
-							{#if header.showBio && $page?.bio}
-								<p 
-									class="bio-text text-sm opacity-70 mt-1 px-4"
-									style="
-										display: -webkit-box;
-										-webkit-line-clamp: {header.bioMaxLines};
-										-webkit-box-orient: vertical;
-										overflow: hidden;
-									"
-								>
-									{$page.bio}
-								</p>
-							{/if}
-						</div>
+						<!-- Content below cover (only for non-avatar-cover) -->
+						{#if !isAvatarCover}
+							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 16 : 0}px; text-align: {header.contentAlign};">
+								<h1 class="text-lg font-bold">{$page?.title || 'Your Name'}</h1>
+								{#if header.showBio && $page?.bio}
+									<p 
+										class="bio-text text-sm opacity-70 mt-1 px-4"
+										style="
+											display: -webkit-box;
+											-webkit-line-clamp: {header.bioMaxLines};
+											-webkit-box-orient: vertical;
+											overflow: hidden;
+										"
+									>
+										{$page.bio}
+									</p>
+								{/if}
+							</div>
+						{/if}
 					{:else}
 						<!-- No Cover - Simple Header -->
 						<div class="header-content mb-6" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
@@ -236,8 +328,19 @@
 						</div>
 					{/if}
 
-					<!-- Links -->
-					<div class="space-y-3 mt-6">
+					<!-- Links - với negative margin và gradient mask cho avatar-cover -->
+					<div 
+						class="space-y-3 relative"
+						style="{isAvatarCover ? `margin-top: -60px; padding-top: 80px;` : 'margin-top: 24px;'}"
+					>
+						<!-- DEBUG: Gradient mask - Đậm hơn, FULL WIDTH như avatar -->
+						{#if isAvatarCover}
+							<div 
+								class="absolute pointer-events-none z-10 -mx-4"
+								style="left: 0; right: 0; top: -80px; height: 120px; background: linear-gradient(to bottom, transparent 0%, {tokens?.backgroundColor || '#ffffff'} 60%, {tokens?.backgroundColor || '#ffffff'} 100%); border: 2px solid green;"
+							></div>
+						{/if}
+						
 						{#each activeLinks as link}
 							<a 
 								href={link.url}
