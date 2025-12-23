@@ -21,6 +21,28 @@
 		}
 	})();
 	
+	// Check if draft_appearance has video (for immediate hide of background)
+	$: hasVideoInDraft = (() => {
+		if (!$page?.draft_appearance) return false;
+		try {
+			const appearance = JSON.parse($page.draft_appearance);
+			return !!(appearance.customTheme?.backgroundVideo);
+		} catch {
+			return false;
+		}
+	})();
+	
+	// Preload default video on mount
+	import { onMount } from 'svelte';
+	const DEFAULT_VIDEO = '/presets/videos/14950008_1080_1920_60fps.mp4';
+	
+	onMount(() => {
+		// Preload default video in background
+		const video = document.createElement('video');
+		video.preload = 'auto';
+		video.src = DEFAULT_VIDEO;
+	});
+	
 	$: {
 		console.log('[PhoneMockup] appearance changed:', $appearance);
 		console.log('[PhoneMockup] tokens:', tokens);
@@ -74,10 +96,10 @@
 			<!-- Notch -->
 			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
 
-			<!-- Background Video (if exists) -->
-			{#if backgroundVideo}
+			<!-- Background Video (always rendered when hasVideoInDraft) -->
+			{#if hasVideoInDraft}
 				<video 
-					src={backgroundVideo} 
+					src={backgroundVideo || ''} 
 					class="absolute inset-0 w-full h-full object-cover"
 					autoplay 
 					loop 
@@ -90,13 +112,13 @@
 			<div 
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
-					{!backgroundVideo && tokens?.backgroundColor 
+					{!hasVideoInDraft && tokens?.backgroundColor 
 						? (tokens.backgroundColor.includes('background:') 
 							? tokens.backgroundColor 
 							: tokens.backgroundColor.includes('url(')
 								? `background: ${tokens.backgroundColor} center/cover no-repeat;`
 								: `background: ${tokens.backgroundColor};`)
-						: !backgroundVideo ? 'background: #ffffff;' : 'background: transparent;'}
+						: !hasVideoInDraft ? 'background: #ffffff;' : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 				"

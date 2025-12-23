@@ -107,11 +107,17 @@
 	let backgroundImageUrl = '';
 	let isDragging = false;
 	
+	// Default image background (local)
+	const DEFAULT_IMAGE_BG = '/presets/images/preset-img.jpg';
+	
 	// Video upload state
 	let backgroundVideoUrl = '';
 	let showVideoCropModal = false;
 	let tempVideoFile: File | null = null;
 	let tempVideoPreviewUrl = '';
+	
+	// Default video background (local)
+	const DEFAULT_VIDEO_BG = '/presets/videos/14950008_1080_1920_60fps.mp4';
 	
 	// Pattern state
 	let selectedPattern = 'dots';
@@ -213,10 +219,16 @@
 						backgroundVideoUrl = videoUrl;
 					}
 				} else {
-					backgroundVideoUrl = '';
+					// Use default video if no custom video
+					backgroundVideoUrl = DEFAULT_VIDEO_BG;
 				}
 			}
 		}
+	}
+
+	// Reactive: Ensure default video is set when video type is selected
+	$: if (selectedType === 'video' && !backgroundVideoUrl && !isUserUpdate) {
+		backgroundVideoUrl = DEFAULT_VIDEO_BG;
 	}
 
 	function selectType(type: string) {
@@ -288,7 +300,9 @@
 				backgroundImageUrl = backgroundHistory.image;
 				updateBgColor(`url('${backgroundHistory.image}')`);
 			} else {
-				backgroundImageUrl = '';
+				// Use default image when no custom image uploaded
+				backgroundImageUrl = DEFAULT_IMAGE_BG;
+				updateBgColor(`url('${DEFAULT_IMAGE_BG}')`);
 			}
 		} else if (type === 'video') {
 			backgroundImageUrl = '';
@@ -323,7 +337,35 @@
 					console.error('[BackgroundSection] Failed to save:', e);
 				});
 			} else {
-				backgroundVideoUrl = '';
+				// Use default video when no custom video uploaded
+				backgroundVideoUrl = DEFAULT_VIDEO_BG;
+				
+				if (!$page) {
+					isUserUpdate = false;
+					return;
+				}
+				
+				const appearance = JSON.parse($page.draft_appearance || '{}');
+				if (!appearance.customTheme) appearance.customTheme = {};
+				
+				appearance.customTheme.backgroundVideo = DEFAULT_VIDEO_BG;
+				
+				if (!appearance.customTheme.backgrounds) {
+					appearance.customTheme.backgrounds = {};
+				}
+				appearance.customTheme.backgrounds.video = DEFAULT_VIDEO_BG;
+				
+				page.update(p => p ? {
+					...p,
+					draft_appearance: JSON.stringify(appearance)
+				} : p);
+				
+				// Save to DB in background (non-blocking)
+				api.saveDraft(username, {
+					draft_appearance: JSON.stringify(appearance)
+				}).catch(e => {
+					console.error('[BackgroundSection] Failed to save:', e);
+				});
 			}
 		} else if (type === 'pattern') {
 			backgroundImageUrl = '';
@@ -470,13 +512,21 @@
 	}
 
 	async function handleRemoveBackground() {
-		if (!confirm('Remove background image?')) return;
+		// Check if current image is the default one
+		if (backgroundImageUrl === DEFAULT_IMAGE_BG) {
+			alert('This is the default background image. Upload a custom image to replace it.');
+			return;
+		}
+		
+		if (!confirm('Remove custom background image and restore default?')) return;
 		
 		uploading = true;
 		try {
 			await api.removeBackground(username);
-			backgroundImageUrl = '';
-			updateBgColor('#ffffff');
+			// Restore default image instead of clearing
+			backgroundImageUrl = DEFAULT_IMAGE_BG;
+			backgroundHistory.image = ''; // Clear custom image from history
+			updateBgColor(`url('${DEFAULT_IMAGE_BG}')`);
 		} catch (e) {
 			console.error('Failed to remove background:', e);
 			alert('Failed to remove background');
@@ -645,19 +695,32 @@
 	}
 	
 	async function handleRemoveVideo() {
-		if (!confirm('Remove background video?')) return;
+		// Check if current video is the default one
+		if (backgroundVideoUrl === DEFAULT_VIDEO_BG) {
+			alert('This is the default background video. Upload a custom video to replace it.');
+			return;
+		}
+		
+		if (!confirm('Remove custom background video and restore default?')) return;
 		
 		uploading = true;
 		try {
 			await api.removeBackgroundVideo(username);
-			backgroundVideoUrl = '';
+			// Restore default video instead of clearing
+			backgroundVideoUrl = DEFAULT_VIDEO_BG;
+			backgroundHistory.video = ''; // Clear custom video from history
 			
-			// Update appearance
+			// Update appearance with default video
 			if (!$page) return;
 			const appearance = JSON.parse($page.draft_appearance || '{}');
-			if (appearance.customTheme) {
-				delete appearance.customTheme.backgroundVideo;
+			if (!appearance.customTheme) appearance.customTheme = {};
+			
+			appearance.customTheme.backgroundVideo = DEFAULT_VIDEO_BG;
+			
+			if (!appearance.customTheme.backgrounds) {
+				appearance.customTheme.backgrounds = {};
 			}
+			appearance.customTheme.backgrounds.video = DEFAULT_VIDEO_BG;
 			
 			page.update(p => p ? {
 				...p,
@@ -1041,12 +1104,12 @@
 							<button
 								on:click={handleRemoveBackground}
 								disabled={uploading}
-								class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+								class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 {backgroundImageUrl === DEFAULT_IMAGE_BG ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} text-white rounded-lg font-medium text-sm shadow-lg disabled:opacity-50 flex items-center gap-2"
 							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
 								</svg>
-								Remove
+								{backgroundImageUrl === DEFAULT_IMAGE_BG ? 'Default' : 'Remove'}
 							</button>
 						</div>
 						{#if uploading}
@@ -1131,12 +1194,12 @@
 							<button
 								on:click={handleRemoveVideo}
 								disabled={uploading}
-								class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-red-600 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+								class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 {backgroundVideoUrl === DEFAULT_VIDEO_BG ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} text-white rounded-lg font-medium text-sm shadow-lg disabled:opacity-50 flex items-center gap-2"
 							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
 								</svg>
-								Remove
+								{backgroundVideoUrl === DEFAULT_VIDEO_BG ? 'Default' : 'Remove'}
 							</button>
 						</div>
 						{#if uploading}
