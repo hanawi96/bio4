@@ -59,15 +59,13 @@
 		},
 		{ 
 			id: 'cross', 
-			name: 'Cross',
-			css: 'linear-gradient(currentColor 2px, transparent 2px), linear-gradient(90deg, currentColor 2px, transparent 2px)',
-			size: '40px 40px'
+			name: 'Circuit',
+			svg: `<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.25"><circle cx="10" cy="10" r="3"/><circle cx="70" cy="10" r="3"/><circle cx="10" cy="70" r="3"/><circle cx="70" cy="70" r="3"/><circle cx="40" cy="40" r="4"/><line x1="13" y1="10" x2="37" y2="40"/><line x1="67" y1="10" x2="43" y2="40"/><line x1="13" y1="70" x2="37" y2="43"/><line x1="67" y1="70" x2="43" y2="43"/><rect x="38" y="8" width="4" height="4"/><rect x="38" y="68" width="4" height="4"/><rect x="8" y="38" width="4" height="4"/><rect x="68" y="38" width="4" height="4"/></g></svg>`
 		},
 		{ 
 			id: 'zigzag', 
-			name: 'Zigzag',
-			css: 'linear-gradient(135deg, currentColor 25%, transparent 25%), linear-gradient(225deg, currentColor 25%, transparent 25%)',
-			size: '20px 20px'
+			name: 'Hexagon',
+			svg: `<svg width="56" height="100" xmlns="http://www.w3.org/2000/svg"><path d="M28 0L0 16v32l28 16 28-16V16L28 0zm0 6l22 12.5v25L28 56 6 43.5v-25L28 6z" fill="currentColor" opacity="0.15"/><path d="M28 50L0 66v32l28 16 28-16V66L28 50zm0 6l22 12.5v25L28 106 6 93.5v-25L28 56z" fill="currentColor" opacity="0.15"/></svg>`
 		},
 		{ 
 			id: 'organic', 
@@ -76,8 +74,8 @@
 		},
 		{ 
 			id: 'noise', 
-			name: 'Noise',
-			svg: `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence baseFrequency="0.9" numOctaves="3"/></filter><rect width="200" height="200" filter="url(#n)" opacity="0.15"/></svg>`
+			name: 'Topography',
+			svg: `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><path d="M20 10c-5 0-10 5-10 10s5 10 10 10 10-5 10-10-5-10-10-10zm0 3c4 0 7 3 7 7s-3 7-7 7-7-3-7-7 3-7 7-7z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><path d="M60 15c-8 0-15 7-15 15s7 15 15 15 15-7 15-15-7-15-15-15zm0 4c6 0 11 5 11 11s-5 11-11 11-11-5-11-11 5-11 11-11z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><path d="M30 60c-6 0-12 6-12 12s6 12 12 12 12-6 12-12-6-12-12-12zm0 3c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><path d="M75 65c-7 0-13 6-13 13s6 13 13 13 13-6 13-13-6-13-13-13zm0 3c6 0 10 4 10 10s-4 10-10 10-10-4-10-10 4-10 10-10z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"/></svg>`
 		},
 		{ 
 			id: 'waves', 
@@ -207,21 +205,19 @@
 					selectedPattern = 'dots';
 				} else if (bgColor.includes('repeating-linear-gradient(45deg')) {
 					selectedPattern = 'diagonal';
-				} else if (bgColor.includes('linear-gradient(135deg')) {
-					selectedPattern = 'zigzag';
 				} else if (bgColor.includes('linear-gradient') && bgColor.includes('90deg')) {
-					// Check if it's grid or cross
-					if (bgColor.includes('2px')) {
-						selectedPattern = 'cross';
-					} else {
-						selectedPattern = 'grid';
-					}
+					// Grid pattern (chỉ còn grid, không có cross nữa)
+					selectedPattern = 'grid';
 				} else if (bgColor.includes('url(') && bgColor.includes('svg')) {
 					// SVG pattern - detect by content
-					if (bgColor.includes('feTurbulence')) {
-						selectedPattern = 'noise';
-					} else if (bgColor.includes('path') && bgColor.includes('Q')) {
+					if (bgColor.includes('path') && bgColor.includes('Q')) {
 						selectedPattern = 'waves';
+					} else if (bgColor.includes('path') && bgColor.includes('L28 0L0 16')) {
+						selectedPattern = 'zigzag'; // Hexagon pattern
+					} else if (bgColor.includes('stroke="currentColor"') && bgColor.includes('fill="none"')) {
+						selectedPattern = 'noise'; // Topography pattern
+					} else if (bgColor.includes('circle') && bgColor.includes('line') && bgColor.includes('rect')) {
+						selectedPattern = 'cross'; // Circuit pattern
 					} else {
 						selectedPattern = 'organic';
 					}
