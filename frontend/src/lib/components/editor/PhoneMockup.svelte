@@ -15,7 +15,6 @@
 		try {
 			const appearance = JSON.parse($page.draft_appearance);
 			const videoUrl = appearance.customTheme?.backgroundVideo;
-			// Only return if URL exists and is valid
 			return videoUrl && videoUrl.trim() ? videoUrl : null;
 		} catch {
 			return null;

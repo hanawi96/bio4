@@ -134,7 +134,6 @@
 			const savedBackgrounds = appearance.customTheme?.backgrounds;
 			
 			if (savedBackgrounds) {
-				console.log('[BackgroundSection] Syncing history from DB:', savedBackgrounds);
 				backgroundHistory = {
 					solid: savedBackgrounds.solid || '#ffffff',
 					gradient: savedBackgrounds.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -157,8 +156,6 @@
 		const isThemeChange = currentThemeKey !== lastSyncedThemeKey;
 		
 		if (isThemeChange) {
-			console.log('[BackgroundSection] Theme changed, syncing with tokens.backgroundColor:', bgColor);
-			
 			currentBgColor = bgColor;
 			lastSyncedThemeKey = currentThemeKey;
 			
@@ -171,7 +168,6 @@
 				backgroundVideoUrl = videoUrl;
 				backgroundImageUrl = '';
 			} else if (bgColor.startsWith('background:') || bgColor.startsWith('background ')) {
-				// Pattern format: "background: ..." or "background ..."
 				selectedType = 'pattern';
 				backgroundImageUrl = '';
 				backgroundVideoUrl = '';
@@ -180,10 +176,10 @@
 				backgroundImageUrl = '';
 				backgroundVideoUrl = '';
 			} else if (bgColor.includes('url(')) {
-				selectedType = 'image';
-				backgroundVideoUrl = '';
 				const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
 				if (urlMatch && urlMatch[1].trim()) {
+					selectedType = 'image';
+					backgroundVideoUrl = '';
 					backgroundImageUrl = urlMatch[1];
 				} else {
 					selectedType = 'solid';
@@ -194,10 +190,6 @@
 				backgroundImageUrl = '';
 				backgroundVideoUrl = '';
 			}
-			
-			console.log('[BackgroundSection] Auto-detected type:', selectedType);
-			console.log('[BackgroundSection] backgroundImageUrl:', backgroundImageUrl);
-			console.log('[BackgroundSection] backgroundVideoUrl:', backgroundVideoUrl);
 		} else {
 			// Just sync color, don't change type
 			currentBgColor = bgColor;
@@ -221,8 +213,8 @@
 		}
 	}
 
-	function selectType(type: string) {
-		console.log('[BackgroundSection] Switching from', selectedType, 'to', type);
+	async function selectType(type: string) {
+		isUserUpdate = true;
 		
 		// Save current state to history before switching
 		if (selectedType === 'solid') {
@@ -237,23 +229,102 @@
 			backgroundHistory.pattern = currentBgColor;
 		}
 		
-		console.log('[BackgroundSection] Saved to history:', backgroundHistory);
-		
-		// Switch type
 		selectedType = type;
 		
-		// CRITICAL: Clear video from store when switching away from video
+		// Clear video from store when switching away from video
 		if (type !== 'video' && $page) {
 			const appearance = JSON.parse($page.draft_appearance || '{}');
 			if (appearance.customTheme?.backgroundVideo) {
-				console.log('[BackgroundSection] Clearing video from store');
 				delete appearance.customTheme.backgroundVideo;
+				
+				if (!appearance.customTheme.backgrounds) {
+					appearance.customTheme.backgrounds = {};
+				}
+				appearance.customTheme.backgrounds.video = backgroundHistory.video;
 				
 				page.update(p => p ? {
 					...p,
 					draft_appearance: JSON.stringify(appearance)
 				} : p);
+				
+				try {
+					await api.saveDraft(username, {
+						draft_appearance: JSON.stringify(appearance)
+					});
+				} catch (e) {
+					console.error('[BackgroundSection] Failed to save:', e);
+				}
 			}
+		}
+		
+		// Clear URLs when switching to non-media types
+		if (type !== 'image') {
+			backgroundImageUrl = '';
+		}
+		if (type !== 'video') {
+			backgroundVideoUrl = '';
+		}
+		
+		// Load from history
+		if (type === 'solid') {
+			if (backgroundHistory.solid) {
+				updateBgColor(backgroundHistory.solid);
+			} else {
+				updateBgColor('#ffffff');
+			}
+		} else if (type === 'gradient') {
+			if (backgroundHistory.gradient) {
+				updateBgColor(backgroundHistory.gradient);
+			} else {
+				updateBgGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg');
+			}
+		} else if (type === 'image') {
+			if (backgroundHistory.image && backgroundHistory.image.trim()) {
+				backgroundImageUrl = backgroundHistory.image;
+				updateBgColor(`url('${backgroundHistory.image}')`);
+			}
+		} else if (type === 'video') {
+			if (backgroundHistory.video && backgroundHistory.video.trim()) {
+				backgroundVideoUrl = backgroundHistory.video;
+				
+				if (!$page) {
+					isUserUpdate = false;
+					return;
+				}
+				
+				const appearance = JSON.parse($page.draft_appearance || '{}');
+				if (!appearance.customTheme) appearance.customTheme = {};
+				
+				appearance.customTheme.backgroundVideo = backgroundHistory.video;
+				
+				if (!appearance.customTheme.backgrounds) {
+					appearance.customTheme.backgrounds = {};
+				}
+				appearance.customTheme.backgrounds.video = backgroundHistory.video;
+				
+				page.update(p => p ? {
+					...p,
+					draft_appearance: JSON.stringify(appearance)
+				} : p);
+				
+				try {
+					await api.saveDraft(username, {
+						draft_appearance: JSON.stringify(appearance)
+					});
+				} catch (e) {
+					console.error('[BackgroundSection] Failed to save:', e);
+				}
+			}
+		} else if (type === 'pattern') {
+			if (backgroundHistory.pattern) {
+				updateBgColor(backgroundHistory.pattern);
+			}
+		}
+		
+		setTimeout(() => {
+			isUserUpdate = false;
+		}, 100);
+	}
 		}
 		
 		// Clear URLs when switching to non-media types
@@ -286,17 +357,46 @@
 		} else if (type === 'video') {
 			// Only load if URL is valid (non-empty)
 			if (backgroundHistory.video && backgroundHistory.video.trim()) {
+				console.log('[BackgroundSection] Restoring video from history:', backgroundHistory.video);
 				backgroundVideoUrl = backgroundHistory.video;
+				
 				// Update appearance with video
-				if (!$page) return;
+				if (!$page) {
+					console.error('[BackgroundSection] No $page available');
+					isUserUpdate = false;
+					return;
+				}
+				
 				const appearance = JSON.parse($page.draft_appearance || '{}');
 				if (!appearance.customTheme) appearance.customTheme = {};
+				
+				// FIX: Update BOTH backgroundVideo and backgrounds.video
 				appearance.customTheme.backgroundVideo = backgroundHistory.video;
 				
+				if (!appearance.customTheme.backgrounds) {
+					appearance.customTheme.backgrounds = {};
+				}
+				appearance.customTheme.backgrounds.video = backgroundHistory.video;
+				
+				console.log('[BackgroundSection] Updated appearance:', JSON.stringify(appearance));
+				
+				// Update store
 				page.update(p => p ? {
 					...p,
 					draft_appearance: JSON.stringify(appearance)
 				} : p);
+				
+				// FIX: Save to DB immediately
+				try {
+					await api.saveDraft(username, {
+						draft_appearance: JSON.stringify(appearance)
+					});
+					console.log('[BackgroundSection] Saved video restore to DB');
+				} catch (e) {
+					console.error('[BackgroundSection] Failed to save video restore:', e);
+				}
+			} else {
+				console.log('[BackgroundSection] No video in history to restore');
 			}
 		} else if (type === 'pattern') {
 			if (backgroundHistory.pattern) {
@@ -304,7 +404,16 @@
 			}
 		}
 		
-		console.log('[BackgroundSection] Loaded from history for type:', type);
+		console.log('[BackgroundSection] After update backgroundVideoUrl:', backgroundVideoUrl);
+		console.log('[BackgroundSection] After update backgroundImageUrl:', backgroundImageUrl);
+		console.log('[BackgroundSection] After update backgroundHistory:', JSON.stringify(backgroundHistory));
+		console.log('[BackgroundSection] After update $page.draft_appearance:', $page?.draft_appearance);
+		console.log('=== [BackgroundSection] SELECT TYPE END ===');
+		
+		// Reset flag after a short delay to allow updates to propagate
+		setTimeout(() => {
+			isUserUpdate = false;
+		}, 100);
 	}
 
 	async function updateBgColor(color: string) {
