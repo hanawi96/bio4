@@ -576,8 +576,8 @@
 			return;
 		}
 
-		if (file.size > 10 * 1024 * 1024) {
-			alert('Video must be less than 10MB');
+		if (file.size > 20 * 1024 * 1024) {
+			alert('Video must be less than 20MB');
 			return;
 		}
 
@@ -746,8 +746,8 @@
 			return;
 		}
 
-		if (file.size > 10 * 1024 * 1024) {
-			alert('Video must be less than 10MB');
+		if (file.size > 20 * 1024 * 1024) {
+			alert('Video must be less than 20MB');
 			return;
 		}
 
@@ -1249,7 +1249,7 @@
 									<div class="flex items-center gap-3 text-xs text-gray-500">
 										<span>MP4, WebM</span>
 										<span>•</span>
-										<span>Max 10MB</span>
+										<span>Max 20MB</span>
 									</div>
 								{/if}
 							</div>

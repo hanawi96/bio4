@@ -642,6 +642,7 @@
 		outputWidth={1200}
 		outputHeight={400}
 		title="Adjust Cover Image"
+		uploading={uploading}
 		on:accept={handleCropAccept}
 		on:cancel={handleCropCancel}
 	/>

@@ -517,9 +517,9 @@ app.post('/background-video/:username', async (c) => {
 			return c.json({ error: 'Invalid file type. Allowed: MP4, WebM' }, 400);
 		}
 
-		const MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB
+		const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB
 		if (file.size > MAX_VIDEO_SIZE) {
-			return c.json({ error: 'File too large. Max 10MB' }, 400);
+			return c.json({ error: 'File too large. Max 20MB' }, 400);
 		}
 
 		// Get page with draft_appearance
