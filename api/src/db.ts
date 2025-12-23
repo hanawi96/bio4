@@ -32,7 +32,7 @@ export async function saveDraft(
 			.prepare('SELECT draft_profile FROM bio_pages WHERE id = ?')
 			.bind(pageId)
 			.first<{ draft_profile: string }>();
-		
+
 		let currentProfile: any = {};
 		if (currentPage?.draft_profile) {
 			try {
@@ -41,7 +41,7 @@ export async function saveDraft(
 				console.error('Failed to parse draft_profile:', e);
 			}
 		}
-		
+
 		// Filter out undefined values from new data
 		const cleanedProfile: any = {};
 		Object.entries(draftData.profile).forEach(([key, value]) => {
@@ -49,24 +49,24 @@ export async function saveDraft(
 				cleanedProfile[key] = value;
 			}
 		});
-		
+
 		// Merge new data with existing data (only defined values)
 		const mergedProfile = {
 			...currentProfile,
 			...cleanedProfile
 		};
-		
+
 		fields.push('draft_profile = ?');
 		values.push(JSON.stringify(mergedProfile));
 	}
-	
+
 	if (draftData.appearance !== undefined) {
 		// Get current draft_appearance to merge
 		const currentPage = await db
 			.prepare('SELECT draft_appearance FROM bio_pages WHERE id = ?')
 			.bind(pageId)
 			.first<{ draft_appearance: string }>();
-		
+
 		let currentAppearance: any = {};
 		if (currentPage?.draft_appearance) {
 			try {
@@ -75,7 +75,7 @@ export async function saveDraft(
 				console.error('Failed to parse draft_appearance:', e);
 			}
 		}
-		
+
 		// Filter out undefined values from new data
 		const cleanedAppearance: any = {};
 		Object.entries(draftData.appearance).forEach(([key, value]) => {
@@ -83,13 +83,13 @@ export async function saveDraft(
 				cleanedAppearance[key] = value;
 			}
 		});
-		
+
 		// Merge new data with existing data (only defined values)
 		const mergedAppearance = {
 			...currentAppearance,
 			...cleanedAppearance
 		};
-		
+
 		fields.push('draft_appearance = ?');
 		values.push(JSON.stringify(mergedAppearance));
 	}
@@ -355,7 +355,7 @@ export async function getFullPageData(db: D1Database, username: string, useDraft
 	if (!page) return null;
 
 	// Parse profile data
-	const profileData = useDraft 
+	const profileData = useDraft
 		? (page.draft_profile ? JSON.parse(page.draft_profile) : {})
 		: (page.published_profile ? JSON.parse(page.published_profile) : {});
 

@@ -194,12 +194,18 @@
 			// Just sync color, don't change type
 			currentBgColor = bgColor;
 			
-			// Sync image URL if type is image
+			// Sync image URL if type is image (only if bgColor matches)
 			if (selectedType === 'image' && bgColor.includes('url(')) {
 				const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
 				if (urlMatch && urlMatch[1].trim()) {
-					backgroundImageUrl = urlMatch[1];
+					const newImageUrl = urlMatch[1];
+					if (backgroundImageUrl !== newImageUrl) {
+						backgroundImageUrl = newImageUrl;
+					}
 				}
+			} else if (selectedType === 'image' && !bgColor.includes('url(')) {
+				// If type is image but bgColor is not url, clear image
+				backgroundImageUrl = '';
 			}
 			
 			// Sync video URL if type is video
@@ -207,13 +213,18 @@
 				const appearance = JSON.parse($page?.draft_appearance || '{}');
 				const videoUrl = appearance.customTheme?.backgroundVideo;
 				if (videoUrl && videoUrl.trim()) {
-					backgroundVideoUrl = videoUrl;
+					if (backgroundVideoUrl !== videoUrl) {
+						backgroundVideoUrl = videoUrl;
+					}
+				} else {
+					// If type is video but no videoUrl, clear video
+					backgroundVideoUrl = '';
 				}
 			}
 		}
 	}
 
-	async function selectType(type: string) {
+	function selectType(type: string) {
 		isUserUpdate = true;
 		
 		// Save current state to history before switching
@@ -231,7 +242,7 @@
 		
 		selectedType = type;
 		
-		// Clear video from store when switching away from video
+		// Clear video from store when switching away from video (non-blocking)
 		if (type !== 'video' && $page) {
 			const appearance = JSON.parse($page.draft_appearance || '{}');
 			if (appearance.customTheme?.backgroundVideo) {
@@ -247,43 +258,46 @@
 					draft_appearance: JSON.stringify(appearance)
 				} : p);
 				
-				try {
-					await api.saveDraft(username, {
-						draft_appearance: JSON.stringify(appearance)
-					});
-				} catch (e) {
+				// Save to DB in background (non-blocking)
+				api.saveDraft(username, {
+					draft_appearance: JSON.stringify(appearance)
+				}).catch(e => {
 					console.error('[BackgroundSection] Failed to save:', e);
-				}
+				});
 			}
 		}
 		
-		// Clear URLs when switching to non-media types
-		if (type !== 'image') {
-			backgroundImageUrl = '';
-		}
-		if (type !== 'video') {
-			backgroundVideoUrl = '';
-		}
-		
-		// Load from history
+		// Load from history and update URLs
 		if (type === 'solid') {
+			backgroundImageUrl = '';
+			backgroundVideoUrl = '';
+			
 			if (backgroundHistory.solid) {
 				updateBgColor(backgroundHistory.solid);
 			} else {
 				updateBgColor('#ffffff');
 			}
 		} else if (type === 'gradient') {
+			backgroundImageUrl = '';
+			backgroundVideoUrl = '';
+			
 			if (backgroundHistory.gradient) {
 				updateBgColor(backgroundHistory.gradient);
 			} else {
 				updateBgGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg');
 			}
 		} else if (type === 'image') {
+			backgroundVideoUrl = '';
+			
 			if (backgroundHistory.image && backgroundHistory.image.trim()) {
 				backgroundImageUrl = backgroundHistory.image;
 				updateBgColor(`url('${backgroundHistory.image}')`);
+			} else {
+				backgroundImageUrl = '';
 			}
 		} else if (type === 'video') {
+			backgroundImageUrl = '';
+			
 			if (backgroundHistory.video && backgroundHistory.video.trim()) {
 				backgroundVideoUrl = backgroundHistory.video;
 				
@@ -307,15 +321,19 @@
 					draft_appearance: JSON.stringify(appearance)
 				} : p);
 				
-				try {
-					await api.saveDraft(username, {
-						draft_appearance: JSON.stringify(appearance)
-					});
-				} catch (e) {
+				// Save to DB in background (non-blocking)
+				api.saveDraft(username, {
+					draft_appearance: JSON.stringify(appearance)
+				}).catch(e => {
 					console.error('[BackgroundSection] Failed to save:', e);
-				}
+				});
+			} else {
+				backgroundVideoUrl = '';
 			}
 		} else if (type === 'pattern') {
+			backgroundImageUrl = '';
+			backgroundVideoUrl = '';
+			
 			if (backgroundHistory.pattern) {
 				updateBgColor(backgroundHistory.pattern);
 			}
@@ -323,7 +341,7 @@
 		
 		setTimeout(() => {
 			isUserUpdate = false;
-		}, 100);
+		}, 500);
 	}
 
 	async function updateBgColor(color: string) {
