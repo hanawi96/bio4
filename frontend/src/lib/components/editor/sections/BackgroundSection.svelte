@@ -325,116 +325,20 @@
 			isUserUpdate = false;
 		}, 100);
 	}
-		}
-		
-		// Clear URLs when switching to non-media types
-		if (type !== 'image') {
-			backgroundImageUrl = '';
-		}
-		if (type !== 'video') {
-			backgroundVideoUrl = '';
-		}
-		
-		// Load from history
-		if (type === 'solid') {
-			if (backgroundHistory.solid) {
-				updateBgColor(backgroundHistory.solid);
-			} else {
-				updateBgColor('#ffffff');
-			}
-		} else if (type === 'gradient') {
-			if (backgroundHistory.gradient) {
-				updateBgColor(backgroundHistory.gradient);
-			} else {
-				updateBgGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg');
-			}
-		} else if (type === 'image') {
-			// Only load if URL is valid (non-empty)
-			if (backgroundHistory.image && backgroundHistory.image.trim()) {
-				backgroundImageUrl = backgroundHistory.image;
-				updateBgColor(`url('${backgroundHistory.image}')`);
-			}
-		} else if (type === 'video') {
-			// Only load if URL is valid (non-empty)
-			if (backgroundHistory.video && backgroundHistory.video.trim()) {
-				console.log('[BackgroundSection] Restoring video from history:', backgroundHistory.video);
-				backgroundVideoUrl = backgroundHistory.video;
-				
-				// Update appearance with video
-				if (!$page) {
-					console.error('[BackgroundSection] No $page available');
-					isUserUpdate = false;
-					return;
-				}
-				
-				const appearance = JSON.parse($page.draft_appearance || '{}');
-				if (!appearance.customTheme) appearance.customTheme = {};
-				
-				// FIX: Update BOTH backgroundVideo and backgrounds.video
-				appearance.customTheme.backgroundVideo = backgroundHistory.video;
-				
-				if (!appearance.customTheme.backgrounds) {
-					appearance.customTheme.backgrounds = {};
-				}
-				appearance.customTheme.backgrounds.video = backgroundHistory.video;
-				
-				console.log('[BackgroundSection] Updated appearance:', JSON.stringify(appearance));
-				
-				// Update store
-				page.update(p => p ? {
-					...p,
-					draft_appearance: JSON.stringify(appearance)
-				} : p);
-				
-				// FIX: Save to DB immediately
-				try {
-					await api.saveDraft(username, {
-						draft_appearance: JSON.stringify(appearance)
-					});
-					console.log('[BackgroundSection] Saved video restore to DB');
-				} catch (e) {
-					console.error('[BackgroundSection] Failed to save video restore:', e);
-				}
-			} else {
-				console.log('[BackgroundSection] No video in history to restore');
-			}
-		} else if (type === 'pattern') {
-			if (backgroundHistory.pattern) {
-				updateBgColor(backgroundHistory.pattern);
-			}
-		}
-		
-		console.log('[BackgroundSection] After update backgroundVideoUrl:', backgroundVideoUrl);
-		console.log('[BackgroundSection] After update backgroundImageUrl:', backgroundImageUrl);
-		console.log('[BackgroundSection] After update backgroundHistory:', JSON.stringify(backgroundHistory));
-		console.log('[BackgroundSection] After update $page.draft_appearance:', $page?.draft_appearance);
-		console.log('=== [BackgroundSection] SELECT TYPE END ===');
-		
-		// Reset flag after a short delay to allow updates to propagate
-		setTimeout(() => {
-			isUserUpdate = false;
-		}, 100);
-	}
 
 	async function updateBgColor(color: string) {
-		console.log('[BackgroundSection] updateBgColor called with:', color);
 		isUserUpdate = true;
 		currentBgColor = color;
 		
 		// Update history
 		if (selectedType === 'solid' || selectedType === 'gradient' || selectedType === 'pattern') {
 			backgroundHistory[selectedType] = color;
-			console.log('[BackgroundSection] Updated history for', selectedType, ':', color);
 		}
 
 		// Update page store immediately (optimistic)
 		page.update(p => {
-			if (!p) {
-				console.log('[BackgroundSection] No page in store');
-				return p;
-			}
+			if (!p) return p;
 
-			console.log('[BackgroundSection] Current draft_appearance:', p.draft_appearance);
 			const appearance = JSON.parse(p.draft_appearance || '{}');
 
 			// Update customTheme
@@ -447,18 +351,14 @@
 					borderRadius: 12,
 					spacing: 16
 				};
-				console.log('[BackgroundSection] Created new customTheme:', appearance.customTheme);
 			} else {
 				appearance.customTheme.backgroundColor = color;
-				console.log('[BackgroundSection] Updated customTheme.backgroundColor:', color);
 			}
 			
 			// Save history to DB
 			appearance.customTheme.backgrounds = { ...backgroundHistory };
-			console.log('[BackgroundSection] Saved backgrounds to DB:', appearance.customTheme.backgrounds);
 
 			const newDraftAppearance = JSON.stringify(appearance);
-			console.log('[BackgroundSection] New draft_appearance:', newDraftAppearance);
 
 			return {
 				...p,
@@ -473,11 +373,9 @@
 				const currentPage = $page;
 				if (!currentPage) return;
 
-				console.log('[BackgroundSection] Saving to API...');
 				await api.saveDraft(username, {
 					draft_appearance: currentPage.draft_appearance
 				});
-				console.log('[BackgroundSection] Saved successfully');
 			} catch (e) {
 				console.error('[BackgroundSection] Failed to save background:', e);
 			} finally {
