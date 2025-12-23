@@ -14,7 +14,9 @@
 		if (!$page?.draft_appearance) return null;
 		try {
 			const appearance = JSON.parse($page.draft_appearance);
-			return appearance.customTheme?.backgroundVideo || null;
+			const videoUrl = appearance.customTheme?.backgroundVideo;
+			// Only return if URL exists and is valid
+			return videoUrl && videoUrl.trim() ? videoUrl : null;
 		} catch {
 			return null;
 		}
@@ -25,6 +27,15 @@
 		console.log('[PhoneMockup] tokens:', tokens);
 		console.log('[PhoneMockup] tokens.backgroundColor:', tokens?.backgroundColor);
 		console.log('[PhoneMockup] backgroundVideo:', backgroundVideo);
+		
+		// Check if backgroundColor is a pattern
+		if (tokens?.backgroundColor) {
+			const isPattern = tokens.backgroundColor.includes('background:');
+			console.log('[PhoneMockup] Is pattern?', isPattern);
+			if (isPattern) {
+				console.log('[PhoneMockup] Pattern detected! Full value:', tokens.backgroundColor);
+			}
+		}
 	}
 
 	// Avatar size mapping
@@ -80,9 +91,13 @@
 			<div 
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
-					{!backgroundVideo && tokens?.backgroundColor?.includes('url(') 
-						? `background: ${tokens.backgroundColor} center/cover no-repeat;` 
-						: !backgroundVideo ? `background: ${tokens?.backgroundColor || '#ffffff'};` : 'background: transparent;'}
+					{!backgroundVideo && tokens?.backgroundColor 
+						? (tokens.backgroundColor.includes('background:') 
+							? tokens.backgroundColor 
+							: tokens.backgroundColor.includes('url(')
+								? `background: ${tokens.backgroundColor} center/cover no-repeat;`
+								: `background: ${tokens.backgroundColor};`)
+						: !backgroundVideo ? 'background: #ffffff;' : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 				"

@@ -101,7 +101,19 @@ export function triggerAutosave(username: string) {
 export async function publishChanges(username: string): Promise<boolean> {
 	try {
 		saveStatus.set('saving');
+		
+		// Publish page (cleanup logic is now in the publish endpoint)
 		await api.publishPage(username);
+		
+		// Reload data to sync UI with cleaned DB
+		try {
+			const freshData = await api.getEditorData(username);
+			page.set(freshData.page);
+			console.log('[Publish] Reloaded fresh data after publish');
+		} catch (e) {
+			console.error('[Publish] Failed to reload data:', e);
+		}
+		
 		saveStatus.set('saved');
 		return true;
 	} catch (error) {

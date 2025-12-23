@@ -310,6 +310,8 @@ class ApiClient {
 		if (!res.ok) throw new Error('Failed to remove video');
 		return res.json();
 	}
+	
+	// ============ PUBLISH CLEANUP ============
 }
 
 export const api = new ApiClient(API_BASE_URL);

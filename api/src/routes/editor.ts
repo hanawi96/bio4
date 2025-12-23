@@ -79,6 +79,78 @@ app.post('/:username/publish', async (c) => {
 		return c.json({ error: 'Page not found' }, 404);
 	}
 
+	// Parse appearance to get active background type
+	let appearance: any = {};
+	try {
+		appearance = JSON.parse(page.draft_appearance || '{}');
+	} catch (e) {
+		console.error('[Publish] Failed to parse draft_appearance:', e);
+	}
+
+	const backgrounds = appearance.customTheme?.backgrounds || {};
+	const backgroundVideo = appearance.customTheme?.backgroundVideo;
+	const backgroundColor = appearance.customTheme?.backgroundColor || '';
+
+	// Determine active background type
+	let activeType = 'solid'; // default
+	if (backgroundVideo) {
+		activeType = 'video';
+	} else if (backgroundColor.includes('url(')) {
+		activeType = 'image';
+	} else if (backgroundColor.includes('gradient')) {
+		activeType = 'gradient';
+	} else if (backgroundColor.includes('background:')) {
+		activeType = 'pattern';
+	}
+
+	console.log('[Publish] Active background type:', activeType);
+	console.log('[Publish] Backgrounds history:', backgrounds);
+
+	// Delete inactive backgrounds from R2 and clear from DB
+	const typesToCleanup = ['image', 'video'].filter(t => t !== activeType);
+	
+	for (const type of typesToCleanup) {
+		const url = backgrounds[type];
+		if (!url) continue;
+		
+		try {
+			// Extract storage key from URL
+			const urlParts = url.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+			
+			if (type === 'image' && url.includes('/backgrounds/')) {
+				await c.env.STORAGE.delete(`backgrounds/${storageKey}`);
+				console.log(`[Publish] Deleted inactive image: backgrounds/${storageKey}`);
+			} else if (type === 'video' && url.includes('/background-videos/')) {
+				await c.env.STORAGE.delete(`background-videos/${storageKey}`);
+				console.log(`[Publish] Deleted inactive video: background-videos/${storageKey}`);
+			}
+			
+			// Clear from history
+			backgrounds[type] = '';
+		} catch (e) {
+			console.error(`[Publish] Failed to delete ${type}:`, e);
+		}
+	}
+
+	// Update appearance with cleaned backgrounds
+	if (appearance.customTheme) {
+		appearance.customTheme.backgrounds = backgrounds;
+		
+		// Also clear backgroundVideo if not active
+		if (activeType !== 'video' && appearance.customTheme.backgroundVideo) {
+			delete appearance.customTheme.backgroundVideo;
+		}
+	}
+
+	// Save cleaned appearance back to draft before publishing
+	await c.env.DB.prepare(
+		'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+	).bind(JSON.stringify(appearance), page.id).run();
+
+	console.log('[Publish] Cleaned backgrounds:', backgrounds);
+
+	// Now publish
 	await publishDraft(c.env.DB, page.id);
 
 	// TODO: Invalidate cache if using Cloudflare Cache API

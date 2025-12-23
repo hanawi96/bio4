@@ -36,6 +36,54 @@
 		{ name: 'Aurora', gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', from: '#a8edea', to: '#fed6e3', direction: '135deg' }
 	];
 
+	const patterns = [
+		{ 
+			id: 'dots', 
+			name: 'Dots',
+			css: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
+			size: '20px 20px'
+		},
+		{ 
+			id: 'grid', 
+			name: 'Grid',
+			css: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)',
+			size: '30px 30px'
+		},
+		{ 
+			id: 'diagonal', 
+			name: 'Diagonal',
+			css: 'repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px)',
+			size: 'auto'
+		},
+		{ 
+			id: 'cross', 
+			name: 'Cross',
+			css: 'linear-gradient(currentColor 2px, transparent 2px), linear-gradient(90deg, currentColor 2px, transparent 2px)',
+			size: '40px 40px'
+		},
+		{ 
+			id: 'zigzag', 
+			name: 'Zigzag',
+			css: 'linear-gradient(135deg, currentColor 25%, transparent 25%), linear-gradient(225deg, currentColor 25%, transparent 25%)',
+			size: '20px 20px'
+		},
+		{ 
+			id: 'organic', 
+			name: 'Organic',
+			svg: `<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><path d="M30 10c-8 0-12 8-12 12s4 8 8 12c4-4 12-8 12-12s-4-12-8-12z" fill="currentColor" opacity="0.3"/></svg>`
+		},
+		{ 
+			id: 'noise', 
+			name: 'Noise',
+			svg: `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence baseFrequency="0.9" numOctaves="3"/></filter><rect width="200" height="200" filter="url(#n)" opacity="0.15"/></svg>`
+		},
+		{ 
+			id: 'waves', 
+			name: 'Waves',
+			svg: `<svg width="100" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q 25 0, 50 10 T 100 10" stroke="currentColor" fill="none" stroke-width="2" opacity="0.3"/></svg>`
+		}
+	];
+
 	let selectedType = 'solid';
 	let currentBgColor = '#ffffff';
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -64,6 +112,41 @@
 	let showVideoCropModal = false;
 	let tempVideoFile: File | null = null;
 	let tempVideoPreviewUrl = '';
+	
+	// Pattern state
+	let selectedPattern = 'dots';
+	let patternColor = '#e5e7eb';
+	let patternBgColor = '#ffffff';
+	
+	// Background history (session-only, not saved to DB)
+	let backgroundHistory = {
+		solid: '#ffffff',
+		gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+		image: '',
+		video: '',
+		pattern: ''
+	};
+
+	// Reactive: Sync backgroundHistory from DB when draft_appearance changes
+	$: if ($page?.draft_appearance && !isUserUpdate) {
+		try {
+			const appearance = JSON.parse($page.draft_appearance);
+			const savedBackgrounds = appearance.customTheme?.backgrounds;
+			
+			if (savedBackgrounds) {
+				console.log('[BackgroundSection] Syncing history from DB:', savedBackgrounds);
+				backgroundHistory = {
+					solid: savedBackgrounds.solid || '#ffffff',
+					gradient: savedBackgrounds.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+					image: (savedBackgrounds.image && savedBackgrounds.image.trim()) ? savedBackgrounds.image : '',
+					video: (savedBackgrounds.video && savedBackgrounds.video.trim()) ? savedBackgrounds.video : '',
+					pattern: savedBackgrounds.pattern || ''
+				};
+			}
+		} catch (e) {
+			console.error('[BackgroundSection] Failed to parse draft_appearance:', e);
+		}
+	}
 
 	// Reactive: Sync with appearance tokens (only when theme changes)
 	$: if ($appearance?.tokens?.backgroundColor && !isUserUpdate) {
@@ -79,27 +162,42 @@
 			currentBgColor = bgColor;
 			lastSyncedThemeKey = currentThemeKey;
 			
-			// Check for video first
+			// Get appearance for video check
 			const appearance = JSON.parse($page?.draft_appearance || '{}');
 			const videoUrl = appearance.customTheme?.backgroundVideo;
 			
-			if (videoUrl) {
+			if (videoUrl && videoUrl.trim()) {
 				selectedType = 'video';
 				backgroundVideoUrl = videoUrl;
+				backgroundImageUrl = '';
+			} else if (bgColor.startsWith('background:') || bgColor.startsWith('background ')) {
+				// Pattern format: "background: ..." or "background ..."
+				selectedType = 'pattern';
+				backgroundImageUrl = '';
+				backgroundVideoUrl = '';
 			} else if (bgColor.includes('gradient')) {
 				selectedType = 'gradient';
+				backgroundImageUrl = '';
+				backgroundVideoUrl = '';
 			} else if (bgColor.includes('url(')) {
 				selectedType = 'image';
-				// Extract URL from url('...')
+				backgroundVideoUrl = '';
 				const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
-				if (urlMatch) {
+				if (urlMatch && urlMatch[1].trim()) {
 					backgroundImageUrl = urlMatch[1];
+				} else {
+					selectedType = 'solid';
+					backgroundImageUrl = '';
 				}
 			} else {
 				selectedType = 'solid';
+				backgroundImageUrl = '';
+				backgroundVideoUrl = '';
 			}
 			
 			console.log('[BackgroundSection] Auto-detected type:', selectedType);
+			console.log('[BackgroundSection] backgroundImageUrl:', backgroundImageUrl);
+			console.log('[BackgroundSection] backgroundVideoUrl:', backgroundVideoUrl);
 		} else {
 			// Just sync color, don't change type
 			currentBgColor = bgColor;
@@ -107,7 +205,7 @@
 			// Sync image URL if type is image
 			if (selectedType === 'image' && bgColor.includes('url(')) {
 				const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
-				if (urlMatch) {
+				if (urlMatch && urlMatch[1].trim()) {
 					backgroundImageUrl = urlMatch[1];
 				}
 			}
@@ -116,7 +214,7 @@
 			if (selectedType === 'video') {
 				const appearance = JSON.parse($page?.draft_appearance || '{}');
 				const videoUrl = appearance.customTheme?.backgroundVideo;
-				if (videoUrl) {
+				if (videoUrl && videoUrl.trim()) {
 					backgroundVideoUrl = videoUrl;
 				}
 			}
@@ -124,23 +222,101 @@
 	}
 
 	function selectType(type: string) {
-		selectedType = type;
-		console.log('[BackgroundSection] User manually selected type:', type);
+		console.log('[BackgroundSection] Switching from', selectedType, 'to', type);
 		
-		// Reset to appropriate default color when switching types
-		if (type === 'solid' && currentBgColor.includes('gradient')) {
-			// If switching to solid from gradient, use white as default
-			updateBgColor('#ffffff');
-		} else if (type === 'gradient' && !currentBgColor.includes('gradient')) {
-			// If switching to gradient from solid, use default gradient
-			updateBgGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg');
+		// Save current state to history before switching
+		if (selectedType === 'solid') {
+			backgroundHistory.solid = currentBgColor;
+		} else if (selectedType === 'gradient') {
+			backgroundHistory.gradient = currentBgColor;
+		} else if (selectedType === 'image') {
+			backgroundHistory.image = backgroundImageUrl;
+		} else if (selectedType === 'video') {
+			backgroundHistory.video = backgroundVideoUrl;
+		} else if (selectedType === 'pattern') {
+			backgroundHistory.pattern = currentBgColor;
 		}
+		
+		console.log('[BackgroundSection] Saved to history:', backgroundHistory);
+		
+		// Switch type
+		selectedType = type;
+		
+		// CRITICAL: Clear video from store when switching away from video
+		if (type !== 'video' && $page) {
+			const appearance = JSON.parse($page.draft_appearance || '{}');
+			if (appearance.customTheme?.backgroundVideo) {
+				console.log('[BackgroundSection] Clearing video from store');
+				delete appearance.customTheme.backgroundVideo;
+				
+				page.update(p => p ? {
+					...p,
+					draft_appearance: JSON.stringify(appearance)
+				} : p);
+			}
+		}
+		
+		// Clear URLs when switching to non-media types
+		if (type !== 'image') {
+			backgroundImageUrl = '';
+		}
+		if (type !== 'video') {
+			backgroundVideoUrl = '';
+		}
+		
+		// Load from history
+		if (type === 'solid') {
+			if (backgroundHistory.solid) {
+				updateBgColor(backgroundHistory.solid);
+			} else {
+				updateBgColor('#ffffff');
+			}
+		} else if (type === 'gradient') {
+			if (backgroundHistory.gradient) {
+				updateBgColor(backgroundHistory.gradient);
+			} else {
+				updateBgGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg');
+			}
+		} else if (type === 'image') {
+			// Only load if URL is valid (non-empty)
+			if (backgroundHistory.image && backgroundHistory.image.trim()) {
+				backgroundImageUrl = backgroundHistory.image;
+				updateBgColor(`url('${backgroundHistory.image}')`);
+			}
+		} else if (type === 'video') {
+			// Only load if URL is valid (non-empty)
+			if (backgroundHistory.video && backgroundHistory.video.trim()) {
+				backgroundVideoUrl = backgroundHistory.video;
+				// Update appearance with video
+				if (!$page) return;
+				const appearance = JSON.parse($page.draft_appearance || '{}');
+				if (!appearance.customTheme) appearance.customTheme = {};
+				appearance.customTheme.backgroundVideo = backgroundHistory.video;
+				
+				page.update(p => p ? {
+					...p,
+					draft_appearance: JSON.stringify(appearance)
+				} : p);
+			}
+		} else if (type === 'pattern') {
+			if (backgroundHistory.pattern) {
+				updateBgColor(backgroundHistory.pattern);
+			}
+		}
+		
+		console.log('[BackgroundSection] Loaded from history for type:', type);
 	}
 
 	async function updateBgColor(color: string) {
 		console.log('[BackgroundSection] updateBgColor called with:', color);
 		isUserUpdate = true;
 		currentBgColor = color;
+		
+		// Update history
+		if (selectedType === 'solid' || selectedType === 'gradient' || selectedType === 'pattern') {
+			backgroundHistory[selectedType] = color;
+			console.log('[BackgroundSection] Updated history for', selectedType, ':', color);
+		}
 
 		// Update page store immediately (optimistic)
 		page.update(p => {
@@ -167,6 +343,10 @@
 				appearance.customTheme.backgroundColor = color;
 				console.log('[BackgroundSection] Updated customTheme.backgroundColor:', color);
 			}
+			
+			// Save history to DB
+			appearance.customTheme.backgrounds = { ...backgroundHistory };
+			console.log('[BackgroundSection] Saved backgrounds to DB:', appearance.customTheme.backgrounds);
 
 			const newDraftAppearance = JSON.stringify(appearance);
 			console.log('[BackgroundSection] New draft_appearance:', newDraftAppearance);
@@ -248,6 +428,7 @@
 
 			const result = await api.uploadBackground(username, croppedFile);
 			backgroundImageUrl = result.url;
+			backgroundHistory.image = result.url; // Save to history
 			
 			updateBgColor(`url('${result.url}')`);
 
@@ -378,6 +559,7 @@
 		try {
 			const result = await api.uploadBackgroundVideo(username, tempVideoFile);
 			backgroundVideoUrl = result.url;
+			backgroundHistory.video = result.url; // Save to history
 			
 			// Update appearance with video URL
 			if (!$page) return;
@@ -411,6 +593,35 @@
 		URL.revokeObjectURL(tempVideoPreviewUrl);
 		tempVideoPreviewUrl = '';
 		tempVideoFile = null;
+	}
+	
+	function getPatternStyle(patternId: string, color: string, bgColor: string): string {
+		const pattern = patterns.find(p => p.id === patternId);
+		console.log('[getPatternStyle] patternId:', patternId, 'pattern:', pattern);
+		
+		if (!pattern) return `background: ${bgColor};`;
+		
+		if (pattern.svg) {
+			// SVG pattern - encode as data URI
+			const svg = pattern.svg.replace(/currentColor/g, color);
+			const encoded = btoa(svg);
+			const result = `background: url('data:image/svg+xml;base64,${encoded}') repeat, ${bgColor};`;
+			console.log('[getPatternStyle] SVG result:', result);
+			return result;
+		} else {
+			// CSS pattern
+			const css = pattern.css!.replace(/currentColor/g, color);
+			const result = `background: ${css}, ${bgColor}; background-size: ${pattern.size};`;
+			console.log('[getPatternStyle] CSS result:', result);
+			return result;
+		}
+	}
+	
+	function updatePattern() {
+		console.log('[updatePattern] selectedPattern:', selectedPattern, 'patternColor:', patternColor, 'patternBgColor:', patternBgColor);
+		const patternStyle = getPatternStyle(selectedPattern, patternColor, patternBgColor);
+		console.log('[updatePattern] patternStyle:', patternStyle);
+		updateBgColor(patternStyle);
 	}
 	
 	async function handleRemoveVideo() {
@@ -965,16 +1176,90 @@
 			</div>
 		{/if}
 
-		<!-- Pattern (Coming Soon) -->
+		<!-- Pattern -->
 		{#if selectedType === 'pattern'}
-			<div class="text-center py-12 bg-gray-50 rounded-xl">
-				<div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-					<svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-					</svg>
+			<div class="space-y-4">
+				<!-- Pattern Presets -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">Pattern Style</label>
+					<div class="grid grid-cols-4 gap-2">
+						{#each patterns as pattern}
+							<button
+								on:click={() => { selectedPattern = pattern.id; updatePattern(); }}
+								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
+								title={pattern.name}
+							>
+								<div 
+									class="w-full h-full"
+									style={getPatternStyle(pattern.id, patternColor, patternBgColor)}
+								></div>
+								{#if selectedPattern === pattern.id}
+									<div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+										<svg class="w-6 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+											<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+										</svg>
+									</div>
+								{/if}
+							</button>
+						{/each}
+					</div>
 				</div>
-				<p class="text-sm font-medium text-gray-900 mb-1">Pattern Backgrounds</p>
-				<p class="text-xs text-gray-500">Coming soon</p>
+
+				<!-- Pattern Customization -->
+				<div class="p-4 bg-gray-50 rounded-xl space-y-3">
+					<h4 class="text-sm font-semibold text-gray-900">Customize Pattern</h4>
+					
+					<div class="grid grid-cols-2 gap-3">
+						<!-- Pattern Color -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-2">Pattern Color</label>
+							<div class="relative">
+								<input
+									type="color"
+									bind:value={patternColor}
+									on:input={updatePattern}
+									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+								/>
+								<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
+									<div 
+										class="w-8 h-8 rounded border-2 border-white shadow-sm"
+										style="background-color: {patternColor};"
+									></div>
+									<p class="text-xs font-mono text-gray-900">{patternColor}</p>
+								</div>
+							</div>
+						</div>
+
+						<!-- Background Color -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-2">Background</label>
+							<div class="relative">
+								<input
+									type="color"
+									bind:value={patternBgColor}
+									on:input={updatePattern}
+									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+								/>
+								<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
+									<div 
+										class="w-8 h-8 rounded border-2 border-white shadow-sm"
+										style="background-color: {patternBgColor};"
+									></div>
+									<p class="text-xs font-mono text-gray-900">{patternBgColor}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Preview -->
+					<div>
+						<label class="block text-xs font-medium text-gray-700 mb-2">Preview</label>
+						<div 
+							class="h-24 rounded-lg border-2 border-white shadow-sm"
+							style={getPatternStyle(selectedPattern, patternColor, patternBgColor)}
+						></div>
+					</div>
+				</div>
 			</div>
 		{/if}
 	</div>
