@@ -49,6 +49,8 @@ export function generatePatternColors(
 	// Normalize pattern type
 	const normalizedType = patternType as PatternType;
 	
+	console.log('[generatePatternColors] Input:', { bgColor, patternType: normalizedType });
+	
 	// Convert to OKLCH
 	const bgOklch = oklch(bgColor);
 	
@@ -72,7 +74,10 @@ export function generatePatternColors(
 	
 	// Adjust chroma for ink color
 	let C_ink: number;
-	if (C > 0.12) {
+	if (C < 0.02) {
+		// Achromatic (gray/black/white) - keep chroma at 0
+		C_ink = 0;
+	} else if (C > 0.12) {
 		C_ink = C * 0.85;
 	} else {
 		C_ink = Math.min(0.12, C + 0.03);
@@ -83,7 +88,16 @@ export function generatePatternColors(
 	L_ink = Math.max(0, Math.min(1, L_ink)); // Clamp to valid range
 	
 	// Create ink color in OKLCH
-	let inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink, h: H };
+	// For achromatic colors (C ≈ 0), don't use hue to avoid color shift
+	let inkOklch: { mode: 'oklch'; l: number; c: number; h?: number };
+	if (C < 0.02) {
+		// Achromatic (gray/black/white) - no hue
+		inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink };
+	} else {
+		// Chromatic - preserve hue
+		inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink, h: H || 0 };
+	}
+	
 	let inkColor = formatHex(inkOklch);
 	
 	// Contrast safety: ensure ratio between 1.5 and 2.4
@@ -98,7 +112,13 @@ export function generatePatternColors(
 			deltaL += 0.03; // Tăng từ 0.02 lên 0.03 để điều chỉnh nhanh hơn
 			L_ink = isLight ? L - deltaL : L + deltaL;
 			L_ink = Math.max(0, Math.min(1, L_ink));
-			inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink, h: H };
+			
+			// Recreate ink color
+			if (C < 0.02) {
+				inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink };
+			} else {
+				inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink, h: H || 0 };
+			}
 			inkColor = formatHex(inkOklch);
 			attempts++;
 		} else if (ratio > 2.4) {
@@ -106,7 +126,13 @@ export function generatePatternColors(
 			deltaL -= 0.02;
 			L_ink = isLight ? L - deltaL : L + deltaL;
 			L_ink = Math.max(0, Math.min(1, L_ink));
-			inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink, h: H };
+			
+			// Recreate ink color
+			if (C < 0.02) {
+				inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink };
+			} else {
+				inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink, h: H || 0 };
+			}
 			inkColor = formatHex(inkOklch);
 			attempts++;
 		} else {
@@ -137,9 +163,13 @@ export function generatePatternColors(
 	
 	const opacity = baseOpacity * (patternMultipliers[normalizedType] || 1.0);
 	
-	return {
+	const result = {
 		bgColor,
 		inkColor,
 		opacity: Math.max(0.1, Math.min(0.35, opacity)) // Clamp opacity
 	};
+	
+	console.log('[generatePatternColors] Output:', result);
+	
+	return result;
 }

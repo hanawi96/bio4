@@ -126,6 +126,32 @@
 	let patternBgColor = '#ffffff';
 	let isPatternAutoSync = true; // Flag to enable/disable auto-sync
 	
+	// Computed pattern colors for preview - always sync with currentBgColor
+	$: previewPatternColors = (() => {
+		let baseColor = currentBgColor;
+		
+		// If gradient, use the first color
+		if (baseColor && baseColor.includes('gradient')) {
+			const match = baseColor.match(/#[0-9a-fA-F]{6}/);
+			if (match) {
+				baseColor = match[0];
+			}
+		}
+		
+		// If not hex (pattern/image/video), use solid history
+		if (!baseColor || !baseColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			baseColor = backgroundHistory.solid || '#ffffff';
+		}
+		
+		// Generate pattern colors
+		if (baseColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			return generatePatternColors(baseColor, selectedPattern);
+		}
+		
+		// Fallback (should not reach here)
+		return { bgColor: '#ffffff', inkColor: '#e5e7eb', opacity: 0.25 };
+	})();
+	
 	// Background history (session-only, not saved to DB)
 	let backgroundHistory = {
 		solid: '#ffffff',
@@ -137,13 +163,6 @@
 
 	// Reactive: Auto-sync pattern colors when background color changes
 	$: if (isPatternAutoSync && !isUserUpdate && currentBgColor) {
-		console.log('[AUTO-SYNC] Triggered:', {
-			isPatternAutoSync,
-			isUserUpdate,
-			currentBgColor,
-			selectedPattern
-		});
-		
 		// Extract base color for pattern sync
 		let baseColor = currentBgColor;
 		
@@ -157,13 +176,9 @@
 		
 		// If solid color (hex), auto-generate pattern colors
 		if (baseColor.match(/^#[0-9a-fA-F]{6}$/)) {
-			console.log('[AUTO-SYNC] Generating pattern colors for:', baseColor);
 			const patternColors = generatePatternColors(baseColor, selectedPattern);
-			console.log('[AUTO-SYNC] Generated:', patternColors);
 			patternBgColor = patternColors.bgColor;
 			patternColor = patternColors.inkColor;
-		} else {
-			console.log('[AUTO-SYNC] Skipped - not a hex color:', baseColor);
 		}
 	}
 
@@ -174,7 +189,6 @@
 			const savedBackgrounds = appearance.customTheme?.backgrounds;
 			
 			if (savedBackgrounds) {
-				console.log('[SYNC-FROM-DB] Syncing backgroundHistory:', savedBackgrounds);
 				const newHistory = {
 					solid: savedBackgrounds.solid || '#ffffff',
 					gradient: savedBackgrounds.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -184,7 +198,6 @@
 				};
 				
 				backgroundHistory = newHistory;
-				console.log('[SYNC-FROM-DB] Updated backgroundHistory:', backgroundHistory);
 				
 				// Clear local URLs if history is empty
 				if (!newHistory.image) {
@@ -404,25 +417,15 @@
 				});
 			}
 		} else if (type === 'pattern') {
-			console.log('[SELECT-TYPE] Switching to pattern:', {
-				currentBgColor,
-				backgroundHistory: backgroundHistory.pattern,
-				selectedPattern
-			});
-			
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			
 			// Re-enable auto-sync when switching to pattern type
 			isPatternAutoSync = true;
-			console.log('[SELECT-TYPE] Re-enabled auto-sync');
 			
 			// Always generate fresh pattern colors from current background
-			// Don't use history to avoid loading old pattern colors
-			console.log('[SELECT-TYPE] Generating fresh pattern colors from currentBgColor:', currentBgColor);
 			if (currentBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
 				const patternColors = generatePatternColors(currentBgColor, selectedPattern);
-				console.log('[SELECT-TYPE] Generated pattern colors:', patternColors);
 				patternBgColor = patternColors.bgColor;
 				patternColor = patternColors.inkColor;
 				updatePattern();
@@ -435,14 +438,12 @@
 	}
 
 	async function updateBgColor(color: string) {
-		console.log('[UPDATE-BG-COLOR] Called with:', color, 'selectedType:', selectedType);
 		isUserUpdate = true;
 		currentBgColor = color;
 		
 		// Update history
 		if (selectedType === 'solid' || selectedType === 'gradient' || selectedType === 'pattern') {
 			backgroundHistory[selectedType] = color;
-			console.log('[UPDATE-BG-COLOR] Updated history:', backgroundHistory);
 		}
 
 		// Update page store immediately (optimistic)
@@ -743,13 +744,10 @@
 	}
 	
 	function updatePattern() {
-		console.log('[UPDATE-PATTERN] Called - Disabling auto-sync');
 		// Disable auto-sync when user manually changes pattern colors
 		isPatternAutoSync = false;
 		
-		console.log('[UPDATE-PATTERN] selectedPattern:', selectedPattern, 'patternColor:', patternColor, 'patternBgColor:', patternBgColor);
 		const patternStyle = getPatternStyle(selectedPattern, patternColor, patternBgColor);
-		console.log('[UPDATE-PATTERN] patternStyle:', patternStyle);
 		updateBgColor(patternStyle);
 	}
 	
@@ -1328,14 +1326,29 @@
 						{#each patterns as pattern}
 							<button
 								on:click={() => { 
+									console.log('[PATTERN-CLICK] Clicked pattern:', pattern.id, 'currentBgColor:', currentBgColor);
 									selectedPattern = pattern.id;
 									// Re-enable auto-sync when changing pattern type
 									isPatternAutoSync = true;
-									// Trigger auto-sync immediately
-									if (currentBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-										const patternColors = generatePatternColors(currentBgColor, selectedPattern);
+									
+									// Extract base color for pattern generation
+									let baseColor = currentBgColor;
+									
+									// If currentBgColor is a pattern/gradient, use solid history
+									if (!baseColor.match(/^#[0-9a-fA-F]{6}$/)) {
+										console.log('[PATTERN-CLICK] currentBgColor is not hex, using backgroundHistory.solid:', backgroundHistory.solid);
+										baseColor = backgroundHistory.solid || '#ffffff';
+									}
+									
+									// Trigger auto-sync immediately - USE pattern.id NOT selectedPattern!
+									if (baseColor.match(/^#[0-9a-fA-F]{6}$/)) {
+										console.log('[PATTERN-CLICK] Generating colors for pattern:', pattern.id, 'with baseColor:', baseColor);
+										const patternColors = generatePatternColors(baseColor, pattern.id);
+										console.log('[PATTERN-CLICK] Generated colors:', patternColors);
 										patternBgColor = patternColors.bgColor;
 										patternColor = patternColors.inkColor;
+									} else {
+										console.log('[PATTERN-CLICK] Still not hex after fallback, using defaults');
 									}
 									updatePattern();
 								}}
@@ -1344,7 +1357,7 @@
 							>
 								<div 
 									class="w-full h-full"
-									style={getPatternStyle(pattern.id, patternColor, patternBgColor)}
+									style={getPatternStyle(pattern.id, previewPatternColors.inkColor, previewPatternColors.bgColor)}
 								></div>
 								{#if selectedPattern === pattern.id}
 									<div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">

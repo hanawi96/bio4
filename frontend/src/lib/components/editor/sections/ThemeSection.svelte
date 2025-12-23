@@ -38,13 +38,14 @@
 				const currentAppearance = JSON.parse(p.draft_appearance || '{}');
 				
 				// Update theme key and REMOVE customTheme to use theme preset
+				// Use null to explicitly delete customTheme
 				const newAppearance = {
 					...currentAppearance,
 					themeKey: preset.key,
-					customTheme: undefined  // Remove customTheme to use theme preset
+					customTheme: null  // null = delete customTheme
 				};
 				
-				console.log('[ThemeSection] New appearance (customTheme removed):', newAppearance);
+				console.log('[ThemeSection] New appearance (customTheme deleted):', newAppearance);
 				
 				return {
 					...p,
@@ -53,10 +54,14 @@
 				};
 			});
 
-			// Save to API (debounced by autosave)
-			await api.saveDraft(username, {
-				theme_preset_key: preset.key
-			});
+			// Save to API - MUST save both theme_preset_key AND draft_appearance
+			const currentPage = $page;
+			if (currentPage) {
+				await api.saveDraft(username, {
+					theme_preset_key: preset.key,
+					draft_appearance: currentPage.draft_appearance  // Save cleaned appearance
+				});
+			}
 			
 			console.log('[ThemeSection] Theme saved successfully');
 		} catch (e) {

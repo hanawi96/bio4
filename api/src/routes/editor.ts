@@ -37,7 +37,7 @@ app.put('/:username/draft', async (c) => {
 	}
 
 	// Separate profile and appearance data
-	const draftData: { profile?: any; appearance?: any } = {};
+	const draftData: { profile?: any; appearance?: any; theme_preset_key?: string } = {};
 
 	// Profile data (title, bio, social_links, show_social_icons)
 	if (body.title !== undefined || body.bio !== undefined || body.social_links !== undefined || body.show_social_icons !== undefined) {
@@ -49,6 +49,11 @@ app.put('/:username/draft', async (c) => {
 		if (body.show_social_icons !== undefined) profileData.show_social_icons = body.show_social_icons;
 		
 		draftData.profile = profileData;
+	}
+
+	// Theme preset key
+	if (body.theme_preset_key !== undefined) {
+		draftData.theme_preset_key = body.theme_preset_key;
 	}
 
 	// Appearance data - Handle both old and new format

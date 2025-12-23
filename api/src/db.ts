@@ -21,7 +21,7 @@ export async function getPageById(db: D1Database, pageId: number) {
 export async function saveDraft(
 	db: D1Database,
 	pageId: number,
-	draftData: { profile?: any; appearance?: any }
+	draftData: { profile?: any; appearance?: any; theme_preset_key?: string }
 ) {
 	const fields: string[] = [];
 	const values: any[] = [];
@@ -76,22 +76,40 @@ export async function saveDraft(
 			}
 		}
 
-		// Filter out undefined values from new data
+		// Process new data: undefined = skip, null = delete
 		const cleanedAppearance: any = {};
 		Object.entries(draftData.appearance).forEach(([key, value]) => {
-			if (value !== undefined) {
+			if (value === null) {
+				// null means delete the field
+				cleanedAppearance[key] = undefined;
+			} else if (value !== undefined) {
+				// defined value means update
 				cleanedAppearance[key] = value;
 			}
+			// undefined means skip (don't touch)
 		});
 
-		// Merge new data with existing data (only defined values)
+		// Merge new data with existing data
 		const mergedAppearance = {
 			...currentAppearance,
 			...cleanedAppearance
 		};
+		
+		// Remove fields that are explicitly set to undefined
+		Object.keys(mergedAppearance).forEach(key => {
+			if (mergedAppearance[key] === undefined) {
+				delete mergedAppearance[key];
+			}
+		});
 
 		fields.push('draft_appearance = ?');
 		values.push(JSON.stringify(mergedAppearance));
+	}
+
+	// Theme preset key
+	if (draftData.theme_preset_key !== undefined) {
+		fields.push('theme_preset_key = ?');
+		values.push(draftData.theme_preset_key);
 	}
 
 	if (fields.length === 0) return;
