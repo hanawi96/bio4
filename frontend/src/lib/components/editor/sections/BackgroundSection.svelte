@@ -128,9 +128,16 @@
 		if (theme?.config?.backgroundColor) {
 			const bgColor = theme.config.backgroundColor;
 			
-			// Chỉ lấy màu nền gốc (hex)
-			if (bgColor && bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			// Extract base color cho pattern
+			if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+				// Solid color
 				baseThemeColor = bgColor;
+			} else if (bgColor.includes('gradient')) {
+				// Gradient: extract màu đầu tiên
+				const matches = bgColor.match(/#[0-9a-fA-F]{6}/g);
+				if (matches && matches.length > 0) {
+					baseThemeColor = matches[0]; // Lấy màu đầu tiên
+				}
 			}
 		}
 	}
