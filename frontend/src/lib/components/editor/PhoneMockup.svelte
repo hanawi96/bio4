@@ -9,10 +9,22 @@
 	// Loading state - true when page data is not yet loaded
 	$: isLoading = !$page || !tokens;
 	
+	// Check for video background
+	$: backgroundVideo = (() => {
+		if (!$page?.draft_appearance) return null;
+		try {
+			const appearance = JSON.parse($page.draft_appearance);
+			return appearance.customTheme?.backgroundVideo || null;
+		} catch {
+			return null;
+		}
+	})();
+	
 	$: {
 		console.log('[PhoneMockup] appearance changed:', $appearance);
 		console.log('[PhoneMockup] tokens:', tokens);
 		console.log('[PhoneMockup] tokens.backgroundColor:', tokens?.backgroundColor);
+		console.log('[PhoneMockup] backgroundVideo:', backgroundVideo);
 	}
 
 	// Avatar size mapping
@@ -52,13 +64,25 @@
 			<!-- Notch -->
 			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
 
+			<!-- Background Video (if exists) -->
+			{#if backgroundVideo}
+				<video 
+					src={backgroundVideo} 
+					class="absolute inset-0 w-full h-full object-cover"
+					autoplay 
+					loop 
+					muted 
+					playsinline
+				></video>
+			{/if}
+
 			<!-- Content -->
 			<div 
-				class="w-full h-full overflow-y-auto scrollbar-hide phone-content"
+				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
-					{tokens?.backgroundColor?.includes('url(') 
+					{!backgroundVideo && tokens?.backgroundColor?.includes('url(') 
 						? `background: ${tokens.backgroundColor} center/cover no-repeat;` 
-						: `background: ${tokens?.backgroundColor || '#ffffff'};`}
+						: !backgroundVideo ? `background: ${tokens?.backgroundColor || '#ffffff'};` : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 				"

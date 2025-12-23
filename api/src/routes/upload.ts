@@ -498,4 +498,146 @@ app.delete('/background/:username', async (c) => {
 	}
 });
 
+// POST /upload/background-video/:username - Upload background video
+app.post('/background-video/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+		const formData = await c.req.formData();
+		const fileEntry = formData.get('file');
+
+		if (!fileEntry || typeof fileEntry === 'string') {
+			return c.json({ error: 'No file provided' }, 400);
+		}
+
+		const file = fileEntry as File;
+
+		// Validate video types
+		const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+		if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+			return c.json({ error: 'Invalid file type. Allowed: MP4, WebM' }, 400);
+		}
+
+		const MAX_VIDEO_SIZE = 10 * 1024 * 1024; // 10MB
+		if (file.size > MAX_VIDEO_SIZE) {
+			return c.json({ error: 'File too large. Max 10MB' }, 400);
+		}
+
+		// Get page with draft_appearance
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete old video from R2 if exists
+		const oldVideoUrl = draftAppearance.customTheme?.backgroundVideo;
+		if (oldVideoUrl) {
+			const urlParts = oldVideoUrl.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+
+			if (storageKey && oldVideoUrl.includes('/background-videos/')) {
+				try {
+					await c.env.STORAGE.delete(`background-videos/${storageKey}`);
+				} catch (e) {
+					console.error('Failed to delete old video:', e);
+				}
+			}
+		}
+
+		// Generate unique filename
+		const ext = file.name.split('.').pop() || 'mp4';
+		const storageKey = `background-videos/${username}-${Date.now()}.${ext}`;
+
+		// Upload to R2
+		const arrayBuffer = await file.arrayBuffer();
+		await c.env.STORAGE.put(storageKey, arrayBuffer, {
+			httpMetadata: {
+				contentType: file.type
+			}
+		});
+
+		// Build public URL
+		const url = `${c.env.R2_PUBLIC_URL}/${storageKey}`;
+
+		// Update draft_appearance with new video
+		if (!draftAppearance.customTheme) {
+			draftAppearance.customTheme = {};
+		}
+		
+		draftAppearance.customTheme.backgroundVideo = url;
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ url, storage_key: storageKey });
+	} catch (error) {
+		console.error('Background video upload error:', error);
+		return c.json({ error: 'Background video upload failed' }, 500);
+	}
+});
+
+// DELETE /upload/background-video/:username - Remove background video
+app.delete('/background-video/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+
+		// Get page with draft_appearance
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete from R2 if exists
+		const videoUrl = draftAppearance.customTheme?.backgroundVideo;
+		if (videoUrl) {
+			const urlParts = videoUrl.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+
+			if (storageKey && videoUrl.includes('/background-videos/')) {
+				try {
+					await c.env.STORAGE.delete(`background-videos/${storageKey}`);
+				} catch (e) {
+					console.error('Failed to delete video:', e);
+				}
+			}
+		}
+
+		// Remove video URL
+		if (draftAppearance.customTheme) {
+			delete draftAppearance.customTheme.backgroundVideo;
+		}
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ success: true });
+	} catch (error) {
+		console.error('Background video remove error:', error);
+		return c.json({ error: 'Background video remove failed' }, 500);
+	}
+});
+
 export default app;
