@@ -1356,6 +1356,7 @@
 		outputWidth={1080}
 		outputHeight={2236}
 		title="Adjust Background Image"
+		uploading={uploading}
 		on:accept={handleCropAccept}
 		on:cancel={handleCropCancel}
 	/>
@@ -1369,6 +1370,7 @@
 		outputWidth={1080}
 		outputHeight={2236}
 		title="Adjust Video Position"
+		uploading={uploading}
 		on:accept={handleVideoCropAccept}
 		on:cancel={handleVideoCropCancel}
 	/>
