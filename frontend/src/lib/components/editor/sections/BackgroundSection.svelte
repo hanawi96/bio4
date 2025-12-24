@@ -75,6 +75,45 @@
 		return false;
 	})();
 	
+	// Check if Avatar Cover mode (only allow solid background)
+	$: isAvatarCoverMode = $appearanceState.headerPresetId === 'avatar-cover';
+	
+	// Helper: Extract solid color from gradient/pattern/image
+	function extractSolidColor(bgValue: string): string {
+		// Already solid color
+		if (bgValue.match(/^#[0-9a-fA-F]{6}$/)) {
+			return bgValue;
+		}
+		
+		// Extract from gradient
+		if (bgValue.includes('gradient')) {
+			const colorMatch = bgValue.match(/#[0-9a-fA-F]{6}/);
+			if (colorMatch) {
+				return colorMatch[0];
+			}
+		}
+		
+		// Extract from pattern
+		if (bgValue.startsWith('background:')) {
+			const colorMatch = bgValue.match(/#[0-9a-fA-F]{6}/);
+			if (colorMatch) {
+				return colorMatch[0];
+			}
+		}
+		
+		// Fallback to white
+		return '#ffffff';
+	}
+	
+	// Auto-switch to solid when Avatar Cover mode is activated
+	$: if (isAvatarCoverMode && selectedType !== 'solid') {
+		const solidColor = extractSolidColor(currentBgColor);
+		selectedType = 'solid';
+		currentBgColor = solidColor;
+		backgroundHistory.solid = solidColor;
+		updateAppearance('backgroundColor', solidColor);
+	}
+	
 	// Helper: Normalize gradient string để so sánh
 	function normalizeGradient(gradient: string): string {
 		if (!gradient) return '';
@@ -298,8 +337,8 @@
 			if (matches?.[0]) baseThemeColor = matches[0];
 		}
 		
-		// Reset when theme changes
-		if (lastSyncedThemeKey && currentThemeKey !== lastSyncedThemeKey) {
+		// Reset when theme changes (but NOT in Avatar Cover mode)
+		if (lastSyncedThemeKey && currentThemeKey !== lastSyncedThemeKey && !isAvatarCoverMode) {
 			lastSyncedThemeKey = currentThemeKey;
 			hasInitialized = false;
 			
@@ -629,12 +668,31 @@
 	</div>
 	
 	<div class="p-6 space-y-6">
+		<!-- Avatar Cover Mode Warning -->
+		{#if isAvatarCoverMode}
+			<div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+				<div class="flex gap-3">
+					<div class="flex-shrink-0">
+						<svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+						</svg>
+					</div>
+					<div class="flex-1">
+						<p class="text-sm font-medium text-amber-900">Avatar Cover Mode</p>
+						<p class="text-xs text-amber-700 mt-0.5">Only solid color backgrounds are available in this header style</p>
+					</div>
+				</div>
+			</div>
+		{/if}
+		
 		<!-- Background Type Selector -->
 		<div class="grid grid-cols-5 gap-3">
 			{#each bgTypes as type}
 				<button
 					on:click={() => selectType(type.id)}
-					class="p-4 rounded-xl border-2 transition-all hover:scale-105 {selectedType === type.id ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+					disabled={isAvatarCoverMode && type.id !== 'solid'}
+					class="p-4 rounded-xl border-2 transition-all {isAvatarCoverMode && type.id !== 'solid' ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'} {selectedType === type.id ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+					title={isAvatarCoverMode && type.id !== 'solid' ? 'Not available in Avatar Cover mode' : ''}
 				>
 					<!-- Icon -->
 					<div class="w-12 h-12 mx-auto mb-3 rounded-lg flex items-center justify-center transition-colors {selectedType === type.id ? 'bg-blue-100' : 'bg-gray-100'}">

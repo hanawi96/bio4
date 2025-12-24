@@ -115,31 +115,24 @@
 	
 	// Get background color for gradient overlay (for avatar-cover)
 	$: overlayGradientColor = (() => {
-		const bgColor = tokens?.backgroundColor;
-		if (!bgColor) return 'rgba(0, 0, 0, 0.7)';
+		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
 		
-		// If solid color, use it
+		// Read directly from overrides (most up-to-date source)
+		const bgColor = $appearanceState.overrides['backgroundColor'];
+		
+		if (!bgColor) {
+			return 'rgba(0, 0, 0, 0.7)';
+		}
+		
+		// If solid color, convert to rgba
 		if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-			// Convert hex to rgb for opacity
 			const r = parseInt(bgColor.slice(1, 3), 16);
 			const g = parseInt(bgColor.slice(3, 5), 16);
 			const b = parseInt(bgColor.slice(5, 7), 16);
 			return `rgba(${r}, ${g}, ${b}, 0.95)`;
 		}
 		
-		// If gradient, extract first color
-		if (bgColor.includes('gradient')) {
-			const match = bgColor.match(/#[0-9a-fA-F]{6}/);
-			if (match) {
-				const hex = match[0];
-				const r = parseInt(hex.slice(1, 3), 16);
-				const g = parseInt(hex.slice(3, 5), 16);
-				const b = parseInt(hex.slice(5, 7), 16);
-				return `rgba(${r}, ${g}, ${b}, 0.95)`;
-			}
-		}
-		
-		// Fallback to black
+		// Fallback
 		return 'rgba(0, 0, 0, 0.7)';
 	})();
 
@@ -149,36 +142,6 @@
 
 <!-- Phone Frame -->
 <div class="relative scale-125">
-	<!-- Debug Toggle Button -->
-	{#if isAvatarCover}
-		<button
-			on:click={() => showDebug = !showDebug}
-			class="absolute -top-10 right-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all z-50"
-			title="Toggle Debug Info"
-		>
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-			</svg>
-		</button>
-		
-		<!-- DEBUG INFO Panel -->
-		{#if showDebug}
-			<div class="absolute -top-10 right-12 bg-gray-900 text-white text-xs p-3 rounded-lg shadow-xl z-50 min-w-[200px]">
-				<div class="font-bold mb-2 text-blue-400">🐛 Debug Info</div>
-				<div class="space-y-1">
-					<div><span class="text-gray-400">Cover Height:</span> {coverHeight}px</div>
-					<div><span class="text-gray-400">Cover mb:</span> 24px (mb-6)</div>
-					<div><span class="text-gray-400">Links margin-top:</span> -60px</div>
-					<div><span class="text-gray-400">✅ Mask Top:</span> -24px (khớp!)</div>
-					<div><span class="text-gray-400">Mask Height:</span> 60px</div>
-					<div><span class="text-gray-400">Mask Bottom:</span> {-24 + 60}px = 36px</div>
-					<div><span class="text-gray-400">BgColor:</span> <span class="inline-block w-3 h-3 rounded" style="background: {tokens?.backgroundColor || '#ffffff'}"></span> {tokens?.backgroundColor || '#ffffff'}</div>
-					<div><span class="text-gray-400">OverlayColor:</span> <span class="inline-block w-3 h-3 rounded" style="background: {overlayGradientColor}"></span></div>
-				</div>
-			</div>
-		{/if}
-	{/if}
-	
 	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
 		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
 			<!-- Notch -->

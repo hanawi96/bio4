@@ -58,9 +58,16 @@ export const isCustom = derived(appearanceState, ($state) => {
 // ============================================
 
 export function updateAppearance(path: string, value: any) {
+    console.log('📝 updateAppearance called:', { path, value });
+    
     const currentState = get(appearanceState);
+    console.log('📝 currentState before:', currentState.overrides);
+    
     const newState = setAppearanceHelper(currentState, path, value);
+    console.log('📝 newState after:', newState.overrides);
+    
     const oldFormat = migrateNewToOld(newState);
+    console.log('📝 oldFormat to save:', oldFormat);
 
     // Optimistic update: Update page store immediately
     page.update(p => {
