@@ -1,12 +1,52 @@
 <script lang="ts">
 	import { page } from '$lib/stores/page';
-	import { appearance } from '$lib/stores/appearance';
+	import { appearanceState, updateAppearance } from '$lib/stores/appearanceManager';
 	import { api } from '$lib/api.client';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import { generatePatternColors, type PatternType } from '$lib/utils/patternColors';
 	import { THEMES_MAP } from '$lib/appearance/presets';
 
 	const username = 'demo';
+
+	// Get backgroundColor from new format (override > preset)
+	$: presetBgColor = THEMES_MAP[$appearanceState.presetKey]?.config?.backgroundColor || '#ffffff';
+	$: resolvedBgColor = $appearanceState.overrides['backgroundColor'] ?? presetBgColor;
+	$: resolvedBgVideo = $appearanceState.overrides['backgroundVideo'];
+	
+	// Initial load: detect type from stored data (runs once)
+	let hasInitialized = false;
+	$: if (!hasInitialized && resolvedBgColor) {
+		hasInitialized = true;
+		
+		if (resolvedBgVideo) {
+			selectedType = 'video';
+			backgroundVideoUrl = resolvedBgVideo;
+			currentBgColor = resolvedBgColor;
+		} else if (resolvedBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			selectedType = 'solid';
+			currentBgColor = resolvedBgColor;
+		} else if (resolvedBgColor.includes('gradient') && !resolvedBgColor.startsWith('background:')) {
+			selectedType = 'gradient';
+			currentBgColor = resolvedBgColor;
+			const parsed = parseGradient(resolvedBgColor);
+			if (parsed) {
+				gradientFromColor = parsed.from;
+				gradientToColor = parsed.to;
+				gradientDirection = parsed.direction;
+				gradientType = parsed.type;
+			}
+		} else if (resolvedBgColor.startsWith('background:')) {
+			selectedType = 'pattern';
+			currentBgColor = resolvedBgColor;
+		} else if (resolvedBgColor.startsWith("url(")) {
+			selectedType = 'image';
+			currentBgColor = resolvedBgColor;
+			const urlMatch = resolvedBgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
+			if (urlMatch && urlMatch[1]) {
+				backgroundImageUrl = urlMatch[1];
+			}
+		}
+	}
 
 	const bgTypes = [
 		{ id: 'solid', name: 'Solid Color', description: 'Single color' },
@@ -26,9 +66,6 @@
 		{ name: 'Pink', color: '#ec4899' },
 		{ name: 'Green', color: '#10b981' }
 	];
-	
-	// Dynamic solid colors - không thêm button mới
-	$: dynamicSolidColors = solidColors;
 	
 	// Check nếu currentBgColor không match preset nào
 	$: isCustomSolidColor = (() => {
@@ -89,17 +126,6 @@
 		}
 		return false;
 	})();
-	
-	// Sync gradient state từ currentBgColor khi load theme
-	$: if (selectedType === 'gradient' && currentBgColor && currentBgColor.includes('gradient') && !isUserUpdate) {
-		const parsed = parseGradient(currentBgColor);
-		if (parsed) {
-			gradientFromColor = parsed.from;
-			gradientToColor = parsed.to;
-			gradientDirection = parsed.direction;
-			gradientType = parsed.type;
-		}
-	}
 
 	const gradients = [
 		{ name: 'Sunset', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', from: '#667eea', to: '#764ba2', direction: '135deg' },
@@ -159,10 +185,59 @@
 
 	let selectedType = 'solid';
 	let currentBgColor = '#ffffff';
-	let saveTimer: ReturnType<typeof setTimeout> | null = null;
-	let isUserUpdate = false;
 	let lastSyncedThemeKey = '';
-	let isInitialLoad = true;
+	
+	// Update solid color using centralized manager
+	async function updateSolidColor(color: string) {
+		currentBgColor = color;
+		backgroundHistory.solid = color;
+		await updateAppearance('backgroundColor', color);
+	}
+	
+	// NEW: Update gradient using centralized manager
+	async function updateGradientColor(gradient: string, from?: string, to?: string, direction?: string, type?: 'linear' | 'radial') {
+		currentBgColor = gradient;
+		backgroundHistory.gradient = gradient;
+		if (from) gradientFromColor = from;
+		if (to) gradientToColor = to;
+		if (direction) gradientDirection = direction;
+		if (type) gradientType = type;
+		await updateAppearance('backgroundColor', gradient);
+	}
+	
+	// NEW: Update pattern using centralized manager
+	async function updatePatternColor(patternId: string, inkColor: string, bgColor: string) {
+		selectedPattern = patternId;
+		patternColor = inkColor;
+		patternBgColor = bgColor;
+		const patternStyle = getPatternStyle(patternId, inkColor, bgColor);
+		currentBgColor = patternStyle;
+		backgroundHistory.pattern = patternStyle;
+		await updateAppearance('backgroundColor', patternStyle);
+	}
+	
+	// NEW: Update image background using centralized manager
+	async function updateImageBackground(imageUrl: string) {
+		backgroundImageUrl = imageUrl;
+		const bgValue = `url('${imageUrl}')`;
+		currentBgColor = bgValue;
+		if (imageUrl !== DEFAULT_IMAGE_BG) {
+			backgroundHistory.image = imageUrl;
+		}
+		await updateAppearance('backgroundColor', bgValue);
+	}
+	
+	// NEW: Update video background using centralized manager
+	async function updateVideoBackground(videoUrl: string) {
+		backgroundVideoUrl = videoUrl;
+		currentBgColor = '#000000'; // Placeholder for video
+		if (videoUrl !== DEFAULT_VIDEO_BG) {
+			backgroundHistory.video = videoUrl;
+		}
+		// Video needs both backgroundColor and backgroundVideo
+		await updateAppearance('backgroundColor', '#000000');
+		await updateAppearance('backgroundVideo', videoUrl);
+	}
 	
 	// Custom gradient state
 	let showCustomGradient = false;
@@ -198,39 +273,29 @@
 	let patternColor = '#e5e7eb';
 	let patternBgColor = '#ffffff';
 	
-	// Màu nền gốc để tạo pattern preview (KHÔNG thay đổi)
+	// Màu nền gốc để tạo pattern preview
 	let baseThemeColor = '#ffffff';
 	
-	// Reactive: Sync base theme color từ theme preset (không từ customTheme)
-	$: if ($page?.theme_preset_key && !isUserUpdate) {
+	// Reactive: Sync base theme color từ theme preset
+	$: if ($page?.theme_preset_key) {
 		const themeKey = $page.theme_preset_key;
 		const theme = THEMES_MAP[themeKey];
 		
 		if (theme?.config?.backgroundColor) {
 			const bgColor = theme.config.backgroundColor;
 			
-			// Extract base color cho pattern
 			if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-				// Solid color
 				baseThemeColor = bgColor;
 			} else if (bgColor.includes('gradient')) {
-				// Gradient: extract màu đầu tiên
 				const matches = bgColor.match(/#[0-9a-fA-F]{6}/g);
 				if (matches && matches.length > 0) {
-					baseThemeColor = matches[0]; // Lấy màu đầu tiên
+					baseThemeColor = matches[0];
 				}
 			}
 		}
 	}
 	
-	// Reactive: Sync pattern colors khi baseThemeColor hoặc selectedType thay đổi
-	$: if (baseThemeColor && selectedType === 'pattern' && !isUserUpdate) {
-		const patternColors = generatePatternColors(baseThemeColor, selectedPattern);
-		patternBgColor = patternColors.bgColor;
-		patternColor = patternColors.inkColor;
-	}
-	
-	// Fixed pattern colors for preset previews - dùng baseThemeColor
+	// Fixed pattern colors for preset previews
 	$: fixedPreviewColors = generatePatternColors(baseThemeColor, 'grid');
 	
 	// Background history (session-only, not saved to DB)
@@ -242,191 +307,38 @@
 		pattern: ''
 	};
 
-	// Reactive: Sync backgroundHistory from DB when draft_appearance changes
-	$: if ($page?.draft_appearance && !isUserUpdate) {
-		try {
-			const appearance = JSON.parse($page.draft_appearance);
-			const savedBackgrounds = appearance.customTheme?.backgrounds;
-			
-			if (savedBackgrounds) {
-				const newHistory = {
-					solid: savedBackgrounds.solid || '#ffffff',
-					gradient: savedBackgrounds.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-					image: (savedBackgrounds.image && savedBackgrounds.image.trim()) ? savedBackgrounds.image : '',
-					video: (savedBackgrounds.video && savedBackgrounds.video.trim()) ? savedBackgrounds.video : '',
-					pattern: savedBackgrounds.pattern || ''
-				};
-				
-				backgroundHistory = newHistory;
-				
-				// KHÔNG clear backgroundImageUrl nếu đang ở image type
-				// Vì detect logic đã set nó từ backgroundColor
-			}
-		} catch (e) {
-			console.error('[BackgroundSection] Failed to parse draft_appearance:', e);
-		}
-	}
-
-	// Reactive: Detect background type từ backgroundColor (khi load trang)
-	$: if ($appearance?.tokens?.backgroundColor && !isUserUpdate) {
-		const bgColor = $appearance.tokens.backgroundColor;
+	// Reactive: Sync when theme changes
+	$: if ($page?.theme_preset_key) {
+		const currentThemeKey = $page.theme_preset_key;
 		
-		console.log('[BackgroundSection] Detect type reactive:', {
-			bgColor,
-			selectedType,
-			isUserUpdate,
-			backgroundVideoUrl,
-			backgroundImageUrl
-		});
-		
-		// Check if there's a backgroundVideo first (priority)
-		let hasBackgroundVideo = false;
-		try {
-			if ($page?.draft_appearance) {
-				const appearance = JSON.parse($page.draft_appearance);
-				if (appearance.customTheme?.backgroundVideo) {
-					hasBackgroundVideo = true;
-					if (selectedType !== 'video') {
-						console.log('[BackgroundSection] Switching to video (detected backgroundVideo)');
-						selectedType = 'video';
-						backgroundVideoUrl = appearance.customTheme.backgroundVideo;
-						currentBgColor = bgColor; // Keep the placeholder color
-					}
-				}
-			}
-		} catch (e) {
-			console.error('[BackgroundSection] Failed to parse draft_appearance:', e);
-		}
-		
-		// Only detect other types if no backgroundVideo
-		if (!hasBackgroundVideo) {
-			// Detect type từ backgroundColor
-			if (bgColor.startsWith('background:') || bgColor.startsWith('background ')) {
-				// Pattern CSS string
-				if (selectedType !== 'pattern') {
-					console.log('[BackgroundSection] Switching to pattern');
-					selectedType = 'pattern';
-					currentBgColor = bgColor;
-					
-					// Detect pattern type từ CSS string
-					if (bgColor.includes('radial-gradient(circle')) {
-						selectedPattern = 'dots';
-					} else if (bgColor.includes('repeating-linear-gradient(45deg')) {
-						selectedPattern = 'diagonal';
-					} else if (bgColor.includes('linear-gradient') && bgColor.includes('90deg')) {
-						// Grid pattern (chỉ còn grid, không có cross nữa)
-						selectedPattern = 'grid';
-					} else if (bgColor.includes('url(') && bgColor.includes('svg')) {
-						// SVG pattern - detect by content
-						if (bgColor.includes('path') && bgColor.includes('Q')) {
-							selectedPattern = 'waves';
-						} else if (bgColor.includes('path') && bgColor.includes('L28 0L0 16')) {
-							selectedPattern = 'zigzag'; // Hexagon pattern
-						} else if (bgColor.includes('stroke="currentColor"') && bgColor.includes('fill="none"')) {
-							selectedPattern = 'noise'; // Topography pattern
-						} else if (bgColor.includes('circle') && bgColor.includes('line') && bgColor.includes('rect')) {
-							selectedPattern = 'cross'; // Circuit pattern
-						} else {
-							selectedPattern = 'organic';
-						}
-					}
-					
-					// Sync pattern colors từ baseThemeColor
-					const patternColors = generatePatternColors(baseThemeColor, selectedPattern);
-					patternBgColor = patternColors.bgColor;
-					patternColor = patternColors.inkColor;
-				}
-			} else if (bgColor.includes('gradient')) {
-				if (selectedType !== 'gradient') {
-					console.log('[BackgroundSection] Switching to gradient');
-					selectedType = 'gradient';
-					currentBgColor = bgColor;
-				}
-			} else if (bgColor.includes('url(')) {
-				// Image background
-				if (selectedType !== 'image') {
-					console.log('[BackgroundSection] Switching to image');
-					selectedType = 'image';
-					currentBgColor = bgColor;
-					
-					// Extract image URL
-					const urlMatch = bgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
-					if (urlMatch && urlMatch[1]) {
-						backgroundImageUrl = urlMatch[1];
-					} else {
-						// Fallback to default if can't extract
-						backgroundImageUrl = DEFAULT_IMAGE_BG;
-					}
-				}
-			} else if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-				if (selectedType !== 'solid') {
-					console.log('[BackgroundSection] Switching to solid');
-					selectedType = 'solid';
-					currentBgColor = bgColor;
-				}
-			}
-		}
-	}
-
-	// Reactive: Sync with appearance tokens (only when theme changes)
-	$: if ($appearance?.tokens?.backgroundColor && !isUserUpdate) {
-		const bgColor = $appearance.tokens.backgroundColor;
-		const currentThemeKey = $page?.theme_preset_key || '';
-		
-		// Only auto-detect type when theme changes (not on initial load or every appearance update)
-		const isThemeChange = currentThemeKey !== lastSyncedThemeKey && lastSyncedThemeKey !== '';
-		
-		if (isInitialLoad) {
-			// Lần đầu load: sync theme key VÀ currentBgColor
+		if (lastSyncedThemeKey && currentThemeKey !== lastSyncedThemeKey) {
+			// Theme changed: reset to theme default
 			lastSyncedThemeKey = currentThemeKey;
-			isInitialLoad = false;
+			hasInitialized = false; // Re-initialize from new theme
 			
-			// Sync currentBgColor nếu là solid color
-			if (bgColor.match(/^#[0-9a-fA-F]{6}$/) && selectedType === 'solid') {
-				currentBgColor = bgColor;
-			}
-		} else if (isThemeChange) {
-			// Theme thật sự thay đổi: reset về theme default
-			lastSyncedThemeKey = currentThemeKey;
+			const theme = THEMES_MAP[currentThemeKey];
+			const bgColor = theme?.config?.backgroundColor || '#ffffff';
 			
-			// Khi đổi theme, RESET về solid color của theme mới
-			// Không giữ pattern/gradient/image cũ
 			if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-				// Theme mới có màu solid
 				currentBgColor = bgColor;
 				selectedType = 'solid';
-				backgroundImageUrl = '';
-				backgroundVideoUrl = '';
 			} else if (bgColor.includes('gradient')) {
-				// Theme mới có gradient
 				currentBgColor = bgColor;
 				selectedType = 'gradient';
-				backgroundImageUrl = '';
-				backgroundVideoUrl = '';
 			} else {
-				// Fallback: reset về solid white
 				currentBgColor = '#ffffff';
 				selectedType = 'solid';
-				backgroundImageUrl = '';
-				backgroundVideoUrl = '';
 			}
 			
-			// Clear pattern history khi đổi theme
+			backgroundImageUrl = '';
+			backgroundVideoUrl = '';
 			backgroundHistory.pattern = '';
+		} else if (!lastSyncedThemeKey) {
+			lastSyncedThemeKey = currentThemeKey;
 		}
 	}
 
-	function selectType(type: string) {
-		console.log('[BackgroundSection] selectType called:', {
-			from: selectedType,
-			to: type,
-			backgroundVideoUrl,
-			backgroundImageUrl,
-			currentBgColor
-		});
-		
-		isUserUpdate = true;
-		
+	async function selectType(type: string) {
 		// Save current state to history before switching
 		if (selectedType === 'solid') {
 			backgroundHistory.solid = currentBgColor;
@@ -440,253 +352,60 @@
 			backgroundHistory.pattern = currentBgColor;
 		}
 		
-		console.log('[BackgroundSection] Saved history:', backgroundHistory);
-		
 		selectedType = type;
-		
-		console.log('[BackgroundSection] selectedType changed to:', type);
-		
-		// Clear video from store when switching away from video (non-blocking)
-		if (type !== 'video' && $page) {
-			const appearance = JSON.parse($page.draft_appearance || '{}');
-			if (appearance.customTheme?.backgroundVideo) {
-				delete appearance.customTheme.backgroundVideo;
-				
-				if (!appearance.customTheme.backgrounds) {
-					appearance.customTheme.backgrounds = {};
-				}
-				appearance.customTheme.backgrounds.video = backgroundHistory.video;
-				
-				page.update(p => p ? {
-					...p,
-					draft_appearance: JSON.stringify(appearance)
-				} : p);
-				
-				// Save to DB in background (non-blocking)
-				api.saveDraft(username, {
-					draft_appearance: JSON.stringify(appearance)
-				}).catch(e => {
-					console.error('[BackgroundSection] Failed to save:', e);
-				});
-			}
-		}
 		
 		// Load from history and update URLs
 		if (type === 'solid') {
-			console.log('[BackgroundSection] Loading solid from history');
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			
 			if (backgroundHistory.solid) {
-				updateBgColor(backgroundHistory.solid);
+				await updateSolidColor(backgroundHistory.solid);
 			} else {
-				updateBgColor('#ffffff');
+				await updateSolidColor('#ffffff');
 			}
 		} else if (type === 'gradient') {
-			console.log('[BackgroundSection] Loading gradient from history');
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			
 			if (backgroundHistory.gradient) {
-				// Parse gradient từ history
 				const parsed = parseGradient(backgroundHistory.gradient);
 				if (parsed) {
-					updateBgGradient(backgroundHistory.gradient, parsed.from, parsed.to, parsed.direction, parsed.type);
+					await updateGradientColor(backgroundHistory.gradient, parsed.from, parsed.to, parsed.direction, parsed.type);
 				} else {
-					updateBgColor(backgroundHistory.gradient);
+					await updateGradientColor(backgroundHistory.gradient);
 				}
 			} else {
-				updateBgGradient('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg', 'linear');
+				await updateGradientColor('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg', 'linear');
 			}
 		} else if (type === 'image') {
-			console.log('[BackgroundSection] Loading image from history');
 			backgroundVideoUrl = '';
 			
 			if (backgroundHistory.image && backgroundHistory.image.trim()) {
-				backgroundImageUrl = backgroundHistory.image;
-				updateBgColor(`url('${backgroundHistory.image}')`);
+				await updateImageBackground(backgroundHistory.image);
 			} else {
-				// Use default image when no custom image uploaded
-				backgroundImageUrl = DEFAULT_IMAGE_BG;
-				updateBgColor(`url('${DEFAULT_IMAGE_BG}')`);
+				await updateImageBackground(DEFAULT_IMAGE_BG);
 			}
 		} else if (type === 'video') {
-			console.log('[BackgroundSection] Loading video from history:', backgroundHistory.video);
 			backgroundImageUrl = '';
 			
 			if (backgroundHistory.video && backgroundHistory.video.trim()) {
-				console.log('[BackgroundSection] Using custom video from history');
-				backgroundVideoUrl = backgroundHistory.video;
-				
-				if (!$page) {
-					isUserUpdate = false;
-					return;
-				}
-				
-				const appearance = JSON.parse($page.draft_appearance || '{}');
-				if (!appearance.customTheme) appearance.customTheme = {};
-				
-				// Set backgroundColor to a placeholder for video type
-				appearance.customTheme.backgroundColor = '#000000'; // Placeholder for video
-				appearance.customTheme.backgroundVideo = backgroundHistory.video;
-				
-				if (!appearance.customTheme.backgrounds) {
-					appearance.customTheme.backgrounds = {};
-				}
-				appearance.customTheme.backgrounds.video = backgroundHistory.video;
-				
-				// Update currentBgColor to match
-				currentBgColor = '#000000';
-				
-				page.update(p => p ? {
-					...p,
-					draft_appearance: JSON.stringify(appearance)
-				} : p);
-				
-				// Save to DB in background (non-blocking)
-				api.saveDraft(username, {
-					draft_appearance: JSON.stringify(appearance)
-				}).catch(e => {
-					console.error('[BackgroundSection] Failed to save:', e);
-				});
+				await updateVideoBackground(backgroundHistory.video);
 			} else {
-				// Use default video when no custom video uploaded
-				console.log('[BackgroundSection] Using default video');
-				backgroundVideoUrl = DEFAULT_VIDEO_BG;
-				
-				if (!$page) {
-					isUserUpdate = false;
-					return;
-				}
-				
-				const appearance = JSON.parse($page.draft_appearance || '{}');
-				if (!appearance.customTheme) appearance.customTheme = {};
-				
-				// Set backgroundColor to a placeholder for video type
-				appearance.customTheme.backgroundColor = '#000000'; // Placeholder for video
-				appearance.customTheme.backgroundVideo = DEFAULT_VIDEO_BG;
-				
-				if (!appearance.customTheme.backgrounds) {
-					appearance.customTheme.backgrounds = {};
-				}
-				appearance.customTheme.backgrounds.video = DEFAULT_VIDEO_BG;
-				
-				// Update currentBgColor to match
-				currentBgColor = '#000000';
-				
-				page.update(p => p ? {
-					...p,
-					draft_appearance: JSON.stringify(appearance)
-				} : p);
-				
-				// Save to DB in background (non-blocking)
-				api.saveDraft(username, {
-					draft_appearance: JSON.stringify(appearance)
-				}).catch(e => {
-					console.error('[BackgroundSection] Failed to save:', e);
-				});
+				await updateVideoBackground(DEFAULT_VIDEO_BG);
 			}
 		} else if (type === 'pattern') {
-			console.log('[BackgroundSection] Loading pattern from history');
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			
-			// Generate pattern colors từ baseThemeColor
 			const patternColors = generatePatternColors(baseThemeColor, selectedPattern);
-			patternBgColor = patternColors.bgColor;
-			patternColor = patternColors.inkColor;
-			
-			// Update pattern ngay lập tức
-			const patternStyle = getPatternStyle(selectedPattern, patternColors.inkColor, patternColors.bgColor);
-			updateBgColor(patternStyle);
+			await updatePatternColor(selectedPattern, patternColors.inkColor, patternColors.bgColor);
 		}
 		
-		console.log('[BackgroundSection] selectType completed, setting timeout to clear isUserUpdate');
-		
-		setTimeout(() => {
-			console.log('[BackgroundSection] Clearing isUserUpdate flag');
-			isUserUpdate = false;
-		}, 500);
-	}
-
-	function updateBgGradient(gradient: string, from: string, to: string, direction: string, type: 'linear' | 'radial' = 'linear') {
-		gradientFromColor = from;
-		gradientToColor = to;
-		gradientDirection = direction;
-		gradientType = type;
-		updateBgColor(gradient);
-	}
-	
-	async function updateBgColor(color: string) {
-		console.log('[BackgroundSection] updateBgColor called:', {
-			color,
-			selectedType,
-			isUserUpdate
-		});
-		
-		isUserUpdate = true;
-		currentBgColor = color;
-		
-		// Update history
-		if (selectedType === 'solid' || selectedType === 'gradient' || selectedType === 'pattern') {
-			backgroundHistory[selectedType] = color;
+		// Clear backgroundVideo from store when switching away from video (after main update)
+		if (type !== 'video') {
+			await updateAppearance('backgroundVideo', null);
 		}
-
-		// Optimistic update: Update store ngay lập tức
-		page.update(p => {
-			if (!p) return p;
-
-			const appearance = JSON.parse(p.draft_appearance || '{}');
-
-			// Update customTheme
-			if (!appearance.customTheme) {
-				appearance.customTheme = {
-					backgroundColor: color,
-					textColor: '#000000',
-					primaryColor: '#3b82f6',
-					fontFamily: 'Inter',
-					borderRadius: 12,
-					spacing: 16
-				};
-			} else {
-				appearance.customTheme.backgroundColor = color;
-			}
-			
-			// Save history to DB
-			appearance.customTheme.backgrounds = { ...backgroundHistory };
-
-			const newDraftAppearance = JSON.stringify(appearance);
-			
-			console.log('[BackgroundSection] Updated appearance:', {
-				backgroundColor: color,
-				backgrounds: appearance.customTheme.backgrounds
-			});
-
-			return {
-				...p,
-				draft_appearance: newDraftAppearance
-			};
-		});
-
-		// Debounce API call (chạy background, không block UI)
-		if (saveTimer) clearTimeout(saveTimer);
-		saveTimer = setTimeout(async () => {
-			try {
-				const currentPage = $page;
-				if (!currentPage) return;
-
-				await api.saveDraft(username, {
-					draft_appearance: currentPage.draft_appearance
-				});
-				
-				console.log('[BackgroundSection] Saved to DB successfully');
-			} catch (e) {
-				console.error('[BackgroundSection] Failed to save background:', e);
-			} finally {
-				console.log('[BackgroundSection] Setting isUserUpdate to false');
-				isUserUpdate = false;
-			}
-		}, 300);
 	}
 	
 	function handleBackgroundUpload(event: Event) {
@@ -719,10 +438,8 @@
 			});
 
 			const result = await api.uploadBackground(username, croppedFile);
-			backgroundImageUrl = result.url;
 			backgroundHistory.image = result.url; // Save to history
-			
-			updateBgColor(`url('${result.url}')`);
+			await updateImageBackground(result.url);
 
 			showCropModal = false;
 			URL.revokeObjectURL(tempImageUrl);
@@ -754,9 +471,8 @@
 		try {
 			await api.removeBackground(username);
 			// Restore default image instead of clearing
-			backgroundImageUrl = DEFAULT_IMAGE_BG;
 			backgroundHistory.image = ''; // Clear custom image from history
-			updateBgColor(`url('${DEFAULT_IMAGE_BG}')`);
+			await updateImageBackground(DEFAULT_IMAGE_BG);
 		} catch (e) {
 			console.error('Failed to remove background:', e);
 			alert('Failed to remove background');
@@ -858,23 +574,8 @@
 		uploading = true;
 		try {
 			const result = await api.uploadBackgroundVideo(username, tempVideoFile);
-			backgroundVideoUrl = result.url;
 			backgroundHistory.video = result.url; // Save to history
-			
-			// Update appearance with video URL
-			if (!$page) return;
-			const appearance = JSON.parse($page.draft_appearance || '{}');
-			if (!appearance.customTheme) appearance.customTheme = {};
-			appearance.customTheme.backgroundVideo = result.url;
-			
-			page.update(p => p ? {
-				...p,
-				draft_appearance: JSON.stringify(appearance)
-			} : p);
-			
-			await api.saveDraft(username, {
-				draft_appearance: JSON.stringify(appearance)
-			});
+			await updateVideoBackground(result.url);
 			
 			showVideoCropModal = false;
 			URL.revokeObjectURL(tempVideoPreviewUrl);
@@ -925,25 +626,8 @@
 		try {
 			await api.removeBackgroundVideo(username);
 			// Restore default video instead of clearing
-			backgroundVideoUrl = DEFAULT_VIDEO_BG;
 			backgroundHistory.video = ''; // Clear custom video from history
-			
-			// Update appearance with default video
-			if (!$page) return;
-			const appearance = JSON.parse($page.draft_appearance || '{}');
-			if (!appearance.customTheme) appearance.customTheme = {};
-			
-			appearance.customTheme.backgroundVideo = DEFAULT_VIDEO_BG;
-			
-			if (!appearance.customTheme.backgrounds) {
-				appearance.customTheme.backgrounds = {};
-			}
-			appearance.customTheme.backgrounds.video = DEFAULT_VIDEO_BG;
-			
-			page.update(p => p ? {
-				...p,
-				draft_appearance: JSON.stringify(appearance)
-			} : p);
+			await updateVideoBackground(DEFAULT_VIDEO_BG);
 		} catch (e) {
 			console.error('Failed to remove video:', e);
 			alert('Failed to remove video');
@@ -1031,9 +715,9 @@
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-2">Preset Colors</label>
 					<div class="grid grid-cols-9 gap-1.5">
-						{#each dynamicSolidColors as color}
+						{#each solidColors as color}
 							<button
-								on:click={() => updateBgColor(color.color)}
+								on:click={() => updateSolidColor(color.color)}
 								class="group relative aspect-square rounded-md transition-all hover:scale-105 border {currentBgColor === color.color ? 'border-blue-500 ring-1 ring-blue-100' : 'border-gray-200'}"
 								style="background: {color.color};"
 								title={color.name}
@@ -1088,7 +772,7 @@
 								<input 
 									type="color" 
 									value={currentBgColor}
-									on:input={(e) => updateBgColor(e.currentTarget.value)}
+									on:input={(e) => updateSolidColor(e.currentTarget.value)}
 									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 								/>
 								<div 
@@ -1099,7 +783,7 @@
 							<input 
 								type="text"
 								value={currentBgColor}
-								on:input={(e) => updateBgColor(e.currentTarget.value)}
+								on:input={(e) => updateSolidColor(e.currentTarget.value)}
 								class="flex-1 px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm font-mono bg-white"
 								placeholder="#ffffff"
 							/>
@@ -1117,13 +801,7 @@
 					<div class="grid grid-cols-8 gap-2">
 						{#each gradients as grad}
 							<button
-								on:click={() => {
-									gradientFromColor = grad.from;
-									gradientToColor = grad.to;
-									gradientDirection = grad.direction;
-									gradientType = 'linear';
-									updateBgColor(grad.gradient);
-								}}
+								on:click={() => updateGradientColor(grad.gradient, grad.from, grad.to, grad.direction, 'linear')}
 								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 {normalizeGradient(currentBgColor) === normalizeGradient(grad.gradient) ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
 								style="background: {grad.gradient};"
 								title={grad.name}
@@ -1185,7 +863,7 @@
 											const gradient = gradientType === 'radial' 
 												? `radial-gradient(circle, ${gradientFromColor}, ${gradientToColor})`
 												: `linear-gradient(${gradientDirection}, ${gradientFromColor}, ${gradientToColor})`;
-											updateBgColor(gradient);
+											updateGradientColor(gradient);
 										}}
 										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 									/>
@@ -1205,7 +883,7 @@
 											const gradient = gradientType === 'radial' 
 												? `radial-gradient(circle, ${gradientFromColor}, ${gradientToColor})`
 												: `linear-gradient(${gradientDirection}, ${gradientFromColor}, ${gradientToColor})`;
-											updateBgColor(gradient);
+											updateGradientColor(gradient);
 										}}
 										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 									/>
@@ -1225,7 +903,7 @@
 									on:click={() => {
 										gradientType = 'linear';
 										const gradient = `linear-gradient(${gradientDirection}, ${gradientFromColor}, ${gradientToColor})`;
-										updateBgColor(gradient);
+										updateGradientColor(gradient);
 									}}
 									class="px-3 py-2 rounded-lg text-xs font-medium transition {gradientType === 'linear' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 								>
@@ -1235,7 +913,7 @@
 									on:click={() => {
 										gradientType = 'radial';
 										const gradient = `radial-gradient(circle, ${gradientFromColor}, ${gradientToColor})`;
-										updateBgColor(gradient);
+										updateGradientColor(gradient);
 									}}
 									class="px-3 py-2 rounded-lg text-xs font-medium transition {gradientType === 'radial' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 								>
@@ -1253,7 +931,7 @@
 										on:click={() => {
 											gradientDirection = '0deg';
 											const gradient = `linear-gradient(0deg, ${gradientFromColor}, ${gradientToColor})`;
-											updateBgColor(gradient);
+											updateGradientColor(gradient);
 										}}
 										class="p-2 rounded-lg transition {gradientDirection === '0deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 										title="Top to Bottom"
@@ -1266,7 +944,7 @@
 										on:click={() => {
 											gradientDirection = '90deg';
 											const gradient = `linear-gradient(90deg, ${gradientFromColor}, ${gradientToColor})`;
-											updateBgColor(gradient);
+											updateGradientColor(gradient);
 										}}
 										class="p-2 rounded-lg transition {gradientDirection === '90deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 										title="Left to Right"
@@ -1279,7 +957,7 @@
 										on:click={() => {
 											gradientDirection = '135deg';
 											const gradient = `linear-gradient(135deg, ${gradientFromColor}, ${gradientToColor})`;
-											updateBgColor(gradient);
+											updateGradientColor(gradient);
 										}}
 										class="p-2 rounded-lg transition {gradientDirection === '135deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 										title="Diagonal"
@@ -1292,7 +970,7 @@
 										on:click={() => {
 											gradientDirection = '180deg';
 											const gradient = `linear-gradient(180deg, ${gradientFromColor}, ${gradientToColor})`;
-											updateBgColor(gradient);
+											updateGradientColor(gradient);
 										}}
 										class="p-2 rounded-lg transition {gradientDirection === '180deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 										title="Bottom to Top"
@@ -1499,16 +1177,8 @@
 						{#each patterns as pattern}
 							<button
 								on:click={() => {
-									selectedPattern = pattern.id;
-									
-									// Generate pattern colors từ baseThemeColor
 									const patternColors = generatePatternColors(baseThemeColor, pattern.id);
-									patternBgColor = patternColors.bgColor;
-									patternColor = patternColors.inkColor;
-									
-									// Update ngay lập tức
-									const patternStyle = getPatternStyle(pattern.id, patternColors.inkColor, patternColors.bgColor);
-									updateBgColor(patternStyle);
+									updatePatternColor(pattern.id, patternColors.inkColor, patternColors.bgColor);
 								}}
 								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
 								title={pattern.name}
@@ -1541,10 +1211,7 @@
 								<input
 									type="color"
 									bind:value={patternColor}
-									on:input={() => {
-										const patternStyle = getPatternStyle(selectedPattern, patternColor, patternBgColor);
-										updateBgColor(patternStyle);
-									}}
+									on:input={() => updatePatternColor(selectedPattern, patternColor, patternBgColor)}
 									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 								/>
 								<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
@@ -1564,10 +1231,7 @@
 								<input
 									type="color"
 									bind:value={patternBgColor}
-									on:input={() => {
-										const patternStyle = getPatternStyle(selectedPattern, patternColor, patternBgColor);
-										updateBgColor(patternStyle);
-									}}
+									on:input={() => updatePatternColor(selectedPattern, patternColor, patternBgColor)}
 									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 								/>
 								<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">

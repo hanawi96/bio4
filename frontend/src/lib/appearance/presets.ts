@@ -25,7 +25,7 @@ export const THEMES_MAP: Record<string, Theme> = {
 		key: 'dark',
 		name: 'Dark',
 		config: {
-			backgroundColor: '#1a1a1a',
+			backgroundColor: '#000000',
 			textColor: '#ffffff',
 			primaryColor: '#60a5fa',
 			fontFamily: 'Inter',
