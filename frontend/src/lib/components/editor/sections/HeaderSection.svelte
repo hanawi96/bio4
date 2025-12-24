@@ -12,9 +12,6 @@
 	// Default cover image (demo)
 	const DEFAULT_COVER_IMAGE = '/presets/images/cover-demo.jpg';
 
-	// Cover options (local state for UI)
-	let solidColor = '#3b82f6';
-	
 	// Crop modal state
 	let showCropModal = false;
 	let tempImageUrl = '';
@@ -26,15 +23,11 @@
 	$: selectedPresetId = $appearanceState.headerPresetId || 'no-cover';
 	$: selectedPreset = HEADER_PRESETS[selectedPresetId];
 	
-	// Get cover values: override > preset default
-	$: coverType = ($appearanceState.overrides['header.coverType'] as 'solid' | 'gradient' | 'image') 
-		|| selectedPreset?.coverType 
-		|| 'gradient';
+	// Get cover value from store
 	$: coverValue = ($appearanceState.overrides['header.coverValue'] as string) 
 		|| selectedPreset?.coverValue 
 		|| '';
 	$: coverImageUrl = (() => {
-		if (coverType !== 'image') return '';
 		// Kiểm tra nếu coverValue là URL ảnh hợp lệ
 		const isValidImageUrl = coverValue && (coverValue.startsWith('http') || coverValue.startsWith('/'));
 		return isValidImageUrl ? coverValue : DEFAULT_COVER_IMAGE;
@@ -42,69 +35,14 @@
 	$: isDefaultCover = coverImageUrl === DEFAULT_COVER_IMAGE;
 	$: showCoverOptions = selectedPreset?.hasCover;
 
-	// Parse colors from coverValue
-	$: gradientStart = (() => {
-		if (coverType === 'gradient' && coverValue) {
-			// Match: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
-			// Extract first color (after direction)
-			const match = coverValue.match(/linear-gradient\([^,]+,\s*(#[0-9a-fA-F]{6})/);
-			return match ? match[1] : '#667eea';
-		}
-		return '#667eea';
-	})();
-	
-	$: gradientEnd = (() => {
-		if (coverType === 'gradient' && coverValue) {
-			// Match: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
-			// Extract second color (last hex color before %)
-			const matches = coverValue.match(/#[0-9a-fA-F]{6}/g);
-			return matches && matches.length >= 2 ? matches[1] : '#764ba2';
-		}
-		return '#764ba2';
-	})();
-
-	$: if (coverType === 'solid' && coverValue) {
-		solidColor = coverValue;
-	}
-
 	// Select header preset
 	async function selectPreset(presetId: string) {
 		pendingSave = true;
 		try {
 			await changeHeaderPreset(presetId);
-			// No need to set coverType/coverValue - preset has defaults
-			// overrides will be empty = using preset values
 		} finally {
 			pendingSave = false;
 		}
-	}
-
-	// Update cover type
-	function updateCoverType(type: 'solid' | 'gradient' | 'image') {
-		updateAppearance('header.coverType', type);
-		
-		// Update cover value based on type
-		if (type === 'solid') {
-			updateAppearance('header.coverValue', solidColor);
-		} else if (type === 'gradient') {
-			updateAppearance('header.coverValue', `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`);
-		} else if (type === 'image') {
-			// Kiểm tra nếu coverValue là URL ảnh hợp lệ, nếu không thì dùng demo
-			const isValidImageUrl = coverValue && (coverValue.startsWith('http') || coverValue.startsWith('/'));
-			const imageValue = isValidImageUrl ? coverValue : DEFAULT_COVER_IMAGE;
-			updateAppearance('header.coverValue', imageValue);
-		}
-	}
-
-	// Save cover settings (for color changes)
-	function saveCoverSettings() {
-		const value = coverType === 'solid' 
-			? solidColor 
-			: coverType === 'gradient'
-			? `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`
-			: coverImageUrl;
-		
-		updateAppearance('header.coverValue', value);
 	}
 
 	async function handleCoverUpload(event: Event) {
@@ -256,7 +194,7 @@
 	
 	<div class="p-6">
 		<!-- Header Presets Grid -->
-		<div class="grid grid-cols-3 gap-4">
+		<div class="grid grid-cols-4 gap-3">
 		{#each presets as preset}
 			<button
 				on:click={() => selectPreset(preset.id)}
@@ -330,134 +268,13 @@
 			{/each}
 		</div>
 
-		<!-- Info -->
-		<div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-			<div class="flex gap-3">
-				<div class="flex-shrink-0">
-					<svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-						<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-					</svg>
-				</div>
-				<div class="flex-1">
-					<p class="text-sm text-blue-900 font-medium">Tip</p>
-					<p class="text-xs text-blue-700 mt-0.5">Cover images can be customized below when "With Cover" is selected</p>
-				</div>
-			</div>
-		</div>
-
 		<!-- Cover Options -->
 		{#if showCoverOptions}
 			<div class="mt-6 pt-6 border-t border-gray-200">
-				<h3 class="text-sm font-semibold text-gray-900 mb-4">Cover Customization</h3>
-
-				<!-- Cover Type Tabs -->
-				<div class="flex gap-2 mb-4">
-					<button
-						on:click={() => updateCoverType('solid')}
-						class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition {coverType === 'solid' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
-					>
-						<div class="flex items-center justify-center gap-2">
-							<div class="w-4 h-4 rounded bg-current opacity-50"></div>
-							Solid
-						</div>
-					</button>
-					<button
-						on:click={() => updateCoverType('gradient')}
-						class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition {coverType === 'gradient' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
-					>
-						<div class="flex items-center justify-center gap-2">
-							<div class="w-4 h-4 rounded bg-gradient-to-r from-purple-500 to-pink-500"></div>
-							Gradient
-						</div>
-					</button>
-					<button
-						on:click={() => updateCoverType('image')}
-						class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition {coverType === 'image' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
-					>
-						<div class="flex items-center justify-center gap-2">
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-							</svg>
-							Image
-						</div>
-					</button>
-				</div>
-
-				<!-- Solid Color Picker -->
-				{#if coverType === 'solid'}
-					<div class="space-y-3">
-						<label class="block">
-							<span class="text-xs font-medium text-gray-700 mb-2 block">Cover Color</span>
-							<div class="relative">
-								<input
-									type="color"
-									bind:value={solidColor}
-									on:input={saveCoverSettings}
-									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-								/>
-								<div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
-									<div 
-										class="w-12 h-12 rounded-lg border-2 border-white shadow-sm ring-1 ring-gray-200"
-										style="background-color: {solidColor};"
-									></div>
-									<div class="flex-1">
-										<p class="text-xs font-medium text-gray-500 uppercase">Selected Color</p>
-										<p class="text-sm font-bold text-gray-900 font-mono">{solidColor}</p>
-									</div>
-								</div>
-							</div>
-						</label>
-					</div>
-				{/if}
-
-				<!-- Gradient Picker -->
-				{#if coverType === 'gradient'}
-					<div class="space-y-3">
-						<div class="grid grid-cols-2 gap-3">
-							<label class="block">
-								<span class="text-xs font-medium text-gray-700 mb-2 block">Start Color</span>
-								<div class="relative">
-									<input
-										type="color"
-										bind:value={gradientStart}
-										on:input={saveCoverSettings}
-										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-									/>
-									<div class="flex items-center gap-2 px-3 py-2 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
-										<div 
-											class="w-8 h-8 rounded border-2 border-white shadow-sm"
-											style="background-color: {gradientStart};"
-										></div>
-										<p class="text-xs font-mono text-gray-900">{gradientStart}</p>
-									</div>
-								</div>
-							</label>
-							<label class="block">
-								<span class="text-xs font-medium text-gray-700 mb-2 block">End Color</span>
-								<div class="relative">
-									<input
-										type="color"
-										bind:value={gradientEnd}
-										on:input={saveCoverSettings}
-										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-									/>
-									<div class="flex items-center gap-2 px-3 py-2 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
-										<div 
-											class="w-8 h-8 rounded border-2 border-white shadow-sm"
-											style="background-color: {gradientEnd};"
-										></div>
-										<p class="text-xs font-mono text-gray-900">{gradientEnd}</p>
-									</div>
-								</div>
-							</label>
-						</div>
-						<div class="h-20 rounded-lg" style="background: linear-gradient(135deg, {gradientStart}, {gradientEnd});"></div>
-					</div>
-				{/if}
+				<h3 class="text-sm font-semibold text-gray-900 mb-4">Cover Image</h3>
 
 				<!-- Image Upload -->
-				{#if coverType === 'image'}
-					<div class="space-y-3">
+				<div class="space-y-3">
 						{#if coverImageUrl}
 							<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
 								<img src={coverImageUrl} alt="Cover" class="w-full h-40 object-cover" />
@@ -497,27 +314,6 @@
 									</div>
 								{/if}
 							</div>
-							{#if isDefaultCover}
-								<div class="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-									<svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-										<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-									</svg>
-									<div class="flex-1">
-										<p class="text-sm font-medium text-amber-900">Using demo image</p>
-										<p class="text-xs text-amber-700 mt-0.5">Upload your own image to customize</p>
-									</div>
-								</div>
-							{:else}
-								<div class="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-									<svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-										<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-									</svg>
-									<div class="flex-1">
-										<p class="text-sm font-medium text-green-900">Cover uploaded successfully</p>
-										<p class="text-xs text-green-700 mt-0.5">Hover to change or remove</p>
-									</div>
-								</div>
-							{/if}
 						{:else}
 							<label class="block cursor-pointer">
 								<input
@@ -585,7 +381,6 @@
 							</div>
 						{/if}
 					</div>
-				{/if}
 			</div>
 		{/if}
 	</div>
