@@ -11,9 +11,7 @@
 
 	// Cover options (local state for UI)
 	let solidColor = '#3b82f6';
-	let gradientStart = '#667eea';
-	let gradientEnd = '#764ba2';
-
+	
 	// Crop modal state
 	let showCropModal = false;
 	let tempImageUrl = '';
@@ -21,7 +19,7 @@
 	// Get all header presets
 	const presets = Object.values(HEADER_PRESETS);
 
-	// Derived from store - use getResolvedValue pattern
+	// Derived from store
 	$: selectedPresetId = $appearanceState.headerPresetId || 'no-cover';
 	$: selectedPreset = HEADER_PRESETS[selectedPresetId];
 	
@@ -35,16 +33,29 @@
 	$: coverImageUrl = coverType === 'image' ? coverValue : '';
 	$: showCoverOptions = selectedPreset?.hasCover;
 
-	// Sync local color state from coverValue (override or preset default)
+	// Parse colors from coverValue
+	$: gradientStart = (() => {
+		if (coverType === 'gradient' && coverValue) {
+			// Match: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+			// Extract first color (after direction)
+			const match = coverValue.match(/linear-gradient\([^,]+,\s*(#[0-9a-fA-F]{6})/);
+			return match ? match[1] : '#667eea';
+		}
+		return '#667eea';
+	})();
+	
+	$: gradientEnd = (() => {
+		if (coverType === 'gradient' && coverValue) {
+			// Match: linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+			// Extract second color (last hex color before %)
+			const matches = coverValue.match(/#[0-9a-fA-F]{6}/g);
+			return matches && matches.length >= 2 ? matches[1] : '#764ba2';
+		}
+		return '#764ba2';
+	})();
+
 	$: if (coverType === 'solid' && coverValue) {
 		solidColor = coverValue;
-	}
-	$: if (coverType === 'gradient' && coverValue) {
-		const match = coverValue.match(/linear-gradient\([^,]+,\s*([^,]+),\s*([^)]+)\)/);
-		if (match) {
-			gradientStart = match[1].trim();
-			gradientEnd = match[2].trim();
-		}
 	}
 
 	// Select header preset
@@ -60,31 +71,27 @@
 	}
 
 	// Update cover type
-	async function updateCoverType(type: 'solid' | 'gradient' | 'image') {
-		await updateAppearance('header.coverType', type);
+	function updateCoverType(type: 'solid' | 'gradient' | 'image') {
+		updateAppearance('header.coverType', type);
 		
 		// Update cover value based on type
 		if (type === 'solid') {
-			await updateAppearance('header.coverValue', solidColor);
+			updateAppearance('header.coverValue', solidColor);
 		} else if (type === 'gradient') {
-			await updateAppearance('header.coverValue', `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`);
+			updateAppearance('header.coverValue', `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`);
 		}
 		// For image, keep existing value or wait for upload
 	}
 
 	// Save cover settings (for color changes)
-	async function saveCoverSettings() {
-		let value = '';
+	function saveCoverSettings() {
+		const value = coverType === 'solid' 
+			? solidColor 
+			: coverType === 'gradient'
+			? `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`
+			: coverImageUrl;
 		
-		if (coverType === 'solid') {
-			value = solidColor;
-		} else if (coverType === 'gradient') {
-			value = `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`;
-		} else if (coverType === 'image') {
-			value = coverImageUrl;
-		}
-
-		await updateAppearance('header.coverValue', value);
+		updateAppearance('header.coverValue', value);
 	}
 
 	async function handleCoverUpload(event: Event) {
