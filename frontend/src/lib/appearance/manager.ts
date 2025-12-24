@@ -88,8 +88,10 @@ export function setAppearance(
     );
     const newOverrides = { ...state.overrides };
 
-    // Compare with preset value
-    if (deepEqual(value, presetValue)) {
+    // If value is null/undefined, remove from overrides
+    if (value === null || value === undefined) {
+        delete newOverrides[path];
+    } else if (deepEqual(value, presetValue)) {
         // Value matches preset → Remove from overrides
         delete newOverrides[path];
     } else {

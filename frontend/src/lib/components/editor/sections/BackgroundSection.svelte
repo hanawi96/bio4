@@ -272,32 +272,10 @@
 	let patternColor = '#e5e7eb';
 	let patternBgColor = '#ffffff';
 	
-	// Màu nền gốc để tạo pattern preview
+	// Base theme color for pattern preview
 	let baseThemeColor = '#ffffff';
 	
-	// Reactive: Sync base theme color từ theme preset
-	$: if ($page?.theme_preset_key) {
-		const themeKey = $page.theme_preset_key;
-		const theme = THEMES_MAP[themeKey];
-		
-		if (theme?.config?.backgroundColor) {
-			const bgColor = theme.config.backgroundColor;
-			
-			if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-				baseThemeColor = bgColor;
-			} else if (bgColor.includes('gradient')) {
-				const matches = bgColor.match(/#[0-9a-fA-F]{6}/g);
-				if (matches && matches.length > 0) {
-					baseThemeColor = matches[0];
-				}
-			}
-		}
-	}
-	
-	// Fixed pattern colors for preset previews
-	$: fixedPreviewColors = generatePatternColors(baseThemeColor, 'grid');
-	
-	// Background history (session-only, not saved to DB)
+	// Background history (session-only)
 	let backgroundHistory = {
 		solid: '#ffffff',
 		gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -306,17 +284,24 @@
 		pattern: ''
 	};
 
-	// Reactive: Sync when theme changes
+	// Reactive: Sync theme changes
 	$: if ($page?.theme_preset_key) {
 		const currentThemeKey = $page.theme_preset_key;
+		const theme = THEMES_MAP[currentThemeKey];
+		const bgColor = theme?.config?.backgroundColor || '#ffffff';
 		
+		// Extract base color for pattern preview
+		if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			baseThemeColor = bgColor;
+		} else if (bgColor.includes('gradient')) {
+			const matches = bgColor.match(/#[0-9a-fA-F]{6}/g);
+			if (matches?.[0]) baseThemeColor = matches[0];
+		}
+		
+		// Reset when theme changes
 		if (lastSyncedThemeKey && currentThemeKey !== lastSyncedThemeKey) {
-			// Theme changed: reset to theme default
 			lastSyncedThemeKey = currentThemeKey;
-			hasInitialized = false; // Re-initialize from new theme
-			
-			const theme = THEMES_MAP[currentThemeKey];
-			const bgColor = theme?.config?.backgroundColor || '#ffffff';
+			hasInitialized = false;
 			
 			if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
 				currentBgColor = bgColor;
@@ -336,57 +321,52 @@
 			lastSyncedThemeKey = currentThemeKey;
 		}
 	}
+	
+	// Fixed pattern colors for preset previews
+	$: fixedPreviewColors = generatePatternColors(baseThemeColor, 'grid');
 
 	function selectType(type: string) {
-		// Save current state to history before switching
-		if (selectedType === 'solid') {
-			backgroundHistory.solid = currentBgColor;
-		} else if (selectedType === 'gradient') {
-			backgroundHistory.gradient = currentBgColor;
-		} else if (selectedType === 'image') {
-			backgroundHistory.image = backgroundImageUrl;
-		} else if (selectedType === 'video') {
-			backgroundHistory.video = backgroundVideoUrl;
-		} else if (selectedType === 'pattern') {
-			backgroundHistory.pattern = currentBgColor;
+		// Save current state to history
+		const historyMap = {
+			solid: currentBgColor,
+			gradient: currentBgColor,
+			image: backgroundImageUrl,
+			video: backgroundVideoUrl,
+			pattern: currentBgColor
+		};
+		if (selectedType in historyMap) {
+			backgroundHistory[selectedType] = historyMap[selectedType];
 		}
 		
 		selectedType = type;
 		
-		// Clear backgroundVideo when switching away from video
+		// Clear video when switching away
 		if (type !== 'video') {
 			updateAppearance('backgroundVideo', null);
 		}
 		
-		// Load from history and update
+		// Clear URLs
+		backgroundImageUrl = '';
+		backgroundVideoUrl = '';
+		
+		// Load from history
 		if (type === 'solid') {
-			backgroundImageUrl = '';
-			backgroundVideoUrl = '';
 			updateSolidColor(backgroundHistory.solid || '#ffffff');
 		} else if (type === 'gradient') {
-			backgroundImageUrl = '';
-			backgroundVideoUrl = '';
-			if (backgroundHistory.gradient) {
-				const parsed = parseGradient(backgroundHistory.gradient);
-				if (parsed) {
-					updateGradientColor(backgroundHistory.gradient, parsed.from, parsed.to, parsed.direction, parsed.type);
-				} else {
-					updateGradientColor(backgroundHistory.gradient);
-				}
+			const gradient = backgroundHistory.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+			const parsed = parseGradient(gradient);
+			if (parsed) {
+				updateGradientColor(gradient, parsed.from, parsed.to, parsed.direction, parsed.type);
 			} else {
-				updateGradientColor('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg', 'linear');
+				updateGradientColor(gradient);
 			}
 		} else if (type === 'image') {
-			backgroundVideoUrl = '';
 			updateImageBackground(backgroundHistory.image?.trim() || DEFAULT_IMAGE_BG);
 		} else if (type === 'video') {
-			backgroundImageUrl = '';
 			updateVideoBackground(backgroundHistory.video?.trim() || DEFAULT_VIDEO_BG);
 		} else if (type === 'pattern') {
-			backgroundImageUrl = '';
-			backgroundVideoUrl = '';
-			const patternColors = generatePatternColors(baseThemeColor, selectedPattern);
-			updatePatternColor(selectedPattern, patternColors.inkColor, patternColors.bgColor);
+			const colors = generatePatternColors(baseThemeColor, selectedPattern);
+			updatePatternColor(selectedPattern, colors.inkColor, colors.bgColor);
 		}
 	}
 	
