@@ -9,6 +9,9 @@
 	// Loading state - true when page data is not yet loaded
 	$: isLoading = !$page || !tokens;
 	
+	// Debug toggle state
+	let showDebug = false;
+	
 	// Check for video background
 	$: backgroundVideo = (() => {
 		if (!$page?.draft_appearance) return null;
@@ -144,6 +147,36 @@
 
 <!-- Phone Frame -->
 <div class="relative scale-125">
+	<!-- Debug Toggle Button -->
+	{#if isAvatarCover}
+		<button
+			on:click={() => showDebug = !showDebug}
+			class="absolute -top-10 right-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all z-50"
+			title="Toggle Debug Info"
+		>
+			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+			</svg>
+		</button>
+		
+		<!-- DEBUG INFO Panel -->
+		{#if showDebug}
+			<div class="absolute -top-10 right-12 bg-gray-900 text-white text-xs p-3 rounded-lg shadow-xl z-50 min-w-[200px]">
+				<div class="font-bold mb-2 text-blue-400">🐛 Debug Info</div>
+				<div class="space-y-1">
+					<div><span class="text-gray-400">Cover Height:</span> {coverHeight}px</div>
+					<div><span class="text-gray-400">Cover mb:</span> 24px (mb-6)</div>
+					<div><span class="text-gray-400">Links margin-top:</span> -60px</div>
+					<div><span class="text-gray-400">✅ Mask Top:</span> -24px (khớp!)</div>
+					<div><span class="text-gray-400">Mask Height:</span> 60px</div>
+					<div><span class="text-gray-400">Mask Bottom:</span> {-24 + 60}px = 36px</div>
+					<div><span class="text-gray-400">BgColor:</span> <span class="inline-block w-3 h-3 rounded" style="background: {tokens?.backgroundColor || '#ffffff'}"></span> {tokens?.backgroundColor || '#ffffff'}</div>
+					<div><span class="text-gray-400">OverlayColor:</span> <span class="inline-block w-3 h-3 rounded" style="background: {overlayGradientColor}"></span></div>
+				</div>
+			</div>
+		{/if}
+	{/if}
+	
 	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
 		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
 			<!-- Notch -->
@@ -196,16 +229,16 @@
 							>
 								<!-- Double gradient overlay for avatar-cover -->
 								{#if isAvatarCover}
-									<!-- DEBUG: Gradient 1 - Avatar bottom fade -->
+									<!-- Gradient 1 - Avatar bottom fade -->
 									<div 
 										class="absolute inset-0" 
-										style="background: linear-gradient(to bottom, transparent 0%, transparent 30%, {overlayGradientColor} 100%); border: 2px solid red;"
+										style="background: linear-gradient(to bottom, transparent 0%, transparent 30%, {overlayGradientColor} 100%);"
 									></div>
 									
-									<!-- DEBUG: Gradient 2 - Darken middle -->
+									<!-- Gradient 2 - Darken middle -->
 									<div 
 										class="absolute inset-0" 
-										style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%); border: 2px solid blue;"
+										style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);"
 									></div>
 									
 									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
@@ -333,11 +366,11 @@
 						class="space-y-3 relative"
 						style="{isAvatarCover ? `margin-top: -60px; padding-top: 80px;` : 'margin-top: 24px;'}"
 					>
-						<!-- DEBUG: Gradient mask - Đậm hơn, FULL WIDTH như avatar -->
+						<!-- Gradient mask - nối liền với overlay trên avatar -->
 						{#if isAvatarCover}
 							<div 
 								class="absolute pointer-events-none z-10 -mx-4"
-								style="left: 0; right: 0; top: -80px; height: 120px; background: linear-gradient(to bottom, transparent 0%, {tokens?.backgroundColor || '#ffffff'} 60%, {tokens?.backgroundColor || '#ffffff'} 100%); border: 2px solid green;"
+								style="left: 0; right: 0; top: -24px; height: 60px; background: linear-gradient(to bottom, transparent 0%, {tokens?.backgroundColor || '#ffffff'} 100%);"
 							></div>
 						{/if}
 						

@@ -218,7 +218,7 @@ export interface HeaderPreset {
 	
 	// Cover settings
 	hasCover: boolean;
-	coverHeight?: 'sm' | 'md' | 'lg'; // 120px, 160px, 200px
+	coverHeight?: 'sm' | 'md' | 'lg' | 'xl'; // 120px, 160px, 200px, 280px
 	
 	// Avatar settings
 	avatarSize: 'sm' | 'md' | 'lg' | 'xl'; // 64px, 80px, 96px, 120px
@@ -251,7 +251,7 @@ export interface BlockPreset {
 // User Overrides - Whitelist only
 export interface HeaderOverrides {
 	hasCover?: boolean;
-	coverHeight?: 'sm' | 'md' | 'lg';
+	coverHeight?: 'sm' | 'md' | 'lg' | 'xl';
 	coverType?: 'solid' | 'gradient' | 'image'; // Type of cover
 	coverValue?: string; // Color hex, gradient CSS, or image URL
 	avatarSize?: 'sm' | 'md' | 'lg' | 'xl';
