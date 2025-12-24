@@ -1,10 +1,31 @@
 <script lang="ts">
 	import { page, groups } from '$lib/stores/page';
 	import { appearance } from '$lib/stores/appearance';
+	import { appearanceState } from '$lib/stores/appearanceManager';
+	import { HEADER_PRESETS } from '$lib/appearance/presets';
 
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
-	$: header = $appearance?.header;
+	
+	// Get header from NEW format appearanceState
+	$: headerPresetId = $appearanceState.headerPresetId || 'no-cover';
+	$: baseHeaderPreset = HEADER_PRESETS[headerPresetId];
+	
+	// Merge preset with overrides (flat format)
+	$: header = (() => {
+		const overrides = $appearanceState.overrides || {};
+		const merged: any = { ...baseHeaderPreset };
+		
+		// Apply header.* overrides
+		Object.entries(overrides).forEach(([key, value]) => {
+			if (key.startsWith('header.')) {
+				const field = key.replace('header.', '');
+				merged[field] = value;
+			}
+		});
+		
+		return merged;
+	})();
 	
 	// Loading state - true when page data is not yet loaded
 	$: isLoading = !$page || !tokens;
@@ -17,7 +38,7 @@
 		if (!$page?.draft_appearance) return null;
 		try {
 			const appearance = JSON.parse($page.draft_appearance);
-			const videoUrl = appearance.customTheme?.backgroundVideo;
+			const videoUrl = appearance.customTheme?.backgroundVideo || appearance.overrides?.backgroundVideo;
 			return videoUrl && videoUrl.trim() ? videoUrl : null;
 		} catch {
 			return null;
@@ -29,7 +50,7 @@
 		if (!$page?.draft_appearance) return false;
 		try {
 			const appearance = JSON.parse($page.draft_appearance);
-			return !!(appearance.customTheme?.backgroundVideo);
+			return !!(appearance.customTheme?.backgroundVideo || appearance.overrides?.backgroundVideo);
 		} catch {
 			return false;
 		}
@@ -66,34 +87,23 @@
 		return '0';
 	}
 
-	// Get cover background style
+	// Get cover background style from header preset + overrides
 	$: coverStyle = (() => {
 		if (!header?.hasCover) return '';
 		
-		// Check if this is avatar-cover preset
-		const presetId = (() => {
-			try {
-				if ($page?.draft_appearance) {
-					const appearance = JSON.parse($page.draft_appearance);
-					return appearance.headerStyle?.presetId;
-				}
-			} catch (e) {}
-			return null;
-		})();
-		
 		// If avatar-cover preset, use avatar as cover
-		if (presetId === 'avatar-cover' && $page?.avatar_url) {
+		if (headerPresetId === 'avatar-cover' && $page?.avatar_url) {
 			return `background: url('${$page.avatar_url}') center/cover;`;
 		}
 		
-		const overrides = $appearance?.header;
-		const coverValue = overrides?.coverValue;
+		// Get coverValue from header (already merged with overrides)
+		const coverValue = header?.coverValue;
 		
 		if (!coverValue) {
 			return 'background: linear-gradient(135deg, #667eea, #764ba2);';
 		}
 		
-		if (coverValue.startsWith('http')) {
+		if (coverValue.startsWith('http') || coverValue.startsWith('/')) {
 			return `background: url('${coverValue}') center/cover;`;
 		}
 		
@@ -101,15 +111,7 @@
 	})();
 	
 	// Check if avatar-cover preset (hide avatar, show text overlay)
-	$: isAvatarCover = (() => {
-		try {
-			if ($page?.draft_appearance) {
-				const appearance = JSON.parse($page.draft_appearance);
-				return appearance.headerStyle?.presetId === 'avatar-cover';
-			}
-		} catch (e) {}
-		return false;
-	})();
+	$: isAvatarCover = headerPresetId === 'avatar-cover';
 	
 	// Get background color for gradient overlay (for avatar-cover)
 	$: overlayGradientColor = (() => {

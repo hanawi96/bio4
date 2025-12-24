@@ -1,170 +1,90 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
 	import { api } from '$lib/api.client';
-	import { page } from '$lib/stores/page';
-	import { appearance } from '$lib/stores/appearance';
+	import { appearanceState, updateAppearance, changeHeaderPreset } from '$lib/stores/appearanceManager';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
-	import type { HeaderPreset, PageAppearanceState, HeaderOverrides } from '$lib/appearance/types';
+	import type { HeaderPreset } from '$lib/appearance/types';
 
 	const username = 'demo';
 	let uploading = false;
-	let pageState: PageAppearanceState | null = null;
-	let selectedPresetId = 'no-cover';
-	let currentOverrides: HeaderOverrides = {};
+	let pendingSave = false;
 
-	// Cover options
-	let coverType: 'solid' | 'gradient' | 'image' = 'gradient';
+	// Cover options (local state for UI)
 	let solidColor = '#3b82f6';
 	let gradientStart = '#667eea';
 	let gradientEnd = '#764ba2';
-	let coverImageUrl = '';
 
 	// Crop modal state
 	let showCropModal = false;
 	let tempImageUrl = '';
 
-	// Debounce timer
-	let saveTimer: ReturnType<typeof setTimeout> | null = null;
-	let pendingSave = false;
-	let isUserUpdate = false; // Flag to prevent reactive loop
-
 	// Get all header presets
 	const presets = Object.values(HEADER_PRESETS);
 
-	// Reactive: Load data from store when page changes (but not during user updates)
-	$: if ($page?.draft_appearance && !isUserUpdate) {
-		try {
-			const appearance = JSON.parse($page.draft_appearance || '{}');
-			pageState = appearance;
-			
-			// Get default header preset from theme
-			const defaultHeaderId = $appearance?.theme?.defaultHeaderPresetId || 'no-cover';
-			selectedPresetId = appearance.headerStyle?.presetId || defaultHeaderId;
-			
-			currentOverrides = appearance.headerStyle?.overrides || {};
+	// Derived from store - use getResolvedValue pattern
+	$: selectedPresetId = $appearanceState.headerPresetId || 'no-cover';
+	$: selectedPreset = HEADER_PRESETS[selectedPresetId];
+	
+	// Get cover values: override > preset default
+	$: coverType = ($appearanceState.overrides['header.coverType'] as 'solid' | 'gradient' | 'image') 
+		|| selectedPreset?.coverType 
+		|| 'gradient';
+	$: coverValue = ($appearanceState.overrides['header.coverValue'] as string) 
+		|| selectedPreset?.coverValue 
+		|| '';
+	$: coverImageUrl = coverType === 'image' ? coverValue : '';
+	$: showCoverOptions = selectedPreset?.hasCover;
 
-			if (currentOverrides.coverType) {
-				coverType = currentOverrides.coverType;
-				if (coverType === 'solid') {
-					solidColor = currentOverrides.coverValue || '#3b82f6';
-				} else if (coverType === 'gradient') {
-					const match = currentOverrides.coverValue?.match(/linear-gradient\([^,]+,\s*([^,]+),\s*([^)]+)\)/);
-					if (match) {
-						gradientStart = match[1].trim();
-						gradientEnd = match[2].trim();
-					}
-				} else if (coverType === 'image') {
-					coverImageUrl = currentOverrides.coverValue || '';
-				}
-			}
-		} catch (e) {
-			console.error('Failed to parse draft_appearance:', e);
+	// Sync local color state from coverValue (override or preset default)
+	$: if (coverType === 'solid' && coverValue) {
+		solidColor = coverValue;
+	}
+	$: if (coverType === 'gradient' && coverValue) {
+		const match = coverValue.match(/linear-gradient\([^,]+,\s*([^,]+),\s*([^)]+)\)/);
+		if (match) {
+			gradientStart = match[1].trim();
+			gradientEnd = match[2].trim();
 		}
 	}
 
-	onDestroy(() => {
-		if (saveTimer) clearTimeout(saveTimer);
-	});
-
-	// Optimistic update + debounced save
-	function updateAppearance(newState: PageAppearanceState) {
-		// Set flag to prevent reactive loop
-		isUserUpdate = true;
-		
-		// 1. Optimistic: Update store immediately
-		page.update(p => p ? {
-			...p,
-			draft_appearance: JSON.stringify(newState)
-		} : p);
-
-		// 2. Debounce: Save to API after delay
-		pendingSave = true;
-		if (saveTimer) clearTimeout(saveTimer);
-		
-		saveTimer = setTimeout(async () => {
-			try {
-				await api.saveDraft(username, {
-					draft_appearance: JSON.stringify(newState)
-				});
-				pendingSave = false;
-			} catch (e) {
-				console.error('Failed to save:', e);
-				pendingSave = false;
-			} finally {
-				// Reset flag after save completes
-				isUserUpdate = false;
-			}
-		}, 300);
-	}
-
+	// Select header preset
 	async function selectPreset(presetId: string) {
-		selectedPresetId = presetId;
-		const preset = HEADER_PRESETS[presetId];
-		
-		const newState: PageAppearanceState = {
-			...pageState,
-			headerStyle: {
-				presetId,
-				overrides: preset.hasCover ? {
-					coverType: 'gradient',
-					coverValue: `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`
-				} : undefined
-			}
-		};
-		
-		pageState = newState;
-		currentOverrides = newState.headerStyle?.overrides || {};
-		
-		updateAppearance(newState);
+		pendingSave = true;
+		try {
+			await changeHeaderPreset(presetId);
+			// No need to set coverType/coverValue - preset has defaults
+			// overrides will be empty = using preset values
+		} finally {
+			pendingSave = false;
+		}
 	}
 
+	// Update cover type
 	async function updateCoverType(type: 'solid' | 'gradient' | 'image') {
-		coverType = type;
-		saveCoverSettings();
+		await updateAppearance('header.coverType', type);
+		
+		// Update cover value based on type
+		if (type === 'solid') {
+			await updateAppearance('header.coverValue', solidColor);
+		} else if (type === 'gradient') {
+			await updateAppearance('header.coverValue', `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`);
+		}
+		// For image, keep existing value or wait for upload
 	}
 
-	// Debounced save for color picker (instant visual, delayed API)
-	let colorSaveTimer: ReturnType<typeof setTimeout> | null = null;
-	
-	function saveCoverSettings() {
-		if (!pageState) return;
-		
-		let coverValue = '';
+	// Save cover settings (for color changes)
+	async function saveCoverSettings() {
+		let value = '';
 		
 		if (coverType === 'solid') {
-			coverValue = solidColor;
+			value = solidColor;
 		} else if (coverType === 'gradient') {
-			coverValue = `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`;
+			value = `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`;
 		} else if (coverType === 'image') {
-			coverValue = coverImageUrl;
+			value = coverImageUrl;
 		}
 
-		const newOverrides: HeaderOverrides = {
-			...currentOverrides,
-			coverType,
-			coverValue
-		};
-
-		const newState: PageAppearanceState = {
-			...pageState,
-			headerStyle: {
-				presetId: selectedPresetId,
-				overrides: newOverrides
-			}
-		};
-
-		pageState = newState;
-		currentOverrides = newOverrides;
-		
-		// Instant visual update
-		updateAppearance(newState);
-		
-		// Debounced API save (avoid spam)
-		if (colorSaveTimer) clearTimeout(colorSaveTimer);
-		colorSaveTimer = setTimeout(() => {
-			// API save already handled by updateAppearance debounce
-		}, 500);
+		await updateAppearance('header.coverValue', value);
 	}
 
 	async function handleCoverUpload(event: Event) {
@@ -203,29 +123,10 @@
 
 			// Upload to server
 			const result = await api.uploadCover(username, croppedFile);
-			coverImageUrl = result.url;
-			coverType = 'image';
 
-			// Update state immediately
-			if (!pageState) return;
-
-			const newOverrides: HeaderOverrides = {
-				...currentOverrides,
-				coverType: 'image',
-				coverValue: result.url
-			};
-
-			const newState: PageAppearanceState = {
-				...pageState,
-				headerStyle: {
-					presetId: selectedPresetId,
-					overrides: newOverrides
-				}
-			};
-
-			pageState = newState;
-			currentOverrides = newOverrides;
-			updateAppearance(newState);
+			// Update appearance with new image
+			await updateAppearance('header.coverType', 'image');
+			await updateAppearance('header.coverValue', result.url);
 
 			// Close modal and cleanup
 			showCropModal = false;
@@ -251,9 +152,10 @@
 		uploading = true;
 		try {
 			await api.removeCover(username);
-			coverImageUrl = '';
-			coverType = 'gradient';
-			saveCoverSettings();
+			
+			// Switch to gradient
+			await updateAppearance('header.coverType', 'gradient');
+			await updateAppearance('header.coverValue', `linear-gradient(135deg, ${gradientStart}, ${gradientEnd})`);
 		} catch (e) {
 			console.error('Failed to remove cover:', e);
 			alert('Failed to remove cover');
@@ -310,9 +212,6 @@
 		}
 		return 'no-cover';
 	}
-
-	$: selectedPreset = HEADER_PRESETS[selectedPresetId];
-	$: showCoverOptions = selectedPreset?.hasCover;
 </script>
 
 <section class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -332,23 +231,14 @@
 	</div>
 	
 	<div class="p-6">
-		{#if !$page}
-			<!-- Loading State -->
-			<div class="flex items-center justify-center py-12">
-				<div class="flex flex-col items-center gap-3">
-					<div class="animate-spin w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full"></div>
-					<p class="text-sm text-gray-500">Loading header styles...</p>
-				</div>
-			</div>
-		{:else}
-			<!-- Header Presets Grid -->
-			<div class="grid grid-cols-3 gap-4">
-			{#each presets as preset}
-				<button
-					on:click={() => selectPreset(preset.id)}
-					class="group relative rounded-xl overflow-hidden border-2 transition-all hover:scale-[1.02] {selectedPresetId === preset.id ? 'border-blue-500 ring-4 ring-blue-100' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'}"
-				>
-					<!-- Preview -->
+		<!-- Header Presets Grid -->
+		<div class="grid grid-cols-3 gap-4">
+		{#each presets as preset}
+			<button
+				on:click={() => selectPreset(preset.id)}
+				class="group relative rounded-xl overflow-hidden border-2 transition-all hover:scale-[1.02] {selectedPresetId === preset.id ? 'border-blue-500 ring-4 ring-blue-100' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'}"
+			>
+				<!-- Preview -->
 					<div class="aspect-[4/5] bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 p-6 flex flex-col items-center relative overflow-hidden">
 						{#if getPresetPreview(preset) === 'avatar-cover'}
 							<!-- Avatar Cover - Full screen avatar with text overlay -->
@@ -661,7 +551,6 @@
 					</div>
 				{/if}
 			</div>
-		{/if}
 		{/if}
 	</div>
 </section>

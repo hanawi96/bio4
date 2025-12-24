@@ -219,6 +219,8 @@ export interface HeaderPreset {
 	// Cover settings
 	hasCover: boolean;
 	coverHeight?: 'sm' | 'md' | 'lg' | 'xl'; // 120px, 160px, 200px, 280px
+	coverType?: 'solid' | 'gradient' | 'image'; // Default cover type
+	coverValue?: string; // Default cover value (color, gradient CSS, or image URL)
 	
 	// Avatar settings
 	avatarSize: 'sm' | 'md' | 'lg' | 'xl'; // 64px, 80px, 96px, 120px

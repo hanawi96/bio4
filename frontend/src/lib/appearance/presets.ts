@@ -66,6 +66,8 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		description: 'Header with cover image and overlapping avatar',
 		hasCover: true,
 		coverHeight: 'md',
+		coverType: 'gradient', // Default cover type
+		coverValue: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Default gradient
 		avatarSize: 'lg',
 		avatarShape: 'circle',
 		avatarPosition: 'overlap',
@@ -113,6 +115,8 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		description: 'Full-screen avatar with text overlay',
 		hasCover: true, // Use cover system but source from avatar
 		coverHeight: 'lg',
+		coverType: 'gradient', // Default cover type
+		coverValue: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Default gradient
 		avatarSize: 'sm', // Hidden, not displayed
 		avatarShape: 'circle',
 		avatarPosition: 'center',

@@ -61,49 +61,61 @@ export async function saveDraft(
 	}
 
 	if (draftData.appearance !== undefined) {
-		// Get current draft_appearance to merge
-		const currentPage = await db
-			.prepare('SELECT draft_appearance FROM bio_pages WHERE id = ?')
-			.bind(pageId)
-			.first<{ draft_appearance: string }>();
+		// Check if this is a full reset (has themeKey) or partial update
+		const isFullReset = draftData.appearance.themeKey !== undefined && 
+		                    draftData.appearance.overrides !== undefined &&
+		                    Object.keys(draftData.appearance.overrides).length === 0;
+		
+		let finalAppearance: any;
+		
+		if (isFullReset) {
+			// Full reset: Replace entire appearance (when changing theme preset)
+			finalAppearance = draftData.appearance;
+		} else {
+			// Partial update: Merge with existing data
+			const currentPage = await db
+				.prepare('SELECT draft_appearance FROM bio_pages WHERE id = ?')
+				.bind(pageId)
+				.first<{ draft_appearance: string }>();
 
-		let currentAppearance: any = {};
-		if (currentPage?.draft_appearance) {
-			try {
-				currentAppearance = JSON.parse(currentPage.draft_appearance);
-			} catch (e) {
-				console.error('Failed to parse draft_appearance:', e);
+			let currentAppearance: any = {};
+			if (currentPage?.draft_appearance) {
+				try {
+					currentAppearance = JSON.parse(currentPage.draft_appearance);
+				} catch (e) {
+					console.error('Failed to parse draft_appearance:', e);
+				}
 			}
+
+			// Process new data: undefined = skip, null = delete
+			const cleanedAppearance: any = {};
+			Object.entries(draftData.appearance).forEach(([key, value]) => {
+				if (value === null) {
+					// null means delete the field
+					cleanedAppearance[key] = undefined;
+				} else if (value !== undefined) {
+					// defined value means update
+					cleanedAppearance[key] = value;
+				}
+				// undefined means skip (don't touch)
+			});
+
+			// Merge new data with existing data
+			finalAppearance = {
+				...currentAppearance,
+				...cleanedAppearance
+			};
+			
+			// Remove fields that are explicitly set to undefined
+			Object.keys(finalAppearance).forEach(key => {
+				if (finalAppearance[key] === undefined) {
+					delete finalAppearance[key];
+				}
+			});
 		}
 
-		// Process new data: undefined = skip, null = delete
-		const cleanedAppearance: any = {};
-		Object.entries(draftData.appearance).forEach(([key, value]) => {
-			if (value === null) {
-				// null means delete the field
-				cleanedAppearance[key] = undefined;
-			} else if (value !== undefined) {
-				// defined value means update
-				cleanedAppearance[key] = value;
-			}
-			// undefined means skip (don't touch)
-		});
-
-		// Merge new data with existing data
-		const mergedAppearance = {
-			...currentAppearance,
-			...cleanedAppearance
-		};
-		
-		// Remove fields that are explicitly set to undefined
-		Object.keys(mergedAppearance).forEach(key => {
-			if (mergedAppearance[key] === undefined) {
-				delete mergedAppearance[key];
-			}
-		});
-
 		fields.push('draft_appearance = ?');
-		values.push(JSON.stringify(mergedAppearance));
+		values.push(JSON.stringify(finalAppearance));
 	}
 
 	// Theme preset key

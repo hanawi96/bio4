@@ -1,11 +1,8 @@
 import type { 
-	PageAppearanceState, 
 	ResolvedAppearance, 
 	Theme,
 	ThemeTokens,
-	ThemeConfig,
-	HeaderPreset,
-	BlockPreset 
+	ThemeConfig
 } from './types';
 import { HEADER_PRESETS, BLOCK_PRESETS } from './presets';
 
@@ -32,6 +29,11 @@ function expandThemeTokens(config: ThemeConfig): ThemeTokens {
 
 // Simple color adjustment helper
 function adjustColor(hex: string, percent: number): string {
+	// Handle non-hex colors (gradients, etc)
+	if (!hex || !hex.startsWith('#')) {
+		return hex || '#000000';
+	}
+	
 	// Simple lightness adjustment
 	const num = parseInt(hex.replace('#', ''), 16);
 	const amt = Math.round(2.55 * percent);
@@ -42,30 +44,23 @@ function adjustColor(hex: string, percent: number): string {
 }
 
 // ============================================
-// MAIN RESOLVER
+// MAIN RESOLVER (Supports both old and new format)
 // ============================================
 
 export function resolveAppearance(
 	theme: Theme | null,
-	pageState: PageAppearanceState
+	pageState: any // Accept any format
 ): ResolvedAppearance {
-	// Get theme config (priority: customTheme > theme > default)
+	// Detect format: new format has 'overrides' at root level
+	const isNewFormat = pageState.overrides !== undefined;
+	
+	// Get theme config
 	let themeConfig: ThemeConfig;
 	let themeName = 'Custom';
 	
-	// Priority 1: customTheme (user customizations)
-	if (pageState.customTheme) {
-		themeConfig = pageState.customTheme;
-		themeName = 'Custom';
-	}
-	// Priority 2: theme from DB
-	else if (theme) {
-		themeConfig = theme.config;
-		themeName = theme.name;
-	}
-	// Priority 3: fallback default
-	else {
-		themeConfig = {
+	if (isNewFormat) {
+		// NEW FORMAT: { themeKey, overrides, headerPresetId, blockPresetId }
+		const baseConfig = theme?.config || {
 			backgroundColor: '#ffffff',
 			textColor: '#000000',
 			primaryColor: '#3b82f6',
@@ -73,29 +68,88 @@ export function resolveAppearance(
 			borderRadius: 12,
 			spacing: 16
 		};
+		
+		// Apply theme-level overrides (not header.* or block.*)
+		const themeOverrides: any = {};
+		Object.entries(pageState.overrides || {}).forEach(([key, value]) => {
+			if (!key.startsWith('header.') && !key.startsWith('block.')) {
+				themeOverrides[key] = value;
+			}
+		});
+		
+		themeConfig = { ...baseConfig, ...themeOverrides };
+		themeName = Object.keys(themeOverrides).length > 0 ? 'Custom' : (theme?.name || 'Custom');
+	} else {
+		// OLD FORMAT: { themeKey, customTheme, headerStyle, blockStyle }
+		if (pageState.customTheme) {
+			themeConfig = pageState.customTheme;
+			themeName = 'Custom';
+		} else if (theme) {
+			themeConfig = theme.config;
+			themeName = theme.name;
+		} else {
+			themeConfig = {
+				backgroundColor: '#ffffff',
+				textColor: '#000000',
+				primaryColor: '#3b82f6',
+				fontFamily: 'Inter, sans-serif',
+				borderRadius: 12,
+				spacing: 16
+			};
+		}
 	}
 	
 	const tokens = expandThemeTokens(themeConfig);
 	
 	// Get header preset
 	const defaultHeaderId = theme?.defaultHeaderPresetId || 'no-cover';
-	const headerPresetId = pageState.headerStyle?.presetId || defaultHeaderId;
+	let headerPresetId: string;
+	let headerOverrides: any = {};
+	
+	if (isNewFormat) {
+		headerPresetId = pageState.headerPresetId || defaultHeaderId;
+		// Extract header.* overrides
+		Object.entries(pageState.overrides || {}).forEach(([key, value]) => {
+			if (key.startsWith('header.')) {
+				headerOverrides[key.replace('header.', '')] = value;
+			}
+		});
+	} else {
+		headerPresetId = pageState.headerStyle?.presetId || defaultHeaderId;
+		headerOverrides = pageState.headerStyle?.overrides || {};
+	}
+	
 	const headerPreset = HEADER_PRESETS[headerPresetId] || HEADER_PRESETS['no-cover'];
 	
 	// Get block preset
 	const defaultBlockId = theme?.defaultBlockPresetId || 'rounded-solid';
-	const blockPresetId = pageState.blockStyle?.presetId || defaultBlockId;
+	let blockPresetId: string;
+	let blockOverrides: any = {};
+	
+	if (isNewFormat) {
+		blockPresetId = pageState.blockPresetId || defaultBlockId;
+		// Extract block.* overrides
+		Object.entries(pageState.overrides || {}).forEach(([key, value]) => {
+			if (key.startsWith('block.')) {
+				blockOverrides[key.replace('block.', '')] = value;
+			}
+		});
+	} else {
+		blockPresetId = pageState.blockStyle?.presetId || defaultBlockId;
+		blockOverrides = pageState.blockStyle?.overrides || {};
+	}
+	
 	const blockPreset = BLOCK_PRESETS[blockPresetId] || BLOCK_PRESETS['rounded-solid'];
 	
 	// Merge: preset + overrides
 	const resolvedHeader = {
 		...headerPreset,
-		...(pageState.headerStyle?.overrides || {})
+		...headerOverrides
 	};
 	
 	const resolvedBlock = {
 		...blockPreset,
-		...(pageState.blockStyle?.overrides || {})
+		...blockOverrides
 	};
 	
 	return {
@@ -109,66 +163,6 @@ export function resolveAppearance(
 		header: resolvedHeader,
 		block: resolvedBlock
 	};
-}
-
-// ============================================
-// RESET HELPERS
-// ============================================
-
-export function resetHeaderToThemeDefault(
-	theme: Theme | null,
-	pageState: PageAppearanceState
-): PageAppearanceState {
-	const defaultHeaderId = theme?.defaultHeaderPresetId || 'no-cover';
-	
-	return {
-		...pageState,
-		headerStyle: {
-			presetId: defaultHeaderId,
-			overrides: undefined
-		}
-	};
-}
-
-export function resetBlockToThemeDefault(
-	theme: Theme | null,
-	pageState: PageAppearanceState
-): PageAppearanceState {
-	const defaultBlockId = theme?.defaultBlockPresetId || 'rounded-solid';
-	
-	return {
-		...pageState,
-		blockStyle: {
-			presetId: defaultBlockId,
-			overrides: undefined
-		}
-	};
-}
-
-// ============================================
-// CHECK IF USING DEFAULTS
-// ============================================
-
-export function isHeaderDefault(
-	theme: Theme | null,
-	pageState: PageAppearanceState
-): boolean {
-	const defaultHeaderId = theme?.defaultHeaderPresetId || 'no-cover';
-	return (
-		(!pageState.headerStyle || pageState.headerStyle.presetId === defaultHeaderId) &&
-		!pageState.headerStyle?.overrides
-	);
-}
-
-export function isBlockDefault(
-	theme: Theme | null,
-	pageState: PageAppearanceState
-): boolean {
-	const defaultBlockId = theme?.defaultBlockPresetId || 'rounded-solid';
-	return (
-		(!pageState.blockStyle || pageState.blockStyle.presetId === defaultBlockId) &&
-		!pageState.blockStyle?.overrides
-	);
 }
 
 // ============================================

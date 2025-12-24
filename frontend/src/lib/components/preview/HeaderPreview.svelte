@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$lib/stores/page';
+	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import type { HeaderPreset } from '$lib/appearance/types';
 	
@@ -22,42 +23,24 @@
 				...socialPlatforms[platform as keyof typeof socialPlatforms]
 			})) : [];
 	
-	// Get header preset from appearance state
+	// Get header preset from NEW format appearanceState
+	$: headerPresetId = $appearanceState.headerPresetId || 'no-cover';
+	$: basePreset = HEADER_PRESETS[headerPresetId];
+	
+	// Merge preset with overrides (flat format)
 	$: headerPreset = (() => {
-		console.log('[HeaderPreview] Computing headerPreset...');
-		console.log('[HeaderPreview] $page:', $page);
-		console.log('[HeaderPreview] draft_appearance:', $page?.draft_appearance);
+		const overrides = $appearanceState.overrides || {};
+		const merged: any = { ...basePreset };
 		
-		try {
-			if ($page?.draft_appearance) {
-				const appearance = JSON.parse($page.draft_appearance);
-				console.log('[HeaderPreview] Parsed appearance:', appearance);
-				
-				const presetId = appearance.headerStyle?.presetId || 'no-cover';
-				console.log('[HeaderPreview] presetId:', presetId);
-				
-				const preset = HEADER_PRESETS[presetId];
-				console.log('[HeaderPreview] preset from HEADER_PRESETS:', preset);
-				
-				const overrides = appearance.headerStyle?.overrides || {};
-				console.log('[HeaderPreview] overrides:', overrides);
-				
-				// Merge preset with overrides
-				const merged = {
-					...preset,
-					...overrides
-				};
-				console.log('[HeaderPreview] Merged headerPreset:', merged);
-				
-				return merged;
+		// Apply header.* overrides
+		Object.entries(overrides).forEach(([key, value]) => {
+			if (key.startsWith('header.')) {
+				const field = key.replace('header.', '');
+				merged[field] = value;
 			}
-		} catch (e) {
-			console.error('[HeaderPreview] Failed to parse header preset:', e);
-		}
+		});
 		
-		// Fallback to default
-		console.log('[HeaderPreview] Using fallback preset: no-cover');
-		return HEADER_PRESETS['no-cover'];
+		return merged as HeaderPreset;
 	})();
 	
 	// Map avatarSize to Tailwind classes
@@ -68,9 +51,7 @@
 			lg: 'w-24 h-24',
 			xl: 'w-32 h-40' // Oval: wider width, taller height
 		};
-		const result = sizeMap[size] || sizeMap.lg;
-		console.log('[HeaderPreview] getAvatarSizeClasses:', { size, result });
-		return result;
+		return sizeMap[size] || sizeMap.lg;
 	}
 	
 	// Map avatarShape to Tailwind classes
@@ -81,21 +62,10 @@
 			square: 'rounded-none',
 			oval: 'rounded-[50%]' // Oval shape
 		};
-		const result = shapeMap[shape] || shapeMap.circle;
-		console.log('[HeaderPreview] getAvatarShapeClasses:', { shape, result });
-		return result;
-	}
-	
-	$: {
-		console.log('[HeaderPreview] Computing avatarClasses...');
-		console.log('[HeaderPreview] headerPreset:', headerPreset);
-		console.log('[HeaderPreview] avatarSize:', headerPreset?.avatarSize);
-		console.log('[HeaderPreview] avatarShape:', headerPreset?.avatarShape);
+		return shapeMap[shape] || shapeMap.circle;
 	}
 	
 	$: avatarClasses = `${getAvatarSizeClasses(headerPreset?.avatarSize)} ${getAvatarShapeClasses(headerPreset?.avatarShape)} object-cover`;
-	
-	$: console.log('[HeaderPreview] Final avatarClasses:', avatarClasses);
 </script>
 
 <div class="flex flex-col items-center gap-4 p-8">
