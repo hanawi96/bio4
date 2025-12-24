@@ -187,56 +187,55 @@
 	let currentBgColor = '#ffffff';
 	let lastSyncedThemeKey = '';
 	
-	// Update solid color using centralized manager
-	async function updateSolidColor(color: string) {
+	// Update solid color
+	function updateSolidColor(color: string) {
 		currentBgColor = color;
 		backgroundHistory.solid = color;
-		await updateAppearance('backgroundColor', color);
+		updateAppearance('backgroundColor', color);
 	}
 	
-	// NEW: Update gradient using centralized manager
-	async function updateGradientColor(gradient: string, from?: string, to?: string, direction?: string, type?: 'linear' | 'radial') {
+	// Update gradient
+	function updateGradientColor(gradient: string, from?: string, to?: string, direction?: string, type?: 'linear' | 'radial') {
 		currentBgColor = gradient;
 		backgroundHistory.gradient = gradient;
 		if (from) gradientFromColor = from;
 		if (to) gradientToColor = to;
 		if (direction) gradientDirection = direction;
 		if (type) gradientType = type;
-		await updateAppearance('backgroundColor', gradient);
+		updateAppearance('backgroundColor', gradient);
 	}
 	
-	// NEW: Update pattern using centralized manager
-	async function updatePatternColor(patternId: string, inkColor: string, bgColor: string) {
+	// Update pattern
+	function updatePatternColor(patternId: string, inkColor: string, bgColor: string) {
 		selectedPattern = patternId;
 		patternColor = inkColor;
 		patternBgColor = bgColor;
 		const patternStyle = getPatternStyle(patternId, inkColor, bgColor);
 		currentBgColor = patternStyle;
 		backgroundHistory.pattern = patternStyle;
-		await updateAppearance('backgroundColor', patternStyle);
+		updateAppearance('backgroundColor', patternStyle);
 	}
 	
-	// NEW: Update image background using centralized manager
-	async function updateImageBackground(imageUrl: string) {
+	// Update image background
+	function updateImageBackground(imageUrl: string) {
 		backgroundImageUrl = imageUrl;
 		const bgValue = `url('${imageUrl}')`;
 		currentBgColor = bgValue;
 		if (imageUrl !== DEFAULT_IMAGE_BG) {
 			backgroundHistory.image = imageUrl;
 		}
-		await updateAppearance('backgroundColor', bgValue);
+		updateAppearance('backgroundColor', bgValue);
 	}
 	
-	// NEW: Update video background using centralized manager
-	async function updateVideoBackground(videoUrl: string) {
+	// Update video background
+	function updateVideoBackground(videoUrl: string) {
 		backgroundVideoUrl = videoUrl;
-		currentBgColor = '#000000'; // Placeholder for video
+		currentBgColor = '#000000';
 		if (videoUrl !== DEFAULT_VIDEO_BG) {
 			backgroundHistory.video = videoUrl;
 		}
-		// Video needs both backgroundColor and backgroundVideo
-		await updateAppearance('backgroundColor', '#000000');
-		await updateAppearance('backgroundVideo', videoUrl);
+		updateAppearance('backgroundColor', '#000000');
+		updateAppearance('backgroundVideo', videoUrl);
 	}
 	
 	// Custom gradient state
@@ -338,7 +337,7 @@
 		}
 	}
 
-	async function selectType(type: string) {
+	function selectType(type: string) {
 		// Save current state to history before switching
 		if (selectedType === 'solid') {
 			backgroundHistory.solid = currentBgColor;
@@ -354,57 +353,40 @@
 		
 		selectedType = type;
 		
-		// Load from history and update URLs
+		// Clear backgroundVideo when switching away from video
+		if (type !== 'video') {
+			updateAppearance('backgroundVideo', null);
+		}
+		
+		// Load from history and update
 		if (type === 'solid') {
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
-			
-			if (backgroundHistory.solid) {
-				await updateSolidColor(backgroundHistory.solid);
-			} else {
-				await updateSolidColor('#ffffff');
-			}
+			updateSolidColor(backgroundHistory.solid || '#ffffff');
 		} else if (type === 'gradient') {
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
-			
 			if (backgroundHistory.gradient) {
 				const parsed = parseGradient(backgroundHistory.gradient);
 				if (parsed) {
-					await updateGradientColor(backgroundHistory.gradient, parsed.from, parsed.to, parsed.direction, parsed.type);
+					updateGradientColor(backgroundHistory.gradient, parsed.from, parsed.to, parsed.direction, parsed.type);
 				} else {
-					await updateGradientColor(backgroundHistory.gradient);
+					updateGradientColor(backgroundHistory.gradient);
 				}
 			} else {
-				await updateGradientColor('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg', 'linear');
+				updateGradientColor('linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '#667eea', '#764ba2', '135deg', 'linear');
 			}
 		} else if (type === 'image') {
 			backgroundVideoUrl = '';
-			
-			if (backgroundHistory.image && backgroundHistory.image.trim()) {
-				await updateImageBackground(backgroundHistory.image);
-			} else {
-				await updateImageBackground(DEFAULT_IMAGE_BG);
-			}
+			updateImageBackground(backgroundHistory.image?.trim() || DEFAULT_IMAGE_BG);
 		} else if (type === 'video') {
 			backgroundImageUrl = '';
-			
-			if (backgroundHistory.video && backgroundHistory.video.trim()) {
-				await updateVideoBackground(backgroundHistory.video);
-			} else {
-				await updateVideoBackground(DEFAULT_VIDEO_BG);
-			}
+			updateVideoBackground(backgroundHistory.video?.trim() || DEFAULT_VIDEO_BG);
 		} else if (type === 'pattern') {
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
-			
 			const patternColors = generatePatternColors(baseThemeColor, selectedPattern);
-			await updatePatternColor(selectedPattern, patternColors.inkColor, patternColors.bgColor);
-		}
-		
-		// Clear backgroundVideo from store when switching away from video (after main update)
-		if (type !== 'video') {
-			await updateAppearance('backgroundVideo', null);
+			updatePatternColor(selectedPattern, patternColors.inkColor, patternColors.bgColor);
 		}
 	}
 	
