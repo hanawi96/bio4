@@ -22,6 +22,7 @@ export const FALLBACK_THEME: Theme = {
 			surface: '#fafafa',
 			border: '#e5e5e5',
 			blockBase: '#3b82f6',
+			shadowColor: '#000000',
 			fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
 		},
 		defaults: {
@@ -46,7 +47,8 @@ export const FALLBACK_THEME: Theme = {
 					text: '#ffffff',
 					surface: '#171717',
 					border: '#404040',
-					blockBase: '#60a5fa'
+					blockBase: '#60a5fa',
+					shadowColor: '#ffffff'
 				}
 			}
 		}

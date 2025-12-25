@@ -38,7 +38,13 @@
 				: resolveToken(recipe.text, tokens);
 		const border = recipe.border ? resolveToken(recipe.border, tokens) : undefined;
 		const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
-		const shadow = recipe.shadow;
+		
+		// Resolve shadow - if it's a token reference, resolve it; otherwise use as-is
+		const shadow = recipe.shadow 
+			? (recipe.shadow.includes('px') 
+				? recipe.shadow 
+				: `4px 4px 0px ${resolveToken(recipe.shadow, tokens)}`)
+			: undefined;
 
 		return {
 			backgroundColor: fill,
@@ -99,10 +105,11 @@
 	];
 
 	$: currentShadow = (() => {
-		// If current recipe has built-in shadow, use that
-		if (currentBlockStyle?.shadow) {
-			return currentBlockStyle.shadow;
+		// If on Brutal recipe, always show Hard as selected
+		if (currentRecipeId === 'brutal') {
+			return '4px 4px 0px rgba(0,0,0,1)'; // Match the Hard button value
 		}
+		
 		// Otherwise use override or theme default
 		return $appearanceState.overrides?.['block.shadow'] 
 			|| $appearance?.theme?.config?.defaults?.blockShadow 
@@ -111,7 +118,20 @@
 
 	function selectShadow(shadowId: string) {
 		const shadow = shadowOptions.find((s) => s.id === shadowId);
-		updateAppearance('block.shadow', shadow?.value || 'none');
+		const shadowValue = shadow?.value || 'none';
+		
+		// If currently on Brutal and user selects a different shadow, switch to Solid
+		if (currentRecipeId === 'brutal' && shadowValue !== currentBlockStyle?.shadow) {
+			updateAppearance('block.stylePreset', 'solid');
+		}
+		
+		// If currently on Solid and user selects Hard shadow, switch to Brutal
+		if (currentRecipeId === 'solid' && shadowId === 'hard') {
+			updateAppearance('block.stylePreset', 'brutal');
+			return; // Don't set shadow override, let Brutal use its built-in shadow
+		}
+		
+		updateAppearance('block.shadow', shadowValue);
 	}
 </script>
 
@@ -241,5 +261,42 @@
 				💡 Changing this color will update all block styles automatically
 			</p>
 		</div>
+
+		<!-- Shadow Color (only show when Brutal is selected) -->
+		{#if currentRecipeId === 'brutal'}
+			<div class="pt-6 border-t border-gray-100">
+				<div class="flex items-center justify-between mb-3">
+					<div>
+						<p class="text-sm font-medium text-gray-900">Shadow Color</p>
+						<p class="text-xs text-gray-500">Color for brutal shadow effect</p>
+					</div>
+				</div>
+				<div class="flex items-center gap-3">
+					<div class="flex-1">
+						<div class="relative">
+							<input
+								type="color"
+								value={$appearance?.tokens?.shadowColor || '#000000'}
+								on:input={(e) => updateAppearance('tokens.shadowColor', e.currentTarget.value)}
+								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+							/>
+							<div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer">
+								<div 
+									class="w-10 h-10 rounded-lg border-2 border-white shadow-sm ring-1 ring-gray-200"
+									style="background-color: {$appearance?.tokens?.shadowColor || '#000000'};"
+								></div>
+								<div class="flex-1">
+									<p class="text-xs font-medium text-gray-500 uppercase">Shadow Color</p>
+									<p class="text-sm font-bold text-gray-900 font-mono">{$appearance?.tokens?.shadowColor || '#000000'}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<p class="text-xs text-gray-500 mt-2">
+					🎨 Customize the shadow color for brutal style
+				</p>
+			</div>
+		{/if}
 	</div>
 </section>

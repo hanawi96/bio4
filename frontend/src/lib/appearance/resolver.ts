@@ -90,6 +90,7 @@ function expandThemeTokens(config: any): ThemeTokens {
 		surface: tokens.surface || '#fafafa',
 		border: tokens.border || '#e5e5e5',
 		blockBase: tokens.blockBase || '#3b82f6',
+		shadowColor: tokens.shadowColor || '#000000',
 		fontFamily: tokens.fontFamily || 'Inter, sans-serif',
 		secondary: adjustColor(tokens.primary || '#3b82f6', -20),
 		textSecondary: adjustColor(tokens.text || '#000000', isDark ? -30 : 30),
@@ -214,8 +215,12 @@ function resolveBlockStyle(
 	// Resolve glow color (optional)
 	const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
 
-	// Get shadow (hard shadow takes priority over glow)
-	const shadow = recipe.shadow;
+	// Resolve shadow - if it's a token reference, resolve it; otherwise use as-is
+	const shadow = recipe.shadow 
+		? (recipe.shadow.includes('px') 
+			? recipe.shadow 
+			: `4px 4px 0px ${resolveToken(recipe.shadow, tokens)}`)
+		: undefined;
 
 	return {
 		recipe,

@@ -58,8 +58,8 @@ export const BLOCK_STYLE_RECIPES: Record<BlockStylePresetId, BlockStyleRecipe> =
     brutal: {
         fill: 'blockBase',
         text: 'auto',
-        border: '2px solid #000000',
-        shadow: '4px 4px 0px rgba(0,0,0,1)'
+        border: 'shadowColor',
+        shadow: 'shadowColor'
     }
 };
 

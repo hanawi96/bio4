@@ -20,6 +20,7 @@ export interface ThemeConfigTokens {
 	surface: string;
 	border: string;
 	blockBase: string;
+	shadowColor?: string; // Shadow color for brutal style (optional, default: #000000)
 	fontFamily: string;
 }
 
@@ -83,6 +84,7 @@ export interface ThemeTokens {
 	surface: string;
 	border: string;
 	blockBase: string;
+	shadowColor: string;
 	fontFamily: string;
 	
 	// Computed
