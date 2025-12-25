@@ -58,6 +58,31 @@
 		} else if (resolvedBgColor.startsWith('background:')) {
 			selectedType = 'pattern';
 			currentBgColor = resolvedBgColor;
+			
+			// Extract pattern colors from pattern string
+			const colorMatches = resolvedBgColor.match(/#[0-9a-fA-F]{6}/g);
+			console.log('🎨 [Initial load] Pattern detected, colors:', colorMatches);
+			if (colorMatches && colorMatches.length >= 2) {
+				// First color is usually pattern ink color
+				patternColor = colorMatches[0];
+				// Last color is background color
+				patternBgColor = colorMatches[colorMatches.length - 1];
+				basePatternBgColor = patternBgColor;
+				console.log('🎨 [Initial load] Set patternColor:', patternColor, 'patternBgColor:', patternBgColor);
+			}
+			
+			// Try to detect pattern ID from the string
+			// This is best-effort, may not always work
+			if (resolvedBgColor.includes('radial-gradient(circle')) {
+				selectedPattern = 'dots';
+			} else if (resolvedBgColor.includes('linear-gradient') && resolvedBgColor.includes('90deg')) {
+				selectedPattern = 'grid';
+			} else if (resolvedBgColor.includes('repeating-linear-gradient')) {
+				selectedPattern = 'diagonal';
+			} else if (resolvedBgColor.includes('url(')) {
+				// SVG pattern - harder to detect specific type
+				selectedPattern = 'cross'; // Default to first SVG pattern
+			}
 		} else if (resolvedBgColor.startsWith("url(")) {
 			selectedType = 'image';
 			currentBgColor = resolvedBgColor;
@@ -269,6 +294,7 @@
 		selectedPattern = patternId;
 		patternColor = inkColor;
 		patternBgColor = bgColor;
+		basePatternBgColor = bgColor; // Store base color for next pattern generation
 		const patternStyle = getPatternStyle(patternId, inkColor, bgColor);
 		console.log('🎨 [updatePatternColor]', { patternId, inkColor, bgColor, patternStyle });
 		currentBgColor = patternStyle;
@@ -331,6 +357,17 @@
 	let selectedPattern = 'dots';
 	let patternColor = '#e5e7eb';
 	let patternBgColor = '#ffffff';
+	
+	// Store the base background color (before pattern applied) for consistent pattern generation
+	let basePatternBgColor = '#ffffff';
+	
+	// Initialize basePatternBgColor from current background when component loads
+	$: if (!basePatternBgColor || basePatternBgColor === '#ffffff') {
+		const extracted = extractSolidColorFromCurrent(currentBgColor);
+		if (extracted !== '#ffffff') {
+			basePatternBgColor = extracted;
+		}
+	}
 	
 	// Base theme color for pattern preview
 	let baseThemeColor = '#ffffff';
@@ -401,9 +438,6 @@
 		}
 	}
 	
-	// Fixed pattern colors for preset previews
-	$: fixedPreviewColors = generatePatternColors(baseThemeColor, 'grid');
-
 	function selectType(type: string) {
 		// Save current state to history
 		const historyMap = {
@@ -444,9 +478,40 @@
 		} else if (type === 'video') {
 			updateVideoBackground(backgroundHistory.video?.trim() || DEFAULT_VIDEO_BG);
 		} else if (type === 'pattern') {
-			const colors = generatePatternColors(baseThemeColor, selectedPattern);
+			// Use current background color (after customization) instead of theme preset
+			const bgColorForPattern = extractSolidColorFromCurrent(currentBgColor);
+			basePatternBgColor = bgColorForPattern; // Store for consistent pattern generation
+			const colors = generatePatternColors(bgColorForPattern, selectedPattern);
 			updatePatternColor(selectedPattern, colors.inkColor, colors.bgColor);
 		}
+	}
+	
+	// Helper: Extract solid color from current background (gradient, solid, etc.)
+	function extractSolidColorFromCurrent(bgValue: string): string {
+		// Already solid color
+		if (bgValue.match(/^#[0-9a-fA-F]{6}$/)) {
+			return bgValue;
+		}
+		
+		// Extract from gradient
+		if (bgValue.includes('gradient')) {
+			const colorMatch = bgValue.match(/#[0-9a-fA-F]{6}/);
+			if (colorMatch) {
+				return colorMatch[0];
+			}
+		}
+		
+		// Extract from pattern (already has background color)
+		if (bgValue.startsWith('background:')) {
+			const colorMatch = bgValue.match(/#[0-9a-fA-F]{6}/g);
+			if (colorMatch && colorMatch.length > 0) {
+				// Last color is usually the background color
+				return colorMatch[colorMatch.length - 1];
+			}
+		}
+		
+		// Fallback to white
+		return '#ffffff';
 	}
 	
 	function handleBackgroundUpload(event: Event) {
@@ -1237,7 +1302,8 @@
 						{#each patterns as pattern}
 							<button
 								on:click={() => {
-									const patternColors = generatePatternColors(baseThemeColor, pattern.id);
+									// Use current customized background color
+									const patternColors = generatePatternColors(patternBgColor, pattern.id);
 									updatePatternColor(pattern.id, patternColors.inkColor, patternColors.bgColor);
 								}}
 								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
@@ -1245,7 +1311,7 @@
 							>
 								<div 
 									class="w-full h-full"
-									style={getPatternStyle(pattern.id, fixedPreviewColors.inkColor, fixedPreviewColors.bgColor)}
+									style={getPatternStyle(pattern.id, patternColor, patternBgColor)}
 								></div>
 								{#if selectedPattern === pattern.id}
 									<div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
