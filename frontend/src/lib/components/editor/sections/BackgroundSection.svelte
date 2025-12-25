@@ -1302,9 +1302,8 @@
 						{#each patterns as pattern}
 							<button
 								on:click={() => {
-									// Use current customized background color
-									const patternColors = generatePatternColors(patternBgColor, pattern.id);
-									updatePatternColor(pattern.id, patternColors.inkColor, patternColors.bgColor);
+									// Keep current customized colors, only change pattern type
+									updatePatternColor(pattern.id, patternColor, patternBgColor);
 								}}
 								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
 								title={pattern.name}
