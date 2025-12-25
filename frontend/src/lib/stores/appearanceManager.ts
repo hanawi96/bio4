@@ -67,19 +67,12 @@ export const isCustom = derived([appearanceState, themes], ([$state, $themes]) =
 // ============================================
 
 export function updateAppearance(path: string, value: any) {
-    console.log('📝 updateAppearance called:', { path, value });
-    
     const currentState = get(appearanceState);
     const $themes = get(themes);
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
     
-    console.log('📝 currentState before:', currentState.overrides);
-    
     const newState = setAppearanceHelper(themesMap, currentState, path, value);
-    console.log('📝 newState after:', newState.overrides);
-    
     const oldFormat = migrateNewToOld(themesMap, newState);
-    console.log('📝 oldFormat to save:', oldFormat);
 
     // Optimistic update: Update page store immediately
     page.update(p => {

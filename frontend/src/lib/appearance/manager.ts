@@ -20,6 +20,27 @@ export interface AppearanceState {
 // HELPER: Get value from preset by path
 // ============================================
 
+// ============================================
+// HELPER: Convert bg token to CSS string (for comparison)
+// ============================================
+
+function bgTokenToCss(bgToken: any): string {
+    if (!bgToken) return '';
+    
+    if (bgToken.type === 'color') {
+        return bgToken.value as string;
+    } else if (bgToken.type === 'gradient') {
+        const grad = bgToken.value as { from: string; to: string; angle: number };
+        return `linear-gradient(${grad.angle}deg, ${grad.from} 0%, ${grad.to} 100%)`;
+    }
+    
+    return '';
+}
+
+// ============================================
+// HELPER: Get value from preset by path
+// ============================================
+
 export function getPresetValue(
     themesMap: Record<string, Theme>,
     presetKey: string,
@@ -43,6 +64,10 @@ export function getPresetValue(
         const currentBlockId = blockPresetId || preset.defaultBlockPresetId || 'rounded-solid';
         const blockPreset = BLOCK_PRESETS[currentBlockId];
         return blockPreset?.[blockKey as keyof typeof blockPreset];
+    } else if (path === 'backgroundColor') {
+        // Special case: Convert bg token to CSS string for comparison
+        const bgToken = preset.config.tokens?.bg;
+        return bgTokenToCss(bgToken);
     } else {
         // Theme config value
         return preset.config[path as keyof typeof preset.config];
@@ -50,13 +75,55 @@ export function getPresetValue(
 }
 
 // ============================================
-// HELPER: Deep equality check
+// HELPER: Normalize gradient string to comparable format
+// ============================================
+
+function normalizeGradient(value: string): string | null {
+    if (!value || typeof value !== 'string') return null;
+    
+    // Already normalized or not a gradient
+    if (!value.includes('gradient')) return value;
+    
+    // Extract gradient type
+    const isRadial = value.includes('radial-gradient');
+    
+    // Extract colors (support both #hex and rgb/rgba)
+    const colorRegex = /#[0-9a-fA-F]{6}|rgba?\([^)]+\)/g;
+    const colors = value.match(colorRegex);
+    if (!colors || colors.length < 2) return value;
+    
+    // Extract angle for linear gradients
+    let angle = 135; // default
+    if (!isRadial) {
+        const angleMatch = value.match(/(\d+)deg/);
+        if (angleMatch) {
+            angle = parseInt(angleMatch[1]);
+        }
+    }
+    
+    // Normalize to standard format: "type|angle|color1|color2"
+    const type = isRadial ? 'radial' : 'linear';
+    return `${type}|${angle}|${colors[0]}|${colors[1]}`;
+}
+
+// ============================================
+// HELPER: Deep equality check with gradient normalization
 // ============================================
 
 export function deepEqual(a: any, b: any): boolean {
     if (a === b) return true;
     if (a == null || b == null) return false;
     if (typeof a !== typeof b) return false;
+
+    // Special case: Compare gradient strings
+    if (typeof a === 'string' && typeof b === 'string') {
+        if (a.includes('gradient') || b.includes('gradient')) {
+            const normalizedA = normalizeGradient(a);
+            const normalizedB = normalizeGradient(b);
+            return normalizedA === normalizedB;
+        }
+        return a === b;
+    }
 
     // For objects
     if (typeof a === 'object') {
@@ -226,11 +293,16 @@ export function migrateOldToNew(themesMap: Record<string, Theme>, dbState: any):
     
     // NEW FORMAT: Already flat
     if (dbState.overrides !== undefined) {
+        // Priority: DB value > theme default > fallback
+        // If themes not loaded yet, DB value will be used
+        const headerPresetId = dbState.headerPresetId || preset?.defaultHeaderPresetId || 'no-cover';
+        const blockPresetId = dbState.blockPresetId || preset?.defaultBlockPresetId || 'rounded-solid';
+        
         return {
             presetKey,
             overrides: dbState.overrides || {},
-            headerPresetId: dbState.headerPresetId || preset?.defaultHeaderPresetId || 'no-cover',
-            blockPresetId: dbState.blockPresetId || preset?.defaultBlockPresetId || 'rounded-solid'
+            headerPresetId,
+            blockPresetId
         };
     }
     
@@ -297,24 +369,14 @@ export function migrateNewToOld(themesMap: Record<string, Theme>, newState: Appe
     //   blockPresetId: "rounded-solid"
     // }
     
-    const preset = themesMap[newState.presetKey];
-    const defaultHeaderId = preset?.defaultHeaderPresetId || 'no-cover';
-    const defaultBlockId = preset?.defaultBlockPresetId || 'rounded-solid';
-    
     const dbState: any = {
         themeKey: newState.presetKey,
-        overrides: newState.overrides
+        overrides: newState.overrides,
+        // Always save preset IDs so they persist across page reloads
+        // even when themes store hasn't loaded yet
+        headerPresetId: newState.headerPresetId,
+        blockPresetId: newState.blockPresetId
     };
-    
-    // Only save headerPresetId if different from theme default
-    if (newState.headerPresetId && newState.headerPresetId !== defaultHeaderId) {
-        dbState.headerPresetId = newState.headerPresetId;
-    }
-    
-    // Only save blockPresetId if different from theme default
-    if (newState.blockPresetId && newState.blockPresetId !== defaultBlockId) {
-        dbState.blockPresetId = newState.blockPresetId;
-    }
     
     return dbState;
 }

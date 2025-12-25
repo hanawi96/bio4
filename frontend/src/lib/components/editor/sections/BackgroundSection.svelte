@@ -11,6 +11,7 @@
 
 	// Get bg token from theme config (new format)
 	$: themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+	$: themesLoaded = Object.keys($themes).length > 0;
 	$: currentTheme = themesMap[$appearanceState.presetKey] || FALLBACK_THEME;
 	$: themeConfig = currentTheme.config;
 	$: themeBgToken = themeConfig?.tokens?.bg;
@@ -23,7 +24,7 @@
 			return themeBgToken.value as string;
 		} else if (themeBgToken.type === 'gradient') {
 			const grad = themeBgToken.value as { from: string; to: string; angle: number };
-			return `linear-gradient(${grad.angle}deg, ${grad.from}, ${grad.to})`;
+			return `linear-gradient(${grad.angle}deg, ${grad.from} 0%, ${grad.to} 100%)`;
 		}
 		return '#ffffff';
 	})();
@@ -32,9 +33,9 @@
 	$: resolvedBgColor = $appearanceState.overrides['backgroundColor'] ?? presetBgValue;
 	$: resolvedBgVideo = $appearanceState.overrides['backgroundVideo'];
 	
-	// Initial load: detect type from stored data (runs once)
+	// Initial load: detect type from stored data (runs once, AFTER themes loaded)
 	let hasInitialized = false;
-	$: if (!hasInitialized && (resolvedBgColor || themeBgToken)) {
+	$: if (!hasInitialized && themesLoaded && (resolvedBgColor || themeBgToken)) {
 		hasInitialized = true;
 		
 		if (resolvedBgVideo) {
@@ -342,9 +343,13 @@
 		pattern: ''
 	};
 
+	// Track previous overrides state to detect when user selects theme preset
+	let lastHadOverrides = false;
+
 	// Reactive: Sync theme changes
 	$: if ($appearanceState.presetKey) {
 		const currentThemeKey = $appearanceState.presetKey;
+		const hasOverrides = Object.keys($appearanceState.overrides).length > 0;
 		
 		// Extract base color for pattern preview
 		if (presetBgValue.match(/^#[0-9a-fA-F]{6}$/)) {
@@ -354,10 +359,16 @@
 			if (matches?.[0]) baseThemeColor = matches[0];
 		}
 		
-		// Reset when theme changes (but NOT in Avatar Cover mode)
-		if (lastSyncedThemeKey && currentThemeKey !== lastSyncedThemeKey && !isAvatarCoverMode) {
+		// Reset when:
+		// 1. Theme changed (different key), OR
+		// 2. Overrides cleared (user selected theme preset: had overrides → no overrides)
+		const themeChanged = lastSyncedThemeKey && currentThemeKey !== lastSyncedThemeKey;
+		const overridesCleared = lastHadOverrides && !hasOverrides;
+		
+		if ((themeChanged || overridesCleared) && !isAvatarCoverMode) {
 			lastSyncedThemeKey = currentThemeKey;
-			hasInitialized = false;
+			lastHadOverrides = hasOverrides;
+			hasInitialized = true; // Set to true to prevent re-detection
 			
 			if (presetBgValue.match(/^#[0-9a-fA-F]{6}$/)) {
 				currentBgColor = presetBgValue;
@@ -380,8 +391,12 @@
 			backgroundImageUrl = '';
 			backgroundVideoUrl = '';
 			backgroundHistory.pattern = '';
-		} else if (!lastSyncedThemeKey) {
-			lastSyncedThemeKey = currentThemeKey;
+		} else {
+			// Update tracking variables
+			if (!lastSyncedThemeKey) {
+				lastSyncedThemeKey = currentThemeKey;
+			}
+			lastHadOverrides = hasOverrides;
 		}
 	}
 	
@@ -905,8 +920,8 @@
 										bind:value={gradientFromColor}
 										on:input={() => {
 											const gradient = gradientType === 'radial' 
-												? `radial-gradient(circle, ${gradientFromColor}, ${gradientToColor})`
-												: `linear-gradient(${gradientDirection}, ${gradientFromColor}, ${gradientToColor})`;
+												? `radial-gradient(circle, ${gradientFromColor} 0%, ${gradientToColor} 100%)`
+												: `linear-gradient(${gradientDirection}, ${gradientFromColor} 0%, ${gradientToColor} 100%)`;
 											updateGradientColor(gradient);
 										}}
 										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
