@@ -94,7 +94,7 @@
 		{ id: 'none', label: 'None', value: 'none' },
 		{ id: 'subtle', label: 'Subtle', value: '0 1px 2px rgba(0,0,0,0.05)' },
 		{ id: 'strong', label: 'Strong', value: '0 4px 6px rgba(0,0,0,0.1)' },
-		{ id: 'hard', label: 'Hard', value: '0 10px 15px rgba(0,0,0,0.2)' }
+		{ id: 'hard', label: 'Hard', value: '4px 4px 0px rgba(0,0,0,1)' }
 	];
 
 	$: currentShadow = $appearanceState.overrides?.['block.shadow'] || 'none';
