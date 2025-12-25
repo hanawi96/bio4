@@ -10,12 +10,46 @@ export const THEMES_MAP: Record<string, Theme> = {
 		key: 'minimal',
 		name: 'Minimal',
 		config: {
-			backgroundColor: '#ffffff',
-			textColor: '#000000',
-			primaryColor: '#3b82f6',
-			fontFamily: 'Inter',
-			borderRadius: 8,
-			spacing: 16
+			meta: {
+				id: 'preset.minimal',
+				name: 'Minimal',
+				schemaVersion: 1,
+				version: '1.0.0'
+			},
+			tokens: {
+				bg: { type: 'color', value: '#ffffff' },
+				text: '#000000',
+				primary: '#3b82f6',
+				surface: '#fafafa',
+				border: '#e5e5e5',
+				blockBase: '#3b82f6',
+				fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+			},
+			defaults: {
+				headerPreset: 'no-cover',
+				blockPreset: 'rounded',
+				blockStylePreset: 'solid'
+			},
+			page: {
+				mode: 'light',
+				layout: {
+					maxWidth: 480,
+					pagePadding: 16,
+					blockGap: 16,
+					textAlign: 'center'
+				}
+			},
+			modes: {
+				dark: {
+					tokens: {
+						bg: { type: 'color', value: '#0a0a0a' },
+						text: '#ffffff',
+						surface: '#171717',
+						border: '#404040',
+						blockBase: '#60a5fa'
+					}
+				}
+			}
 		},
 		defaultHeaderPresetId: 'no-cover',
 		defaultBlockPresetId: 'rounded-solid'
@@ -25,12 +59,46 @@ export const THEMES_MAP: Record<string, Theme> = {
 		key: 'dark',
 		name: 'Dark',
 		config: {
-			backgroundColor: '#000000',
-			textColor: '#ffffff',
-			primaryColor: '#60a5fa',
-			fontFamily: 'Inter',
-			borderRadius: 12,
-			spacing: 20
+			meta: {
+				id: 'preset.dark',
+				name: 'Dark',
+				schemaVersion: 1,
+				version: '1.0.0'
+			},
+			tokens: {
+				bg: { type: 'color', value: '#000000' },
+				text: '#ffffff',
+				primary: '#60a5fa',
+				surface: '#171717',
+				border: '#404040',
+				blockBase: '#60a5fa',
+				fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+			},
+			defaults: {
+				headerPreset: 'with-cover',
+				blockPreset: 'rounded',
+				blockStylePreset: 'solid'
+			},
+			page: {
+				mode: 'dark',
+				layout: {
+					maxWidth: 480,
+					pagePadding: 20,
+					blockGap: 20,
+					textAlign: 'center'
+				}
+			},
+			modes: {
+				light: {
+					tokens: {
+						bg: { type: 'color', value: '#ffffff' },
+						text: '#000000',
+						surface: '#fafafa',
+						border: '#e5e5e5',
+						blockBase: '#3b82f6'
+					}
+				}
+			}
 		},
 		defaultHeaderPresetId: 'with-cover',
 		defaultBlockPresetId: 'rounded-solid'
@@ -40,12 +108,46 @@ export const THEMES_MAP: Record<string, Theme> = {
 		key: 'gradient',
 		name: 'Gradient',
 		config: {
-			backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-			textColor: '#ffffff',
-			primaryColor: '#ffffff',
-			fontFamily: 'Poppins',
-			borderRadius: 16,
-			spacing: 24
+			meta: {
+				id: 'preset.gradient',
+				name: 'Gradient',
+				schemaVersion: 1,
+				version: '1.0.0'
+			},
+			tokens: {
+				bg: { type: 'gradient', value: { from: '#667eea', to: '#764ba2', angle: 135 } },
+				text: '#ffffff',
+				primary: '#ffffff',
+				surface: 'rgba(255,255,255,0.1)',
+				border: 'rgba(255,255,255,0.2)',
+				blockBase: '#ffffff',
+				fontFamily: 'Poppins, system-ui, -apple-system, sans-serif'
+			},
+			defaults: {
+				headerPreset: 'with-cover',
+				blockPreset: 'rounded',
+				blockStylePreset: 'solid'
+			},
+			page: {
+				mode: 'light',
+				layout: {
+					maxWidth: 480,
+					pagePadding: 24,
+					blockGap: 24,
+					textAlign: 'center'
+				}
+			},
+			modes: {
+				dark: {
+					tokens: {
+						bg: { type: 'gradient', value: { from: '#4a5568', to: '#2d3748', angle: 135 } },
+						text: '#e2e8f0',
+						surface: 'rgba(255,255,255,0.05)',
+						border: 'rgba(255,255,255,0.1)',
+						blockBase: '#cbd5e0'
+					}
+				}
+			}
 		},
 		defaultHeaderPresetId: 'with-cover',
 		defaultBlockPresetId: 'pill-outline'

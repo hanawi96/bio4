@@ -9,7 +9,7 @@ app.get('/', async (c) => {
 		const db = c.env.DB;
 		
 		const result = await db.prepare(`
-			SELECT id, key, name, config, config_v2,
+			SELECT id, key, name, config,
 			       default_header_preset_id, default_block_preset_id,
 			       created_at
 			FROM theme_presets
@@ -21,7 +21,6 @@ app.get('/', async (c) => {
 			key: row.key,
 			name: row.name,
 			config: JSON.parse(row.config),
-			config_v2: row.config_v2 ? JSON.parse(row.config_v2) : null,
 			defaultHeaderPresetId: row.default_header_preset_id || 'centered',
 			defaultBlockPresetId: row.default_block_preset_id || 'rounded-solid',
 			created_at: row.created_at
@@ -41,7 +40,7 @@ app.get('/:key', async (c) => {
 		const db = c.env.DB;
 		
 		const result = await db.prepare(`
-			SELECT id, key, name, config, config_v2,
+			SELECT id, key, name, config,
 			       default_header_preset_id, default_block_preset_id,
 			       created_at
 			FROM theme_presets
@@ -57,7 +56,6 @@ app.get('/:key', async (c) => {
 			key: result.key,
 			name: result.name,
 			config: JSON.parse(result.config as string),
-			config_v2: result.config_v2 ? JSON.parse(result.config_v2 as string) : null,
 			defaultHeaderPresetId: result.default_header_preset_id || 'centered',
 			defaultBlockPresetId: result.default_block_preset_id || 'rounded-solid',
 			created_at: result.created_at

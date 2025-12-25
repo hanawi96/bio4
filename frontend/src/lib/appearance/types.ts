@@ -3,190 +3,62 @@
 // ============================================
 
 // ============================================
-// THEME V2 (10/10 System)
+// THEME CONFIG (Current Schema)
 // ============================================
 
-export interface ThemeMetaContract {
-	controls: Array<{
-		keyPath: string;
-		type: 'select' | 'slider' | 'color' | 'toggle' | 'number';
-		label: string;
-		options?: string[];
-		min?: number;
-		max?: number;
-		step?: number;
-		affects?: string[];
-	}>;
-	constraints?: Record<string, { min?: number; max?: number; enum?: string[] }>;
-	notes?: string[];
+export interface ThemeConfigToken {
+	type: 'color' | 'gradient';
+	value: string | { from: string; to: string; angle: number };
 }
 
-export interface ThemeMeta {
-	id: string;
-	name: string;
-	version: string;
-	schemaVersion: number;
-	author: string;
-	description: string;
-	supports: {
-		modes?: string[];
-		animation?: boolean;
-		glass?: boolean;
-	};
-	tier?: 'free' | 'pro';
-	visibility?: 'public' | 'unlisted' | 'private';
-	preview?: {
-		thumbnailUrl?: string;
-		demoUrl?: string;
-	};
-	contract: ThemeMetaContract;
+export interface ThemeConfigTokens {
+	bg: ThemeConfigToken;
+	text: string;
+	primary: string;
+	surface: string;
+	border: string;
+	blockBase: string;
+	fontFamily: string;
 }
 
-export interface ThemeTokensV2 {
-	color: Record<string, any>;
-	typography: Record<string, any>;
-	space: Record<string, number>;
-	radius: Record<string, number>;
-	elevation: Record<string, string>;
-	motion?: Record<string, any>;
-	zIndex?: Record<string, number>;
-	breakpoint?: Record<string, string>;
+export interface ThemeConfigDefaults {
+	headerPreset: string;
+	blockPreset: string;
+	blockStylePreset: string;
 }
 
-export interface ThemeSemantic {
-	color: {
-		primary: string;
-		secondary?: string;
-		accent?: string;
-		text: {
-			default: string;
-			muted: string;
-			invert: string;
-		};
-		border: {
-			default: string;
-		};
-		divider?: string;
-		surface: {
-			page: string;
-			card: string;
-			overlay?: string;
-		};
-		danger?: string;
-		success?: string;
-		warning?: string;
-	};
-	typography: {
-		heading: Record<string, any>;
-		body: Record<string, any>;
-		caption: Record<string, any>;
-		button?: Record<string, any>;
-	};
-}
-
-export interface ThemeRecipes {
-	header: {
-		base: {
-			hasCover: boolean;
-			coverHeight?: 'sm' | 'md' | 'lg';
-			avatarSize: 'sm' | 'md' | 'lg' | 'xl';
-			avatarShape: 'circle' | 'rounded' | 'square';
-			avatarPosition: 'center' | 'overlap';
-			contentAlign: 'center' | 'left';
-			showBio: boolean;
-			bioMaxLines: number;
-			spacing: 'compact' | 'comfortable' | 'spacious';
-		};
-	};
-	linkItem: {
-		base: {
-			shape: 'rounded' | 'pill' | 'square';
-			fill: 'solid' | 'outline' | 'ghost' | 'gradient';
-			size: 'sm' | 'md' | 'lg';
-			radius: string;
-			padding: string;
-			shadow: string;
-			iconPosition?: 'left' | 'right' | 'none';
-			hoverEffect?: 'lift' | 'scale' | 'glow' | 'none';
-		};
-	};
-	linkGroup: {
-		base: {
-			gap: string;
-		};
-		variants: {
-			layout: {
-				list: { columns: number };
-				cards: { columns: number; cardStyle?: string };
-				grid: { columns: number };
-			};
-		};
-	};
-}
-
-export interface ThemePageLayout {
+export interface ThemeConfigPageLayout {
 	maxWidth: number;
 	pagePadding: number;
 	blockGap: number;
 	textAlign: 'left' | 'center' | 'right';
-	baseFontSize: 'S' | 'M' | 'L' | 'XL';
-	contentAlign?: 'left' | 'center' | 'right';
 }
 
-export interface ThemePageDefaults {
-	linkGroup: {
-		textAlign: 'left' | 'center' | 'right';
-		fontSize: 'S' | 'M' | 'L' | 'XL';
-		radius: string;
-		padding?: string;
-		shadow?: string;
-		spacing?: 'compact' | 'comfortable' | 'spacious';
+export interface ThemeConfigPage {
+	mode: 'light' | 'dark';
+	layout: ThemeConfigPageLayout;
+}
+
+export interface ThemeConfigModes {
+	dark?: {
+		tokens: Partial<ThemeConfigTokens>;
 	};
-	textBlock?: Record<string, any>;
-	imageBlock?: Record<string, any>;
-	productBlock?: Record<string, any>;
-}
-
-export interface ThemePage {
-	layout: ThemePageLayout;
-	defaults: ThemePageDefaults;
-	mode?: 'light' | 'dark' | 'compact';
-}
-
-export interface ThemeBackground {
-	wallpaper: {
-		kind: 'preset' | 'upload';
-		assetId: number | string;
-		url?: string;
-	};
-	effects: {
-		blur: number;
-		dim: number;
-		overlayColor: string;
+	light?: {
+		tokens: Partial<ThemeConfigTokens>;
 	};
 }
-
-export interface ThemeConfigV2 {
-	meta: ThemeMeta;
-	tokens: ThemeTokensV2;
-	semantic: ThemeSemantic;
-	recipes: ThemeRecipes;
-	page: ThemePage;
-	background: ThemeBackground;
-	modes?: Record<string, any>;
-}
-
-// ============================================
-// THEME V1 (Legacy - for backward compatibility)
-// ============================================
 
 export interface ThemeConfig {
-	backgroundColor: string;
-	textColor: string;
-	primaryColor: string;
-	fontFamily: string;
-	borderRadius: number;
-	spacing: number;
+	meta: {
+		id: string;
+		name: string;
+		schemaVersion: number;
+		version: string;
+	};
+	tokens: ThemeConfigTokens;
+	defaults: ThemeConfigDefaults;
+	page: ThemeConfigPage;
+	modes?: ThemeConfigModes;
 }
 
 export interface Theme {
@@ -194,20 +66,33 @@ export interface Theme {
 	key: string;
 	name: string;
 	config: ThemeConfig;
-	config_v2?: ThemeConfigV2; // New field
 	defaultHeaderPresetId?: string;
 	defaultBlockPresetId?: string;
 	created_at?: string;
 }
 
-// Design Tokens - Expanded from ThemeConfig (Legacy V1)
-export interface ThemeTokens extends ThemeConfig {
-	// Additional computed tokens
-	secondary: string;
+// Design Tokens - Computed from ThemeConfig
+export interface ThemeTokens {
+	// From config.tokens
+	bg: ThemeConfigToken;
+	text: string;
+	primary: string;
 	surface: string;
-	textSecondary: string;
 	border: string;
+	blockBase: string;
+	fontFamily: string;
+	
+	// Computed
+	secondary: string;
+	textSecondary: string;
 	shadowLevel: 'none' | 'sm' | 'md' | 'lg';
+	
+	// For backward compatibility (computed from bg token)
+	backgroundColor: string;
+	textColor: string;
+	primaryColor: string;
+	borderRadius: number;
+	spacing: number;
 }
 
 // Header Preset - Predefined header styles
