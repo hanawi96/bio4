@@ -8,7 +8,7 @@
 		getBlockStyleRecipe,
 		type BlockStylePresetId
 	} from '$lib/appearance/blockStyles';
-	import { resolveToken, resolveAutoTextColor } from '$lib/appearance/tokenResolver';
+	import { resolveToken, resolveAutoTextColor, resolveShadow } from '$lib/appearance/tokenResolver';
 
 	// Get all available recipes
 	const recipes = getBlockStyleRecipeIds();
@@ -49,11 +49,41 @@
 		return {
 			backgroundColor: fill,
 			color: text,
-			border: border ? `2px solid ${border}` : 'none',
+			border: border ? `1px solid ${border}` : 'none',
 			boxShadow: shadow || (glow ? `0 0 20px ${glow}` : 'none'),
 			backdropFilter: recipe.blur ? `blur(${recipe.blur}px)` : 'none'
 		};
 	}
+
+	// Shadow options
+	const shadowOptions = [
+		{ id: 'none', label: 'None', value: 'none' },
+		{ id: 'subtle', label: 'Subtle', value: '0 1px 2px rgba(0,0,0,0.05)' },
+		{ id: 'strong', label: 'Strong', value: '0 4px 6px rgba(0,0,0,0.1)' },
+		{ id: 'hard', label: 'Hard', value: '4px 4px 0px rgba(0,0,0,1)' }
+	];
+
+	$: currentShadow = (() => {
+		// If on Brutal recipe, always show Hard as selected
+		if (currentRecipeId === 'brutal') {
+			return '4px 4px 0px rgba(0,0,0,1)';
+		}
+		
+		// Otherwise use override or theme default
+		return $appearanceState.overrides?.['block.shadow'] 
+			|| $appearance?.theme?.config?.defaults?.blockShadow 
+			|| 'none';
+	})();
+
+	// Track current shadow type (none/subtle/strong/hard)
+	$: currentShadowType = (() => {
+		const shadow = currentShadow;
+		if (!shadow || shadow === 'none') return 'none';
+		if (shadow.includes('4px 4px 0px')) return 'hard';
+		if (shadow.includes('0 4px 6px')) return 'strong';
+		if (shadow.includes('0 1px 2px')) return 'subtle';
+		return 'none';
+	})();
 
 	// Get current block style from appearance (for applying to preview)
 	$: currentBlockStyle = $appearance?.blockStyle;
@@ -61,11 +91,15 @@
 	// Memoize display styles for all recipes (reactive)
 	$: displayStyles = recipes.reduce((acc, recipeId) => {
 		if (recipeId === currentRecipeId && currentBlockStyle) {
+			// For current recipe, use resolved block style with shadow override
+			const shadowToUse = currentShadow !== 'none' ? currentShadow : (currentBlockStyle.shadow || '');
+			const resolvedShadow = resolveShadow(shadowToUse, $appearance?.tokens?.shadowColor || '#000000');
+			
 			acc[recipeId] = {
 				backgroundColor: currentBlockStyle.fill,
 				color: currentBlockStyle.text,
-				border: currentBlockStyle.border ? `2px solid ${currentBlockStyle.border}` : 'none',
-				boxShadow: currentBlockStyle.shadow || (currentBlockStyle.glow ? `0 0 20px ${currentBlockStyle.glow}` : 'none'),
+				border: currentBlockStyle.border ? `1px solid ${currentBlockStyle.border}` : 'none',
+				boxShadow: resolvedShadow !== 'none' ? resolvedShadow : (currentBlockStyle.glow ? `0 0 20px ${currentBlockStyle.glow}` : 'none'),
 				backdropFilter: currentBlockStyle.blur ? `blur(${currentBlockStyle.blur}px)` : 'none'
 			};
 		} else {
@@ -96,36 +130,21 @@
 		square: 'rounded-none'
 	}[blockShape] || 'rounded-lg';
 
-	// Shadow options
-	const shadowOptions = [
-		{ id: 'none', label: 'None', value: 'none' },
-		{ id: 'subtle', label: 'Subtle', value: '0 1px 2px rgba(0,0,0,0.05)' },
-		{ id: 'strong', label: 'Strong', value: '0 4px 6px rgba(0,0,0,0.1)' },
-		{ id: 'hard', label: 'Hard', value: '4px 4px 0px rgba(0,0,0,1)' }
-	];
-
-	$: currentShadow = (() => {
-		// If on Brutal recipe, always show Hard as selected
-		if (currentRecipeId === 'brutal') {
-			return '4px 4px 0px rgba(0,0,0,1)'; // Match the Hard button value
-		}
-		
-		// Otherwise use override or theme default
-		return $appearanceState.overrides?.['block.shadow'] 
-			|| $appearance?.theme?.config?.defaults?.blockShadow 
-			|| 'none';
-	})();
-
 	function selectShadow(shadowId: string) {
 		const shadow = shadowOptions.find((s) => s.id === shadowId);
-		const shadowValue = shadow?.value || 'none';
+		let shadowValue = shadow?.value || 'none';
+		
+		// If selecting hard shadow, use shadowColor token instead of fixed black
+		if (shadowId === 'hard' && $appearance?.tokens?.shadowColor) {
+			shadowValue = `4px 4px 0px ${$appearance.tokens.shadowColor}`;
+		}
 		
 		// If currently on Brutal and user selects a different shadow, switch to Solid
-		if (currentRecipeId === 'brutal' && shadowValue !== currentBlockStyle?.shadow) {
+		if (currentRecipeId === 'brutal' && shadowId !== 'hard') {
 			updateAppearance('block.stylePreset', 'solid');
 		}
 		
-		// If currently on Solid and user selects Hard shadow, switch to Brutal
+		// If currently on Solid and user selects Hard shadow, switch to Brutal (Brutal = Solid + Hard)
 		if (currentRecipeId === 'solid' && shadowId === 'hard') {
 			updateAppearance('block.stylePreset', 'brutal');
 			return; // Don't set shadow override, let Brutal use its built-in shadow
@@ -156,8 +175,19 @@
 							class="aspect-square p-4 flex items-center justify-center relative"
 							style="background: {previewBackground};"
 						>
-							<!-- Subtle pattern overlay to make blocks visible on any background -->
-							<div class="absolute inset-0 opacity-[0.03]" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px);"></div>
+							<!-- Pattern overlay - stronger for glass effect visibility -->
+							<div 
+								class="absolute inset-0 {recipeId === 'glass' ? 'opacity-20' : 'opacity-[0.03]'}" 
+								style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px);"
+							></div>
+							
+							<!-- Additional gradient for glass preview -->
+							{#if recipeId === 'glass'}
+								<div 
+									class="absolute inset-0 opacity-30"
+									style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(168, 85, 247, 0.3) 100%);"
+								></div>
+							{/if}
 							
 							{#if $appearance?.tokens}
 								{@const displayStyle = displayStyles[recipeId]}
@@ -169,9 +199,10 @@
 										border: {displayStyle.border};
 										box-shadow: {displayStyle.boxShadow || 'none'};
 										backdrop-filter: {displayStyle.backdropFilter || 'none'};
+										-webkit-backdrop-filter: {displayStyle.backdropFilter || 'none'};
 									"
 								>
-									<div class="w-3 h-3 rounded-full bg-current opacity-60"></div>
+									<span class="text-[10px] font-medium">Text</span>
 								</div>
 							{/if}
 						</div>
@@ -180,9 +211,6 @@
 						<div class="py-2 px-2 bg-white border-t border-gray-100">
 							<p class="text-xs font-semibold text-gray-900 truncate text-center">
 								{getBlockStyleRecipeName(recipeId)}
-							</p>
-							<p class="text-[10px] text-gray-500 truncate text-center mt-0.5">
-								{getBlockStyleRecipeDescription(recipeId)}
 							</p>
 						</div>
 					</button>
@@ -217,7 +245,7 @@
 				{#each shadowOptions as shadow}
 					<button
 						on:click={() => selectShadow(shadow.id)}
-						class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all hover:scale-105 {currentShadow === shadow.value
+						class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all hover:scale-105 {currentShadowType === shadow.id
 							? 'border-blue-500 bg-blue-50 text-blue-700'
 							: 'border-gray-200 text-gray-700 hover:border-gray-300'}"
 					>
@@ -262,13 +290,13 @@
 			</p>
 		</div>
 
-		<!-- Shadow Color (only show when Brutal is selected) -->
-		{#if currentRecipeId === 'brutal'}
+		<!-- Shadow Color (only show when Hard shadow is selected) -->
+		{#if currentShadowType === 'hard'}
 			<div class="pt-6 border-t border-gray-100">
 				<div class="flex items-center justify-between mb-3">
 					<div>
 						<p class="text-sm font-medium text-gray-900">Shadow Color</p>
-						<p class="text-xs text-gray-500">Color for brutal shadow effect</p>
+						<p class="text-xs text-gray-500">Color for hard shadow effect</p>
 					</div>
 				</div>
 				<div class="flex items-center gap-3">
@@ -294,7 +322,7 @@
 					</div>
 				</div>
 				<p class="text-xs text-gray-500 mt-2">
-					🎨 Customize the shadow color for brutal style
+					🎨 Customize the shadow color for hard shadow
 				</p>
 			</div>
 		{/if}

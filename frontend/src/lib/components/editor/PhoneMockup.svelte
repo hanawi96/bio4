@@ -3,6 +3,7 @@
 	import { appearance } from '$lib/stores/appearance';
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
+	import { resolveShadow } from '$lib/appearance/tokenResolver';
 
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
@@ -158,6 +159,12 @@
 	$: blockShadow = $appearanceState.overrides?.['block.shadow'] 
 		|| $appearance?.theme?.config?.defaults?.blockShadow 
 		|| 'none';
+	
+	// Resolve shadow with shadowColor token (for hard shadows)
+	$: resolvedBlockShadow = resolveShadow(
+		$appearance?.blockStyle?.shadow || blockShadow,
+		tokens?.shadowColor || '#000000'
+	);
 </script>
 
 <!-- Phone Frame -->
@@ -370,12 +377,10 @@
 								style="
 									background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 									color: {$appearance?.blockStyle?.text || 'white'};
-									border: {$appearance?.blockStyle?.border ? `2px solid ${$appearance.blockStyle.border}` : 'none'};
-									box-shadow: {$appearance?.blockStyle?.shadow 
-										? $appearance.blockStyle.shadow 
-										: (blockShadow !== 'none' 
-											? blockShadow 
-											: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none'))};
+									border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
+									box-shadow: {resolvedBlockShadow !== 'none' 
+										? resolvedBlockShadow 
+										: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
 									{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 									border-radius: {blockBorderRadius};
 								"

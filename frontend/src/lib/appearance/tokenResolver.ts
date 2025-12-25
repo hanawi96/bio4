@@ -45,6 +45,17 @@ export function resolveToken(ref: string, tokens: ThemeConfigTokens): string {
 		return color;
 	}
 
+	// If color is already rgba/rgb, adjust opacity
+	if (color.startsWith('rgba(') || color.startsWith('rgb(')) {
+		// Extract RGB values and replace opacity
+		const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+		if (match) {
+			return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${opacity})`;
+		}
+		// Fallback: return as-is if can't parse
+		return color;
+	}
+
 	// Convert hex to rgba with opacity
 	return hexToRgba(color, opacity);
 }
@@ -100,4 +111,19 @@ export function resolveAutoTextColor(fillRef: string, tokens: ThemeConfigTokens)
 
 	// Calculate contrast color
 	return getAutoTextColor(fillColor);
+}
+
+// Resolve shadow with shadowColor token (for hard shadows)
+// Examples:
+//   resolveShadow("4px 4px 0px #000000", "#ff0000") → "4px 4px 0px #ff0000"
+//   resolveShadow("0 4px 6px rgba(0,0,0,0.1)", "#ff0000") → "0 4px 6px rgba(0,0,0,0.1)"
+export function resolveShadow(shadow: string | undefined, shadowColor: string): string {
+	if (!shadow || shadow === 'none') return 'none';
+	
+	// If it's a hard shadow (4px 4px 0px), replace the color with shadowColor token
+	if (shadow.includes('4px 4px 0px')) {
+		return `4px 4px 0px ${shadowColor}`;
+	}
+	
+	return shadow;
 }
