@@ -21,7 +21,8 @@ const DEFAULT_CONFIG = {
 	defaults: {
 		headerPreset: 'no-cover',
 		blockPreset: 'rounded',
-		blockStylePreset: 'solid'
+		blockStylePreset: 'solid',
+		blockShadow: 'none'
 	},
 	page: {
 		mode: 'light' as const,
@@ -213,13 +214,17 @@ function resolveBlockStyle(
 	// Resolve glow color (optional)
 	const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
 
+	// Get shadow (hard shadow takes priority over glow)
+	const shadow = recipe.shadow;
+
 	return {
 		recipe,
 		fill,
 		text,
 		border,
 		glow,
-		blur: recipe.blur
+		blur: recipe.blur,
+		shadow
 	};
 }
 

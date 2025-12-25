@@ -27,7 +27,8 @@ export const FALLBACK_THEME: Theme = {
 		defaults: {
 			headerPreset: 'no-cover',
 			blockPreset: 'rounded',
-			blockStylePreset: 'solid'
+			blockStylePreset: 'solid',
+			blockShadow: 'none'
 		},
 		page: {
 			mode: 'light',

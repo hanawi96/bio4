@@ -38,12 +38,13 @@
 				: resolveToken(recipe.text, tokens);
 		const border = recipe.border ? resolveToken(recipe.border, tokens) : undefined;
 		const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
+		const shadow = recipe.shadow;
 
 		return {
 			backgroundColor: fill,
 			color: text,
 			border: border ? `2px solid ${border}` : 'none',
-			boxShadow: glow ? `0 0 20px ${glow}` : 'none',
+			boxShadow: shadow || (glow ? `0 0 20px ${glow}` : 'none'),
 			backdropFilter: recipe.blur ? `blur(${recipe.blur}px)` : 'none'
 		};
 	}
@@ -58,7 +59,7 @@
 				backgroundColor: currentBlockStyle.fill,
 				color: currentBlockStyle.text,
 				border: currentBlockStyle.border ? `2px solid ${currentBlockStyle.border}` : 'none',
-				boxShadow: currentBlockStyle.glow ? `0 0 20px ${currentBlockStyle.glow}` : 'none',
+				boxShadow: currentBlockStyle.shadow || (currentBlockStyle.glow ? `0 0 20px ${currentBlockStyle.glow}` : 'none'),
 				backdropFilter: currentBlockStyle.blur ? `blur(${currentBlockStyle.blur}px)` : 'none'
 			};
 		} else {
@@ -97,7 +98,16 @@
 		{ id: 'hard', label: 'Hard', value: '4px 4px 0px rgba(0,0,0,1)' }
 	];
 
-	$: currentShadow = $appearanceState.overrides?.['block.shadow'] || 'none';
+	$: currentShadow = (() => {
+		// If current recipe has built-in shadow, use that
+		if (currentBlockStyle?.shadow) {
+			return currentBlockStyle.shadow;
+		}
+		// Otherwise use override or theme default
+		return $appearanceState.overrides?.['block.shadow'] 
+			|| $appearance?.theme?.config?.defaults?.blockShadow 
+			|| 'none';
+	})();
 
 	function selectShadow(shadowId: string) {
 		const shadow = shadowOptions.find((s) => s.id === shadowId);
@@ -115,7 +125,7 @@
 		<!-- Button Style -->
 		<div>
 			<h3 class="text-sm font-medium text-gray-900 mb-3">Button style</h3>
-			<div class="grid grid-cols-5 gap-3">
+			<div class="grid grid-cols-6 gap-3">
 				{#each recipes as recipeId}
 					<button
 						on:click={() => selectRecipe(recipeId)}

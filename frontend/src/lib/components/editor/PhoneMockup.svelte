@@ -154,8 +154,10 @@
 		return '12px'; // Default fallback
 	})();
 
-	// Get block shadow from override
-	$: blockShadow = $appearanceState.overrides?.['block.shadow'] || 'none';
+	// Get block shadow from override or theme default
+	$: blockShadow = $appearanceState.overrides?.['block.shadow'] 
+		|| $appearance?.theme?.config?.defaults?.blockShadow 
+		|| 'none';
 </script>
 
 <!-- Phone Frame -->
@@ -369,7 +371,11 @@
 									background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 									color: {$appearance?.blockStyle?.text || 'white'};
 									border: {$appearance?.blockStyle?.border ? `2px solid ${$appearance.blockStyle.border}` : 'none'};
-									box-shadow: {blockShadow !== 'none' ? blockShadow : ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
+									box-shadow: {$appearance?.blockStyle?.shadow 
+										? $appearance.blockStyle.shadow 
+										: (blockShadow !== 'none' 
+											? blockShadow 
+											: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none'))};
 									{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 									border-radius: {blockBorderRadius};
 								"

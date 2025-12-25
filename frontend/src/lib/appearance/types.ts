@@ -27,6 +27,7 @@ export interface ThemeConfigDefaults {
 	headerPreset: string;
 	blockPreset: string;
 	blockStylePreset: BlockStylePresetId;
+	blockShadow?: string; // Optional default shadow for blocks
 }
 
 export interface ThemeConfigPageLayout {
@@ -199,4 +200,5 @@ export interface ResolvedBlockStyle {
 	border?: string; // Resolved border color
 	glow?: string; // Resolved glow color
 	blur?: number; // Blur amount
+	shadow?: string; // Hard shadow
 }
