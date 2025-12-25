@@ -61,6 +61,12 @@ export function getPresetValue(
     } else if (path.startsWith('block.')) {
         // Block preset value
         const blockKey = path.replace('block.', '');
+        
+        // Special case: block.stylePreset comes from theme config, not BLOCK_PRESETS
+        if (blockKey === 'stylePreset') {
+            return preset.config.defaults?.blockStylePreset || 'solid';
+        }
+        
         const currentBlockId = blockPresetId || preset.defaultBlockPresetId || 'rounded-solid';
         const blockPreset = BLOCK_PRESETS[currentBlockId];
         return blockPreset?.[blockKey as keyof typeof blockPreset];

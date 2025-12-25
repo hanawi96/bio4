@@ -1,115 +1,54 @@
 <script lang="ts">
-	import { theme, DEFAULT_THEME } from '$lib/stores/page';
+	import { appearanceState, updateAppearance } from '$lib/stores/appearanceManager';
+	import { appearance } from '$lib/stores/appearance';
+	import {
+		getBlockStyleRecipeIds,
+		getBlockStyleRecipeName,
+		getBlockStyleRecipeDescription,
+		getBlockStyleRecipe,
+		type BlockStylePresetId
+	} from '$lib/appearance/blockStyles';
+	import { resolveToken, resolveAutoTextColor } from '$lib/appearance/tokenResolver';
 
-	const blockStyles = [
-		{ 
-			id: 'solid', 
-			name: 'Solid',
-			preview: 'solid'
-		},
-		{ 
-			id: 'outline', 
-			name: 'Outline',
-			preview: 'outline'
-		},
-		{ 
-			id: 'shadow', 
-			name: 'Shadow',
-			preview: 'shadow'
-		},
-		{ 
-			id: 'soft', 
-			name: 'Soft',
-			preview: 'soft'
-		},
-		{ 
-			id: 'gradient', 
-			name: 'Gradient',
-			preview: 'gradient'
-		},
-		{ 
-			id: 'glass', 
-			name: 'Glass',
-			preview: 'glass'
-		},
-		{ 
-			id: 'neon', 
-			name: 'Neon',
-			preview: 'neon'
-		},
-		{ 
-			id: 'minimal', 
-			name: 'Minimal',
-			preview: 'minimal'
-		}
-	];
+	// Get all available recipes
+	const recipes = getBlockStyleRecipeIds();
 
-	$: currentTheme = $theme || DEFAULT_THEME;
-	let selectedStyle = 'solid';
+	// Current selected recipe (simplified logic)
+	$: currentRecipeId =
+		($appearanceState.overrides?.['block.stylePreset'] as BlockStylePresetId) ||
+		$appearance?.theme?.config?.defaults?.blockStylePreset ||
+		'solid';
+
+	// Select recipe
+	function selectRecipe(recipeId: BlockStylePresetId) {
+		updateAppearance('block.stylePreset', recipeId);
+	}
+
+	// Get preview style for each recipe (resolve with current theme tokens)
+	function getPreviewStyle(recipeId: BlockStylePresetId) {
+		if (!$appearance?.tokens) return {};
+
+		const recipe = getBlockStyleRecipe(recipeId);
+		const tokens = $appearance.tokens;
+
+		// Resolve colors for this specific recipe
+		const fill = resolveToken(recipe.fill, tokens);
+		const text =
+			recipe.text === 'auto'
+				? resolveAutoTextColor(recipe.fill, tokens)
+				: resolveToken(recipe.text, tokens);
+		const border = recipe.border ? resolveToken(recipe.border, tokens) : undefined;
+		const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
+
+		return {
+			backgroundColor: fill,
+			color: text,
+			border: border ? `2px solid ${border}` : 'none',
+			boxShadow: glow ? `0 0 20px ${glow}` : 'none',
+			backdropFilter: recipe.blur ? `blur(${recipe.blur}px)` : 'none'
+		};
+	}
 </script>
-
-<style>
-	/* Custom Slider Styles */
-	.slider {
-		-webkit-appearance: none;
-		appearance: none;
-		background: transparent;
-	}
-
-	.slider::-webkit-slider-thumb {
-		-webkit-appearance: none;
-		appearance: none;
-		width: 20px;
-		height: 20px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-		cursor: pointer;
-		box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
-		transition: all 0.2s;
-		margin-top: -6px; /* Center the thumb on the track */
-	}
-
-	.slider::-webkit-slider-thumb:hover {
-		transform: scale(1.1);
-		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
-	}
-
-	.slider::-moz-range-thumb {
-		width: 20px;
-		height: 20px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-		cursor: pointer;
-		border: none;
-		box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
-		transition: all 0.2s;
-	}
-
-	.slider::-moz-range-thumb:hover {
-		transform: scale(1.1);
-		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
-	}
-
-	.slider::-webkit-slider-runnable-track {
-		width: 100%;
-		height: 8px;
-		background: #e5e7eb;
-		border-radius: 4px;
-	}
-
-	.slider::-moz-range-track {
-		width: 100%;
-		height: 8px;
-		background: #e5e7eb;
-		border-radius: 4px;
-	}
-
-	.slider::-moz-range-progress {
-		background: #3b82f6;
-		height: 8px;
-		border-radius: 4px;
-	}
-</style>
 
 <section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
 	<div class="px-6 py-4 border-b border-gray-100">
@@ -118,98 +57,53 @@
 	</div>
 	
 	<div class="p-6">
-		<!-- Block Styles Grid -->
-		<div class="grid grid-cols-4 gap-4">
-			{#each blockStyles as style}
+		<!-- Block Style Recipes Grid -->
+		<div class="grid grid-cols-5 gap-3">
+			{#each recipes as recipeId}
 				<button
-					on:click={() => selectedStyle = style.id}
-					class="group rounded-xl overflow-hidden border-2 transition-all hover:scale-105 {selectedStyle === style.id ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'}"
+					on:click={() => selectRecipe(recipeId)}
+					class="group rounded-xl overflow-hidden border-2 transition-all hover:scale-105 {currentRecipeId === recipeId ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'}"
 				>
 					<!-- Preview -->
-					<div class="aspect-[3/4] bg-gradient-to-b from-gray-50 to-gray-100 p-4 flex flex-col items-center justify-center gap-2">
-						{#if style.preview === 'solid'}
-							<!-- Solid -->
-							<div class="w-full h-6 bg-blue-600 rounded-lg"></div>
-							<div class="w-full h-6 bg-blue-600 rounded-lg"></div>
-							<div class="w-full h-6 bg-blue-600 rounded-lg"></div>
-						{:else if style.preview === 'outline'}
-							<!-- Outline -->
-							<div class="w-full h-6 border-2 border-blue-600 rounded-lg"></div>
-							<div class="w-full h-6 border-2 border-blue-600 rounded-lg"></div>
-							<div class="w-full h-6 border-2 border-blue-600 rounded-lg"></div>
-						{:else if style.preview === 'shadow'}
-							<!-- Shadow -->
-							<div class="w-full h-6 bg-white rounded-lg shadow-lg"></div>
-							<div class="w-full h-6 bg-white rounded-lg shadow-lg"></div>
-							<div class="w-full h-6 bg-white rounded-lg shadow-lg"></div>
-						{:else if style.preview === 'soft'}
-							<!-- Soft -->
-							<div class="w-full h-6 bg-blue-100 rounded-2xl"></div>
-							<div class="w-full h-6 bg-blue-100 rounded-2xl"></div>
-							<div class="w-full h-6 bg-blue-100 rounded-2xl"></div>
-						{:else if style.preview === 'gradient'}
-							<!-- Gradient -->
-							<div class="w-full h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg"></div>
-							<div class="w-full h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg"></div>
-							<div class="w-full h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg"></div>
-						{:else if style.preview === 'glass'}
-							<!-- Glass -->
-							<div class="w-full h-6 bg-white/40 backdrop-blur rounded-lg border border-white/60"></div>
-							<div class="w-full h-6 bg-white/40 backdrop-blur rounded-lg border border-white/60"></div>
-							<div class="w-full h-6 bg-white/40 backdrop-blur rounded-lg border border-white/60"></div>
-						{:else if style.preview === 'neon'}
-							<!-- Neon -->
-							<div class="w-full h-6 bg-blue-600 rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
-							<div class="w-full h-6 bg-blue-600 rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
-							<div class="w-full h-6 bg-blue-600 rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
-						{:else}
-							<!-- Minimal -->
-							<div class="w-full h-6 bg-transparent border-b-2 border-gray-300"></div>
-							<div class="w-full h-6 bg-transparent border-b-2 border-gray-300"></div>
-							<div class="w-full h-6 bg-transparent border-b-2 border-gray-300"></div>
+					<div
+						class="aspect-[3/4] bg-gradient-to-b from-gray-50 to-gray-100 p-3 flex flex-col items-center justify-center gap-2"
+					>
+						{#if $appearance?.tokens}
+							{@const previewStyle = getPreviewStyle(recipeId)}
+							{#each [1, 2, 3] as _}
+								<div
+									class="w-full h-5 rounded-lg transition-all"
+									style="
+										background-color: {previewStyle.backgroundColor};
+										color: {previewStyle.color};
+										border: {previewStyle.border};
+										box-shadow: {previewStyle.boxShadow || 'none'};
+										backdrop-filter: {previewStyle.backdropFilter || 'none'};
+									"
+								></div>
+							{/each}
 						{/if}
 					</div>
 					
-					<!-- Name -->
-					<div class="py-2 px-3 bg-white border-t border-gray-100">
-						<p class="text-xs font-medium text-gray-900 truncate text-center">{style.name}</p>
+					<!-- Name & Description -->
+					<div class="py-2 px-2 bg-white border-t border-gray-100">
+						<p class="text-xs font-semibold text-gray-900 truncate text-center">
+							{getBlockStyleRecipeName(recipeId)}
+						</p>
+						<p class="text-[10px] text-gray-500 truncate text-center mt-0.5">
+							{getBlockStyleRecipeDescription(recipeId)}
+						</p>
 					</div>
 				</button>
 			{/each}
 		</div>
 
-		<!-- Border Radius Slider -->
-		<div class="mt-6 pt-6 border-t border-gray-100">
-			<div class="flex items-center justify-between mb-4">
-				<div>
-					<p class="text-sm font-medium text-gray-900">Border Radius</p>
-					<p class="text-xs text-gray-500">Adjust corner roundness</p>
-				</div>
-				<div class="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
-					<span class="text-sm font-bold text-blue-700">{currentTheme.borderRadius}px</span>
-				</div>
-			</div>
-			
-			<!-- Slider -->
-			<div class="relative">
-				<input
-					type="range"
-					min="0"
-					max="32"
-					step="2"
-					value={currentTheme.borderRadius}
-					on:input={(e) => theme.update(t => t ? { ...t, borderRadius: parseInt(e.currentTarget.value) } : { ...DEFAULT_THEME, borderRadius: parseInt(e.currentTarget.value) })}
-					class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-				/>
-			</div>
-		</div>
-
-		<!-- Block Background Color -->
+		<!-- Block Base Color -->
 		<div class="mt-6 pt-6 border-t border-gray-100">
 			<div class="flex items-center justify-between mb-3">
 				<div>
-					<p class="text-sm font-medium text-gray-900">Block Background</p>
-					<p class="text-xs text-gray-500">Choose button background color</p>
+					<p class="text-sm font-medium text-gray-900">Block Color</p>
+					<p class="text-xs text-gray-500">Base color for all block styles</p>
 				</div>
 			</div>
 			<div class="flex items-center gap-3">
@@ -217,23 +111,26 @@
 					<div class="relative">
 						<input
 							type="color"
-							value={currentTheme.primaryColor}
-							on:input={(e) => theme.update(t => t ? { ...t, primaryColor: e.currentTarget.value } : { ...DEFAULT_THEME, primaryColor: e.currentTarget.value })}
+							value={$appearance?.tokens?.blockBase || '#3b82f6'}
+							on:input={(e) => updateAppearance('tokens.blockBase', e.currentTarget.value)}
 							class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 						/>
 						<div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer">
 							<div 
 								class="w-10 h-10 rounded-lg border-2 border-white shadow-sm ring-1 ring-gray-200"
-								style="background-color: {currentTheme.primaryColor};"
+								style="background-color: {$appearance?.tokens?.blockBase || '#3b82f6'};"
 							></div>
 							<div class="flex-1">
-								<p class="text-xs font-medium text-gray-500 uppercase">Block Color</p>
-								<p class="text-sm font-bold text-gray-900 font-mono">{currentTheme.primaryColor}</p>
+								<p class="text-xs font-medium text-gray-500 uppercase">Block Base</p>
+								<p class="text-sm font-bold text-gray-900 font-mono">{$appearance?.tokens?.blockBase || '#3b82f6'}</p>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
+			<p class="text-xs text-gray-500 mt-2">
+				💡 Changing this color will update all block styles automatically
+			</p>
 		</div>
 	</div>
 </section>

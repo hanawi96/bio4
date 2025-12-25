@@ -1,5 +1,7 @@
-import type { ResolvedAppearance, Theme, ThemeTokens } from './types';
+import type { ResolvedAppearance, Theme, ThemeTokens, ResolvedBlockStyle } from './types';
 import { HEADER_PRESETS, BLOCK_PRESETS } from './presets';
+import { getBlockStyleRecipe, type BlockStylePresetId } from './blockStyles';
+import { resolveToken, resolveAutoTextColor } from './tokenResolver';
 
 // ============================================
 // CONSTANTS
@@ -185,6 +187,44 @@ function convertOldFormat(customTheme: any): any {
 }
 
 // ============================================
+// BLOCK STYLE RESOLVER
+// ============================================
+
+// Resolve block style recipe with theme tokens
+function resolveBlockStyle(
+	recipeId: BlockStylePresetId,
+	tokens: ThemeTokens
+): ResolvedBlockStyle {
+	const recipe = getBlockStyleRecipe(recipeId);
+
+	// Resolve fill color
+	const fill = resolveToken(recipe.fill, tokens);
+
+	// Resolve text color
+	let text: string;
+	if (recipe.text === 'auto') {
+		text = resolveAutoTextColor(recipe.fill, tokens);
+	} else {
+		text = resolveToken(recipe.text, tokens);
+	}
+
+	// Resolve border color (optional)
+	const border = recipe.border ? resolveToken(recipe.border, tokens) : undefined;
+
+	// Resolve glow color (optional)
+	const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
+
+	return {
+		recipe,
+		fill,
+		text,
+		border,
+		glow,
+		blur: recipe.blur
+	};
+}
+
+// ============================================
 // MAIN RESOLVER
 // ============================================
 
@@ -251,6 +291,11 @@ export function resolveAppearance(
 		)
 		: (pageState.blockStyle?.overrides || {});
 
+	// Resolve block style recipe
+	const defaultBlockStyleId = themeConfig.defaults?.blockStylePreset || 'solid';
+	const blockStyleId = (blockOverrides.stylePreset || defaultBlockStyleId) as BlockStylePresetId;
+	const blockStyle = resolveBlockStyle(blockStyleId, tokens);
+
 	return {
 		theme: theme || {
 			id: 0,
@@ -260,7 +305,8 @@ export function resolveAppearance(
 		},
 		tokens,
 		header: { ...(HEADER_PRESETS[headerPresetId] || HEADER_PRESETS['no-cover']), ...headerOverrides },
-		block: { ...(BLOCK_PRESETS[blockPresetId] || BLOCK_PRESETS['rounded-solid']), ...blockOverrides }
+		block: { ...(BLOCK_PRESETS[blockPresetId] || BLOCK_PRESETS['rounded-solid']), ...blockOverrides },
+		blockStyle
 	};
 }
 

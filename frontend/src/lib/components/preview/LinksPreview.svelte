@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { groups } from '$lib/stores/page';
+	import { appearance } from '$lib/stores/appearance';
 </script>
 
 <div class="flex flex-col gap-6 px-8 max-w-2xl mx-auto">
@@ -9,13 +10,23 @@
 		{/if}
 		
 		<div class="flex flex-col gap-3">
-			{#each group.links.filter(l => l.is_active === 1) as link}
-				<a 
+			{#each group.links.filter((l) => l.is_active === 1) as link}
+				<a
 					href={link.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					class="block px-6 py-4 text-center rounded-lg border-2 hover:scale-[1.02] transition-transform"
-					style="border-color: var(--primary-color); border-radius: var(--border-radius)"
+					class="block px-6 py-4 text-center rounded-lg transition-all hover:scale-[1.02]"
+					style:background-color={$appearance?.blockStyle?.fill || 'transparent'}
+					style:color={$appearance?.blockStyle?.text || 'inherit'}
+					style:border={$appearance?.blockStyle?.border
+						? `2px solid ${$appearance.blockStyle.border}`
+						: 'none'}
+					style:box-shadow={$appearance?.blockStyle?.glow
+						? `0 0 20px ${$appearance.blockStyle.glow}`
+						: 'none'}
+					style:backdrop-filter={$appearance?.blockStyle?.blur
+						? `blur(${$appearance.blockStyle.blur}px)`
+						: 'none'}
 				>
 					{#if link.icon_url}
 						<img src={link.icon_url} alt="" class="w-5 h-5 inline-block mr-2" />

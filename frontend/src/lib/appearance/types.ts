@@ -2,6 +2,8 @@
 // APPEARANCE ARCHITECTURE TYPES
 // ============================================
 
+import type { BlockStylePresetId, BlockStyleRecipe } from './blockStyles';
+
 // ============================================
 // THEME CONFIG (Current Schema)
 // ============================================
@@ -24,7 +26,7 @@ export interface ThemeConfigTokens {
 export interface ThemeConfigDefaults {
 	headerPreset: string;
 	blockPreset: string;
-	blockStylePreset: string;
+	blockStylePreset: BlockStylePresetId;
 }
 
 export interface ThemeConfigPageLayout {
@@ -157,6 +159,7 @@ export interface BlockOverrides {
 	size?: 'sm' | 'md' | 'lg';
 	spacing?: 'compact' | 'comfortable' | 'spacious';
 	hoverEffect?: 'lift' | 'scale' | 'glow' | 'none';
+	stylePreset?: BlockStylePresetId; // Override block style recipe
 }
 
 // Page Appearance State - What we save to DB (draft_appearance/published_appearance)
@@ -184,4 +187,15 @@ export interface ResolvedAppearance {
 	tokens: ThemeTokens;
 	header: HeaderPreset & HeaderOverrides;
 	block: BlockPreset & BlockOverrides;
+	blockStyle: ResolvedBlockStyle; // Resolved block style with actual colors
+}
+
+// Resolved Block Style - Recipe resolved with theme tokens
+export interface ResolvedBlockStyle {
+	recipe: BlockStyleRecipe; // Original recipe
+	fill: string; // Resolved CSS color (rgba, hex, etc.)
+	text: string; // Resolved text color
+	border?: string; // Resolved border color
+	glow?: string; // Resolved glow color
+	blur?: number; // Blur amount
 }

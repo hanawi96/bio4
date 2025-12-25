@@ -9,9 +9,9 @@ import type { ResolvedAppearance } from '$lib/appearance/types';
  * Derived store that automatically resolves appearance from page state
  * Tracks all changes: theme, colors, fonts, spacing, header, blocks, etc.
  */
-export const appearance = derived<typeof page, ResolvedAppearance | null>(
-	page,
-	($page) => {
+export const appearance = derived<[typeof page, typeof themes], ResolvedAppearance | null>(
+	[page, themes],
+	([$page, $themes]) => {
 		if (!$page) {
 			return null;
 		}
@@ -24,16 +24,17 @@ export const appearance = derived<typeof page, ResolvedAppearance | null>(
 			const themeKey = appearanceState.themeKey || $page.theme_preset_key || 'minimal';
 
 			// Get theme from loaded themes store or fallback
-			const $themes = get(themes);
 			const theme = $themes[themeKey] || FALLBACK_THEME;
-			
+
 			if (!$themes[themeKey]) {
-				console.warn(`[appearance store] Theme '${themeKey}' not found in themes store, using fallback`);
+				console.warn(
+					`[appearance store] Theme '${themeKey}' not found in themes store, using fallback`
+				);
 			}
 
 			// Resolve final appearance
 			const resolved = resolveAppearance(theme, appearanceState);
-			
+
 			return resolved;
 		} catch (e) {
 			console.error('[appearance store] Failed to resolve:', e);

@@ -342,16 +342,23 @@
 						{/if}
 						
 						{#each activeLinks as link}
-							<a 
+							<a
 								href={link.url}
 								target="_blank"
 								rel="noopener"
 								class="link-button block w-full py-3 px-4 text-center text-sm font-medium transition-transform hover:scale-[1.02]"
-								style="
-									background: {tokens?.primaryColor || '#3b82f6'};
-									color: white;
-									border-radius: {tokens?.borderRadius || 8}px;
-								"
+								style:background-color={$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'}
+								style:color={$appearance?.blockStyle?.text || 'white'}
+								style:border={$appearance?.blockStyle?.border
+									? `2px solid ${$appearance.blockStyle.border}`
+									: 'none'}
+								style:box-shadow={$appearance?.blockStyle?.glow
+									? `0 0 20px ${$appearance.blockStyle.glow}`
+									: 'none'}
+								style:backdrop-filter={$appearance?.blockStyle?.blur
+									? `blur(${$appearance.blockStyle.blur}px)`
+									: 'none'}
+								style:border-radius="{tokens?.borderRadius || 8}px"
 							>
 								{link.title}
 							</a>
