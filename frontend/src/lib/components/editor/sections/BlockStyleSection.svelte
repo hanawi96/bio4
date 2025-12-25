@@ -48,6 +48,19 @@
 			backdropFilter: recipe.blur ? `blur(${recipe.blur}px)` : 'none'
 		};
 	}
+
+	// Get background style from theme
+	$: previewBackground = $appearance?.tokens?.backgroundColor || '#ffffff';
+
+	// Get block shape from current block preset
+	$: blockShape = $appearance?.block?.shape || 'rounded';
+
+	// Map shape to border-radius class
+	$: shapeClass = {
+		rounded: 'rounded-lg',
+		pill: 'rounded-full',
+		square: 'rounded-none'
+	}[blockShape] || 'rounded-lg';
 </script>
 
 <section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -66,22 +79,26 @@
 				>
 					<!-- Preview -->
 					<div
-						class="aspect-[3/4] bg-gradient-to-b from-gray-50 to-gray-100 p-3 flex flex-col items-center justify-center gap-2"
+						class="aspect-square p-4 flex items-center justify-center relative"
+						style="background: {previewBackground};"
 					>
+						<!-- Subtle pattern overlay to make blocks visible on any background -->
+						<div class="absolute inset-0 opacity-[0.03]" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px);"></div>
+						
 						{#if $appearance?.tokens}
 							{@const previewStyle = getPreviewStyle(recipeId)}
-							{#each [1, 2, 3] as _}
-								<div
-									class="w-full h-5 rounded-lg transition-all"
-									style="
-										background-color: {previewStyle.backgroundColor};
-										color: {previewStyle.color};
-										border: {previewStyle.border};
-										box-shadow: {previewStyle.boxShadow || 'none'};
-										backdrop-filter: {previewStyle.backdropFilter || 'none'};
-									"
-								></div>
-							{/each}
+							<div
+								class="w-full h-8 transition-all flex items-center justify-center {shapeClass} relative z-10"
+								style="
+									background-color: {previewStyle.backgroundColor};
+									color: {previewStyle.color};
+									border: {previewStyle.border};
+									box-shadow: {previewStyle.boxShadow || 'none'};
+									backdrop-filter: {previewStyle.backdropFilter || 'none'};
+								"
+							>
+								<div class="w-3 h-3 rounded-full bg-current opacity-60"></div>
+							</div>
 						{/if}
 					</div>
 					
