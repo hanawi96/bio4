@@ -61,14 +61,12 @@
 			
 			// Extract pattern colors from pattern string
 			const colorMatches = resolvedBgColor.match(/#[0-9a-fA-F]{6}/g);
-			console.log('🎨 [Initial load] Pattern detected, colors:', colorMatches);
 			if (colorMatches && colorMatches.length >= 2) {
 				// First color is usually pattern ink color
 				patternColor = colorMatches[0];
 				// Last color is background color
 				patternBgColor = colorMatches[colorMatches.length - 1];
 				basePatternBgColor = patternBgColor;
-				console.log('🎨 [Initial load] Set patternColor:', patternColor, 'patternBgColor:', patternBgColor);
 			}
 			
 			// Try to detect pattern ID from the string
@@ -123,36 +121,9 @@
 	// Check if Avatar Cover mode (only allow solid background)
 	$: isAvatarCoverMode = $appearanceState.headerPresetId === 'avatar-cover';
 	
-	// Helper: Extract solid color from gradient/pattern/image
-	function extractSolidColor(bgValue: string): string {
-		// Already solid color
-		if (bgValue.match(/^#[0-9a-fA-F]{6}$/)) {
-			return bgValue;
-		}
-		
-		// Extract from gradient
-		if (bgValue.includes('gradient')) {
-			const colorMatch = bgValue.match(/#[0-9a-fA-F]{6}/);
-			if (colorMatch) {
-				return colorMatch[0];
-			}
-		}
-		
-		// Extract from pattern
-		if (bgValue.startsWith('background:')) {
-			const colorMatch = bgValue.match(/#[0-9a-fA-F]{6}/);
-			if (colorMatch) {
-				return colorMatch[0];
-			}
-		}
-		
-		// Fallback to white
-		return '#ffffff';
-	}
-	
 	// Auto-switch to solid when Avatar Cover mode is activated
 	$: if (isAvatarCoverMode && selectedType !== 'solid') {
-		const solidColor = extractSolidColor(currentBgColor);
+		const solidColor = extractSolidColorFromCurrent(currentBgColor);
 		selectedType = 'solid';
 		currentBgColor = solidColor;
 		backgroundHistory.solid = solidColor;
@@ -294,9 +265,8 @@
 		selectedPattern = patternId;
 		patternColor = inkColor;
 		patternBgColor = bgColor;
-		basePatternBgColor = bgColor; // Store base color for next pattern generation
+		basePatternBgColor = bgColor;
 		const patternStyle = getPatternStyle(patternId, inkColor, bgColor);
-		console.log('🎨 [updatePatternColor]', { patternId, inkColor, bgColor, patternStyle });
 		currentBgColor = patternStyle;
 		backgroundHistory.pattern = patternStyle;
 		updateAppearance('backgroundColor', patternStyle);
@@ -360,14 +330,6 @@
 	
 	// Store the base background color (before pattern applied) for consistent pattern generation
 	let basePatternBgColor = '#ffffff';
-	
-	// Initialize basePatternBgColor from current background when component loads
-	$: if (!basePatternBgColor || basePatternBgColor === '#ffffff') {
-		const extracted = extractSolidColorFromCurrent(currentBgColor);
-		if (extracted !== '#ffffff') {
-			basePatternBgColor = extracted;
-		}
-	}
 	
 	// Base theme color for pattern preview
 	let baseThemeColor = '#ffffff';
@@ -439,16 +401,17 @@
 	}
 	
 	function selectType(type: string) {
-		// Save current state to history
-		const historyMap = {
-			solid: currentBgColor,
-			gradient: currentBgColor,
-			image: backgroundImageUrl,
-			video: backgroundVideoUrl,
-			pattern: currentBgColor
-		};
-		if (selectedType in historyMap) {
-			backgroundHistory[selectedType] = historyMap[selectedType];
+		// Save current state to history based on type
+		if (selectedType === 'solid' && currentBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			backgroundHistory.solid = currentBgColor;
+		} else if (selectedType === 'gradient' && currentBgColor.includes('gradient')) {
+			backgroundHistory.gradient = currentBgColor;
+		} else if (selectedType === 'image' && backgroundImageUrl) {
+			backgroundHistory.image = backgroundImageUrl;
+		} else if (selectedType === 'video' && backgroundVideoUrl) {
+			backgroundHistory.video = backgroundVideoUrl;
+		} else if (selectedType === 'pattern' && currentBgColor.startsWith('background:')) {
+			backgroundHistory.pattern = currentBgColor;
 		}
 		
 		selectedType = type;
@@ -462,25 +425,23 @@
 		backgroundImageUrl = '';
 		backgroundVideoUrl = '';
 		
-		// Load from history
+		// Smart color inheritance - load appropriate background for new type
 		if (type === 'solid') {
-			updateSolidColor(backgroundHistory.solid || '#ffffff');
+			const hasCustomHistory = backgroundHistory.solid && backgroundHistory.solid !== '#ffffff';
+			const smartColor = hasCustomHistory ? backgroundHistory.solid : extractSolidColorFromCurrent(currentBgColor);
+			updateSolidColor(smartColor);
 		} else if (type === 'gradient') {
-			const gradient = backgroundHistory.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-			const parsed = parseGradient(gradient);
-			if (parsed) {
-				updateGradientColor(gradient, parsed.from, parsed.to, parsed.direction, parsed.type);
-			} else {
-				updateGradientColor(gradient);
-			}
+			// Always generate smart gradient from current solid color
+			const currentSolid = extractSolidColorFromCurrent(currentBgColor);
+			const smartGrad = generateSmartGradient(currentSolid);
+			updateGradientColor(smartGrad.gradient, smartGrad.from, smartGrad.to, smartGrad.direction, 'linear');
 		} else if (type === 'image') {
 			updateImageBackground(backgroundHistory.image?.trim() || DEFAULT_IMAGE_BG);
 		} else if (type === 'video') {
 			updateVideoBackground(backgroundHistory.video?.trim() || DEFAULT_VIDEO_BG);
 		} else if (type === 'pattern') {
-			// Use current background color (after customization) instead of theme preset
 			const bgColorForPattern = extractSolidColorFromCurrent(currentBgColor);
-			basePatternBgColor = bgColorForPattern; // Store for consistent pattern generation
+			basePatternBgColor = bgColorForPattern;
 			const colors = generatePatternColors(bgColorForPattern, selectedPattern);
 			updatePatternColor(selectedPattern, colors.inkColor, colors.bgColor);
 		}
@@ -512,6 +473,30 @@
 		
 		// Fallback to white
 		return '#ffffff';
+	}
+	
+	// Helper: Generate smart gradient from solid color
+	function generateSmartGradient(solidColor: string): { gradient: string; from: string; to: string; direction: string } {
+		// Parse hex color to RGB
+		const hex = solidColor.replace('#', '');
+		const r = parseInt(hex.substring(0, 2), 16);
+		const g = parseInt(hex.substring(2, 4), 16);
+		const b = parseInt(hex.substring(4, 6), 16);
+		
+		// Calculate luminance to determine if color is light or dark
+		const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+		
+		// Generate darker shade for "to" color
+		const darkenFactor = luminance > 0.5 ? 0.6 : 0.7; // Darker for light colors
+		const toR = Math.round(r * darkenFactor);
+		const toG = Math.round(g * darkenFactor);
+		const toB = Math.round(b * darkenFactor);
+		
+		const toColor = `#${toR.toString(16).padStart(2, '0')}${toG.toString(16).padStart(2, '0')}${toB.toString(16).padStart(2, '0')}`;
+		const direction = '135deg';
+		const gradient = `linear-gradient(${direction}, ${solidColor} 0%, ${toColor} 100%)`;
+		
+		return { gradient, from: solidColor, to: toColor, direction };
 	}
 	
 	function handleBackgroundUpload(event: Event) {
