@@ -4,7 +4,9 @@
 
 import { derived, get } from 'svelte/store';
 import { page } from './page';
+import { themes } from './themes';
 import { api } from '$lib/api.client';
+import { FALLBACK_THEME } from '$lib/appearance/presets';
 import {
     type AppearanceState,
     setAppearance as setAppearanceHelper,
@@ -32,15 +34,21 @@ export const appearanceState = derived<typeof page, AppearanceState>(
     page,
     ($page) => {
         if (!$page?.draft_appearance) {
-            return resetToPreset('minimal');
+            const $themes = get(themes);
+            const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+            return resetToPreset(themesMap, 'minimal');
         }
 
         try {
             const oldState = JSON.parse($page.draft_appearance);
-            return migrateOldToNew(oldState);
+            const $themes = get(themes);
+            const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+            return migrateOldToNew(themesMap, oldState);
         } catch (e) {
             console.error('[appearanceManager] Failed to parse draft_appearance:', e);
-            return resetToPreset('minimal');
+            const $themes = get(themes);
+            const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+            return resetToPreset(themesMap, 'minimal');
         }
     }
 );
@@ -49,8 +57,9 @@ export const appearanceState = derived<typeof page, AppearanceState>(
 // DERIVED: Is using custom theme?
 // ============================================
 
-export const isCustom = derived(appearanceState, ($state) => {
-    return isCustomTheme($state);
+export const isCustom = derived([appearanceState, themes], ([$state, $themes]) => {
+    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+    return isCustomTheme(themesMap, $state);
 });
 
 // ============================================
@@ -61,12 +70,15 @@ export function updateAppearance(path: string, value: any) {
     console.log('📝 updateAppearance called:', { path, value });
     
     const currentState = get(appearanceState);
+    const $themes = get(themes);
+    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+    
     console.log('📝 currentState before:', currentState.overrides);
     
-    const newState = setAppearanceHelper(currentState, path, value);
+    const newState = setAppearanceHelper(themesMap, currentState, path, value);
     console.log('📝 newState after:', newState.overrides);
     
-    const oldFormat = migrateNewToOld(newState);
+    const oldFormat = migrateNewToOld(themesMap, newState);
     console.log('📝 oldFormat to save:', oldFormat);
 
     // Optimistic update: Update page store immediately
@@ -96,8 +108,11 @@ export function updateAppearance(path: string, value: any) {
 // ============================================
 
 export async function changeThemePreset(presetKey: string) {
-    const newState = resetToPreset(presetKey);
-    const oldFormat = migrateNewToOld(newState);
+    const $themes = get(themes);
+    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+    
+    const newState = resetToPreset(themesMap, presetKey);
+    const oldFormat = migrateNewToOld(themesMap, newState);
 
     page.update(p => {
         if (!p) return p;
@@ -124,8 +139,11 @@ export async function changeThemePreset(presetKey: string) {
 
 export async function changeHeaderPreset(headerPresetId: string) {
     const currentState = get(appearanceState);
+    const $themes = get(themes);
+    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+    
     const newState = setHeaderPresetHelper(currentState, headerPresetId);
-    const oldFormat = migrateNewToOld(newState);
+    const oldFormat = migrateNewToOld(themesMap, newState);
 
     page.update(p => {
         if (!p) return p;
@@ -150,8 +168,11 @@ export async function changeHeaderPreset(headerPresetId: string) {
 
 export async function changeBlockPreset(blockPresetId: string) {
     const currentState = get(appearanceState);
+    const $themes = get(themes);
+    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+    
     const newState = setBlockPresetHelper(currentState, blockPresetId);
-    const oldFormat = migrateNewToOld(newState);
+    const oldFormat = migrateNewToOld(themesMap, newState);
 
     page.update(p => {
         if (!p) return p;
@@ -176,5 +197,7 @@ export async function changeBlockPreset(blockPresetId: string) {
 
 export function getValue(path: string): any {
     const state = get(appearanceState);
-    return getResolvedValue(state, path);
+    const $themes = get(themes);
+    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+    return getResolvedValue(themesMap, state, path);
 }

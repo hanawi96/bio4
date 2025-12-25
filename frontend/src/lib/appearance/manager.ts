@@ -2,7 +2,8 @@
 // APPEARANCE MANAGER - Centralized Logic
 // ============================================
 
-import { THEMES_MAP, HEADER_PRESETS, BLOCK_PRESETS } from './presets';
+import { HEADER_PRESETS, BLOCK_PRESETS } from './presets';
+import type { Theme } from './types';
 
 // ============================================
 // NEW APPEARANCE STATE (Flat Structure)
@@ -20,12 +21,13 @@ export interface AppearanceState {
 // ============================================
 
 export function getPresetValue(
+    themesMap: Record<string, Theme>,
     presetKey: string,
     path: string,
     headerPresetId?: string,
     blockPresetId?: string
 ): any {
-    const preset = THEMES_MAP[presetKey];
+    const preset = themesMap[presetKey];
     if (!preset) return undefined;
 
     // Handle different path types
@@ -76,11 +78,13 @@ export function deepEqual(a: any, b: any): boolean {
 // ============================================
 
 export function setAppearance(
+    themesMap: Record<string, Theme>,
     state: AppearanceState,
     path: string,
     value: any
 ): AppearanceState {
     const presetValue = getPresetValue(
+        themesMap,
         state.presetKey,
         path,
         state.headerPresetId,
@@ -109,14 +113,14 @@ export function setAppearance(
 // HELPER: Check if using custom theme
 // ============================================
 
-export function isCustomTheme(state: AppearanceState): boolean {
+export function isCustomTheme(themesMap: Record<string, Theme>, state: AppearanceState): boolean {
     // Check 1: Has any overrides
     if (Object.keys(state.overrides).length > 0) {
         return true;
     }
     
     // Check 2: Header preset different from theme default
-    const preset = THEMES_MAP[state.presetKey];
+    const preset = themesMap[state.presetKey];
     const defaultHeaderId = preset?.defaultHeaderPresetId || 'no-cover';
     if (state.headerPresetId && state.headerPresetId !== defaultHeaderId) {
         return true;
@@ -135,7 +139,7 @@ export function isCustomTheme(state: AppearanceState): boolean {
 // HELPER: Get resolved value (preset + overrides)
 // ============================================
 
-export function getResolvedValue(state: AppearanceState, path: string): any {
+export function getResolvedValue(themesMap: Record<string, Theme>, state: AppearanceState, path: string): any {
     // Priority 1: Check overrides
     if (path in state.overrides) {
         return state.overrides[path];
@@ -143,6 +147,7 @@ export function getResolvedValue(state: AppearanceState, path: string): any {
 
     // Priority 2: Get from preset
     return getPresetValue(
+        themesMap,
         state.presetKey,
         path,
         state.headerPresetId,
@@ -154,8 +159,8 @@ export function getResolvedValue(state: AppearanceState, path: string): any {
 // HELPER: Reset to preset (clear all overrides)
 // ============================================
 
-export function resetToPreset(presetKey: string): AppearanceState {
-    const preset = THEMES_MAP[presetKey];
+export function resetToPreset(themesMap: Record<string, Theme>, presetKey: string): AppearanceState {
+    const preset = themesMap[presetKey];
     return {
         presetKey,
         overrides: {},
@@ -214,10 +219,10 @@ export function setBlockPreset(
 // MIGRATION: Convert DB format to internal state (NEW FORMAT)
 // ============================================
 
-export function migrateOldToNew(dbState: any): AppearanceState {
+export function migrateOldToNew(themesMap: Record<string, Theme>, dbState: any): AppearanceState {
     // Support both old and new format from DB
     const presetKey = dbState.themeKey || 'minimal';
-    const preset = THEMES_MAP[presetKey];
+    const preset = themesMap[presetKey];
     
     // NEW FORMAT: Already flat
     if (dbState.overrides !== undefined) {
@@ -283,7 +288,7 @@ export function migrateOldToNew(dbState: any): AppearanceState {
 // MIGRATION: Convert new format to DB format (NEW FORMAT)
 // ============================================
 
-export function migrateNewToOld(newState: AppearanceState): any {
+export function migrateNewToOld(themesMap: Record<string, Theme>, newState: AppearanceState): any {
     // NEW FORMAT: Flat structure
     // {
     //   themeKey: "dark",
@@ -292,7 +297,7 @@ export function migrateNewToOld(newState: AppearanceState): any {
     //   blockPresetId: "rounded-solid"
     // }
     
-    const preset = THEMES_MAP[newState.presetKey];
+    const preset = themesMap[newState.presetKey];
     const defaultHeaderId = preset?.defaultHeaderPresetId || 'no-cover';
     const defaultBlockId = preset?.defaultBlockPresetId || 'rounded-solid';
     

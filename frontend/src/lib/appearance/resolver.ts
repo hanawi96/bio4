@@ -101,7 +101,27 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 	Object.entries(overrides).forEach(([key, value]) => {
 		// Map old keys to new structure
 		if (key === 'backgroundColor') {
-			config.tokens.bg = { type: 'color', value };
+			// Detect type from value
+			if (value.includes('gradient')) {
+				// Parse gradient to extract colors and angle
+				const matches = value.match(/#[0-9a-fA-F]{6}/g);
+				const angleMatch = value.match(/(\d+)deg/);
+				if (matches && matches.length >= 2) {
+					config.tokens.bg = {
+						type: 'gradient',
+						value: {
+							from: matches[0],
+							to: matches[1],
+							angle: angleMatch ? parseInt(angleMatch[1]) : 135
+						}
+					};
+				} else {
+					// Fallback to storing as color with gradient string
+					config.tokens.bg = { type: 'color', value };
+				}
+			} else {
+				config.tokens.bg = { type: 'color', value };
+			}
 			return;
 		}
 		if (key === 'backgroundVideo') {

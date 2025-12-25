@@ -34,6 +34,20 @@
 			selecting = false;
 		}
 	}
+	
+	// Helper: Convert bg token to CSS value
+	function getBgStyle(preset: ThemePreset): string {
+		const bgToken = preset.config?.tokens?.bg;
+		if (!bgToken) return '#ffffff';
+		
+		if (bgToken.type === 'color') {
+			return bgToken.value as string;
+		} else if (bgToken.type === 'gradient') {
+			const grad = bgToken.value as { from: string; to: string; angle: number };
+			return `linear-gradient(${grad.angle}deg, ${grad.from}, ${grad.to})`;
+		}
+		return '#ffffff';
+	}
 
 	// Check if current preset is selected
 	$: currentPresetKey = $appearanceState.presetKey;
@@ -104,7 +118,7 @@
 						<!-- Preview -->
 						<div 
 							class="h-40 p-3 flex flex-col relative"
-							style="background: {preset.config.backgroundColor}; color: {preset.config.textColor};"
+							style="background: {getBgStyle(preset)}; color: {preset.config.tokens.text};"
 						>
 							<!-- Loading overlay -->
 							{#if selecting && currentPresetKey === preset.key}
@@ -116,7 +130,7 @@
 							<!-- Mini avatar -->
 							<div 
 								class="w-8 h-8 rounded-full mx-auto mb-2"
-								style="background: {preset.config.primaryColor};"
+								style="background: {preset.config.tokens.primary};"
 							></div>
 							<div class="text-[10px] font-medium text-center mb-3 truncate">Preview</div>
 							<!-- Mini links -->
@@ -124,7 +138,7 @@
 								{#each [1, 2, 3] as _}
 									<div 
 										class="h-4 rounded"
-										style="background: {preset.config.primaryColor};"
+										style="background: {preset.config.tokens.primary};"
 									></div>
 								{/each}
 							</div>

@@ -1,21 +1,40 @@
 <script lang="ts">
 	import { page } from '$lib/stores/page';
 	import { appearanceState, updateAppearance } from '$lib/stores/appearanceManager';
+	import { themes } from '$lib/stores/themes';
 	import { api } from '$lib/api.client';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import { generatePatternColors, type PatternType } from '$lib/utils/patternColors';
-	import { THEMES_MAP } from '$lib/appearance/presets';
+	import { FALLBACK_THEME } from '$lib/appearance/presets';
 
 	const username = 'demo';
 
-	// Get backgroundColor from new format (override > preset)
-	$: presetBgColor = THEMES_MAP[$appearanceState.presetKey]?.config?.backgroundColor || '#ffffff';
-	$: resolvedBgColor = $appearanceState.overrides['backgroundColor'] ?? presetBgColor;
+	// Get bg token from theme config (new format)
+	$: themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+	$: currentTheme = themesMap[$appearanceState.presetKey] || FALLBACK_THEME;
+	$: themeConfig = currentTheme.config;
+	$: themeBgToken = themeConfig?.tokens?.bg;
+	
+	// Convert bg token to CSS value
+	$: presetBgValue = (() => {
+		if (!themeBgToken) return '#ffffff';
+		
+		if (themeBgToken.type === 'color') {
+			return themeBgToken.value as string;
+		} else if (themeBgToken.type === 'gradient') {
+			const grad = themeBgToken.value as { from: string; to: string; angle: number };
+			return `linear-gradient(${grad.angle}deg, ${grad.from}, ${grad.to})`;
+		}
+		return '#ffffff';
+	})();
+	
+	// Get resolved values (override > preset)
+	$: resolvedBgColor = $appearanceState.overrides['backgroundColor'] ?? presetBgValue;
 	$: resolvedBgVideo = $appearanceState.overrides['backgroundVideo'];
 	
 	// Initial load: detect type from stored data (runs once)
 	let hasInitialized = false;
-	$: if (!hasInitialized && resolvedBgColor) {
+	$: if (!hasInitialized && (resolvedBgColor || themeBgToken)) {
 		hasInitialized = true;
 		
 		if (resolvedBgVideo) {
@@ -324,16 +343,14 @@
 	};
 
 	// Reactive: Sync theme changes
-	$: if ($page?.theme_preset_key) {
-		const currentThemeKey = $page.theme_preset_key;
-		const theme = THEMES_MAP[currentThemeKey];
-		const bgColor = theme?.config?.backgroundColor || '#ffffff';
+	$: if ($appearanceState.presetKey) {
+		const currentThemeKey = $appearanceState.presetKey;
 		
 		// Extract base color for pattern preview
-		if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-			baseThemeColor = bgColor;
-		} else if (bgColor.includes('gradient')) {
-			const matches = bgColor.match(/#[0-9a-fA-F]{6}/g);
+		if (presetBgValue.match(/^#[0-9a-fA-F]{6}$/)) {
+			baseThemeColor = presetBgValue;
+		} else if (presetBgValue.includes('gradient')) {
+			const matches = presetBgValue.match(/#[0-9a-fA-F]{6}/g);
 			if (matches?.[0]) baseThemeColor = matches[0];
 		}
 		
@@ -342,12 +359,19 @@
 			lastSyncedThemeKey = currentThemeKey;
 			hasInitialized = false;
 			
-			if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-				currentBgColor = bgColor;
+			if (presetBgValue.match(/^#[0-9a-fA-F]{6}$/)) {
+				currentBgColor = presetBgValue;
 				selectedType = 'solid';
-			} else if (bgColor.includes('gradient')) {
-				currentBgColor = bgColor;
+			} else if (presetBgValue.includes('gradient')) {
+				currentBgColor = presetBgValue;
 				selectedType = 'gradient';
+				const parsed = parseGradient(presetBgValue);
+				if (parsed) {
+					gradientFromColor = parsed.from;
+					gradientToColor = parsed.to;
+					gradientDirection = parsed.direction;
+					gradientType = parsed.type;
+				}
 			} else {
 				currentBgColor = '#ffffff';
 				selectedType = 'solid';

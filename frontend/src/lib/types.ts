@@ -50,9 +50,48 @@ export interface ThemePreset {
 	id: number;
 	key: string;
 	name: string;
-	config: ThemeConfig;
+	config: {
+		meta: {
+			id: string;
+			name: string;
+			schemaVersion: number;
+			version: string;
+		};
+		tokens: {
+			bg: { type: 'color' | 'gradient'; value: string | { from: string; to: string; angle: number } };
+			text: string;
+			primary: string;
+			surface: string;
+			border: string;
+			blockBase: string;
+			fontFamily: string;
+		};
+		defaults: {
+			headerPreset: string;
+			blockPreset: string;
+			blockStylePreset: string;
+		};
+		page: {
+			mode: 'light' | 'dark';
+			layout: {
+				maxWidth: number;
+				pagePadding: number;
+				blockGap: number;
+				textAlign: 'left' | 'center' | 'right';
+			};
+		};
+		modes?: {
+			dark?: {
+				tokens: any;
+			};
+			light?: {
+				tokens: any;
+			};
+		};
+	};
 }
 
+// Legacy ThemeConfig (for backward compatibility)
 export interface ThemeConfig {
 	backgroundColor: string;
 	textColor: string;

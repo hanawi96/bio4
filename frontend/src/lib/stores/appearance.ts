@@ -2,7 +2,7 @@ import { derived, get } from 'svelte/store';
 import { page } from './page';
 import { themes } from './themes';
 import { resolveAppearance } from '$lib/appearance/resolver';
-import { THEMES_MAP } from '$lib/appearance/presets';
+import { FALLBACK_THEME } from '$lib/appearance/presets';
 import type { ResolvedAppearance } from '$lib/appearance/types';
 
 /**
@@ -23,9 +23,13 @@ export const appearance = derived<typeof page, ResolvedAppearance | null>(
 			// Get theme key
 			const themeKey = appearanceState.themeKey || $page.theme_preset_key || 'minimal';
 
-			// Get theme from loaded themes store (priority) or fallback to THEMES_MAP
+			// Get theme from loaded themes store or fallback
 			const $themes = get(themes);
-			const theme = $themes[themeKey] || THEMES_MAP[themeKey] || THEMES_MAP['minimal'];
+			const theme = $themes[themeKey] || FALLBACK_THEME;
+			
+			if (!$themes[themeKey]) {
+				console.warn(`[appearance store] Theme '${themeKey}' not found in themes store, using fallback`);
+			}
 
 			// Resolve final appearance
 			const resolved = resolveAppearance(theme, appearanceState);

@@ -1,161 +1,58 @@
 import type { Theme, HeaderPreset, BlockPreset } from './types';
 
 // ============================================
-// DEFAULT THEMES (Map for O(1) lookup)
+// FALLBACK THEME (Used when themes store is not loaded yet)
 // ============================================
 
-export const THEMES_MAP: Record<string, Theme> = {
-	'minimal': {
-		id: 1,
-		key: 'minimal',
-		name: 'Minimal',
-		config: {
-			meta: {
-				id: 'preset.minimal',
-				name: 'Minimal',
-				schemaVersion: 1,
-				version: '1.0.0'
-			},
-			tokens: {
-				bg: { type: 'color', value: '#ffffff' },
-				text: '#000000',
-				primary: '#3b82f6',
-				surface: '#fafafa',
-				border: '#e5e5e5',
-				blockBase: '#3b82f6',
-				fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-			},
-			defaults: {
-				headerPreset: 'no-cover',
-				blockPreset: 'rounded',
-				blockStylePreset: 'solid'
-			},
-			page: {
-				mode: 'light',
-				layout: {
-					maxWidth: 480,
-					pagePadding: 16,
-					blockGap: 16,
-					textAlign: 'center'
-				}
-			},
-			modes: {
-				dark: {
-					tokens: {
-						bg: { type: 'color', value: '#0a0a0a' },
-						text: '#ffffff',
-						surface: '#171717',
-						border: '#404040',
-						blockBase: '#60a5fa'
-					}
-				}
+export const FALLBACK_THEME: Theme = {
+	id: 0,
+	key: 'minimal',
+	name: 'Minimal',
+	config: {
+		meta: {
+			id: 'preset.minimal',
+			name: 'Minimal',
+			schemaVersion: 1,
+			version: '1.0.0'
+		},
+		tokens: {
+			bg: { type: 'color', value: '#ffffff' },
+			text: '#000000',
+			primary: '#3b82f6',
+			surface: '#fafafa',
+			border: '#e5e5e5',
+			blockBase: '#3b82f6',
+			fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+		},
+		defaults: {
+			headerPreset: 'no-cover',
+			blockPreset: 'rounded',
+			blockStylePreset: 'solid'
+		},
+		page: {
+			mode: 'light',
+			layout: {
+				maxWidth: 480,
+				pagePadding: 16,
+				blockGap: 16,
+				textAlign: 'center'
 			}
 		},
-		defaultHeaderPresetId: 'no-cover',
-		defaultBlockPresetId: 'rounded-solid'
+		modes: {
+			dark: {
+				tokens: {
+					bg: { type: 'color', value: '#0a0a0a' },
+					text: '#ffffff',
+					surface: '#171717',
+					border: '#404040',
+					blockBase: '#60a5fa'
+				}
+			}
+		}
 	},
-	'dark': {
-		id: 2,
-		key: 'dark',
-		name: 'Dark',
-		config: {
-			meta: {
-				id: 'preset.dark',
-				name: 'Dark',
-				schemaVersion: 1,
-				version: '1.0.0'
-			},
-			tokens: {
-				bg: { type: 'color', value: '#000000' },
-				text: '#ffffff',
-				primary: '#60a5fa',
-				surface: '#171717',
-				border: '#404040',
-				blockBase: '#60a5fa',
-				fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-			},
-			defaults: {
-				headerPreset: 'with-cover',
-				blockPreset: 'rounded',
-				blockStylePreset: 'solid'
-			},
-			page: {
-				mode: 'dark',
-				layout: {
-					maxWidth: 480,
-					pagePadding: 20,
-					blockGap: 20,
-					textAlign: 'center'
-				}
-			},
-			modes: {
-				light: {
-					tokens: {
-						bg: { type: 'color', value: '#ffffff' },
-						text: '#000000',
-						surface: '#fafafa',
-						border: '#e5e5e5',
-						blockBase: '#3b82f6'
-					}
-				}
-			}
-		},
-		defaultHeaderPresetId: 'with-cover',
-		defaultBlockPresetId: 'rounded-solid'
-	},
-	'gradient': {
-		id: 3,
-		key: 'gradient',
-		name: 'Gradient',
-		config: {
-			meta: {
-				id: 'preset.gradient',
-				name: 'Gradient',
-				schemaVersion: 1,
-				version: '1.0.0'
-			},
-			tokens: {
-				bg: { type: 'gradient', value: { from: '#667eea', to: '#764ba2', angle: 135 } },
-				text: '#ffffff',
-				primary: '#ffffff',
-				surface: 'rgba(255,255,255,0.1)',
-				border: 'rgba(255,255,255,0.2)',
-				blockBase: '#ffffff',
-				fontFamily: 'Poppins, system-ui, -apple-system, sans-serif'
-			},
-			defaults: {
-				headerPreset: 'with-cover',
-				blockPreset: 'rounded',
-				blockStylePreset: 'solid'
-			},
-			page: {
-				mode: 'light',
-				layout: {
-					maxWidth: 480,
-					pagePadding: 24,
-					blockGap: 24,
-					textAlign: 'center'
-				}
-			},
-			modes: {
-				dark: {
-					tokens: {
-						bg: { type: 'gradient', value: { from: '#4a5568', to: '#2d3748', angle: 135 } },
-						text: '#e2e8f0',
-						surface: 'rgba(255,255,255,0.05)',
-						border: 'rgba(255,255,255,0.1)',
-						blockBase: '#cbd5e0'
-					}
-				}
-			}
-		},
-		defaultHeaderPresetId: 'with-cover',
-		defaultBlockPresetId: 'pill-outline'
-	}
+	defaultHeaderPresetId: 'no-cover',
+	defaultBlockPresetId: 'rounded-solid'
 };
-
-// Array for iteration (theme selector)
-export const DEFAULT_THEMES: Theme[] = Object.values(THEMES_MAP);
 
 // ============================================
 // HEADER PRESETS
