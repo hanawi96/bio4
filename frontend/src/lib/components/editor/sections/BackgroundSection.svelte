@@ -270,6 +270,7 @@
 		patternColor = inkColor;
 		patternBgColor = bgColor;
 		const patternStyle = getPatternStyle(patternId, inkColor, bgColor);
+		console.log('🎨 [updatePatternColor]', { patternId, inkColor, bgColor, patternStyle });
 		currentBgColor = patternStyle;
 		backgroundHistory.pattern = patternStyle;
 		updateAppearance('backgroundColor', patternStyle);

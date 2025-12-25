@@ -41,6 +41,11 @@ function bgTokenToCSS(bgToken: any): string {
 	if (!bgToken) return '#ffffff';
 
 	if (bgToken.type === 'color') {
+		// Check if value is a pattern (starts with "background:")
+		if (typeof bgToken.value === 'string' && bgToken.value.startsWith('background:')) {
+			// Return pattern as-is (it already contains full CSS)
+			return bgToken.value;
+		}
 		return bgToken.value;
 	}
 
@@ -101,6 +106,13 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 	Object.entries(overrides).forEach(([key, value]) => {
 		// Map old keys to new structure
 		if (key === 'backgroundColor') {
+			// Check if it's a pattern (starts with "background:")
+			if (typeof value === 'string' && value.startsWith('background:')) {
+				// Pattern format - store as-is in tokens.bg
+				config.tokens.bg = { type: 'color', value };
+				return;
+			}
+			
 			// Detect type from value
 			if (value.includes('gradient')) {
 				// Parse gradient to extract colors and angle

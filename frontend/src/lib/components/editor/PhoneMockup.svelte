@@ -164,11 +164,13 @@
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
 					{!hasVideoInDraft && tokens?.backgroundColor 
-						? (tokens.backgroundColor.includes('background:') 
-							? tokens.backgroundColor 
-							: tokens.backgroundColor.includes('url(')
-								? `background: ${tokens.backgroundColor} center/cover no-repeat;`
-								: `background: ${tokens.backgroundColor};`)
+						? (tokens.backgroundColor.includes('background:') && tokens.backgroundColor.includes('background-size:')
+							? tokens.backgroundColor
+							: tokens.backgroundColor.includes('background:') 
+								? tokens.backgroundColor 
+								: tokens.backgroundColor.includes('url(')
+									? `background: ${tokens.backgroundColor} center/cover no-repeat;`
+									: `background: ${tokens.backgroundColor};`)
 						: !hasVideoInDraft ? 'background: #ffffff;' : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
