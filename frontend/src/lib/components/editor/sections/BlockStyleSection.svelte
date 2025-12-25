@@ -175,20 +175,6 @@
 							class="aspect-square p-4 flex items-center justify-center relative"
 							style="background: {previewBackground};"
 						>
-							<!-- Pattern overlay - stronger for glass effect visibility -->
-							<div 
-								class="absolute inset-0 {recipeId === 'glass' ? 'opacity-20' : 'opacity-[0.03]'}" 
-								style="background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px);"
-							></div>
-							
-							<!-- Additional gradient for glass preview -->
-							{#if recipeId === 'glass'}
-								<div 
-									class="absolute inset-0 opacity-30"
-									style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(168, 85, 247, 0.3) 100%);"
-								></div>
-							{/if}
-							
 							{#if $appearance?.tokens}
 								{@const displayStyle = displayStyles[recipeId]}
 								<div
@@ -238,22 +224,24 @@
 			</div>
 		</div>
 
-		<!-- Shadows -->
-		<div>
-			<h3 class="text-sm font-medium text-gray-900 mb-3">Shadows</h3>
-			<div class="grid grid-cols-4 gap-2">
-				{#each shadowOptions as shadow}
-					<button
-						on:click={() => selectShadow(shadow.id)}
-						class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all hover:scale-105 {currentShadowType === shadow.id
-							? 'border-blue-500 bg-blue-50 text-blue-700'
-							: 'border-gray-200 text-gray-700 hover:border-gray-300'}"
-					>
-						{shadow.label}
-					</button>
-				{/each}
+		<!-- Shadows (hide when Neon is selected) -->
+		{#if currentRecipeId !== 'neon'}
+			<div>
+				<h3 class="text-sm font-medium text-gray-900 mb-3">Shadows</h3>
+				<div class="grid grid-cols-4 gap-2">
+					{#each shadowOptions as shadow}
+						<button
+							on:click={() => selectShadow(shadow.id)}
+							class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all hover:scale-105 {currentShadowType === shadow.id
+								? 'border-blue-500 bg-blue-50 text-blue-700'
+								: 'border-gray-200 text-gray-700 hover:border-gray-300'}"
+						>
+							{shadow.label}
+						</button>
+					{/each}
+				</div>
 			</div>
-		</div>
+		{/if}
 
 		<!-- Block Base Color -->
 		<div class="pt-6 border-t border-gray-100">
