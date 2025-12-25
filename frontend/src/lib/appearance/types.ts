@@ -93,7 +93,6 @@ export interface ThemeTokens {
 	backgroundColor: string;
 	textColor: string;
 	primaryColor: string;
-	borderRadius: number;
 	spacing: number;
 }
 
@@ -130,6 +129,7 @@ export interface BlockPreset {
 	id: string;
 	name: string;
 	shape: 'rounded' | 'pill' | 'square';
+	borderRadius?: number; // Border radius in px (optional, overrides shape default)
 	fill: 'solid' | 'outline' | 'ghost' | 'gradient';
 	size: 'sm' | 'md' | 'lg';
 	iconPosition: 'left' | 'right' | 'none';
@@ -155,6 +155,7 @@ export interface HeaderOverrides {
 
 export interface BlockOverrides {
 	shape?: 'rounded' | 'pill' | 'square';
+	borderRadius?: number; // Override border radius in px
 	fill?: 'solid' | 'outline' | 'ghost' | 'gradient';
 	size?: 'sm' | 'md' | 'lg';
 	spacing?: 'compact' | 'comfortable' | 'spacious';

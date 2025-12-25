@@ -96,7 +96,6 @@ function expandThemeTokens(config: any): ThemeTokens {
 		backgroundColor,
 		textColor: tokens.text || '#000000',
 		primaryColor: tokens.primary || '#3b82f6',
-		borderRadius: layout.blockGap || 12,
 		spacing: layout.pagePadding || 16
 	};
 }

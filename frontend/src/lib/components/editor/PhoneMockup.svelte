@@ -138,6 +138,24 @@
 
 	// Active links
 	$: activeLinks = $groups.flatMap(g => g.links.filter(l => l.is_active === 1));
+
+	// Get block border-radius from block preset or override
+	$: blockBorderRadius = (() => {
+		const overrideBorderRadius = $appearanceState.overrides?.['block.borderRadius'];
+		if (overrideBorderRadius !== undefined) {
+			return `${overrideBorderRadius}px`;
+		}
+		
+		const presetBorderRadius = $appearance?.block?.borderRadius;
+		if (presetBorderRadius !== undefined) {
+			return `${presetBorderRadius}px`;
+		}
+		
+		return '12px'; // Default fallback
+	})();
+
+	// Get block shadow from override
+	$: blockShadow = $appearanceState.overrides?.['block.shadow'] || 'none';
 </script>
 
 <!-- Phone Frame -->
@@ -351,9 +369,9 @@
 									background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 									color: {$appearance?.blockStyle?.text || 'white'};
 									border: {$appearance?.blockStyle?.border ? `2px solid ${$appearance.blockStyle.border}` : 'none'};
-									box-shadow: {$appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none'};
+									box-shadow: {blockShadow !== 'none' ? blockShadow : ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
 									{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
-									border-radius: {tokens?.borderRadius || 8}px;
+									border-radius: {blockBorderRadius};
 								"
 							>
 								{link.title}
