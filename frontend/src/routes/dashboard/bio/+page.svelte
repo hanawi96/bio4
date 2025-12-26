@@ -160,7 +160,7 @@
 	}
 
 	async function handleAddLink(event: CustomEvent<any>) {
-		const { title, url, icon_url, icon_preview } = event.detail;
+		const { title, url, icon_url } = event.detail;
 		
 		// Wait for groupId if still creating
 		if (isCreatingGroup || currentGroupId === null) {
@@ -177,20 +177,20 @@
 			}
 		}
 
-		// OPTIMISTIC UI: Add link immediately with preview icon
+		// OPTIMISTIC UI: Add link immediately with uploaded icon
 		const tempLink = {
 			id: -Date.now(), // Negative temp ID to avoid conflicts
 			group_id: currentGroupId,
 			title: title,
 			url: url,
-			icon_url: icon_preview || icon_url || null, // Use preview first for instant display
+			icon_url: icon_url || null,
 			sort_order: currentLinks.length,
 			is_active: 1,
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString()
 		};
 		
-		// Show link immediately with preview
+		// Show link immediately
 		currentLinks = [...currentLinks, tempLink];
 
 		// Create link in background (icon already uploaded in LinksEditor)
@@ -198,7 +198,7 @@
 			await api.createLink(currentGroupId, {
 				title,
 				url,
-				icon_url: icon_url || null, // Use real uploaded URL
+				icon_url: icon_url || null,
 				sort_order: currentLinks.length - 1
 			});
 
@@ -215,6 +215,41 @@
 			// If API fails, remove the temp link
 			currentLinks = currentLinks.filter(link => link.id !== tempLink.id);
 			error = e.message || 'Failed to add link';
+		}
+	}
+
+	async function handleUpdateLink(event: CustomEvent<any>) {
+		const { linkId, title, url, icon_url } = event.detail;
+
+		// Store old link for revert
+		const oldLink = currentLinks.find(link => link.id === linkId);
+
+		// OPTIMISTIC UI: Update immediately with uploaded icon_url
+		currentLinks = currentLinks.map(link =>
+			link.id === linkId
+				? { ...link, title, url, icon_url: icon_url || link.icon_url }
+				: link
+		);
+
+		// Update in background
+		try {
+			await api.updateLink(linkId, {
+				title,
+				url,
+				icon_url: icon_url || null
+			});
+
+			// Update store silently in background
+			const data = await api.getEditorData(username);
+			loadEditorData(data);
+		} catch (e: any) {
+			// Revert on error
+			if (oldLink) {
+				currentLinks = currentLinks.map(link =>
+					link.id === linkId ? oldLink : link
+				);
+			}
+			error = e.message || 'Failed to update link';
 		}
 	}
 
@@ -340,6 +375,7 @@
 					groupName={currentGroupName}
 					on:back={handleBackToList}
 					on:addLink={handleAddLink}
+					on:updateLink={handleUpdateLink}
 					on:toggleLink={handleToggleLink}
 					on:deleteLink={handleDeleteLink}
 				/>

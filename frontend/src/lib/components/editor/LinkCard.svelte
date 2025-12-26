@@ -15,9 +15,16 @@
 		e.stopPropagation();
 		dispatch('delete', link.id);
 	}
+
+	function handleEdit() {
+		dispatch('edit', link.id);
+	}
 </script>
 
-<div class="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition group">
+<button 
+	on:click={handleEdit}
+	class="bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition group w-full text-left"
+>
 	<div class="flex items-center gap-3">
 		<!-- Drag Handle -->
 		<button class="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing">
@@ -65,4 +72,4 @@
 			</svg>
 		</button>
 	</div>
-</div>
+</button>
