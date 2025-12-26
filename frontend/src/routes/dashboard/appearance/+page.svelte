@@ -3,11 +3,14 @@
 	import { api } from '$lib/api.client';
 	import { loadEditorData, setAutosaveTrigger } from '$lib/stores/page';
 	import { triggerAutosave, initializeAutosave } from '$lib/stores/autosave';
+	import { appearanceState, resetToThemeDefault } from '$lib/stores/appearanceManager';
+	import { appearance } from '$lib/stores/appearance';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 	import ThemeSection from '$lib/components/editor/sections/ThemeSection.svelte';
 	import HeaderSection from '$lib/components/editor/sections/HeaderSection.svelte';
 	import BackgroundSection from '$lib/components/editor/sections/BackgroundSection.svelte';
 	import AppearanceDebug from '$lib/components/debug/AppearanceDebug.svelte';
+	import ResetThemeModal from '$lib/components/modals/ResetThemeModal.svelte';
 
 	export let params = {};
 	import BlockStyleSection from '$lib/components/editor/sections/BlockStyleSection.svelte';
@@ -21,6 +24,27 @@
 	let activeSection = 'theme';
 	let contentContainer: HTMLElement;
 	let sidebarCollapsed = false;
+
+	// Reset modal state
+	let showResetModal = false;
+	let resetting = false;
+
+	// Check if has customizations
+	$: hasCustomizations = Object.keys($appearanceState.overrides || {}).length > 0;
+	$: themeName = $appearance?.theme?.name || 'Default';
+
+	async function handleResetConfirm() {
+		resetting = true;
+		try {
+			await resetToThemeDefault();
+			showResetModal = false;
+		} catch (e) {
+			console.error('Failed to reset theme:', e);
+			alert('Failed to reset theme. Please try again.');
+		} finally {
+			resetting = false;
+		}
+	}
 
 	// Navigation items with icons
 	const navItems = [
@@ -295,6 +319,20 @@
 						</svg>
 					</button>
 
+					<!-- Reset Button (only show when has customizations) -->
+					{#if hasCustomizations}
+						<button 
+							on:click={() => showResetModal = true}
+							class="px-3 py-2 border border-orange-300 text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors text-sm font-medium flex items-center gap-1.5"
+							title="Reset to theme default"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+							</svg>
+							Reset
+						</button>
+					{/if}
+
 					<!-- Share Button -->
 					<button class="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">
 						SHARE
@@ -312,3 +350,13 @@
 	<!-- Debug Panel -->
 	<AppearanceDebug />
 </div>
+
+<!-- Reset Theme Modal -->
+{#if showResetModal}
+	<ResetThemeModal
+		themeName={themeName}
+		loading={resetting}
+		on:confirm={handleResetConfirm}
+		on:cancel={() => showResetModal = false}
+	/>
+{/if}

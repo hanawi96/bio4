@@ -1,13 +1,19 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
-	import { appearanceState, isCustom, changeThemePreset } from '$lib/stores/appearanceManager';
+	import { appearanceState, changeThemePreset, resetToThemeDefault } from '$lib/stores/appearanceManager';
+	import { appearance } from '$lib/stores/appearance';
+	import ResetThemeModal from '$lib/components/modals/ResetThemeModal.svelte';
 	import type { ThemePreset } from '$lib/types';
 
 	let themes: ThemePreset[] = [];
 	let loading = true;
 	let selecting = false;
 	let activeTab = 'Classic';
+
+	// Reset modal state
+	let showResetModal = false;
+	let resetting = false;
 
 	const tabs = ['Classic', 'Vibrant', 'Cozy', 'Bold'];
 
@@ -22,16 +28,39 @@
 		}
 	});
 
+	// Check if has customizations
+	$: hasCustomizations = Object.keys($appearanceState.overrides || {}).length > 0;
+	$: themeName = $appearance?.theme?.name || 'Default';
+
 	async function selectTheme(preset: ThemePreset) {
 		if (selecting) return;
-		selecting = true;
 
+		// If clicking current theme and has customizations, show reset modal
+		if (preset.key === $appearanceState.themeKey && hasCustomizations) {
+			showResetModal = true;
+			return;
+		}
+
+		selecting = true;
 		try {
 			await changeThemePreset(preset.key);
 		} catch (e) {
 			console.error('[ThemeSection] Failed to change theme:', e);
 		} finally {
 			selecting = false;
+		}
+	}
+
+	async function handleResetConfirm() {
+		resetting = true;
+		try {
+			await resetToThemeDefault();
+			showResetModal = false;
+		} catch (e) {
+			console.error('Failed to reset theme:', e);
+			alert('Failed to reset theme. Please try again.');
+		} finally {
+			resetting = false;
 		}
 	}
 	
@@ -50,8 +79,7 @@
 	}
 
 	// Check if current preset is selected
-	$: currentPresetKey = $appearanceState.presetKey;
-	$: isCustomTheme = $isCustom;
+	$: currentThemeKey = $appearanceState.themeKey;
 </script>
 
 <section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -82,7 +110,7 @@
 		{:else}
 			<div class="flex gap-4 overflow-x-auto pb-2">
 				<!-- Custom Theme Card (show when has customization) -->
-				{#if isCustomTheme}
+				{#if hasCustomizations}
 					<button
 						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 border-purple-500 ring-2 ring-purple-200 transition-all"
 					>
@@ -113,7 +141,7 @@
 					<button
 						on:click={() => selectTheme(preset)}
 						disabled={selecting}
-						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed {currentPresetKey === preset.key && !isCustomTheme ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}"
+						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed {currentThemeKey === preset.key && !hasCustomizations ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}"
 					>
 						<!-- Preview -->
 						<div 
@@ -121,7 +149,7 @@
 							style="background: {getBgStyle(preset)}; color: {preset.config.tokens.text};"
 						>
 							<!-- Loading overlay -->
-							{#if selecting && currentPresetKey === preset.key}
+							{#if selecting && currentThemeKey === preset.key}
 								<div class="absolute inset-0 bg-white/50 flex items-center justify-center">
 									<div class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
 								</div>
@@ -153,3 +181,13 @@
 		{/if}
 	</div>
 </section>
+
+<!-- Reset Theme Modal -->
+{#if showResetModal}
+	<ResetThemeModal
+		themeName={themeName}
+		loading={resetting}
+		on:confirm={handleResetConfirm}
+		on:cancel={() => showResetModal = false}
+	/>
+{/if}

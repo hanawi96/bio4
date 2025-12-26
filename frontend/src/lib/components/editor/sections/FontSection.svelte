@@ -3,6 +3,7 @@
 	import { appearance } from '$lib/stores/appearance';
 
 	const fonts = [
+		{ name: 'Default', category: 'System', isDefault: true },
 		{ name: 'Inter', category: 'Sans Serif' },
 		{ name: 'Poppins', category: 'Sans Serif' },
 		{ name: 'Roboto', category: 'Sans Serif' },
@@ -23,28 +24,24 @@
 		{ id: 'large', name: 'Large', size: 24, description: '24px' }
 	];
 
-	$: currentFontFamily = ($appearanceState.overrides?.['tokens.fontFamily'] as string)
-		|| $appearance?.tokens?.fontFamily
-		|| 'Inter';
+	// Get theme's default font (from theme config)
+	$: themeFontFamily = $appearance?.theme?.config?.tokens?.fontFamily || 'Inter, sans-serif';
+	$: themeDefaultFontName = themeFontFamily.split(',')[0].trim();
 	
-	// Extract font name without fallbacks for comparison
-	$: selectedFont = currentFontFamily.split(',')[0].trim();
+	// Determine selected font
+	$: selectedFont = $appearanceState.overrides?.['tokens.fontFamily']
+		? ($appearanceState.overrides['tokens.fontFamily'] as string).split(',')[0].trim()
+		: 'Default';
 
-	$: currentTitleSize = ($appearanceState.overrides?.['page.titleFontSize'] as number)
-		|| 20; // Default medium
-	
-	$: selectedTitleSize = currentTitleSize <= 17 ? 'small'
-		: currentTitleSize >= 22 ? 'large'
-		: 'medium';
+	$: currentTitleSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
+	$: selectedTitleSize = currentTitleSize <= 17 ? 'small' : currentTitleSize >= 22 ? 'large' : 'medium';
 
-	$: currentTextColor = ($appearanceState.overrides?.['tokens.text'] as string)
-		|| $appearance?.tokens?.text
+	$: currentTextColor = ($appearanceState.overrides?.['tokens.text'] as string) 
+		|| $appearance?.tokens?.text 
 		|| '#000000';
 
 	function selectFont(fontName: string) {
-		// Store with fallbacks for better compatibility
-		const fontValue = `${fontName}, sans-serif`;
-		updateAppearance('tokens.fontFamily', fontValue);
+		updateAppearance('tokens.fontFamily', fontName === 'Default' ? null : `${fontName}, sans-serif`);
 	}
 
 	function selectTitleSize(sizeOption: typeof titleSizes[0]) {
@@ -72,14 +69,20 @@
 							<!-- Preview with actual font -->
 							<div 
 								class="mb-2 {selectedFont === font.name ? 'text-blue-600' : 'text-gray-900'}"
-								style="font-family: '{font.name}', sans-serif;"
+								style="font-family: {font.isDefault ? themeDefaultFontName : `'${font.name}'`}, sans-serif;"
 							>
 								<div class="text-3xl font-bold leading-none">Aa</div>
 								<div class="text-xs mt-1 opacity-60">Quick fox</div>
 							</div>
 							<!-- Name -->
 							<p class="text-sm font-medium text-gray-900 truncate">{font.name}</p>
-							<p class="text-xs text-gray-500">{font.category}</p>
+							<p class="text-xs text-gray-500">
+								{#if font.isDefault}
+									{themeDefaultFontName}
+								{:else}
+									{font.category}
+								{/if}
+							</p>
 						</div>
 					</button>
 				{/each}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { api } from '$lib/api.client';
 	import { appearanceState, updateAppearance, changeHeaderPreset } from '$lib/stores/appearanceManager';
+	import { appearance } from '$lib/stores/appearance';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import type { HeaderPreset } from '$lib/appearance/types';
@@ -34,6 +35,47 @@
 	})();
 	$: isDefaultCover = coverImageUrl === DEFAULT_COVER_IMAGE;
 	$: showCoverOptions = selectedPreset?.hasCover && selectedPresetId !== 'avatar-cover';
+
+	// Title Font options
+	const titleFonts = [
+		{ name: 'Default', category: 'Theme Default', isDefault: true },
+		{ name: 'Inter', category: 'Sans Serif' },
+		{ name: 'Poppins', category: 'Sans Serif' },
+		{ name: 'Roboto', category: 'Sans Serif' },
+		{ name: 'Montserrat', category: 'Sans Serif' },
+		{ name: 'Playfair Display', category: 'Serif' },
+		{ name: 'Merriweather', category: 'Serif' },
+		{ name: 'Crimson Text', category: 'Serif' },
+		{ name: 'Pacifico', category: 'Display' },
+		{ name: 'Space Mono', category: 'Monospace' }
+	];
+
+	const titleSizes = [
+		{ id: 'small', name: 'S', size: 16 },
+		{ id: 'medium', name: 'M', size: 20 },
+		{ id: 'large', name: 'L', size: 24 }
+	];
+
+	// Get theme's default font
+	$: themeFontFamily = $appearance?.theme?.config?.tokens?.fontFamily || 'Inter, sans-serif';
+	$: themeDefaultFontName = themeFontFamily.split(',')[0].trim();
+
+	// Get current title font
+	$: selectedTitleFont = $appearanceState.overrides?.['header.titleFontFamily']
+		? ($appearanceState.overrides['header.titleFontFamily'] as string).split(',')[0].trim()
+		: 'Default';
+
+	// Get current title size
+	$: currentTitleSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
+	$: selectedTitleSize = currentTitleSize <= 17 ? 'small' : currentTitleSize >= 22 ? 'large' : 'medium';
+
+	function selectTitleFont(fontName: string) {
+		updateAppearance('header.titleFontFamily', fontName === 'Default' ? null : `${fontName}, sans-serif`);
+	}
+
+	function selectTitleSize(sizeOption: typeof titleSizes[0]) {
+		updateAppearance('page.titleFontSize', sizeOption.size);
+	}
 
 	// Select header preset
 	async function selectPreset(presetId: string) {
@@ -266,6 +308,61 @@
 					</div>
 				</button>
 			{/each}
+		</div>
+
+		<!-- Title Font & Size -->
+		<div class="mt-6 pt-6 border-t border-gray-200">
+			<h3 class="text-sm font-semibold text-gray-900 mb-4">Title Customization</h3>
+			
+			<div class="space-y-4">
+				<!-- Title Font -->
+				<div>
+					<label class="text-xs font-medium text-gray-700 mb-2 block">Title Font</label>
+					<div class="grid grid-cols-5 gap-2">
+						{#each titleFonts as font}
+							<button
+								on:click={() => selectTitleFont(font.name)}
+								class="group rounded-lg border-2 transition-all hover:scale-105 {selectedTitleFont === font.name ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+							>
+								<div class="p-3 text-center">
+									<div 
+										class="mb-1.5 {selectedTitleFont === font.name ? 'text-blue-600' : 'text-gray-900'}"
+										style="font-family: {font.isDefault ? themeDefaultFontName : `'${font.name}'`}, sans-serif;"
+									>
+										<div class="text-2xl font-bold leading-none">Aa</div>
+									</div>
+									<p class="text-[10px] font-medium text-gray-900 truncate">{font.name}</p>
+									<p class="text-[9px] text-gray-500 truncate">{font.isDefault ? themeDefaultFontName : font.category}</p>
+								</div>
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<!-- Title Size -->
+				<div>
+					<label class="text-xs font-medium text-gray-700 mb-2 block">Title Size</label>
+					<div class="grid grid-cols-3 gap-2">
+						{#each titleSizes as sizeOption}
+							<button
+								on:click={() => selectTitleSize(sizeOption)}
+								class="p-3 rounded-lg border-2 transition-all hover:scale-105 {selectedTitleSize === sizeOption.id ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}"
+							>
+								<div class="flex items-center justify-center mb-2" style="height: 32px;">
+									<div 
+										class="font-bold {selectedTitleSize === sizeOption.id ? 'text-blue-600' : 'text-gray-900'}"
+										style="font-size: {sizeOption.size}px;"
+									>
+										Aa
+									</div>
+								</div>
+								<p class="text-xs font-medium text-gray-900">{sizeOption.name}</p>
+								<p class="text-[10px] text-gray-500">{sizeOption.size}px</p>
+							</button>
+						{/each}
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<!-- Cover Options -->

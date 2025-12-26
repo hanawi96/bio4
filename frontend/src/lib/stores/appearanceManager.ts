@@ -194,3 +194,40 @@ export function getValue(path: string): any {
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
     return getResolvedValue(themesMap, state, path);
 }
+
+// ============================================
+// HELPER: Reset to theme default (clear all overrides)
+// ============================================
+
+export async function resetToThemeDefault() {
+    const currentState = get(appearanceState);
+    const $themes = get(themes);
+    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+    
+    // Keep themeKey, headerPresetId, blockPresetId but clear all overrides
+    const newState: AppearanceState = {
+        themeKey: currentState.themeKey,
+        headerPresetId: currentState.headerPresetId,
+        blockPresetId: currentState.blockPresetId,
+        overrides: {} // Clear all overrides
+    };
+    
+    const oldFormat = migrateNewToOld(themesMap, newState);
+
+    page.update(p => {
+        if (!p) return p;
+        return {
+            ...p,
+            draft_appearance: JSON.stringify(oldFormat)
+        };
+    });
+
+    try {
+        await api.saveDraft(username, {
+            draft_appearance: JSON.stringify(oldFormat)
+        });
+    } catch (e) {
+        console.error('[appearanceManager] Failed to reset theme:', e);
+        throw e;
+    }
+}

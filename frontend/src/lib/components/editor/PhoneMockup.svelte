@@ -120,8 +120,15 @@
 		|| 16;
 	
 	// Get title font size from appearance
-	$: titleFontSize = ($appearanceState.overrides?.['page.titleFontSize'] as number)
-		|| 20; // Default medium
+	$: titleFontSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
+	
+	// Get title font family (separate from body font)
+	$: titleFontFamily = (() => {
+		const override = $appearanceState.overrides?.['header.titleFontFamily'] as string;
+		if (override) return override;
+		// Fallback to theme default
+		return $appearance?.theme?.config?.tokens?.fontFamily || 'Inter, sans-serif';
+	})();
 	
 	// Get background color for gradient overlay (for avatar-cover)
 	$: overlayGradientColor = (() => {
@@ -245,8 +252,8 @@
 									></div>
 									
 									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
-									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-6">
-										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px;">{$page?.title || 'Your Name'}</h1>
+									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
+										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$page?.title || 'Your Name'}</h1>
 										{#if header.showBio && $page?.bio}
 											<p 
 												class="bio-text text-sm text-white/90 mt-2 drop-shadow-md"
@@ -301,10 +308,10 @@
 						<!-- Content below cover (only for non-avatar-cover) -->
 						{#if !isAvatarCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 16 : 0}px; text-align: {header.contentAlign};">
-								<h1 class="font-bold" style="font-size: {titleFontSize}px;">{$page?.title || 'Your Name'}</h1>
+								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$page?.title || 'Your Name'}</h1>
 								{#if header.showBio && $page?.bio}
 									<p 
-										class="bio-text text-sm opacity-70 mt-1 px-4"
+										class="bio-text text-sm opacity-70 mt-1"
 										style="
 											display: -webkit-box;
 											-webkit-line-clamp: {header.bioMaxLines};
@@ -347,10 +354,10 @@
 									{($page?.title || 'U').charAt(0).toUpperCase()}
 								</div>
 							{/if}
-							<h1 class="font-bold" style="font-size: {titleFontSize}px;">{$page?.title || 'Your Name'}</h1>
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$page?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $page?.bio}
 								<p 
-									class="bio-text text-sm opacity-70 mt-1 px-4"
+									class="bio-text text-sm opacity-70 mt-1"
 									style="
 										display: -webkit-box;
 										-webkit-line-clamp: {header.bioMaxLines};
