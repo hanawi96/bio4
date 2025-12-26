@@ -25,6 +25,9 @@
 	let contentContainer: HTMLElement;
 	let sidebarCollapsed = false;
 
+	// Debug activeSection changes
+	$: console.log('[Appearance] activeSection changed to:', activeSection);
+
 	// Reset modal state
 	let showResetModal = false;
 	let resetting = false;
@@ -117,12 +120,12 @@
 			
 			// DON'T connect autosave - sections handle their own saves
 			// setAutosaveTrigger(() => triggerAutosave(username));
-			
-			setupIntersectionObserver();
 		} catch (e) {
 			error = 'Failed to load data';
 		} finally {
 			loading = false;
+			// Setup scroll tracking after DOM is ready
+			setTimeout(() => setupScrollTracking(), 100);
 		}
 	});
 
@@ -131,29 +134,46 @@
 		setAutosaveTrigger(null);
 	});
 
-	// Setup Intersection Observer to track active section
-	function setupIntersectionObserver() {
+	// Setup scroll listener to track active section (simpler approach)
+	function setupScrollTracking() {
 		if (!contentContainer) return;
 
-		const options = {
-			root: contentContainer,
-			rootMargin: '-20% 0px -70% 0px',
-			threshold: 0
-		};
+		const handleScroll = () => {
+			const scrollTop = contentContainer.scrollTop;
+			const viewportHeight = contentContainer.clientHeight;
+			const centerPoint = scrollTop + (viewportHeight * 0.3); // 30% from top
 
-		const observer = new IntersectionObserver((entries) => {
-			entries.forEach((entry) => {
-				if (entry.isIntersecting) {
-					activeSection = entry.target.id;
+			// Find which section's center is closest to our center point
+			let closestSection = navItems[0].id;
+			let closestDistance = Infinity;
+
+			navItems.forEach((item) => {
+				const element = document.getElementById(item.id);
+				if (element) {
+					const elementTop = element.offsetTop - contentContainer.offsetTop;
+					const elementHeight = element.offsetHeight;
+					const elementCenter = elementTop + (elementHeight / 2);
+					const distance = Math.abs(elementCenter - centerPoint);
+
+					if (distance < closestDistance) {
+						closestDistance = distance;
+						closestSection = item.id;
+					}
 				}
 			});
-		}, options);
 
-		// Observe all sections
-		navItems.forEach((item) => {
-			const element = document.getElementById(item.id);
-			if (element) observer.observe(element);
-		});
+			if (activeSection !== closestSection) {
+				console.log('[ScrollTracking] Setting activeSection to:', closestSection);
+				activeSection = closestSection;
+			}
+		};
+
+		contentContainer.addEventListener('scroll', handleScroll);
+		// Initial check
+		handleScroll();
+
+		// Cleanup
+		return () => contentContainer.removeEventListener('scroll', handleScroll);
 	}
 
 	// Smooth scroll to section
