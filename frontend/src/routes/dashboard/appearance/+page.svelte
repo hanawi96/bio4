@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, afterUpdate, onDestroy } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { api } from '$lib/api.client';
 	import { loadEditorData, setAutosaveTrigger } from '$lib/stores/page';
 	import { triggerAutosave, initializeAutosave } from '$lib/stores/autosave';
@@ -24,9 +24,6 @@
 	let activeSection = 'theme';
 	let contentContainer: HTMLElement;
 	let sidebarCollapsed = false;
-
-	// Debug activeSection changes
-	$: console.log('[Appearance] activeSection changed to:', activeSection);
 
 	// Reset modal state
 	let showResetModal = false;
@@ -141,9 +138,8 @@
 		const handleScroll = () => {
 			const scrollTop = contentContainer.scrollTop;
 			const viewportHeight = contentContainer.clientHeight;
-			const centerPoint = scrollTop + (viewportHeight * 0.3); // 30% from top
+			const centerPoint = scrollTop + (viewportHeight * 0.3);
 
-			// Find which section's center is closest to our center point
 			let closestSection = navItems[0].id;
 			let closestDistance = Infinity;
 
@@ -163,7 +159,6 @@
 			});
 
 			if (activeSection !== closestSection) {
-				console.log('[ScrollTracking] Setting activeSection to:', closestSection);
 				activeSection = closestSection;
 			}
 		};
