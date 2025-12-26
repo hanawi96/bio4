@@ -14,6 +14,15 @@ export interface BioPage {
 	draft_appearance: string; // JSON string
 	published_appearance: string; // JSON string
 	theme?: string; // JSON string (for backward compatibility)
+	social_links?: {
+		twitter?: string;
+		instagram?: string;
+		facebook?: string;
+		linkedin?: string;
+		youtube?: string;
+		tiktok?: string;
+	};
+	show_social_icons?: boolean;
 	created_at: string;
 	updated_at: string;
 }

@@ -333,6 +333,12 @@
 	
 	// Base theme color for pattern preview
 	let baseThemeColor = '#ffffff';
+
+	// Filter UI state
+	let activeFilter: 'blur' | 'brightness' | 'grayscale' | null = null;
+
+	// Background filters - computed once for preview
+	$: previewFilters = `blur(${$appearanceState.overrides['backgroundBlur'] ?? 0}px) brightness(${($appearanceState.overrides['backgroundBrightness'] ?? 100) / 100}) grayscale(${($appearanceState.overrides['backgroundGrayscale'] ?? 0) / 100})`;
 	
 	// Background history (session-only)
 	let backgroundHistory = {
@@ -1102,7 +1108,12 @@
 			<div class="space-y-3">
 				{#if backgroundImageUrl}
 					<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
-						<img src={backgroundImageUrl} alt="Background" class="w-full h-48 object-cover" />
+						<img 
+							src={backgroundImageUrl} 
+							alt="Background" 
+							class="w-full h-48 object-cover" 
+							style="filter: {previewFilters};"
+						/>
 						<div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2">
 							<label class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
 								<input
@@ -1135,6 +1146,158 @@
 								<div class="flex items-center gap-3 text-white">
 									<div class="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full"></div>
 									<span class="font-medium">Uploading...</span>
+								</div>
+							</div>
+						{/if}
+					</div>
+					
+					<!-- Image Filters -->
+					<div class="p-4 bg-gray-50 rounded-xl space-y-3">
+						<h4 class="text-sm font-semibold text-gray-900 mb-3">Image Filters</h4>
+						
+						<!-- Filter Tabs -->
+						<div class="grid grid-cols-3 gap-2">
+							<button
+								on:click={() => activeFilter = activeFilter === 'blur' ? null : 'blur'}
+								class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter === 'blur' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+							>
+								<div class="flex items-center justify-center gap-2">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+									</svg>
+									<span>Blur</span>
+								</div>
+							</button>
+							<button
+								on:click={() => activeFilter = activeFilter === 'brightness' ? null : 'brightness'}
+								class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter === 'brightness' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+							>
+								<div class="flex items-center justify-center gap-2">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+									</svg>
+									<span>Brightness</span>
+								</div>
+							</button>
+							<button
+								on:click={() => activeFilter = activeFilter === 'grayscale' ? null : 'grayscale'}
+								class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter === 'grayscale' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+							>
+								<div class="flex items-center justify-center gap-2">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+									</svg>
+									<span>Grayscale</span>
+								</div>
+							</button>
+						</div>
+
+						<!-- Filter Presets (Expandable) -->
+						{#if activeFilter === 'blur'}
+							<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+								<div class="grid grid-cols-4 gap-2">
+									<button
+										on:click={() => updateAppearance('backgroundBlur', 0)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBlur'] ?? 0) === 0 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBlur'] ?? 0) === 0 ? 'text-blue-600' : 'text-gray-900'}">None</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">0px</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundBlur', 4)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBlur'] ?? 0) === 4 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBlur'] ?? 0) === 4 ? 'text-blue-600' : 'text-gray-900'}">Light</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">4px</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundBlur', 8)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBlur'] ?? 0) === 8 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBlur'] ?? 0) === 8 ? 'text-blue-600' : 'text-gray-900'}">Medium</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">8px</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundBlur', 15)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBlur'] ?? 0) === 15 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBlur'] ?? 0) === 15 ? 'text-blue-600' : 'text-gray-900'}">Strong</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">15px</div>
+									</button>
+								</div>
+							</div>
+						{:else if activeFilter === 'brightness'}
+							<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+								<div class="grid grid-cols-5 gap-2">
+									<button
+										on:click={() => updateAppearance('backgroundBrightness', 50)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 50 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 50 ? 'text-blue-600' : 'text-gray-900'}">Dark</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">50%</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundBrightness', 75)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 75 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 75 ? 'text-blue-600' : 'text-gray-900'}">Dim</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">75%</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundBrightness', 100)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 100 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 100 ? 'text-blue-600' : 'text-gray-900'}">Normal</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">100%</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundBrightness', 125)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 125 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 125 ? 'text-blue-600' : 'text-gray-900'}">Bright</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">125%</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundBrightness', 150)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 150 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 150 ? 'text-blue-600' : 'text-gray-900'}">Very Bright</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">150%</div>
+									</button>
+								</div>
+							</div>
+						{:else if activeFilter === 'grayscale'}
+							<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+								<div class="grid grid-cols-4 gap-2">
+									<button
+										on:click={() => updateAppearance('backgroundGrayscale', 0)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 0 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 0 ? 'text-blue-600' : 'text-gray-900'}">Color</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">0%</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundGrayscale', 50)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 50 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 50 ? 'text-blue-600' : 'text-gray-900'}">Half</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">50%</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundGrayscale', 75)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 75 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 75 ? 'text-blue-600' : 'text-gray-900'}">Mostly</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">75%</div>
+									</button>
+									<button
+										on:click={() => updateAppearance('backgroundGrayscale', 100)}
+										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 100 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									>
+										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 100 ? 'text-blue-600' : 'text-gray-900'}">B&W</div>
+										<div class="text-[10px] text-gray-500 mt-0.5">100%</div>
+									</button>
 								</div>
 							</div>
 						{/if}
