@@ -201,16 +201,18 @@
 
 		ctx.setLineDash([]);
 
-		// Draw edge handles based on crop orientation
-		const isHorizontalCrop = aspectRatio > 1;
-		if (isHorizontalCrop) {
-			// Horizontal crop: draw top/bottom handles
-			drawEdgeHandle(ctx, cropBox.x + cropBox.width / 2, cropBox.y, true); // Top
-			drawEdgeHandle(ctx, cropBox.x + cropBox.width / 2, cropBox.y + cropBox.height, true); // Bottom
-		} else {
-			// Vertical crop: draw left/right handles
-			drawEdgeHandle(ctx, cropBox.x, cropBox.y + cropBox.height / 2, false); // Left
-			drawEdgeHandle(ctx, cropBox.x + cropBox.width, cropBox.y + cropBox.height / 2, false); // Right
+		// Draw edge handles (not needed for square crop)
+		if (aspectRatio !== 1) {
+			const isHorizontalCrop = aspectRatio > 1;
+			if (isHorizontalCrop) {
+				// Horizontal crop: draw top/bottom handles
+				drawEdgeHandle(ctx, cropBox.x + cropBox.width / 2, cropBox.y, true);
+				drawEdgeHandle(ctx, cropBox.x + cropBox.width / 2, cropBox.y + cropBox.height, true);
+			} else {
+				// Vertical crop: draw left/right handles
+				drawEdgeHandle(ctx, cropBox.x, cropBox.y + cropBox.height / 2, false);
+				drawEdgeHandle(ctx, cropBox.x + cropBox.width, cropBox.y + cropBox.height / 2, false);
+			}
 		}
 	}
 
