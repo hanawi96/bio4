@@ -228,7 +228,7 @@
 
 <svelte:window on:click={handleClickOutside} />
 
-<section class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+<section class="bg-white rounded-xl border border-gray-200 shadow-sm">
 	<div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
 		<div class="flex items-center justify-between">
 			<div>
@@ -477,7 +477,7 @@
 
 						<!-- Dropdown Panel -->
 						{#if titleFontDropdownOpen}
-							<div class="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+							<div class="absolute z-[100] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
 								<div class="max-h-64 overflow-y-auto">
 									{#each titleFonts as font}
 										<button
