@@ -17,6 +17,10 @@
 	let showCropModal = false;
 	let tempImageUrl = '';
 
+	// Dropdown states
+	let titleFontDropdownOpen = false;
+	let titleFontDropdownButton: HTMLElement;
+
 	// Get all header presets
 	const presets = Object.values(HEADER_PRESETS);
 
@@ -50,11 +54,7 @@
 		{ name: 'Space Mono', category: 'Monospace' }
 	];
 
-	const titleSizes = [
-		{ id: 'small', name: 'S', size: 16 },
-		{ id: 'medium', name: 'M', size: 20 },
-		{ id: 'large', name: 'L', size: 24 }
-	];
+
 
 	// Get theme's default font
 	$: themeFontFamily = $appearance?.theme?.config?.tokens?.fontFamily || 'Inter, sans-serif';
@@ -65,16 +65,24 @@
 		? ($appearanceState.overrides['header.titleFontFamily'] as string).split(',')[0].trim()
 		: 'Default';
 
+	$: selectedTitleFontObj = titleFonts.find(f => f.name === selectedTitleFont) || titleFonts[0];
+
 	// Get current title size
 	$: currentTitleSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
-	$: selectedTitleSize = currentTitleSize <= 17 ? 'small' : currentTitleSize >= 22 ? 'large' : 'medium';
 
 	function selectTitleFont(fontName: string) {
 		updateAppearance('header.titleFontFamily', fontName === 'Default' ? null : `${fontName}, sans-serif`);
+		titleFontDropdownOpen = false;
 	}
 
-	function selectTitleSize(sizeOption: typeof titleSizes[0]) {
-		updateAppearance('page.titleFontSize', sizeOption.size);
+	function updateTitleSize(size: number) {
+		updateAppearance('page.titleFontSize', size);
+	}
+
+	function handleClickOutside(event: MouseEvent) {
+		if (titleFontDropdownOpen && titleFontDropdownButton && !titleFontDropdownButton.contains(event.target as Node)) {
+			titleFontDropdownOpen = false;
+		}
 	}
 
 	// Select header preset
@@ -218,6 +226,8 @@
 	}
 </script>
 
+<svelte:window on:click={handleClickOutside} />
+
 <section class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
 	<div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
 		<div class="flex items-center justify-between">
@@ -308,61 +318,6 @@
 					</div>
 				</button>
 			{/each}
-		</div>
-
-		<!-- Title Font & Size -->
-		<div class="mt-6 pt-6 border-t border-gray-200">
-			<h3 class="text-sm font-semibold text-gray-900 mb-4">Title Customization</h3>
-			
-			<div class="space-y-4">
-				<!-- Title Font -->
-				<div>
-					<label class="text-xs font-medium text-gray-700 mb-2 block">Title Font</label>
-					<div class="grid grid-cols-5 gap-2">
-						{#each titleFonts as font}
-							<button
-								on:click={() => selectTitleFont(font.name)}
-								class="group rounded-lg border-2 transition-all hover:scale-105 {selectedTitleFont === font.name ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-							>
-								<div class="p-3 text-center">
-									<div 
-										class="mb-1.5 {selectedTitleFont === font.name ? 'text-blue-600' : 'text-gray-900'}"
-										style="font-family: {font.isDefault ? themeDefaultFontName : `'${font.name}'`}, sans-serif;"
-									>
-										<div class="text-2xl font-bold leading-none">Aa</div>
-									</div>
-									<p class="text-[10px] font-medium text-gray-900 truncate">{font.name}</p>
-									<p class="text-[9px] text-gray-500 truncate">{font.isDefault ? themeDefaultFontName : font.category}</p>
-								</div>
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<!-- Title Size -->
-				<div>
-					<label class="text-xs font-medium text-gray-700 mb-2 block">Title Size</label>
-					<div class="grid grid-cols-3 gap-2">
-						{#each titleSizes as sizeOption}
-							<button
-								on:click={() => selectTitleSize(sizeOption)}
-								class="p-3 rounded-lg border-2 transition-all hover:scale-105 {selectedTitleSize === sizeOption.id ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}"
-							>
-								<div class="flex items-center justify-center mb-2" style="height: 32px;">
-									<div 
-										class="font-bold {selectedTitleSize === sizeOption.id ? 'text-blue-600' : 'text-gray-900'}"
-										style="font-size: {sizeOption.size}px;"
-									>
-										Aa
-									</div>
-								</div>
-								<p class="text-xs font-medium text-gray-900">{sizeOption.name}</p>
-								<p class="text-[10px] text-gray-500">{sizeOption.size}px</p>
-							</button>
-						{/each}
-					</div>
-				</div>
-			</div>
 		</div>
 
 		<!-- Cover Options -->
@@ -480,6 +435,102 @@
 					</div>
 			</div>
 		{/if}
+
+		<!-- Title Font & Size -->
+		<div class="mt-6 pt-6 border-t border-gray-200">
+			<h3 class="text-sm font-semibold text-gray-900 mb-4">Title Customization</h3>
+			
+			<div class="space-y-4">
+				<!-- Title Font - Custom Dropdown -->
+				<div>
+					<label class="block text-xs font-medium text-gray-700 mb-2">Title Font</label>
+					<div class="relative" bind:this={titleFontDropdownButton}>
+						<button
+							on:click|stopPropagation={() => titleFontDropdownOpen = !titleFontDropdownOpen}
+							class="w-full px-3 py-2.5 bg-white border-2 rounded-lg text-left transition-all {titleFontDropdownOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-300 hover:border-gray-400'}"
+						>
+							<div class="flex items-center justify-between">
+								<div class="flex items-center gap-2.5">
+									<div 
+										class="text-xl font-bold text-gray-900"
+										style="font-family: {selectedTitleFont === 'Default' ? themeDefaultFontName : `'${selectedTitleFont}'`}, sans-serif;"
+									>
+										Aa
+									</div>
+									<div>
+										<div class="text-xs font-medium text-gray-900">{selectedTitleFont}</div>
+										<div class="text-[10px] text-gray-500">
+											{selectedTitleFontObj.isDefault ? themeDefaultFontName : selectedTitleFontObj.category}
+										</div>
+									</div>
+								</div>
+								<svg 
+									class="w-4 h-4 text-gray-400 transition-transform {titleFontDropdownOpen ? 'rotate-180' : ''}" 
+									fill="none" 
+									stroke="currentColor" 
+									viewBox="0 0 24 24"
+								>
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								</svg>
+							</div>
+						</button>
+
+						<!-- Dropdown Panel -->
+						{#if titleFontDropdownOpen}
+							<div class="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+								<div class="max-h-64 overflow-y-auto">
+									{#each titleFonts as font}
+										<button
+											on:click={() => selectTitleFont(font.name)}
+											class="w-full px-3 py-2.5 flex items-center gap-2.5 hover:bg-gray-50 transition-colors {selectedTitleFont === font.name ? 'bg-blue-50' : ''}"
+										>
+											<div 
+												class="text-xl font-bold {selectedTitleFont === font.name ? 'text-blue-600' : 'text-gray-900'}"
+												style="font-family: {font.isDefault ? themeDefaultFontName : `'${font.name}'`}, sans-serif;"
+											>
+												Aa
+											</div>
+											<div class="flex-1 text-left">
+												<div class="text-xs font-medium text-gray-900">{font.name}</div>
+												<div class="text-[10px] text-gray-500">
+													{font.isDefault ? themeDefaultFontName : font.category}
+												</div>
+											</div>
+											{#if selectedTitleFont === font.name}
+												<svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+												</svg>
+											{/if}
+										</button>
+									{/each}
+								</div>
+							</div>
+						{/if}
+					</div>
+				</div>
+
+				<!-- Title Size - Slider -->
+				<div>
+					<div class="flex items-center justify-between mb-2">
+						<label class="text-xs font-medium text-gray-700">Title Size</label>
+						<span class="text-xs font-semibold text-blue-600">{currentTitleSize}px</span>
+					</div>
+					<input
+						type="range"
+						min="14"
+						max="32"
+						step="1"
+						value={currentTitleSize}
+						on:input={(e) => updateTitleSize(Number(e.currentTarget.value))}
+						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+					/>
+					<div class="flex justify-between text-[10px] text-gray-500 mt-1">
+						<span>Small</span>
+						<span>Large</span>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </section>
 
