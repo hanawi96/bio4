@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import ImageCropModal from '../modals/ImageCropModal.svelte';
 
 	export let headline = '';
 	export let subtitle = '';
@@ -11,13 +12,63 @@
 	const dispatch = createEventDispatcher();
 
 	let fileInput: HTMLInputElement;
+	let showCropModal = false;
+	let tempImageUrl = '';
 
 	function handleIconClick() {
 		fileInput?.click();
 	}
 
 	function handleFileChange(event: Event) {
-		dispatch('fileChange', event);
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (!file) return;
+
+		// Validate
+		if (!file.type.startsWith('image/')) {
+			alert('Please select an image file');
+			return;
+		}
+
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Image size must be less than 5MB');
+			return;
+		}
+
+		// Show crop modal
+		tempImageUrl = URL.createObjectURL(file);
+		showCropModal = true;
+	}
+
+	function handleCropAccept(event: CustomEvent<Blob>) {
+		const croppedBlob = event.detail;
+		
+		// Clean up temp URL
+		if (tempImageUrl) {
+			URL.revokeObjectURL(tempImageUrl);
+			tempImageUrl = '';
+		}
+
+		// Create File from Blob
+		const croppedFile = new File([croppedBlob], 'icon.jpg', { type: 'image/jpeg' });
+		
+		// Dispatch with cropped file
+		dispatch('fileChange', { target: { files: [croppedFile] } });
+		
+		showCropModal = false;
+	}
+
+	function handleCropCancel() {
+		// Clean up temp URL
+		if (tempImageUrl) {
+			URL.revokeObjectURL(tempImageUrl);
+			tempImageUrl = '';
+		}
+		
+		// Reset file input
+		if (fileInput) fileInput.value = '';
+		
+		showCropModal = false;
 	}
 
 	function handleRemoveIcon() {
@@ -142,3 +193,17 @@
 		</button>
 	</div>
 </div>
+
+<!-- Crop Modal -->
+{#if showCropModal}
+	<ImageCropModal
+		imageUrl={tempImageUrl}
+		aspectRatio={1}
+		title="Crop Link Icon"
+		outputWidth={512}
+		outputHeight={512}
+		{uploading}
+		on:accept={handleCropAccept}
+		on:cancel={handleCropCancel}
+	/>
+{/if}

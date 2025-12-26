@@ -66,20 +66,10 @@
 		iconPreviewUrl = '';
 	}
 
-	function handleFileChange(event: CustomEvent<Event>) {
-		const target = (event.detail as Event).target as HTMLInputElement;
-		const file = target.files?.[0];
+	function handleFileChange(event: CustomEvent<any>) {
+		const detail = event.detail;
+		const file = detail.target?.files?.[0];
 		if (!file) return;
-		
-		if (!file.type.startsWith('image/')) {
-			alert('Please select an image file');
-			return;
-		}
-		
-		if (file.size > 5 * 1024 * 1024) {
-			alert('Image size must be less than 5MB');
-			return;
-		}
 		
 		cleanupPreview();
 		iconFile = file;

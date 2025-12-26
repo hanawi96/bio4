@@ -67,6 +67,33 @@
 	}
 
 	function initializeCropBox() {
+		// Special handling for square crop (1:1)
+		if (aspectRatio === 1) {
+			// Square crop: use smaller dimension for crop box, scale to cover
+			const cropSize = Math.min(canvasWidth, canvasHeight);
+			
+			cropBox = {
+				x: (canvasWidth - cropSize) / 2,
+				y: (canvasHeight - cropSize) / 2,
+				width: cropSize,
+				height: cropSize
+			};
+
+			// Scale image to COVER crop box (not fit)
+			const scaleToFitWidth = cropSize / image.width;
+			const scaleToFitHeight = cropSize / image.height;
+			imageScale = Math.max(scaleToFitWidth, scaleToFitHeight); // Use max to cover
+
+			// Center image
+			const scaledWidth = image.width * imageScale;
+			const scaledHeight = image.height * imageScale;
+			imagePosition = {
+				x: (canvasWidth - scaledWidth) / 2,
+				y: (canvasHeight - scaledHeight) / 2
+			};
+			return;
+		}
+
 		// Determine if this is a horizontal (landscape) or vertical (portrait) crop
 		const isHorizontalCrop = aspectRatio > 1;
 
@@ -220,29 +247,47 @@
 		const dx = x - dragStart.x;
 		const dy = y - dragStart.y;
 
-		// Determine if this is horizontal or vertical crop
-		const isHorizontalCrop = aspectRatio > 1;
-
-		if (isHorizontalCrop) {
-			// Horizontal crop: move image vertically
+		// Square crop: allow both horizontal and vertical movement
+		if (aspectRatio === 1) {
+			imagePosition.x += dx;
 			imagePosition.y += dy;
 
-			// Constrain image position (ensure crop box is always filled)
+			// Constrain image position
+			const scaledWidth = image.width * imageScale;
 			const scaledHeight = image.height * imageScale;
+			
+			const minX = cropBox.x + cropBox.width - scaledWidth;
+			const maxX = cropBox.x;
 			const minY = cropBox.y + cropBox.height - scaledHeight;
 			const maxY = cropBox.y;
 
+			imagePosition.x = Math.max(minX, Math.min(maxX, imagePosition.x));
 			imagePosition.y = Math.max(minY, Math.min(maxY, imagePosition.y));
 		} else {
-			// Vertical crop: move image horizontally
-			imagePosition.x += dx;
+			// Determine if this is horizontal or vertical crop
+			const isHorizontalCrop = aspectRatio > 1;
 
-			// Constrain image position (ensure crop box is always filled)
-			const scaledWidth = image.width * imageScale;
-			const minX = cropBox.x + cropBox.width - scaledWidth;
-			const maxX = cropBox.x;
+			if (isHorizontalCrop) {
+				// Horizontal crop: move image vertically
+				imagePosition.y += dy;
 
-			imagePosition.x = Math.max(minX, Math.min(maxX, imagePosition.x));
+				// Constrain image position (ensure crop box is always filled)
+				const scaledHeight = image.height * imageScale;
+				const minY = cropBox.y + cropBox.height - scaledHeight;
+				const maxY = cropBox.y;
+
+				imagePosition.y = Math.max(minY, Math.min(maxY, imagePosition.y));
+			} else {
+				// Vertical crop: move image horizontally
+				imagePosition.x += dx;
+
+				// Constrain image position (ensure crop box is always filled)
+				const scaledWidth = image.width * imageScale;
+				const minX = cropBox.x + cropBox.width - scaledWidth;
+				const maxX = cropBox.x;
+
+				imagePosition.x = Math.max(minX, Math.min(maxX, imagePosition.x));
+			}
 		}
 
 		dragStart = { x, y };
@@ -362,7 +407,9 @@
 		<!-- Info -->
 		<div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
 			<p class="text-sm text-gray-600 text-center">
-				{#if aspectRatio > 1}
+				{#if aspectRatio === 1}
+					Drag the image to position it within the square
+				{:else if aspectRatio > 1}
 					Drag the image up or down to choose which part to display
 				{:else}
 					Drag the image left or right to choose which part to display
