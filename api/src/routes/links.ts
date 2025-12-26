@@ -14,6 +14,19 @@ import {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+// Helper function to delete link icon from R2
+async function deleteLinkIconFromR2(storage: R2Bucket, iconUrl: string | null): Promise<void> {
+	if (!iconUrl || !iconUrl.includes('/link-icons/')) return;
+	
+	try {
+		const urlParts = iconUrl.split('/');
+		const storageKey = urlParts.slice(urlParts.indexOf('link-icons')).join('/');
+		await storage.delete(storageKey);
+	} catch (e) {
+		console.error('Failed to delete link icon from R2:', e);
+	}
+}
+
 // ============ GROUPS ============
 
 // GET /links/groups/:username - Get all groups with links
@@ -79,19 +92,10 @@ app.delete('/groups/:groupId', async (c) => {
 	).bind(groupId).all() as { results: { icon_url: string | null }[] };
 	
 	// Delete all link icons from R2
-	if (links.results && links.results.length > 0) {
-		for (const link of links.results) {
-			if (link.icon_url && link.icon_url.includes('/link-icons/')) {
-				try {
-					const urlParts = link.icon_url.split('/');
-					const storageKey = urlParts.slice(urlParts.indexOf('link-icons')).join('/');
-					await c.env.STORAGE.delete(storageKey);
-				} catch (e) {
-					console.error('Failed to delete link icon from R2:', e);
-					// Continue with next icon
-				}
-			}
-		}
+	if (links.results) {
+		await Promise.all(
+			links.results.map(link => deleteLinkIconFromR2(c.env.STORAGE, link.icon_url))
+		);
 	}
 	
 	// Delete group (will cascade delete links)
@@ -126,6 +130,16 @@ app.put('/:linkId', async (c) => {
 	const linkId = parseInt(c.req.param('linkId'));
 	const body = await c.req.json();
 
+	// Get old link to check if icon changed
+	const oldLink = await c.env.DB.prepare(
+		'SELECT icon_url FROM links WHERE id = ?'
+	).bind(linkId).first() as { icon_url: string | null } | null;
+
+	// Delete old icon if changed
+	if (oldLink?.icon_url && body.icon_url !== oldLink.icon_url) {
+		await deleteLinkIconFromR2(c.env.STORAGE, oldLink.icon_url);
+	}
+
 	await updateLink(c.env.DB, linkId, {
 		title: body.title,
 		url: body.url,
@@ -147,16 +161,7 @@ app.delete('/:linkId', async (c) => {
 	).bind(linkId).first() as { icon_url: string | null } | null;
 	
 	// Delete icon from R2 if exists
-	if (link?.icon_url && link.icon_url.includes('/link-icons/')) {
-		try {
-			const urlParts = link.icon_url.split('/');
-			const storageKey = urlParts.slice(urlParts.indexOf('link-icons')).join('/');
-			await c.env.STORAGE.delete(storageKey);
-		} catch (e) {
-			console.error('Failed to delete link icon from R2:', e);
-			// Continue with link deletion even if R2 delete fails
-		}
-	}
+	await deleteLinkIconFromR2(c.env.STORAGE, link?.icon_url || null);
 	
 	// Delete link from database
 	await deleteLink(c.env.DB, linkId);
