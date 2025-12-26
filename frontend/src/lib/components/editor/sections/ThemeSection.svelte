@@ -11,6 +11,8 @@
 	let selecting = false;
 	let selectingThemeKey: string | null = null;
 	let activeTab = 'Classic';
+	let currentPage = 0;
+	const itemsPerPage = 4;
 
 	// Reset modal state
 	let showResetModal = false;
@@ -83,104 +85,149 @@
 
 	// Check if current preset is selected - fallback to appearance.theme.key
 	$: currentThemeKey = $appearanceState.themeKey || $appearance?.theme?.key;
+
+	// Pagination
+	$: totalThemes = hasCustomizations ? themes.length + 1 : themes.length;
+	$: totalPages = Math.ceil(totalThemes / itemsPerPage);
+	$: visibleThemes = (() => {
+		const start = currentPage * itemsPerPage;
+		const end = start + itemsPerPage;
+		
+		if (hasCustomizations) {
+			if (currentPage === 0) {
+				return themes.slice(0, itemsPerPage - 1);
+			} else {
+				return themes.slice(start - 1, end - 1);
+			}
+		}
+		return themes.slice(start, end);
+	})();
+
+	function nextPage() {
+		if (currentPage < totalPages - 1) currentPage++;
+	}
+
+	function prevPage() {
+		if (currentPage > 0) currentPage--;
+	}
 </script>
 
-<section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+<section class="bg-white rounded-xl border border-gray-200">
 	<div class="px-6 py-4 border-b border-gray-100">
 		<h2 class="font-semibold text-gray-900">Theme</h2>
+		<p class="text-sm text-gray-500 mt-0.5">Choose a color scheme for your page</p>
 	</div>
 	
 	<div class="p-6">
-		<!-- Tabs -->
-		<div class="flex gap-2 mb-6">
-			{#each tabs as tab}
-				<button 
-					class="px-4 py-2 text-sm font-medium rounded-full transition {activeTab === tab ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}"
-					on:click={() => activeTab = tab}
-				>
-					{tab}
-				</button>
-			{/each}
-		</div>
-
-		<!-- Theme Grid -->
+		<!-- Theme Grid with Pagination -->
 		{#if loading}
-			<div class="flex gap-4">
-				{#each [1, 2, 3, 4] as _}
-					<div class="w-32 h-48 bg-gray-100 rounded-xl animate-pulse"></div>
+			<div class="grid grid-cols-5 gap-3">
+				{#each [1, 2, 3, 4, 5] as _}
+					<div class="aspect-[3/4] bg-gray-100 rounded-lg animate-pulse"></div>
 				{/each}
 			</div>
 		{:else}
-			<div class="flex gap-4 overflow-x-auto pb-2">
-				<!-- Custom Theme Card (show when has customization) -->
-				{#if hasCustomizations}
-					<button
-						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 border-purple-500 ring-2 ring-purple-200 transition-all"
-					>
-						<!-- Preview -->
-						<div class="h-40 p-3 flex flex-col relative bg-gradient-to-br from-purple-50 to-pink-50">
-							<!-- Custom badge -->
-							<div class="absolute top-2 right-2 bg-purple-600 text-white text-[8px] font-bold px-2 py-0.5 rounded-full">
-								CUSTOM
-							</div>
-							
-							<!-- Icon -->
-							<div class="flex-1 flex items-center justify-center">
-								<svg class="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<div class="relative group">
+				<!-- Grid -->
+				<div class="grid grid-cols-5 gap-3">
+					<!-- Custom Theme Card -->
+					{#if hasCustomizations && currentPage === 0}
+						<button
+							class="group aspect-[3/4] rounded-lg overflow-hidden border-2 border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 transition-all hover:shadow-lg hover:-translate-y-0.5"
+						>
+							<div class="h-full p-3 flex flex-col items-center justify-center relative">
+								<div class="absolute top-2 right-2 bg-purple-600 text-white text-[7px] font-bold px-1.5 py-0.5 rounded">
+									CUSTOM
+								</div>
+								<svg class="w-8 h-8 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
 								</svg>
+								<p class="text-[10px] font-semibold text-purple-900">Custom</p>
 							</div>
-							<div class="text-[10px] font-medium text-center text-purple-900">Customized</div>
-						</div>
-						<!-- Name -->
-						<div class="py-2 px-3 bg-white border-t border-purple-200">
-							<p class="text-xs font-bold text-purple-900 truncate">Custom Theme</p>
-						</div>
-					</button>
-				{/if}
+						</button>
+					{/if}
 
-				<!-- Theme Presets -->
-				{#each themes as preset}
-					{@const isSelected = currentThemeKey === preset.key && !hasCustomizations}
-					<button
-						on:click={() => selectTheme(preset)}
-						disabled={selecting}
-						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed {isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}"
-					>
-						<!-- Preview -->
-						<div 
-							class="h-40 p-3 flex flex-col relative"
-							style="background: {getBgStyle(preset)}; color: {preset.config.tokens.text};"
+					<!-- Theme Presets -->
+					{#each visibleThemes as preset}
+						{@const isSelected = currentThemeKey === preset.key && !hasCustomizations}
+						<button
+							on:click={() => selectTheme(preset)}
+							disabled={selecting}
+							class="group aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed {isSelected ? 'border-blue-500 shadow-md' : 'border-gray-200'}"
 						>
-							<!-- Loading overlay -->
-							{#if selecting && selectingThemeKey === preset.key}
-								<div class="absolute inset-0 bg-white/50 flex items-center justify-center">
-									<div class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-								</div>
-							{/if}
-
-							<!-- Mini avatar -->
 							<div 
-								class="w-8 h-8 rounded-full mx-auto mb-2"
-								style="background: {preset.config.tokens.primary};"
-							></div>
-							<div class="text-[10px] font-medium text-center mb-3 truncate">Preview</div>
-							<!-- Mini links -->
-							<div class="space-y-1.5">
-								{#each [1, 2, 3] as _}
+								class="h-full p-2.5 flex flex-col relative"
+								style="background: {getBgStyle(preset)};"
+							>
+								{#if selecting && selectingThemeKey === preset.key}
+									<div class="absolute inset-0 bg-white/60 flex items-center justify-center backdrop-blur-sm">
+										<div class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+									</div>
+								{/if}
+								
+								<!-- Mini preview -->
+								<div class="flex-1 flex flex-col justify-center space-y-1">
 									<div 
-										class="h-4 rounded"
+										class="w-5 h-5 rounded-full mx-auto"
 										style="background: {preset.config.tokens.primary};"
 									></div>
-								{/each}
+									<div class="space-y-1">
+										{#each [1, 2] as _}
+											<div 
+												class="h-2 rounded-sm"
+												style="background: {preset.config.tokens.primary}; opacity: 0.8;"
+											></div>
+										{/each}
+									</div>
+								</div>
+								
+								<!-- Name -->
+								<div class="mt-1.5 text-center">
+									<p class="text-[9px] font-medium truncate" style="color: {preset.config.tokens.text};">
+										{preset.name}
+									</p>
+								</div>
 							</div>
-						</div>
-						<!-- Name -->
-						<div class="py-2 px-3 bg-white border-t border-gray-100">
-							<p class="text-xs font-medium text-gray-900 truncate">{preset.name}</p>
-						</div>
-					</button>
-				{/each}
+						</button>
+					{/each}
+				</div>
+
+				<!-- Navigation Arrows (Overlay) -->
+				{#if totalPages > 1}
+					<!-- Left Arrow -->
+					{#if currentPage > 0}
+						<button
+							on:click={prevPage}
+							class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all z-10"
+						>
+							<svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+							</svg>
+						</button>
+					{/if}
+
+					<!-- Right Arrow -->
+					{#if currentPage < totalPages - 1}
+						<button
+							on:click={nextPage}
+							class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:scale-110 transition-all z-10"
+						>
+							<svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+							</svg>
+						</button>
+					{/if}
+
+					<!-- Dots Indicator (Subtle) -->
+					<div class="flex justify-center gap-1 mt-4">
+						{#each Array(totalPages) as _, i}
+							<button
+								on:click={() => currentPage = i}
+								class="transition-all {currentPage === i ? 'w-4 h-1 bg-blue-600 rounded-full' : 'w-1 h-1 bg-gray-300 rounded-full hover:bg-gray-400'}"
+							></button>
+						{/each}
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</div>

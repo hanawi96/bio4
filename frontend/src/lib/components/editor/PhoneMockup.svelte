@@ -536,11 +536,15 @@
 						{/if}
 						
 						{#each activeLinks as link}
+							{@const parts = link.title.split(' - ')}
+							{@const headline = parts[0]}
+							{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+							
 							<a
 								href={link.url}
 								target="_blank"
 								rel="noopener"
-								class="link-button block w-full py-3 px-4 text-center text-sm font-medium transition-transform hover:scale-[1.02]"
+								class="link-button block w-full py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
 								style="
 									background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 									color: {$appearance?.blockStyle?.text || 'white'};
@@ -552,7 +556,28 @@
 									border-radius: {blockBorderRadius};
 								"
 							>
-								{link.title}
+								{#if link.icon_url}
+									<div class="flex items-center gap-3">
+										<img 
+											src={link.icon_url} 
+											alt="" 
+											class="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+										/>
+										<div class="flex-1 text-left">
+											<div class="font-semibold">{headline}</div>
+											{#if subtitle}
+												<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+											{/if}
+										</div>
+									</div>
+								{:else}
+									<div class="text-center">
+										<div class="font-semibold">{headline}</div>
+										{#if subtitle}
+											<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+										{/if}
+									</div>
+								{/if}
 							</a>
 						{:else}
 							<div class="text-center py-8 opacity-50">

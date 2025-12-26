@@ -205,6 +205,18 @@ class ApiClient {
 		return res.json();
 	}
 
+	async uploadLinkIcon(file: File): Promise<{ url: string; storage_key: string }> {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const res = await fetch(`${this.baseUrl}/upload/link-icon`, {
+			method: 'POST',
+			body: formData
+		});
+		if (!res.ok) throw new Error('Failed to upload link icon');
+		return res.json();
+	}
+
 	async deleteImage(storageKey: string): Promise<{ success: boolean }> {
 		const res = await fetch(`${this.baseUrl}/upload/${storageKey}`, {
 			method: 'DELETE'

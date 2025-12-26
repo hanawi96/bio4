@@ -72,6 +72,29 @@ app.put('/groups/:groupId', async (c) => {
 // DELETE /links/groups/:groupId - Delete group
 app.delete('/groups/:groupId', async (c) => {
 	const groupId = parseInt(c.req.param('groupId'));
+	
+	// Get all links in this group to delete their icons
+	const links = await c.env.DB.prepare(
+		'SELECT icon_url FROM links WHERE group_id = ?'
+	).bind(groupId).all() as { results: { icon_url: string | null }[] };
+	
+	// Delete all link icons from R2
+	if (links.results && links.results.length > 0) {
+		for (const link of links.results) {
+			if (link.icon_url && link.icon_url.includes('/link-icons/')) {
+				try {
+					const urlParts = link.icon_url.split('/');
+					const storageKey = urlParts.slice(urlParts.indexOf('link-icons')).join('/');
+					await c.env.STORAGE.delete(storageKey);
+				} catch (e) {
+					console.error('Failed to delete link icon from R2:', e);
+					// Continue with next icon
+				}
+			}
+		}
+	}
+	
+	// Delete group (will cascade delete links)
 	await deleteGroup(c.env.DB, groupId);
 	return c.json({ success: true });
 });
@@ -117,6 +140,25 @@ app.put('/:linkId', async (c) => {
 // DELETE /links/:linkId - Delete link
 app.delete('/:linkId', async (c) => {
 	const linkId = parseInt(c.req.param('linkId'));
+	
+	// Get link to check if it has icon_url
+	const link = await c.env.DB.prepare(
+		'SELECT icon_url FROM links WHERE id = ?'
+	).bind(linkId).first() as { icon_url: string | null } | null;
+	
+	// Delete icon from R2 if exists
+	if (link?.icon_url && link.icon_url.includes('/link-icons/')) {
+		try {
+			const urlParts = link.icon_url.split('/');
+			const storageKey = urlParts.slice(urlParts.indexOf('link-icons')).join('/');
+			await c.env.STORAGE.delete(storageKey);
+		} catch (e) {
+			console.error('Failed to delete link icon from R2:', e);
+			// Continue with link deletion even if R2 delete fails
+		}
+	}
+	
+	// Delete link from database
 	await deleteLink(c.env.DB, linkId);
 	return c.json({ success: true });
 });

@@ -498,6 +498,48 @@ app.delete('/background/:username', async (c) => {
 	}
 });
 
+// POST /upload/link-icon - Upload link icon to R2
+app.post('/link-icon', async (c) => {
+	try {
+		const formData = await c.req.formData();
+		const fileEntry = formData.get('file');
+
+		if (!fileEntry || typeof fileEntry === 'string') {
+			return c.json({ error: 'No file provided' }, 400);
+		}
+
+		const file = fileEntry as File;
+
+		if (!ALLOWED_TYPES.includes(file.type)) {
+			return c.json({ error: 'Invalid file type. Allowed: jpg, png, webp, gif' }, 400);
+		}
+
+		if (file.size > MAX_SIZE) {
+			return c.json({ error: 'File too large. Max 5MB' }, 400);
+		}
+
+		// Generate unique filename with link-icons folder
+		const ext = file.name.split('.').pop() || 'jpg';
+		const storageKey = `link-icons/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+		// Upload to R2
+		const arrayBuffer = await file.arrayBuffer();
+		await c.env.STORAGE.put(storageKey, arrayBuffer, {
+			httpMetadata: {
+				contentType: file.type
+			}
+		});
+
+		// Build public URL
+		const url = `${c.env.R2_PUBLIC_URL}/${storageKey}`;
+
+		return c.json({ url, storage_key: storageKey });
+	} catch (error) {
+		console.error('Link icon upload error:', error);
+		return c.json({ error: 'Link icon upload failed' }, 500);
+	}
+});
+
 // POST /upload/background-video/:username - Upload background video
 app.post('/background-video/:username', async (c) => {
 	try {

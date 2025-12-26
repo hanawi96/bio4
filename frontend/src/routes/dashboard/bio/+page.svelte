@@ -160,7 +160,7 @@
 	}
 
 	async function handleAddLink(event: CustomEvent<any>) {
-		const { title, url } = event.detail;
+		const { title, url, icon_url, icon_preview } = event.detail;
 		
 		// Wait for groupId if still creating
 		if (isCreatingGroup || currentGroupId === null) {
@@ -177,32 +177,32 @@
 			}
 		}
 
-		// OPTIMISTIC UI: Add link immediately with temp ID
+		// OPTIMISTIC UI: Add link immediately with preview icon
 		const tempLink = {
 			id: -Date.now(), // Negative temp ID to avoid conflicts
 			group_id: currentGroupId,
 			title: title,
 			url: url,
-			icon_url: null,
+			icon_url: icon_preview || icon_url || null, // Use preview first for instant display
 			sort_order: currentLinks.length,
 			is_active: 1,
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString()
 		};
 		
-		// Show link immediately
+		// Show link immediately with preview
 		currentLinks = [...currentLinks, tempLink];
 
-		// Create link in background
+		// Create link in background (icon already uploaded in LinksEditor)
 		try {
 			await api.createLink(currentGroupId, {
 				title,
 				url,
-				icon_url: null,
+				icon_url: icon_url || null, // Use real uploaded URL
 				sort_order: currentLinks.length - 1
 			});
 
-			// Reload data to get real link with real ID
+			// Reload data to get real link with real ID and URL
 			const data = await api.getEditorData(username);
 			loadEditorData(data);
 			
