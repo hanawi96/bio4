@@ -4,6 +4,7 @@
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import { resolveShadow } from '$lib/appearance/tokenResolver';
+	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
@@ -181,6 +182,42 @@
 		$appearance?.blockStyle?.shadow || blockShadow,
 		tokens?.shadowColor || '#000000'
 	);
+
+	// Page settings - read from appearanceState.overrides
+	$: showShareButton = ($appearanceState.overrides?.['page.showShareButton'] as boolean) ?? true;
+	$: showSubscribeButton = ($appearanceState.overrides?.['page.showSubscribeButton'] as boolean) ?? true;
+	$: bioUrl = `https://biolink.com/${$page?.username || 'demo'}`;
+
+	// Subscribe modal
+	let showSubscribeModal = false;
+	let subscribing = false;
+
+	async function handleShare() {
+		try {
+			await navigator.clipboard.writeText(bioUrl);
+		} catch (e) {
+			const input = document.createElement('input');
+			input.value = bioUrl;
+			document.body.appendChild(input);
+			input.select();
+			document.execCommand('copy');
+			document.body.removeChild(input);
+		}
+	}
+
+	async function handleSubscribe(event: CustomEvent<string>) {
+		subscribing = true;
+		try {
+			// TODO: Call API to subscribe
+			console.log('Subscribe email:', event.detail);
+			await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
+			showSubscribeModal = false;
+		} catch (e) {
+			console.error('Subscribe failed:', e);
+		} finally {
+			subscribing = false;
+		}
+	}
 </script>
 
 <!-- Phone Frame -->
@@ -219,6 +256,50 @@
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 				"
 			>
+				<!-- Share & Subscribe Buttons -->
+				{#if showShareButton || showSubscribeButton}
+					<div class="absolute top-2 left-0 right-0 z-20 flex items-center justify-between px-2">
+						<!-- Subscribe Button (Left) -->
+						{#if showSubscribeButton}
+							<button
+								on:click={() => showSubscribeModal = true}
+								class="h-6 px-2 rounded-full flex items-center gap-1 transition-all hover:scale-105 active:scale-95"
+								style="
+									background: rgba(255, 255, 255, 0.9);
+									backdrop-filter: blur(12px);
+									-webkit-backdrop-filter: blur(12px);
+								"
+								title="Subscribe"
+							>
+								<svg class="w-3 h-3 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+								</svg>
+								<span class="text-[9px] font-medium text-gray-700">Subscribe</span>
+							</button>
+						{:else}
+							<div></div>
+						{/if}
+
+						<!-- Share Button (Right) -->
+						{#if showShareButton}
+							<button
+								on:click={handleShare}
+								class="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+								style="
+									background: rgba(255, 255, 255, 0.9);
+									backdrop-filter: blur(12px);
+									-webkit-backdrop-filter: blur(12px);
+								"
+								title="Share"
+							>
+								<svg class="w-3 h-3 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+								</svg>
+							</button>
+						{/if}
+					</div>
+				{/if}
+
 				{#if isLoading}
 					<!-- Loading State -->
 					<div class="w-full h-full flex items-center justify-center">
@@ -423,6 +504,15 @@
 	<!-- Home Indicator -->
 	<div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-700 rounded-full"></div>
 </div>
+
+<!-- Subscribe Modal -->
+{#if showSubscribeModal}
+	<SubscribeModal
+		loading={subscribing}
+		on:submit={handleSubscribe}
+		on:cancel={() => showSubscribeModal = false}
+	/>
+{/if}
 
 <style>
 	.scrollbar-hide::-webkit-scrollbar {

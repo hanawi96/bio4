@@ -1,7 +1,22 @@
 <script lang="ts">
-	let showShareButton = true;
-	let showSubscribeButton = false;
+	import { page } from '$lib/stores/page';
+	import { appearanceState } from '$lib/stores/appearanceManager';
+	import { updateAppearance } from '$lib/stores/appearanceManager';
+
+	// Read from appearanceState.overrides instead of page
+	$: showShareButton = ($appearanceState.overrides?.['page.showShareButton'] as boolean) ?? true;
+	$: showSubscribeButton = ($appearanceState.overrides?.['page.showSubscribeButton'] as boolean) ?? true;
 	let hideBranding = false;
+
+	function toggleShare() {
+		const newValue = !showShareButton;
+		updateAppearance('page.showShareButton', newValue);
+	}
+
+	function toggleSubscribe() {
+		const newValue = !showSubscribeButton;
+		updateAppearance('page.showSubscribeButton', newValue);
+	}
 </script>
 
 <section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -18,7 +33,7 @@
 				<p class="text-sm text-gray-500 mt-0.5">Let visitors easily share your profile</p>
 			</div>
 			<button
-				on:click={() => showShareButton = !showShareButton}
+				on:click={toggleShare}
 				class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {showShareButton ? 'bg-blue-600' : 'bg-gray-200'}"
 				role="switch"
 				aria-checked={showShareButton}
@@ -36,7 +51,7 @@
 				<p class="text-sm text-gray-500 mt-0.5">Let visitors subscribe to your mailing list</p>
 			</div>
 			<button
-				on:click={() => showSubscribeButton = !showSubscribeButton}
+				on:click={toggleSubscribe}
 				class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {showSubscribeButton ? 'bg-blue-600' : 'bg-gray-200'}"
 				role="switch"
 				aria-checked={showSubscribeButton}

@@ -9,6 +9,7 @@
 	let themes: ThemePreset[] = [];
 	let loading = true;
 	let selecting = false;
+	let selectingThemeKey: string | null = null;
 	let activeTab = 'Classic';
 
 	// Reset modal state
@@ -42,12 +43,14 @@
 		}
 
 		selecting = true;
+		selectingThemeKey = preset.key;
 		try {
 			await changeThemePreset(preset.key);
 		} catch (e) {
 			console.error('[ThemeSection] Failed to change theme:', e);
 		} finally {
 			selecting = false;
+			selectingThemeKey = null;
 		}
 	}
 
@@ -78,8 +81,8 @@
 		return '#ffffff';
 	}
 
-	// Check if current preset is selected
-	$: currentThemeKey = $appearanceState.themeKey;
+	// Check if current preset is selected - fallback to appearance.theme.key
+	$: currentThemeKey = $appearanceState.themeKey || $appearance?.theme?.key;
 </script>
 
 <section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -138,10 +141,11 @@
 
 				<!-- Theme Presets -->
 				{#each themes as preset}
+					{@const isSelected = currentThemeKey === preset.key && !hasCustomizations}
 					<button
 						on:click={() => selectTheme(preset)}
 						disabled={selecting}
-						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed {currentThemeKey === preset.key && !hasCustomizations ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}"
+						class="flex-shrink-0 w-32 rounded-xl overflow-hidden border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed {isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}"
 					>
 						<!-- Preview -->
 						<div 
@@ -149,7 +153,7 @@
 							style="background: {getBgStyle(preset)}; color: {preset.config.tokens.text};"
 						>
 							<!-- Loading overlay -->
-							{#if selecting && currentThemeKey === preset.key}
+							{#if selecting && selectingThemeKey === preset.key}
 								<div class="absolute inset-0 bg-white/50 flex items-center justify-center">
 									<div class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
 								</div>

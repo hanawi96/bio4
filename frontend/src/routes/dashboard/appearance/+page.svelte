@@ -32,6 +32,7 @@
 	// Check if has customizations
 	$: hasCustomizations = Object.keys($appearanceState.overrides || {}).length > 0;
 	$: themeName = $appearance?.theme?.name || 'Default';
+	$: bioUrl = `https://biolink.com/${username}`;
 
 	async function handleResetConfirm() {
 		resetting = true;
@@ -44,6 +45,26 @@
 		} finally {
 			resetting = false;
 		}
+	}
+
+	async function copyLink() {
+		try {
+			await navigator.clipboard.writeText(bioUrl);
+			// Optional: Show toast notification
+		} catch (e) {
+			console.error('Failed to copy:', e);
+			// Fallback for older browsers
+			const input = document.createElement('input');
+			input.value = bioUrl;
+			document.body.appendChild(input);
+			input.select();
+			document.execCommand('copy');
+			document.body.removeChild(input);
+		}
+	}
+
+	function openInNewTab() {
+		window.open(bioUrl, '_blank', 'noopener,noreferrer');
 	}
 
 	// Navigation items with icons
@@ -301,6 +322,7 @@
 
 					<!-- Copy Button -->
 					<button 
+						on:click={copyLink}
 						class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
 						title="Copy link"
 					>
@@ -311,6 +333,7 @@
 
 					<!-- External Link Button -->
 					<button 
+						on:click={openInNewTab}
 						class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
 						title="Open in new tab"
 					>
