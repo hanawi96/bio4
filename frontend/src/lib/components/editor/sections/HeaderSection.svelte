@@ -33,7 +33,7 @@
 		return isValidImageUrl ? coverValue : DEFAULT_COVER_IMAGE;
 	})();
 	$: isDefaultCover = coverImageUrl === DEFAULT_COVER_IMAGE;
-	$: showCoverOptions = selectedPreset?.hasCover;
+	$: showCoverOptions = selectedPreset?.hasCover && selectedPresetId !== 'avatar-cover';
 
 	// Select header preset
 	async function selectPreset(presetId: string) {
