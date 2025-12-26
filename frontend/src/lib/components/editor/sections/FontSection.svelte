@@ -37,6 +37,10 @@
 		: currentTitleSize >= 22 ? 'large'
 		: 'medium';
 
+	$: currentTextColor = ($appearanceState.overrides?.['tokens.text'] as string)
+		|| $appearance?.tokens?.text
+		|| '#000000';
+
 	function selectFont(fontName: string) {
 		// Store with fallbacks for better compatibility
 		const fontValue = `${fontName}, sans-serif`;
@@ -105,6 +109,32 @@
 						<p class="text-xs text-gray-500 mt-1">{sizeOption.description}</p>
 					</button>
 				{/each}
+			</div>
+		</div>
+
+		<!-- Text Color -->
+		<div class="pt-6 border-t border-gray-100">
+			<h3 class="text-sm font-medium text-gray-900 mb-3">Text Color</h3>
+			<div class="flex items-center justify-between py-2">
+				<span class="text-sm text-gray-600">Text</span>
+				<div class="relative">
+					<input
+						type="color"
+						value={currentTextColor}
+						on:input={(e) => updateAppearance('tokens.text', e.currentTarget.value)}
+						class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+					/>
+					<div 
+						class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-200 hover:border-gray-300 transition-colors shadow-sm"
+						style="background-color: {currentTextColor};"
+					></div>
+				</div>
+			</div>
+			<div class="mt-2 flex items-start gap-2 text-xs text-gray-500">
+				<svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+				</svg>
+				<span>Ensure good contrast with background for readability</span>
 			</div>
 		</div>
 	</div>
