@@ -144,7 +144,7 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 			return;
 		}
 
-		// Handle nested keys (e.g., "tokens.bg")
+		// Handle nested keys (e.g., "tokens.bg", "page.blockGap")
 		const keys = key.split('.');
 		let target = config;
 		for (let i = 0; i < keys.length - 1; i++) {

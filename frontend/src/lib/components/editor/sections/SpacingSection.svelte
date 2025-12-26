@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { theme, DEFAULT_THEME } from '$lib/stores/page';
+	import { appearanceState, updateAppearance } from '$lib/stores/appearanceManager';
+	import { appearance } from '$lib/stores/appearance';
 
 	const spacingLevels = [
 		{ id: 'compact', name: 'Compact', spacing: 8, description: 'Tight spacing' },
@@ -7,11 +8,16 @@
 		{ id: 'spacious', name: 'Spacious', spacing: 24, description: 'Generous spacing' }
 	];
 
-	$: currentTheme = $theme || DEFAULT_THEME;
-	$: selectedSpacing = currentTheme.spacing <= 10 ? 'compact' : currentTheme.spacing >= 20 ? 'spacious' : 'default';
+	$: currentBlockGap = ($appearanceState.overrides?.['page.blockGap'] as number) 
+		|| $appearance?.theme?.config?.page?.layout?.blockGap 
+		|| 16;
+	
+	$: selectedSpacing = currentBlockGap <= 10 ? 'compact' 
+		: currentBlockGap >= 20 ? 'spacious' 
+		: 'default';
 
 	function selectSpacing(level: typeof spacingLevels[0]) {
-		theme.update(t => t ? { ...t, spacing: level.spacing } : { ...DEFAULT_THEME, spacing: level.spacing });
+		updateAppearance('page.blockGap', level.spacing);
 	}
 </script>
 

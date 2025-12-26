@@ -114,6 +114,11 @@
 	// Check if avatar-cover preset (hide avatar, show text overlay)
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
 	
+	// Get block gap from appearance
+	$: blockGap = ($appearanceState.overrides?.['page.blockGap'] as number)
+		|| $appearance?.theme?.config?.page?.layout?.blockGap
+		|| 16;
+	
 	// Get background color for gradient overlay (for avatar-cover)
 	$: overlayGradientColor = (() => {
 		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
@@ -357,8 +362,8 @@
 
 					<!-- Links - với negative margin và gradient mask cho avatar-cover -->
 					<div 
-						class="space-y-3 relative"
-						style="{isAvatarCover ? `margin-top: -60px; padding-top: 80px;` : 'margin-top: 24px;'}"
+						class="relative"
+						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -60px; padding-top: 80px;` : 'margin-top: 24px;'}"
 					>
 						<!-- Gradient mask - nối liền với overlay trên avatar -->
 						{#if isAvatarCover}
