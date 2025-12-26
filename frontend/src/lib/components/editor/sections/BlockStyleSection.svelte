@@ -172,13 +172,13 @@
 					>
 						<!-- Preview -->
 						<div
-							class="aspect-square p-4 flex items-center justify-center relative"
+							class="aspect-square p-3 flex items-center justify-center relative"
 							style="background: {previewBackground};"
 						>
 							{#if $appearance?.tokens}
 								{@const displayStyle = displayStyles[recipeId]}
 								<div
-									class="w-full h-8 transition-all flex items-center justify-center {shapeClass} relative z-10"
+									class="w-full h-6 transition-all flex items-center justify-center {shapeClass} relative z-10"
 									style="
 										background-color: {displayStyle.backgroundColor};
 										color: {displayStyle.color};
