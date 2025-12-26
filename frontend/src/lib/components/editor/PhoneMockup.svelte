@@ -119,6 +119,10 @@
 		|| $appearance?.theme?.config?.page?.layout?.blockGap
 		|| 16;
 	
+	// Get title font size from appearance
+	$: titleFontSize = ($appearanceState.overrides?.['page.titleFontSize'] as number)
+		|| 20; // Default medium
+	
 	// Get background color for gradient overlay (for avatar-cover)
 	$: overlayGradientColor = (() => {
 		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
@@ -242,7 +246,7 @@
 									
 									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
 									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-6">
-										<h1 class="text-lg font-bold text-white drop-shadow-lg">{$page?.title || 'Your Name'}</h1>
+										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px;">{$page?.title || 'Your Name'}</h1>
 										{#if header.showBio && $page?.bio}
 											<p 
 												class="bio-text text-sm text-white/90 mt-2 drop-shadow-md"
@@ -297,7 +301,7 @@
 						<!-- Content below cover (only for non-avatar-cover) -->
 						{#if !isAvatarCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 16 : 0}px; text-align: {header.contentAlign};">
-								<h1 class="text-lg font-bold">{$page?.title || 'Your Name'}</h1>
+								<h1 class="font-bold" style="font-size: {titleFontSize}px;">{$page?.title || 'Your Name'}</h1>
 								{#if header.showBio && $page?.bio}
 									<p 
 										class="bio-text text-sm opacity-70 mt-1 px-4"
@@ -343,7 +347,7 @@
 									{($page?.title || 'U').charAt(0).toUpperCase()}
 								</div>
 							{/if}
-							<h1 class="text-lg font-bold">{$page?.title || 'Your Name'}</h1>
+							<h1 class="font-bold" style="font-size: {titleFontSize}px;">{$page?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $page?.bio}
 								<p 
 									class="bio-text text-sm opacity-70 mt-1 px-4"

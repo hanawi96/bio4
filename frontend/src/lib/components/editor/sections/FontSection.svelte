@@ -17,6 +17,12 @@
 		{ name: 'Pacifico', category: 'Display' }
 	];
 
+	const titleSizes = [
+		{ id: 'small', name: 'Small', size: 16, description: '16px' },
+		{ id: 'medium', name: 'Medium', size: 20, description: '20px' },
+		{ id: 'large', name: 'Large', size: 24, description: '24px' }
+	];
+
 	$: currentFontFamily = ($appearanceState.overrides?.['tokens.fontFamily'] as string)
 		|| $appearance?.tokens?.fontFamily
 		|| 'Inter';
@@ -24,10 +30,21 @@
 	// Extract font name without fallbacks for comparison
 	$: selectedFont = currentFontFamily.split(',')[0].trim();
 
+	$: currentTitleSize = ($appearanceState.overrides?.['page.titleFontSize'] as number)
+		|| 20; // Default medium
+	
+	$: selectedTitleSize = currentTitleSize <= 17 ? 'small'
+		: currentTitleSize >= 22 ? 'large'
+		: 'medium';
+
 	function selectFont(fontName: string) {
 		// Store with fallbacks for better compatibility
 		const fontValue = `${fontName}, sans-serif`;
 		updateAppearance('tokens.fontFamily', fontValue);
+	}
+
+	function selectTitleSize(sizeOption: typeof titleSizes[0]) {
+		updateAppearance('page.titleFontSize', sizeOption.size);
 	}
 </script>
 
@@ -37,29 +54,58 @@
 		<p class="text-sm text-gray-500 mt-1">Choose a font for your bio page</p>
 	</div>
 	
-	<div class="p-6">
+	<div class="p-6 space-y-6">
 		<!-- Font Grid -->
-		<div class="grid grid-cols-3 gap-3">
-			{#each fonts as font}
-				<button
-					on:click={() => selectFont(font.name)}
-					class="group rounded-xl border-2 transition-all hover:scale-105 {selectedFont === font.name ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-				>
-					<div class="p-4 text-center">
-						<!-- Preview with actual font -->
-						<div 
-							class="mb-2 {selectedFont === font.name ? 'text-blue-600' : 'text-gray-900'}"
-							style="font-family: '{font.name}', sans-serif;"
-						>
-							<div class="text-3xl font-bold leading-none">Aa</div>
-							<div class="text-xs mt-1 opacity-60">Quick fox</div>
+		<div>
+			<h3 class="text-sm font-medium text-gray-900 mb-3">Font Family</h3>
+			<div class="grid grid-cols-3 gap-3">
+				{#each fonts as font}
+					<button
+						on:click={() => selectFont(font.name)}
+						class="group rounded-xl border-2 transition-all hover:scale-105 {selectedFont === font.name ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+					>
+						<div class="p-4 text-center">
+							<!-- Preview with actual font -->
+							<div 
+								class="mb-2 {selectedFont === font.name ? 'text-blue-600' : 'text-gray-900'}"
+								style="font-family: '{font.name}', sans-serif;"
+							>
+								<div class="text-3xl font-bold leading-none">Aa</div>
+								<div class="text-xs mt-1 opacity-60">Quick fox</div>
+							</div>
+							<!-- Name -->
+							<p class="text-sm font-medium text-gray-900 truncate">{font.name}</p>
+							<p class="text-xs text-gray-500">{font.category}</p>
 						</div>
-						<!-- Name -->
-						<p class="text-sm font-medium text-gray-900 truncate">{font.name}</p>
-						<p class="text-xs text-gray-500">{font.category}</p>
-					</div>
-				</button>
-			{/each}
+					</button>
+				{/each}
+			</div>
+		</div>
+
+		<!-- Title Size -->
+		<div class="pt-6 border-t border-gray-100">
+			<h3 class="text-sm font-medium text-gray-900 mb-3">Title Size</h3>
+			<div class="grid grid-cols-3 gap-3">
+				{#each titleSizes as sizeOption}
+					<button
+						on:click={() => selectTitleSize(sizeOption)}
+						class="p-4 rounded-xl border-2 transition-all hover:scale-105 {selectedTitleSize === sizeOption.id ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}"
+					>
+						<!-- Preview -->
+						<div class="mb-3 flex items-center justify-center" style="height: 48px;">
+							<div 
+								class="font-bold {selectedTitleSize === sizeOption.id ? 'text-blue-600' : 'text-gray-900'}"
+								style="font-size: {sizeOption.size}px;"
+							>
+								Aa
+							</div>
+						</div>
+						<!-- Info -->
+						<p class="text-sm font-medium text-gray-900">{sizeOption.name}</p>
+						<p class="text-xs text-gray-500 mt-1">{sizeOption.description}</p>
+					</button>
+				{/each}
+			</div>
 		</div>
 	</div>
 </section>
