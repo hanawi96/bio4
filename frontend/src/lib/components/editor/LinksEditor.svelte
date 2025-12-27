@@ -32,12 +32,21 @@
 		return false;
 	})();
 
-	// Parse layout config with 3-state shadow logic
-	// shadowEnabled: undefined/null = follow theme
-	// shadowEnabled: true = force ON
-	// shadowEnabled: false = force OFF
+	// Check if theme has border
+	$: themeHasBorder = (() => {
+		const border = $appearance?.blockStyle?.border;
+		if (border && border !== 'none') {
+			return true;
+		}
+		return false;
+	})();
+
+	// Parse layout config with 3-state shadow/border logic
+	// shadowEnabled/borderEnabled: undefined/null = follow theme
+	// shadowEnabled/borderEnabled: true = force ON
+	// shadowEnabled/borderEnabled: false = force OFF
 	$: gridConfig = (() => {
-		const defaultConfig = { columns: 2, aspectRatio: 'square', showLabels: true, borderEnabled: true };
+		const defaultConfig = { columns: 2, aspectRatio: 'square', showLabels: true };
 		if (!layoutConfig) return defaultConfig;
 		try {
 			const parsed = JSON.parse(layoutConfig);
@@ -48,7 +57,7 @@
 	})();
 
 	$: classicConfig = (() => {
-		const defaultConfig = { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', borderEnabled: true };
+		const defaultConfig = { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center' };
 		if (!layoutConfig) return defaultConfig;
 		try {
 			const parsed = JSON.parse(layoutConfig);
@@ -255,12 +264,14 @@
 					<GridLayoutConfig
 						config={gridConfig}
 						themeHasShadow={themeHasShadow}
+						themeHasBorder={themeHasBorder}
 						on:change={handleGridConfigChange}
 					/>
 				{:else if layoutType === 'list'}
 					<ClassicLayoutConfig
 						config={classicConfig}
 						themeHasShadow={themeHasShadow}
+						themeHasBorder={themeHasBorder}
 						on:change={handleClassicConfigChange}
 					/>
 				{/if}

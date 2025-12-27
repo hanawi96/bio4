@@ -583,9 +583,9 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.grid || { columns: 2, aspectRatio: 'square', showLabels: true, borderEnabled: true };
+											return parsed?.grid || { columns: 2, aspectRatio: 'square', showLabels: true };
 										} catch {
-											return { columns: 2, aspectRatio: 'square', showLabels: true, borderEnabled: true };
+											return { columns: 2, aspectRatio: 'square', showLabels: true };
 										}
 									})()}
 									{@const aspectClass = config.aspectRatio === 'portrait' ? 'aspect-[3/4]' : config.aspectRatio === 'landscape' ? 'aspect-video' : 'aspect-square'}
@@ -611,9 +611,24 @@
 										}
 										return 'none'; // undefined + no theme shadow/glow = none
 									})()}
-									{@const gridBorder = config.borderEnabled 
-										? ($appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : '1px solid rgba(0,0,0,0.1)')
-										: 'none'}
+									{@const gridBorder = (() => {
+										// 3-state logic:
+										// undefined/null = follow theme
+										// true = force ON (use blockBase color)
+										// false = force OFF
+										if (config.borderEnabled === false) {
+											return 'none';
+										}
+										// Follow theme border
+										if ($appearance?.blockStyle?.border && $appearance.blockStyle.border !== 'none') {
+											return `1px solid ${$appearance.blockStyle.border}`;
+										}
+										// Force ON: use blockBase color (like soft/outline styles)
+										if (config.borderEnabled === true) {
+											return `1px solid ${$appearance?.tokens?.blockBase || '#3b82f6'}`;
+										}
+										return 'none'; // undefined + no theme border = none
+									})()}
 									
 									<div class="grid gap-2" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr));">
 										{#each groupLinks as link}
@@ -695,9 +710,9 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.list || { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', borderEnabled: true };
+											return parsed?.list || { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center' };
 										} catch {
-											return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', borderEnabled: true };
+											return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center' };
 										}
 									})()}
 									{@const iconShapeClass = config.iconShape === 'circle' ? 'rounded-full' : config.iconShape === 'rounded' ? 'rounded-lg' : ''}
@@ -725,9 +740,24 @@
 										}
 										return 'none'; // undefined + no theme shadow/glow = none
 									})()}
-									{@const listBorder = config.borderEnabled 
-										? ($appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : '1px solid rgba(0,0,0,0.1)')
-										: 'none'}
+									{@const listBorder = (() => {
+										// 3-state logic:
+										// undefined/null = follow theme
+										// true = force ON (use blockBase color)
+										// false = force OFF
+										if (config.borderEnabled === false) {
+											return 'none';
+										}
+										// Follow theme border
+										if ($appearance?.blockStyle?.border && $appearance.blockStyle.border !== 'none') {
+											return `1px solid ${$appearance.blockStyle.border}`;
+										}
+										// Force ON: use blockBase color (like soft/outline styles)
+										if (config.borderEnabled === true) {
+											return `1px solid ${$appearance?.tokens?.blockBase || '#3b82f6'}`;
+										}
+										return 'none'; // undefined + no theme border = none
+									})()}
 									
 									{#each groupLinks as link}
 										{@const parts = link.title.split(' - ')}

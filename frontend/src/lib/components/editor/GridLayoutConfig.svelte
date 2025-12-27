@@ -6,15 +6,15 @@
 		aspectRatio: 'square' | 'portrait' | 'landscape';
 		showLabels: boolean;
 		shadowEnabled?: boolean; // undefined = follow theme, true = force ON, false = force OFF
-		borderEnabled: boolean;
+		borderEnabled?: boolean; // undefined = follow theme, true = force ON, false = force OFF
 	} = {
 		columns: 2,
 		aspectRatio: 'square',
-		showLabels: true,
-		borderEnabled: true
+		showLabels: true
 	};
 	
 	export let themeHasShadow: boolean = false; // Does current theme have shadow?
+	export let themeHasBorder: boolean = false; // Does current theme have border?
 
 	const dispatch = createEventDispatcher();
 
@@ -117,24 +117,18 @@
 						// Force ON → turn OFF
 						updateConfig({ shadowEnabled: false });
 					} else {
-						// Force OFF → back to Auto
-						updateConfig({ shadowEnabled: undefined });
+						// Force OFF → turn ON (not back to Auto)
+						updateConfig({ shadowEnabled: true });
 					}
 				}}
-				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {
-					config.shadowEnabled === undefined 
-						? 'bg-blue-500' 
-						: config.shadowEnabled 
-							? 'bg-gray-900' 
-							: 'bg-gray-200'
-				}"
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {(config.shadowEnabled === undefined && themeHasShadow) || config.shadowEnabled === true
+					? 'bg-gray-900'
+					: 'bg-gray-200'}"
 			>
 				<span
-					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {
-						config.shadowEnabled === false 
-							? 'translate-x-1' 
-							: 'translate-x-6'
-					}"
+					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {(config.shadowEnabled === undefined && themeHasShadow) || config.shadowEnabled === true
+						? 'translate-x-6'
+						: 'translate-x-1'}"
 				></span>
 			</button>
 		</div>
@@ -142,21 +136,38 @@
 			<p class="text-xs text-gray-500 -mt-2">Following theme style</p>
 		{/if}
 
-		<!-- Border -->
+		<!-- Border (3-state: undefined=auto, true=on, false=off) -->
 		<div class="flex items-center justify-between">
 			<label class="text-xs font-medium text-gray-700">Border</label>
 			<button
-				on:click={() => updateConfig({ borderEnabled: !config.borderEnabled })}
-				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {config.borderEnabled
+				on:click={() => {
+					// Smart cycle based on current state and theme
+					if (config.borderEnabled === undefined) {
+						// Auto mode: toggle opposite of theme
+						// If theme has border → turn OFF
+						// If theme no border → turn ON
+						updateConfig({ borderEnabled: !themeHasBorder });
+					} else if (config.borderEnabled === true) {
+						// Force ON → turn OFF
+						updateConfig({ borderEnabled: false });
+					} else {
+						// Force OFF → turn ON (not back to Auto)
+						updateConfig({ borderEnabled: true });
+					}
+				}}
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {(config.borderEnabled === undefined && themeHasBorder) || config.borderEnabled === true
 					? 'bg-gray-900'
 					: 'bg-gray-200'}"
 			>
 				<span
-					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.borderEnabled
+					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {(config.borderEnabled === undefined && themeHasBorder) || config.borderEnabled === true
 						? 'translate-x-6'
 						: 'translate-x-1'}"
 				></span>
 			</button>
 		</div>
+		{#if config.borderEnabled === undefined}
+			<p class="text-xs text-gray-500 -mt-2">Following theme style</p>
+		{/if}
 	</div>
 </div>
