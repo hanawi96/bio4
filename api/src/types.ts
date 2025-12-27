@@ -53,7 +53,8 @@ export interface LinkGroup {
 	id: number;
 	page_id: number;
 	title: string | null;
-	layout_type: 'list' | 'cards' | 'grid';
+	layout_type: 'list' | 'carousel' | 'grid' | 'cards';
+	layout_config: string | null; // JSON string
 	sort_order: number;
 	created_at: string;
 	updated_at: string;

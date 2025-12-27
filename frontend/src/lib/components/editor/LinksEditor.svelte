@@ -2,13 +2,43 @@
 	import { createEventDispatcher } from 'svelte';
 	import LinkCard from './LinkCard.svelte';
 	import LinkForm from './LinkForm.svelte';
+	import LayoutSelector from './LayoutSelector.svelte';
+	import GridLayoutConfig from './GridLayoutConfig.svelte';
+	import ClassicLayoutConfig from './ClassicLayoutConfig.svelte';
 	import type { Link } from '$lib/types';
 	import { api } from '$lib/api.client';
 
 	export let links: Link[] = [];
 	export let groupName = 'Links';
+	export let groupId: number;
+	export let layoutType: 'list' | 'carousel' | 'grid' | 'cards' = 'list';
+	export let layoutConfig: string | null = null;
 
 	const dispatch = createEventDispatcher();
+
+	type TabType = 'links' | 'layouts';
+	let activeTab: TabType = 'links';
+
+	// Parse layout config
+	$: gridConfig = (() => {
+		if (!layoutConfig) return { columns: 3, aspectRatio: 'square', showLabels: true };
+		try {
+			const parsed = JSON.parse(layoutConfig);
+			return parsed.grid || { columns: 3, aspectRatio: 'square', showLabels: true };
+		} catch {
+			return { columns: 3, aspectRatio: 'square', showLabels: true };
+		}
+	})();
+
+	$: classicConfig = (() => {
+		if (!layoutConfig) return { iconShape: 'rounded' };
+		try {
+			const parsed = JSON.parse(layoutConfig);
+			return parsed.list || { iconShape: 'rounded' };
+		} catch {
+			return { iconShape: 'rounded' };
+		}
+	})();
 
 	let showAddForm = false;
 	let editingLink: Link | null = null;
@@ -126,11 +156,25 @@
 	function handleDelete(event: CustomEvent<number>) {
 		dispatch('deleteLink', event.detail);
 	}
+
+	function handleLayoutSelect(event: CustomEvent<string>) {
+		dispatch('updateLayout', event.detail);
+	}
+
+	function handleGridConfigChange(event: CustomEvent<any>) {
+		const newConfig = { grid: event.detail };
+		dispatch('updateLayoutConfig', JSON.stringify(newConfig));
+	}
+
+	function handleClassicConfigChange(event: CustomEvent<any>) {
+		const newConfig = { list: event.detail };
+		dispatch('updateLayoutConfig', JSON.stringify(newConfig));
+	}
 </script>
 
 <div class="h-full flex flex-col">
 	<!-- Header -->
-	<div class="flex-shrink-0 pb-6 border-b border-gray-200">
+	<div class="flex-shrink-0 pb-4 border-b border-gray-200">
 		<button 
 			on:click={handleBack}
 			class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition mb-4"
@@ -141,7 +185,7 @@
 			<span class="font-medium">Back</span>
 		</button>
 
-		<div class="flex items-center gap-3">
+		<div class="flex items-center gap-3 mb-4">
 			<div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
 				<svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -152,10 +196,57 @@
 				<p class="text-sm text-gray-500">Manage your links</p>
 			</div>
 		</div>
+
+		<!-- Tabs -->
+		<div class="flex gap-6 border-b border-gray-200 -mb-px">
+			<button
+				on:click={() => activeTab = 'links'}
+				class="pb-3 px-1 font-medium text-sm transition-colors relative {activeTab === 'links' 
+					? 'text-gray-900' 
+					: 'text-gray-500 hover:text-gray-700'}"
+			>
+				Links
+				{#if activeTab === 'links'}
+					<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
+				{/if}
+			</button>
+			<button
+				on:click={() => activeTab = 'layouts'}
+				class="pb-3 px-1 font-medium text-sm transition-colors relative {activeTab === 'layouts' 
+					? 'text-gray-900' 
+					: 'text-gray-500 hover:text-gray-700'}"
+			>
+				Layouts
+				{#if activeTab === 'layouts'}
+					<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
+				{/if}
+			</button>
+		</div>
 	</div>
 
 	<!-- Content -->
-	<div class="flex-1 overflow-y-auto py-6 space-y-3">
+	<div class="flex-1 overflow-y-auto">
+		{#if activeTab === 'layouts'}
+			<div class="py-6">
+				<LayoutSelector 
+					selectedLayout={layoutType}
+					on:select={handleLayoutSelect}
+				/>
+				
+				{#if layoutType === 'grid'}
+					<GridLayoutConfig
+						config={gridConfig}
+						on:change={handleGridConfigChange}
+					/>
+				{:else if layoutType === 'list'}
+					<ClassicLayoutConfig
+						config={classicConfig}
+						on:change={handleClassicConfigChange}
+					/>
+				{/if}
+			</div>
+		{:else}
+		<div class="py-6 space-y-3">
 		<!-- Add Link Button/Form -->
 		{#if !showAddForm}
 			<button
@@ -216,6 +307,8 @@
 					/>
 				{/if}
 			{/each}
+		{/if}
+		</div>
 		{/if}
 	</div>
 </div>

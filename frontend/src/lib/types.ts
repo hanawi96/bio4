@@ -31,7 +31,8 @@ export interface LinkGroup {
 	id: number;
 	page_id: number;
 	title: string | null;
-	layout_type: 'list' | 'cards' | 'grid';
+	layout_type: 'list' | 'carousel' | 'grid' | 'cards';
+	layout_config: string | null;
 	sort_order: number;
 	links: Link[];
 }

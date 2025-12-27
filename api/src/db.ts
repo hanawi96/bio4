@@ -178,7 +178,7 @@ export async function createGroup(
 export async function updateGroup(
 	db: D1Database,
 	groupId: number,
-	data: { title?: string; layout_type?: string; sort_order?: number }
+	data: { title?: string; layout_type?: string; layout_config?: string; sort_order?: number }
 ) {
 	const fields: string[] = [];
 	const values: any[] = [];
@@ -190,6 +190,10 @@ export async function updateGroup(
 	if (data.layout_type !== undefined) {
 		fields.push('layout_type = ?');
 		values.push(data.layout_type);
+	}
+	if (data.layout_config !== undefined) {
+		fields.push('layout_config = ?');
+		values.push(data.layout_config);
 	}
 	if (data.sort_order !== undefined) {
 		fields.push('sort_order = ?');

@@ -22,7 +22,8 @@ export const linkSchema = z.object({
 // Link group validation
 export const groupSchema = z.object({
 	title: z.string().max(100).optional().nullable(),
-	layout_type: z.enum(['list', 'cards', 'grid']).optional(),
+	layout_type: z.enum(['list', 'carousel', 'grid', 'cards']).optional(),
+	layout_config: z.string().optional().nullable(),
 	sort_order: z.number().int().min(0).optional()
 });
 

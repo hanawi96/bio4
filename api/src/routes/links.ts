@@ -76,6 +76,7 @@ app.put('/groups/:groupId', async (c) => {
 	await updateGroup(c.env.DB, groupId, {
 		title: body.title,
 		layout_type: body.layout_type,
+		layout_config: body.layout_config,
 		sort_order: body.sort_order
 	});
 

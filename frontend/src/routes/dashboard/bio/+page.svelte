@@ -20,6 +20,8 @@
 	let currentGroupId: number | null = null;
 	let currentGroupName: string = 'Links';
 	let currentLinks: Link[] = [];
+	let currentLayoutType: 'list' | 'carousel' | 'grid' | 'cards' = 'list';
+	let currentLayoutConfig: string | null = null;
 	let isCreatingGroup = false; // Track group creation status
 
 	let addBlockModal: AddBlockModal;
@@ -45,6 +47,8 @@
 			currentGroupId = groupId;
 			currentGroupName = group.title || 'Links';
 			currentLinks = group.links || [];
+			currentLayoutType = group.layout_type || 'list';
+			currentLayoutConfig = group.layout_config || null;
 			viewMode = 'edit-links';
 		}
 	}
@@ -313,6 +317,85 @@
 			error = e.message || 'Failed to delete link';
 		}
 	}
+
+	async function handleUpdateLayout(event: CustomEvent<string>) {
+		const newLayoutType = event.detail as 'list' | 'carousel' | 'grid' | 'cards';
+		
+		if (!currentGroupId) return;
+
+		// OPTIMISTIC UI: Update immediately
+		const oldLayoutType = currentLayoutType;
+		const oldLayoutConfig = currentLayoutConfig;
+		currentLayoutType = newLayoutType;
+		
+		// Set default config for grid layout if not exists
+		let newLayoutConfig = currentLayoutConfig;
+		if (newLayoutType === 'grid' && !currentLayoutConfig) {
+			newLayoutConfig = JSON.stringify({ grid: { columns: 3, aspectRatio: 'square', showLabels: true } });
+			currentLayoutConfig = newLayoutConfig;
+		} else if (newLayoutType === 'list' && !currentLayoutConfig) {
+			newLayoutConfig = JSON.stringify({ list: { iconShape: 'rounded' } });
+			currentLayoutConfig = newLayoutConfig;
+		}
+		
+		// Update in store
+		groups.update(g => g.map(group => 
+			group.id === currentGroupId 
+				? { ...group, layout_type: newLayoutType, layout_config: newLayoutConfig }
+				: group
+		));
+
+		// Update in background (no reload - optimistic update is correct)
+		try {
+			await api.updateGroup(currentGroupId, { 
+				layout_type: newLayoutType,
+				layout_config: newLayoutConfig
+			});
+			// Success - no action needed, optimistic update is already correct
+		} catch (e: any) {
+			// Revert on error
+			currentLayoutType = oldLayoutType;
+			currentLayoutConfig = oldLayoutConfig;
+			groups.update(g => g.map(group => 
+				group.id === currentGroupId 
+					? { ...group, layout_type: oldLayoutType, layout_config: oldLayoutConfig }
+					: group
+			));
+			error = e.message || 'Failed to update layout';
+		}
+	}
+
+	async function handleUpdateLayoutConfig(event: CustomEvent<string>) {
+		const newLayoutConfig = event.detail;
+		
+		if (!currentGroupId) return;
+
+		// OPTIMISTIC UI: Update immediately
+		const oldLayoutConfig = currentLayoutConfig;
+		currentLayoutConfig = newLayoutConfig;
+		
+		// Update in store
+		groups.update(g => g.map(group => 
+			group.id === currentGroupId 
+				? { ...group, layout_config: newLayoutConfig }
+				: group
+		));
+
+		// Update in background (no reload - optimistic update is correct)
+		try {
+			await api.updateGroup(currentGroupId, { layout_config: newLayoutConfig });
+			// Success - no action needed, optimistic update is already correct
+		} catch (e: any) {
+			// Revert on error
+			currentLayoutConfig = oldLayoutConfig;
+			groups.update(g => g.map(group => 
+				group.id === currentGroupId 
+					? { ...group, layout_config: oldLayoutConfig }
+					: group
+			));
+			error = e.message || 'Failed to update layout config';
+		}
+	}
 </script>
 
 <div class="flex h-[calc(100vh-64px)] bg-gray-50">
@@ -373,11 +456,16 @@
 				<LinksEditor 
 					links={currentLinks}
 					groupName={currentGroupName}
+					groupId={currentGroupId}
+					layoutType={currentLayoutType}
+					layoutConfig={currentLayoutConfig}
 					on:back={handleBackToList}
 					on:addLink={handleAddLink}
 					on:updateLink={handleUpdateLink}
 					on:toggleLink={handleToggleLink}
 					on:deleteLink={handleDeleteLink}
+					on:updateLayout={handleUpdateLayout}
+					on:updateLayoutConfig={handleUpdateLayoutConfig}
 				/>
 			{/if}
 		</div>

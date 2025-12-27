@@ -154,9 +154,6 @@
 		return 'rgba(0, 0, 0, 0.7)';
 	})();
 
-	// Active links
-	$: activeLinks = $groups.flatMap(g => g.links.filter(l => l.is_active === 1));
-
 	// Get block border-radius from block preset or override
 	$: blockBorderRadius = (() => {
 		const overrideBorderRadius = $appearanceState.overrides?.['block.borderRadius'];
@@ -535,55 +532,207 @@
 							></div>
 						{/if}
 						
-						{#each activeLinks as link}
-							{@const parts = link.title.split(' - ')}
-							{@const headline = parts[0]}
-							{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
-							
-							<a
-								href={link.url}
-								target="_blank"
-								rel="noopener"
-								class="link-button block w-full py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
-								style="
-									background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
-									color: {$appearance?.blockStyle?.text || 'white'};
-									border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
-									box-shadow: {resolvedBlockShadow !== 'none' 
-										? resolvedBlockShadow 
-										: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
-									{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
-									border-radius: {blockBorderRadius};
-								"
-							>
-								{#if link.icon_url}
-									<div class="flex items-center gap-3">
-										<img 
-											src={link.icon_url} 
-											alt="" 
-											class="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-										/>
-										<div class="flex-1 text-left">
-											<div class="font-semibold">{headline}</div>
-											{#if subtitle}
-												<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
-											{/if}
+						{#each $groups as group}
+							{@const groupLinks = group.links.filter(l => l.is_active === 1)}
+							{#if groupLinks.length > 0}
+								{#if group.layout_type === 'carousel'}
+									<!-- Carousel Layout -->
+									<div class="overflow-x-auto scrollbar-hide -mx-4 px-4">
+										<div class="flex gap-3" style="width: max-content;">
+											{#each groupLinks as link}
+												{@const parts = link.title.split(' - ')}
+												{@const headline = parts[0]}
+												{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+												
+												<a
+													href={link.url}
+													target="_blank"
+													rel="noopener"
+													class="link-button block flex-shrink-0 py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
+													style="
+														width: 200px;
+														background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+														color: {$appearance?.blockStyle?.text || 'white'};
+														border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
+														box-shadow: {resolvedBlockShadow !== 'none' 
+															? resolvedBlockShadow 
+															: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
+														{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
+														border-radius: {blockBorderRadius};
+													"
+												>
+													{#if link.icon_url}
+														<img 
+															src={link.icon_url} 
+															alt="" 
+															class="w-full aspect-square rounded-lg object-cover mb-2"
+														/>
+													{/if}
+													<div class="text-center">
+														<div class="font-semibold truncate">{headline}</div>
+														{#if subtitle}
+															<div class="text-xs opacity-70 mt-0.5 truncate">{subtitle}</div>
+														{/if}
+													</div>
+												</a>
+											{/each}
 										</div>
 									</div>
-								{:else}
-									<div class="text-center">
-										<div class="font-semibold">{headline}</div>
-										{#if subtitle}
-											<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
-										{/if}
+								{:else if group.layout_type === 'grid'}
+									<!-- Grid Layout -->
+									{@const config = (() => {
+										try {
+											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
+											return parsed?.grid || { columns: 3, aspectRatio: 'square', showLabels: true };
+										} catch {
+											return { columns: 3, aspectRatio: 'square', showLabels: true };
+										}
+									})()}
+									{@const aspectClass = config.aspectRatio === 'portrait' ? 'aspect-[3/4]' : config.aspectRatio === 'landscape' ? 'aspect-video' : 'aspect-square'}
+									
+									<div class="grid gap-2" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr));">
+										{#each groupLinks as link}
+											{@const parts = link.title.split(' - ')}
+											{@const headline = parts[0]}
+											
+											<a
+												href={link.url}
+												target="_blank"
+												rel="noopener"
+												class="link-button block p-2 text-xs font-medium transition-transform hover:scale-[1.02]"
+												style="
+													background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+													color: {$appearance?.blockStyle?.text || 'white'};
+													border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
+													box-shadow: {resolvedBlockShadow !== 'none' 
+														? resolvedBlockShadow 
+														: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
+													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
+													border-radius: {blockBorderRadius};
+												"
+											>
+												{#if link.icon_url}
+													<img 
+														src={link.icon_url} 
+														alt="" 
+														class="w-full object-cover rounded-lg {aspectClass}"
+													/>
+												{/if}
+												{#if config.showLabels}
+													<div class="w-full text-center truncate text-[10px] mt-1">
+														{headline}
+													</div>
+												{/if}
+											</a>
+										{/each}
 									</div>
+								{:else if group.layout_type === 'cards'}
+									<!-- Card Layout -->
+									<div class="grid grid-cols-2 gap-3">
+										{#each groupLinks as link, i}
+											{@const parts = link.title.split(' - ')}
+											{@const headline = parts[0]}
+											{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+											{@const isFeatured = i === 0}
+											
+											<a
+												href={link.url}
+												target="_blank"
+												rel="noopener"
+												class="link-button block p-3 text-sm font-medium transition-transform hover:scale-[1.02] {isFeatured ? 'col-span-2' : ''}"
+												style="
+													background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+													color: {$appearance?.blockStyle?.text || 'white'};
+													border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
+													box-shadow: {resolvedBlockShadow !== 'none' 
+														? resolvedBlockShadow 
+														: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
+													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
+													border-radius: {blockBorderRadius};
+												"
+											>
+												{#if link.icon_url}
+													<img 
+														src={link.icon_url} 
+														alt="" 
+														class="w-full {isFeatured ? 'aspect-video' : 'aspect-square'} rounded-lg object-cover mb-2"
+													/>
+												{/if}
+												<div class="text-center">
+													<div class="font-semibold truncate">{headline}</div>
+													{#if subtitle}
+														<div class="text-xs opacity-70 mt-0.5 truncate">{subtitle}</div>
+													{/if}
+												</div>
+											</a>
+										{/each}
+									</div>
+								{:else}
+									<!-- List Layout (Default) -->
+									{@const config = (() => {
+										try {
+											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
+											return parsed?.list || { iconShape: 'rounded' };
+										} catch {
+											return { iconShape: 'rounded' };
+										}
+									})()}
+									{@const iconShapeClass = config.iconShape === 'circle' ? 'rounded-full' : config.iconShape === 'rounded' ? 'rounded-lg' : ''}
+									
+									{#each groupLinks as link}
+										{@const parts = link.title.split(' - ')}
+										{@const headline = parts[0]}
+										{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+										
+										<a
+											href={link.url}
+											target="_blank"
+											rel="noopener"
+											class="link-button block w-full py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
+											style="
+												background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+												color: {$appearance?.blockStyle?.text || 'white'};
+												border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
+												box-shadow: {resolvedBlockShadow !== 'none' 
+													? resolvedBlockShadow 
+													: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
+												{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
+												border-radius: {blockBorderRadius};
+											"
+										>
+											{#if link.icon_url}
+												<div class="flex items-center gap-3">
+													<img 
+														src={link.icon_url} 
+														alt="" 
+														class="w-8 h-8 object-cover flex-shrink-0 {iconShapeClass}"
+													/>
+													<div class="flex-1 text-left">
+														<div class="font-semibold">{headline}</div>
+														{#if subtitle}
+															<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+														{/if}
+													</div>
+												</div>
+											{:else}
+												<div class="text-center">
+													<div class="font-semibold">{headline}</div>
+													{#if subtitle}
+														<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+													{/if}
+												</div>
+											{/if}
+										</a>
+									{/each}
 								{/if}
-							</a>
-						{:else}
+							{/if}
+						{/each}
+						
+						{#if $groups.every(g => g.links.filter(l => l.is_active === 1).length === 0)}
 							<div class="text-center py-8 opacity-50">
 								<p class="text-sm">No links yet</p>
 							</div>
-						{/each}
+						{/if}
 					</div>
 
 					<!-- Footer -->
