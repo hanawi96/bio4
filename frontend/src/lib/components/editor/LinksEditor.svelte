@@ -21,22 +21,22 @@
 
 	// Parse layout config
 	$: gridConfig = (() => {
-		if (!layoutConfig) return { columns: 3, aspectRatio: 'square', showLabels: true };
+		if (!layoutConfig) return { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
 		try {
 			const parsed = JSON.parse(layoutConfig);
-			return parsed.grid || { columns: 3, aspectRatio: 'square', showLabels: true };
+			return parsed.grid || { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
 		} catch {
-			return { columns: 3, aspectRatio: 'square', showLabels: true };
+			return { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
 		}
 	})();
 
 	$: classicConfig = (() => {
-		if (!layoutConfig) return { iconShape: 'rounded' };
+		if (!layoutConfig) return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
 		try {
 			const parsed = JSON.parse(layoutConfig);
-			return parsed.list || { iconShape: 'rounded' };
+			return parsed.list || { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
 		} catch {
-			return { iconShape: 'rounded' };
+			return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
 		}
 	})();
 

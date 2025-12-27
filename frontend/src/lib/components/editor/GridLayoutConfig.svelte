@@ -5,10 +5,14 @@
 		columns: 1 | 2 | 3 | 4;
 		aspectRatio: 'square' | 'portrait' | 'landscape';
 		showLabels: boolean;
+		shadowEnabled: boolean;
+		borderEnabled: boolean;
 	} = {
-		columns: 3,
+		columns: 2,
 		aspectRatio: 'square',
-		showLabels: true
+		showLabels: true,
+		shadowEnabled: true,
+		borderEnabled: true
 	};
 
 	const dispatch = createEventDispatcher();
@@ -91,6 +95,40 @@
 			>
 				<span
 					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.showLabels
+						? 'translate-x-6'
+						: 'translate-x-1'}"
+				></span>
+			</button>
+		</div>
+
+		<!-- Shadow -->
+		<div class="flex items-center justify-between">
+			<label class="text-xs font-medium text-gray-700">Shadow</label>
+			<button
+				on:click={() => updateConfig({ shadowEnabled: !config.shadowEnabled })}
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {config.shadowEnabled
+					? 'bg-gray-900'
+					: 'bg-gray-200'}"
+			>
+				<span
+					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.shadowEnabled
+						? 'translate-x-6'
+						: 'translate-x-1'}"
+				></span>
+			</button>
+		</div>
+
+		<!-- Border -->
+		<div class="flex items-center justify-between">
+			<label class="text-xs font-medium text-gray-700">Border</label>
+			<button
+				on:click={() => updateConfig({ borderEnabled: !config.borderEnabled })}
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {config.borderEnabled
+					? 'bg-gray-900'
+					: 'bg-gray-200'}"
+			>
+				<span
+					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.borderEnabled
 						? 'translate-x-6'
 						: 'translate-x-1'}"
 				></span>

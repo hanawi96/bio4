@@ -331,10 +331,10 @@
 		// Set default config for grid layout if not exists
 		let newLayoutConfig = currentLayoutConfig;
 		if (newLayoutType === 'grid' && !currentLayoutConfig) {
-			newLayoutConfig = JSON.stringify({ grid: { columns: 3, aspectRatio: 'square', showLabels: true } });
+			newLayoutConfig = JSON.stringify({ grid: { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true } });
 			currentLayoutConfig = newLayoutConfig;
 		} else if (newLayoutType === 'list' && !currentLayoutConfig) {
-			newLayoutConfig = JSON.stringify({ list: { iconShape: 'rounded' } });
+			newLayoutConfig = JSON.stringify({ list: { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true } });
 			currentLayoutConfig = newLayoutConfig;
 		}
 		

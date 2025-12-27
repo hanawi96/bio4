@@ -583,12 +583,18 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.grid || { columns: 3, aspectRatio: 'square', showLabels: true };
+											return parsed?.grid || { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
 										} catch {
-											return { columns: 3, aspectRatio: 'square', showLabels: true };
+											return { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
 										}
 									})()}
 									{@const aspectClass = config.aspectRatio === 'portrait' ? 'aspect-[3/4]' : config.aspectRatio === 'landscape' ? 'aspect-video' : 'aspect-square'}
+									{@const gridShadow = config.shadowEnabled 
+										? (resolvedBlockShadow !== 'none' ? resolvedBlockShadow : '0 2px 8px rgba(0,0,0,0.1)')
+										: 'none'}
+									{@const gridBorder = config.borderEnabled 
+										? ($appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : '1px solid rgba(0,0,0,0.1)')
+										: 'none'}
 									
 									<div class="grid gap-2" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr));">
 										{#each groupLinks as link}
@@ -603,10 +609,8 @@
 												style="
 													background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 													color: {$appearance?.blockStyle?.text || 'white'};
-													border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
-													box-shadow: {resolvedBlockShadow !== 'none' 
-														? resolvedBlockShadow 
-														: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
+													border: {gridBorder};
+													box-shadow: {gridShadow};
 													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 													border-radius: {blockBorderRadius};
 												"
@@ -672,12 +676,20 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.list || { iconShape: 'rounded' };
+											return parsed?.list || { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
 										} catch {
-											return { iconShape: 'rounded' };
+											return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
 										}
 									})()}
 									{@const iconShapeClass = config.iconShape === 'circle' ? 'rounded-full' : config.iconShape === 'rounded' ? 'rounded-lg' : ''}
+									{@const showIcon = config.iconPosition !== 'none'}
+									{@const iconOnTop = config.iconPosition === 'top'}
+									{@const listShadow = config.shadowEnabled 
+										? (resolvedBlockShadow !== 'none' ? resolvedBlockShadow : '0 2px 8px rgba(0,0,0,0.1)')
+										: 'none'}
+									{@const listBorder = config.borderEnabled 
+										? ($appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : '1px solid rgba(0,0,0,0.1)')
+										: 'none'}
 									
 									{#each groupLinks as link}
 										{@const parts = link.title.split(' - ')}
@@ -692,22 +704,37 @@
 											style="
 												background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 												color: {$appearance?.blockStyle?.text || 'white'};
-												border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
-												box-shadow: {resolvedBlockShadow !== 'none' 
-													? resolvedBlockShadow 
-													: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
+												border: {listBorder};
+												box-shadow: {listShadow};
 												{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 												border-radius: {blockBorderRadius};
+												text-align: {config.textAlign};
 											"
 										>
-											{#if link.icon_url}
-												<div class="flex items-center gap-3">
+											{#if showIcon && link.icon_url && iconOnTop}
+												<!-- Icon on top -->
+												<div class="flex flex-col items-center gap-2">
+													<img 
+														src={link.icon_url} 
+														alt="" 
+														class="w-10 h-10 object-cover {iconShapeClass}"
+													/>
+													<div>
+														<div class="font-semibold">{headline}</div>
+														{#if subtitle}
+															<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+														{/if}
+													</div>
+												</div>
+											{:else if showIcon && link.icon_url}
+												<!-- Icon on left -->
+												<div class="flex items-center gap-3" style="justify-content: {config.textAlign === 'right' ? 'flex-end' : config.textAlign === 'center' ? 'center' : 'flex-start'};">
 													<img 
 														src={link.icon_url} 
 														alt="" 
 														class="w-8 h-8 object-cover flex-shrink-0 {iconShapeClass}"
 													/>
-													<div class="flex-1 text-left">
+													<div class="flex-1" style="text-align: {config.textAlign};">
 														<div class="font-semibold">{headline}</div>
 														{#if subtitle}
 															<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
@@ -715,7 +742,8 @@
 													</div>
 												</div>
 											{:else}
-												<div class="text-center">
+												<!-- No icon or icon hidden -->
+												<div>
 													<div class="font-semibold">{headline}</div>
 													{#if subtitle}
 														<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
