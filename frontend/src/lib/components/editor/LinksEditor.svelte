@@ -135,6 +135,10 @@
 		editedGroupName = groupName;
 	}
 
+	function selectAllText(node: HTMLInputElement) {
+		node.select();
+	}
+
 	async function saveGroupTitle() {
 		const trimmedName = editedGroupName.trim();
 		
@@ -348,6 +352,7 @@
 							bind:value={editedGroupName}
 							on:blur={saveGroupTitle}
 							on:keydown={handleTitleKeydown}
+							use:selectAllText
 							maxlength="50"
 							class="text-2xl font-bold text-gray-900 border-b-2 outline-none bg-transparent w-full {titleError ? 'border-red-500' : 'border-blue-500'}"
 							autofocus
@@ -375,7 +380,9 @@
 						</button>
 					</div>
 				{/if}
-				<p class="text-sm text-gray-500">Manage your links</p>
+				<p class="text-sm text-gray-500">
+					{isEditingTitle ? 'Press Enter to save, Esc to cancel' : 'Manage your links'}
+				</p>
 			</div>
 		</div>
 
