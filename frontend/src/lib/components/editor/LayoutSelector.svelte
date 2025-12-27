@@ -24,7 +24,7 @@
 		{
 			id: 'cards',
 			name: 'Card',
-			icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="9" height="9" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="8" width="7" height="4" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/><rect x="11" y="13" width="10" height="8" rx="1"/></svg>`
+			icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="7" width="8" height="3" rx="0.5"/><rect x="13" y="12" width="8" height="3" rx="0.5"/></svg>`
 		}
 	];
 

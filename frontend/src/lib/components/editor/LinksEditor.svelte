@@ -7,6 +7,7 @@
 	import LayoutSelector from './LayoutSelector.svelte';
 	import GridLayoutConfig from './GridLayoutConfig.svelte';
 	import ClassicLayoutConfig from './ClassicLayoutConfig.svelte';
+	import CardLayoutConfig from './CardLayoutConfig.svelte';
 	import type { Link } from '$lib/types';
 	import { api } from '$lib/api.client';
 
@@ -62,6 +63,17 @@
 		try {
 			const parsed = JSON.parse(layoutConfig);
 			return parsed.list || defaultConfig;
+		} catch {
+			return defaultConfig;
+		}
+	})();
+
+	$: cardConfig = (() => {
+		const defaultConfig = { imagePosition: 'left', imageSize: 50, showSubtitle: true };
+		if (!layoutConfig) return defaultConfig;
+		try {
+			const parsed = JSON.parse(layoutConfig);
+			return parsed.card || defaultConfig;
 		} catch {
 			return defaultConfig;
 		}
@@ -197,6 +209,11 @@
 		const newConfig = { list: event.detail };
 		dispatch('updateLayoutConfig', JSON.stringify(newConfig));
 	}
+
+	function handleCardConfigChange(event: CustomEvent<any>) {
+		const newConfig = { card: event.detail };
+		dispatch('updateLayoutConfig', JSON.stringify(newConfig));
+	}
 </script>
 
 <div class="h-full flex flex-col">
@@ -273,6 +290,13 @@
 						themeHasShadow={themeHasShadow}
 						themeHasBorder={themeHasBorder}
 						on:change={handleClassicConfigChange}
+					/>
+				{:else if layoutType === 'cards'}
+					<CardLayoutConfig
+						config={cardConfig}
+						themeHasShadow={themeHasShadow}
+						themeHasBorder={themeHasBorder}
+						on:change={handleCardConfigChange}
 					/>
 				{/if}
 			</div>

@@ -665,42 +665,85 @@
 										{/each}
 									</div>
 								{:else if group.layout_type === 'cards'}
-									<!-- Card Layout -->
-									<div class="grid grid-cols-2 gap-3">
-										{#each groupLinks as link, i}
+									<!-- Card Layout (Horizontal) -->
+									{@const config = (() => {
+										try {
+											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
+											return parsed?.card || { imagePosition: 'left', imageSize: 50, showSubtitle: true };
+										} catch {
+											return { imagePosition: 'left', imageSize: 50, showSubtitle: true };
+										}
+									})()}
+									{@const cardShadow = (() => {
+										if (config.shadowEnabled === false) {
+											return 'none';
+										}
+										if (resolvedBlockShadow !== 'none') {
+											return resolvedBlockShadow;
+										}
+										if ($appearance?.blockStyle?.glow) {
+											return `0 0 20px ${$appearance.blockStyle.glow}`;
+										}
+										if (config.shadowEnabled === true) {
+											return '0 2px 8px rgba(0,0,0,0.1)';
+										}
+										return 'none';
+									})()}
+									{@const cardBorder = (() => {
+										if (config.borderEnabled === false) {
+											return 'none';
+										}
+										if ($appearance?.blockStyle?.border && $appearance.blockStyle.border !== 'none') {
+											return `1px solid ${$appearance.blockStyle.border}`;
+										}
+										if (config.borderEnabled === true) {
+											return `1px solid ${$appearance?.tokens?.blockBase || '#3b82f6'}`;
+										}
+										return 'none';
+									})()}
+									
+									<div class="flex flex-col" style="gap: {blockGap}px;">
+										{#each groupLinks as link, index}
 											{@const parts = link.title.split(' - ')}
 											{@const headline = parts[0]}
 											{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
-											{@const isFeatured = i === 0}
+											{@const imageWidth = config.imageSize || 50}
+											{@const textWidth = 100 - imageWidth}
+											{@const isReversed = config.imagePosition === 'right' || (config.imagePosition === 'alternate' && index % 2 === 1)}
 											
 											<a
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block p-3 text-sm font-medium transition-transform hover:scale-[1.02] {isFeatured ? 'col-span-2' : ''}"
+												class="link-button block w-full transition-transform hover:scale-[1.02] overflow-hidden"
 												style="
 													background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 													color: {$appearance?.blockStyle?.text || 'white'};
-													border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
-													box-shadow: {resolvedBlockShadow !== 'none' 
-														? resolvedBlockShadow 
-														: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
+													border: {cardBorder};
+													box-shadow: {cardShadow} !important;
 													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 													border-radius: {blockBorderRadius};
 												"
 											>
-												{#if link.icon_url}
-													<img 
-														src={link.icon_url} 
-														alt="" 
-														class="w-full {isFeatured ? 'aspect-video' : 'aspect-square'} rounded-lg object-cover mb-2"
-													/>
-												{/if}
-												<div class="text-center">
-													<div class="font-semibold truncate">{headline}</div>
-													{#if subtitle}
-														<div class="text-xs opacity-70 mt-0.5 truncate">{subtitle}</div>
+												<div class="flex {isReversed ? 'flex-row-reverse' : ''}">
+													{#if link.icon_url}
+														<div style="width: {imageWidth}%; flex-shrink: 0;">
+															<img 
+																src={link.icon_url} 
+																alt="" 
+																class="w-full h-full object-cover"
+															/>
+														</div>
 													{/if}
+													<div 
+														class="flex flex-col justify-center p-4"
+														style="width: {link.icon_url ? textWidth : 100}%;"
+													>
+														<div class="font-semibold text-sm">{headline}</div>
+														{#if subtitle && config.showSubtitle}
+															<div class="text-xs opacity-70 mt-1">{subtitle}</div>
+														{/if}
+													</div>
 												</div>
 											</a>
 										{/each}
@@ -734,8 +777,12 @@
 										if ($appearance?.blockStyle?.glow) {
 											return `0 0 20px ${$appearance.blockStyle.glow}`; // Follow theme glow
 										}
-										// Force ON with default shadow
+										// Force ON with default shadow - BUT respect if theme explicitly set to 'none'
 										if (config.shadowEnabled === true) {
+											// If theme explicitly disabled shadow (blockShadow === 'none'), respect it
+											if (blockShadow === 'none') {
+												return 'none';
+											}
 											return '0 2px 8px rgba(0,0,0,0.1)';
 										}
 										return 'none'; // undefined + no theme shadow/glow = none
