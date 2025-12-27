@@ -28,10 +28,29 @@
 		
 		dispatch('change', config);
 	}
+
+	function resetToTheme() {
+		const { shadowEnabled, borderEnabled, ...rest } = config;
+		config = rest;
+		dispatch('change', config);
+	}
+
+	$: hasOverrides = config.shadowEnabled !== undefined || config.borderEnabled !== undefined;
 </script>
 
 <div class="mt-6 pt-6 border-t border-gray-200">
-	<h4 class="text-sm font-semibold text-gray-900 mb-4">Classic Settings</h4>
+	<div class="flex items-center justify-between mb-4">
+		<h4 class="text-sm font-semibold text-gray-900">Classic Settings</h4>
+		{#if hasOverrides}
+			<button
+				on:click={resetToTheme}
+				class="text-xs text-gray-500 hover:text-gray-900 transition-colors"
+				title="Reset style overrides to theme defaults"
+			>
+				↺ Reset to Theme
+			</button>
+		{/if}
+	</div>
 	
 	<div class="space-y-4">
 		<!-- Icon Position -->
