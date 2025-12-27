@@ -425,32 +425,32 @@
 				<!-- List View -->
 				<div class="flex items-center justify-between mb-6">
 					<div>
-						<h2 class="text-lg font-semibold text-gray-900">Manage Bio Content</h2>
-						<p class="text-sm text-gray-500">Add, edit, and organize your links and content blocks</p>
+						<h2 class="text-xl font-semibold text-gray-900 tracking-tight">Manage Bio Content</h2>
+						<p class="text-sm text-gray-500 mt-0.5">Add, edit, and organize your links and content blocks</p>
 					</div>
-					<button on:click={handleAddBlock} class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+					<button on:click={handleAddBlock} class="btn-ios-primary flex items-center gap-2">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 						</svg>
 						Add Block
 					</button>
 				</div>
 
 				{#if $groups.length === 0}
-					<div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
-						<div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-							<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+					<div class="card-ios p-16 text-center">
+						<div class="icon-ios w-20 h-20 mx-auto mb-5">
+							<svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
 							</svg>
 						</div>
-						<h3 class="text-lg font-medium text-gray-900 mb-1">No content yet</h3>
-						<p class="text-gray-500 mb-4">Add your first block to get started</p>
-						<button on:click={handleAddBlock} class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+						<h3 class="text-lg font-semibold text-gray-900 mb-2 tracking-tight">No content yet</h3>
+						<p class="text-gray-500 mb-6">Add your first block to get started</p>
+						<button on:click={handleAddBlock} class="btn-ios-primary">
 							Add Block
 						</button>
 					</div>
 				{:else}
-					<div class="space-y-3">
+					<div class="space-y-4">
 						{#each $groups as group, index (group.id)}
 							<BlockCard 
 								{group}
