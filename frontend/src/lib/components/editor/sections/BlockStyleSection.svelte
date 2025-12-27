@@ -212,8 +212,8 @@
 					>
 						<!-- Preview Container -->
 						<div
-							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-blue-500 bg-blue-50/30' : 'border-gray-200 bg-white'}"
-							style="background: {isSelected ? 'linear-gradient(to bottom, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.02))' : previewBackground};"
+							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white"
+							style="background: {previewBackground};"
 						>
 							{#if $appearance?.tokens}
 								{@const displayStyle = displayStyles[recipeId]}
