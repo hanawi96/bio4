@@ -597,13 +597,19 @@
 										if (config.shadowEnabled === false) {
 											return 'none';
 										}
+										// Check for shadow first
 										if (resolvedBlockShadow !== 'none') {
-											return resolvedBlockShadow; // Follow theme
+											return resolvedBlockShadow; // Follow theme shadow
 										}
+										// Check for glow (neon effect)
+										if ($appearance?.blockStyle?.glow) {
+											return `0 0 20px ${$appearance.blockStyle.glow}`; // Follow theme glow
+										}
+										// Force ON with default shadow
 										if (config.shadowEnabled === true) {
-											return '0 2px 8px rgba(0,0,0,0.1)'; // Force ON with default
+											return '0 2px 8px rgba(0,0,0,0.1)';
 										}
-										return 'none'; // undefined + no theme shadow = none
+										return 'none'; // undefined + no theme shadow/glow = none
 									})()}
 									{@const gridBorder = config.borderEnabled 
 										? ($appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : '1px solid rgba(0,0,0,0.1)')
@@ -705,13 +711,19 @@
 										if (config.shadowEnabled === false) {
 											return 'none';
 										}
+										// Check for shadow first
 										if (resolvedBlockShadow !== 'none') {
-											return resolvedBlockShadow; // Follow theme
+											return resolvedBlockShadow; // Follow theme shadow
 										}
+										// Check for glow (neon effect)
+										if ($appearance?.blockStyle?.glow) {
+											return `0 0 20px ${$appearance.blockStyle.glow}`; // Follow theme glow
+										}
+										// Force ON with default shadow
 										if (config.shadowEnabled === true) {
-											return '0 2px 8px rgba(0,0,0,0.1)'; // Force ON with default
+											return '0 2px 8px rgba(0,0,0,0.1)';
 										}
-										return 'none'; // undefined + no theme shadow = none
+										return 'none'; // undefined + no theme shadow/glow = none
 									})()}
 									{@const listBorder = config.borderEnabled 
 										? ($appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : '1px solid rgba(0,0,0,0.1)')

@@ -21,10 +21,16 @@
 	type TabType = 'links' | 'layouts';
 	let activeTab: TabType = 'links';
 
-	// Check if theme has shadow
-	$: themeHasShadow = $appearance?.blockStyle?.shadow 
-		? resolveShadow($appearance.blockStyle.shadow, $appearance?.tokens?.shadowColor || '#000000') !== 'none'
-		: false;
+	// Check if theme has shadow or glow (neon)
+	$: themeHasShadow = (() => {
+		if ($appearance?.blockStyle?.shadow) {
+			return resolveShadow($appearance.blockStyle.shadow, $appearance?.tokens?.shadowColor || '#000000') !== 'none';
+		}
+		if ($appearance?.blockStyle?.glow) {
+			return true; // Neon has glow
+		}
+		return false;
+	})();
 
 	// Parse layout config with 3-state shadow logic
 	// shadowEnabled: undefined/null = follow theme
