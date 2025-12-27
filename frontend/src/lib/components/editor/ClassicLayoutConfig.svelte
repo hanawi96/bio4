@@ -5,15 +5,16 @@
 		iconShape: 'square' | 'rounded' | 'circle';
 		iconPosition: 'left' | 'top' | 'none';
 		textAlign: 'left' | 'center' | 'right';
-		shadowEnabled: boolean;
+		shadowEnabled?: boolean; // undefined = follow theme, true = force ON, false = force OFF
 		borderEnabled: boolean;
 	} = {
 		iconShape: 'rounded',
 		iconPosition: 'left',
 		textAlign: 'center',
-		shadowEnabled: true,
 		borderEnabled: true
 	};
+	
+	export let themeHasShadow: boolean = false; // Does current theme have shadow?
 
 	const dispatch = createEventDispatcher();
 
@@ -171,22 +172,45 @@
 			{/if}
 		</div>
 
-		<!-- Shadow -->
+		<!-- Shadow (3-state: undefined=auto, true=on, false=off) -->
 		<div class="flex items-center justify-between">
 			<label class="text-xs font-medium text-gray-700">Shadow</label>
 			<button
-				on:click={() => updateConfig({ shadowEnabled: !config.shadowEnabled })}
-				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {config.shadowEnabled
-					? 'bg-gray-900'
-					: 'bg-gray-200'}"
+				on:click={() => {
+					// Smart cycle based on current state and theme
+					if (config.shadowEnabled === undefined) {
+						// Auto mode: toggle opposite of theme
+						// If theme has shadow → turn OFF
+						// If theme no shadow → turn ON
+						updateConfig({ shadowEnabled: !themeHasShadow });
+					} else if (config.shadowEnabled === true) {
+						// Force ON → turn OFF
+						updateConfig({ shadowEnabled: false });
+					} else {
+						// Force OFF → back to Auto
+						updateConfig({ shadowEnabled: undefined });
+					}
+				}}
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {
+					config.shadowEnabled === undefined 
+						? 'bg-blue-500' 
+						: config.shadowEnabled 
+							? 'bg-gray-900' 
+							: 'bg-gray-200'
+				}"
 			>
 				<span
-					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.shadowEnabled
-						? 'translate-x-6'
-						: 'translate-x-1'}"
+					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {
+						config.shadowEnabled === false 
+							? 'translate-x-1' 
+							: 'translate-x-6'
+					}"
 				></span>
 			</button>
 		</div>
+		{#if config.shadowEnabled === undefined}
+			<p class="text-xs text-gray-500 -mt-2">Following theme style</p>
+		{/if}
 
 		<!-- Border -->
 		<div class="flex items-center justify-between">

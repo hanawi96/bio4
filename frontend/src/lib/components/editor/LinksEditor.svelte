@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { appearance } from '$lib/stores/appearance';
+	import { resolveShadow } from '$lib/appearance/tokenResolver';
 	import LinkCard from './LinkCard.svelte';
 	import LinkForm from './LinkForm.svelte';
 	import LayoutSelector from './LayoutSelector.svelte';
@@ -19,24 +21,34 @@
 	type TabType = 'links' | 'layouts';
 	let activeTab: TabType = 'links';
 
-	// Parse layout config
+	// Check if theme has shadow
+	$: themeHasShadow = $appearance?.blockStyle?.shadow 
+		? resolveShadow($appearance.blockStyle.shadow, $appearance?.tokens?.shadowColor || '#000000') !== 'none'
+		: false;
+
+	// Parse layout config with 3-state shadow logic
+	// shadowEnabled: undefined/null = follow theme
+	// shadowEnabled: true = force ON
+	// shadowEnabled: false = force OFF
 	$: gridConfig = (() => {
-		if (!layoutConfig) return { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
+		const defaultConfig = { columns: 2, aspectRatio: 'square', showLabels: true, borderEnabled: true };
+		if (!layoutConfig) return defaultConfig;
 		try {
 			const parsed = JSON.parse(layoutConfig);
-			return parsed.grid || { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
+			return parsed.grid || defaultConfig;
 		} catch {
-			return { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
+			return defaultConfig;
 		}
 	})();
 
 	$: classicConfig = (() => {
-		if (!layoutConfig) return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
+		const defaultConfig = { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', borderEnabled: true };
+		if (!layoutConfig) return defaultConfig;
 		try {
 			const parsed = JSON.parse(layoutConfig);
-			return parsed.list || { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
+			return parsed.list || defaultConfig;
 		} catch {
-			return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
+			return defaultConfig;
 		}
 	})();
 
@@ -236,11 +248,13 @@
 				{#if layoutType === 'grid'}
 					<GridLayoutConfig
 						config={gridConfig}
+						themeHasShadow={themeHasShadow}
 						on:change={handleGridConfigChange}
 					/>
 				{:else if layoutType === 'list'}
 					<ClassicLayoutConfig
 						config={classicConfig}
+						themeHasShadow={themeHasShadow}
 						on:change={handleClassicConfigChange}
 					/>
 				{/if}

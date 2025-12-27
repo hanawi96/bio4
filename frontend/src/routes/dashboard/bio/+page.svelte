@@ -329,12 +329,27 @@
 		currentLayoutType = newLayoutType;
 		
 		// Set default config for grid layout if not exists
+		// shadowEnabled: undefined = follow theme (3-state logic)
 		let newLayoutConfig = currentLayoutConfig;
 		if (newLayoutType === 'grid' && !currentLayoutConfig) {
-			newLayoutConfig = JSON.stringify({ grid: { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true } });
+			newLayoutConfig = JSON.stringify({ 
+				grid: { 
+					columns: 2, 
+					aspectRatio: 'square', 
+					showLabels: true, 
+					borderEnabled: true 
+				} 
+			});
 			currentLayoutConfig = newLayoutConfig;
 		} else if (newLayoutType === 'list' && !currentLayoutConfig) {
-			newLayoutConfig = JSON.stringify({ list: { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true } });
+			newLayoutConfig = JSON.stringify({ 
+				list: { 
+					iconShape: 'rounded', 
+					iconPosition: 'left', 
+					textAlign: 'center', 
+					borderEnabled: true 
+				} 
+			});
 			currentLayoutConfig = newLayoutConfig;
 		}
 		

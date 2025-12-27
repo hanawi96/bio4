@@ -583,15 +583,28 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.grid || { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
+											return parsed?.grid || { columns: 2, aspectRatio: 'square', showLabels: true, borderEnabled: true };
 										} catch {
-											return { columns: 2, aspectRatio: 'square', showLabels: true, shadowEnabled: true, borderEnabled: true };
+											return { columns: 2, aspectRatio: 'square', showLabels: true, borderEnabled: true };
 										}
 									})()}
 									{@const aspectClass = config.aspectRatio === 'portrait' ? 'aspect-[3/4]' : config.aspectRatio === 'landscape' ? 'aspect-video' : 'aspect-square'}
-									{@const gridShadow = config.shadowEnabled 
-										? (resolvedBlockShadow !== 'none' ? resolvedBlockShadow : '0 2px 8px rgba(0,0,0,0.1)')
-										: 'none'}
+									{@const gridShadow = (() => {
+										// 3-state logic:
+										// undefined/null = follow theme
+										// true = force ON (use theme if available, else default)
+										// false = force OFF
+										if (config.shadowEnabled === false) {
+											return 'none';
+										}
+										if (resolvedBlockShadow !== 'none') {
+											return resolvedBlockShadow; // Follow theme
+										}
+										if (config.shadowEnabled === true) {
+											return '0 2px 8px rgba(0,0,0,0.1)'; // Force ON with default
+										}
+										return 'none'; // undefined + no theme shadow = none
+									})()}
 									{@const gridBorder = config.borderEnabled 
 										? ($appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : '1px solid rgba(0,0,0,0.1)')
 										: 'none'}
@@ -676,17 +689,30 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.list || { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
+											return parsed?.list || { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', borderEnabled: true };
 										} catch {
-											return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', shadowEnabled: true, borderEnabled: true };
+											return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center', borderEnabled: true };
 										}
 									})()}
 									{@const iconShapeClass = config.iconShape === 'circle' ? 'rounded-full' : config.iconShape === 'rounded' ? 'rounded-lg' : ''}
 									{@const showIcon = config.iconPosition !== 'none'}
 									{@const iconOnTop = config.iconPosition === 'top'}
-									{@const listShadow = config.shadowEnabled 
-										? (resolvedBlockShadow !== 'none' ? resolvedBlockShadow : '0 2px 8px rgba(0,0,0,0.1)')
-										: 'none'}
+									{@const listShadow = (() => {
+										// 3-state logic:
+										// undefined/null = follow theme
+										// true = force ON (use theme if available, else default)
+										// false = force OFF
+										if (config.shadowEnabled === false) {
+											return 'none';
+										}
+										if (resolvedBlockShadow !== 'none') {
+											return resolvedBlockShadow; // Follow theme
+										}
+										if (config.shadowEnabled === true) {
+											return '0 2px 8px rgba(0,0,0,0.1)'; // Force ON with default
+										}
+										return 'none'; // undefined + no theme shadow = none
+									})()}
 									{@const listBorder = config.borderEnabled 
 										? ($appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : '1px solid rgba(0,0,0,0.1)')
 										: 'none'}
