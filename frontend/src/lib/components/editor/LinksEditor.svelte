@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { appearance } from '$lib/stores/appearance';
 	import { appearanceState } from '$lib/stores/appearanceManager';
+	import { groups } from '$lib/stores/page';
 	import { resolveShadow } from '$lib/appearance/tokenResolver';
 	import LinkCard from './LinkCard.svelte';
 	import LinkForm from './LinkForm.svelte';
@@ -104,10 +105,98 @@
 	let iconPreviewUrl = '';
 	let uploading = false;
 
+	// Group title editing
+	let isEditingTitle = false;
+	let editedGroupName = groupName;
+	let titleError = '';
+
 	$: isEditMode = editingLink !== null;
+
+	// Validate group title
+	$: {
+		const trimmed = editedGroupName.trim();
+		if (isEditingTitle) {
+			if (!trimmed) {
+				titleError = 'Group name cannot be empty';
+			} else if (trimmed.length > 50) {
+				titleError = 'Group name must be 50 characters or less';
+			} else {
+				titleError = '';
+			}
+		}
+	}
 
 	function handleBack() {
 		dispatch('back');
+	}
+
+	function startEditTitle() {
+		isEditingTitle = true;
+		editedGroupName = groupName;
+	}
+
+	async function saveGroupTitle() {
+		const trimmedName = editedGroupName.trim();
+		
+		// Validate
+		if (!trimmedName) {
+			titleError = 'Group name cannot be empty';
+			return;
+		}
+		
+		if (trimmedName.length > 50) {
+			titleError = 'Group name must be 50 characters or less';
+			return;
+		}
+		
+		if (trimmedName === groupName) {
+			isEditingTitle = false;
+			titleError = '';
+			return;
+		}
+
+		// OPTIMISTIC UI: Update immediately in both local and store
+		const oldGroupName = groupName;
+		groupName = trimmedName;
+		isEditingTitle = false;
+		titleError = '';
+
+		// Update in store
+		groups.update(g => g.map(group => 
+			group.id === groupId 
+				? { ...group, title: trimmedName }
+				: group
+		));
+
+		// Update in background
+		try {
+			await api.updateGroup(groupId, { title: trimmedName });
+		} catch (error: any) {
+			// Revert on error
+			groupName = oldGroupName;
+			editedGroupName = oldGroupName;
+			groups.update(g => g.map(group => 
+				group.id === groupId 
+					? { ...group, title: oldGroupName }
+					: group
+			));
+			alert(error.message || 'Failed to update group name');
+		}
+	}
+
+	function cancelEditTitle() {
+		isEditingTitle = false;
+		editedGroupName = groupName;
+		titleError = '';
+	}
+
+	function handleTitleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			saveGroupTitle();
+		} else if (event.key === 'Escape') {
+			cancelEditTitle();
+		}
 	}
 
 	function toggleAddForm() {
@@ -251,8 +340,41 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
 				</svg>
 			</div>
-			<div>
-				<h2 class="text-2xl font-bold text-gray-900">{groupName}</h2>
+			<div class="flex-1">
+				{#if isEditingTitle}
+					<div>
+						<input
+							type="text"
+							bind:value={editedGroupName}
+							on:blur={saveGroupTitle}
+							on:keydown={handleTitleKeydown}
+							maxlength="50"
+							class="text-2xl font-bold text-gray-900 border-b-2 outline-none bg-transparent w-full {titleError ? 'border-red-500' : 'border-blue-500'}"
+							autofocus
+						/>
+						{#if titleError}
+							<p class="text-xs text-red-500 mt-1">{titleError}</p>
+						{/if}
+					</div>
+				{:else}
+					<div class="flex items-center gap-2 group">
+						<h2 
+							on:click={startEditTitle}
+							class="text-2xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+						>
+							{groupName}
+						</h2>
+						<button
+							on:click={startEditTitle}
+							class="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
+							title="Edit group name"
+						>
+							<svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+							</svg>
+						</button>
+					</div>
+				{/if}
 				<p class="text-sm text-gray-500">Manage your links</p>
 			</div>
 		</div>
