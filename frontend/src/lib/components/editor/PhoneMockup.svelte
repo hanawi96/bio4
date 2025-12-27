@@ -621,9 +621,9 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.grid || { columns: 2, aspectRatio: 'square', showLabels: true };
+											return parsed?.grid || { columns: 2, aspectRatio: 'square', showLabels: true, imagePadding: false };
 										} catch {
-											return { columns: 2, aspectRatio: 'square', showLabels: true };
+											return { columns: 2, aspectRatio: 'square', showLabels: true, imagePadding: false };
 										}
 									})()}
 									{@const aspectClass = config.aspectRatio === 'portrait' ? 'aspect-[3/4]' : config.aspectRatio === 'landscape' ? 'aspect-video' : 'aspect-square'}
@@ -647,7 +647,7 @@
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block p-2 text-xs font-medium transition-transform hover:scale-[1.02]"
+												class="link-button block text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? 'p-2' : 'overflow-hidden'}"
 												style="
 													background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 													color: {$appearance?.blockStyle?.text || 'white'};
@@ -661,11 +661,12 @@
 													<img 
 														src={link.icon_url} 
 														alt="" 
-														class="w-full object-cover rounded-lg {aspectClass}"
+														class="w-full object-cover {aspectClass}"
+														style="{config.imagePadding ? 'border-radius: 0.5rem;' : config.showLabels ? `border-radius: ${blockBorderRadius} ${blockBorderRadius} 0 0;` : `border-radius: ${blockBorderRadius};`}"
 													/>
 												{/if}
 												{#if config.showLabels}
-													<div class="w-full text-center truncate text-[10px] mt-1">
+													<div class="w-full text-center truncate text-[10px] {config.imagePadding ? 'mt-1' : 'mt-1 px-2 pb-1'}">
 														{headline}
 													</div>
 												{/if}
@@ -677,9 +678,9 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.card || { imagePosition: 'left', imageSize: 50, showSubtitle: true };
+											return parsed?.card || { imagePosition: 'left', imageSize: 50, imageAspect: 'square', showSubtitle: true, imagePadding: false };
 										} catch {
-											return { imagePosition: 'left', imageSize: 50, showSubtitle: true };
+											return { imagePosition: 'left', imageSize: 50, imageAspect: 'square', showSubtitle: true, imagePadding: false };
 										}
 									})()}
 									{@const cardShadow = resolveLayoutShadow(
@@ -692,6 +693,7 @@
 										$appearance?.blockStyle?.border,
 										$appearance?.tokens?.blockBase || '#3b82f6'
 									)}
+									{@const aspectClass = config.imageAspect === 'portrait' ? 'aspect-[3/4]' : config.imageAspect === 'landscape' ? 'aspect-video' : 'aspect-square'}
 									
 									<div class="flex flex-col" style="gap: {blockGap}px;">
 										{#each groupLinks as link, index}
@@ -706,7 +708,7 @@
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block w-full transition-transform hover:scale-[1.02] overflow-hidden"
+												class="link-button block w-full transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'}"
 												style="
 													background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 													color: {$appearance?.blockStyle?.text || 'white'};
@@ -716,9 +718,9 @@
 													border-radius: {blockBorderRadius};
 												"
 											>
-												<div class="flex {isReversed ? 'flex-row-reverse' : ''}">
+												<div class="flex {isReversed ? 'flex-row-reverse' : ''} {config.imagePadding ? 'p-2 gap-2' : ''}">
 													{#if link.icon_url}
-														<div style="width: {imageWidth}%; flex-shrink: 0;">
+														<div class="{aspectClass} {config.imagePadding ? 'rounded-lg overflow-hidden' : ''}" style="width: {imageWidth}%; flex-shrink: 0;">
 															<img 
 																src={link.icon_url} 
 																alt="" 
@@ -727,7 +729,7 @@
 														</div>
 													{/if}
 													<div 
-														class="flex flex-col justify-center p-4"
+														class="flex flex-col justify-center {config.imagePadding ? 'pr-2' : 'p-4'}"
 														style="width: {link.icon_url ? textWidth : 100}%;"
 													>
 														<div class="font-semibold text-sm">{headline}</div>

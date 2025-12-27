@@ -5,12 +5,14 @@
 		columns: 1 | 2 | 3 | 4;
 		aspectRatio: 'square' | 'portrait' | 'landscape';
 		showLabels: boolean;
+		imagePadding: boolean; // Add padding around image (inset style)
 		shadowEnabled?: boolean; // undefined = follow theme, true = force ON, false = force OFF
 		borderEnabled?: boolean; // undefined = follow theme, true = force ON, false = force OFF
 	} = {
 		columns: 2,
 		aspectRatio: 'square',
-		showLabels: true
+		showLabels: true,
+		imagePadding: false
 	};
 	
 	export let themeHasShadow: boolean = false; // Does current theme have shadow?
@@ -116,6 +118,23 @@
 			>
 				<span
 					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.showLabels
+						? 'translate-x-6'
+						: 'translate-x-1'}"
+				></span>
+			</button>
+		</div>
+
+		<!-- Image Padding -->
+		<div class="flex items-center justify-between">
+			<label class="text-xs font-medium text-gray-700">Image Padding</label>
+			<button
+				on:click={() => updateConfig({ imagePadding: !config.imagePadding })}
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {config.imagePadding
+					? 'bg-gray-900'
+					: 'bg-gray-200'}"
+			>
+				<span
+					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.imagePadding
 						? 'translate-x-6'
 						: 'translate-x-1'}"
 				></span>

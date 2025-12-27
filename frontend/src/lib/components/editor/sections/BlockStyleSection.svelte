@@ -203,21 +203,22 @@
 		<!-- Button Style -->
 		<div>
 			<h3 class="text-sm font-medium text-gray-900 mb-3">Button style</h3>
-			<div class="grid grid-cols-6 gap-3">
+			<div class="grid grid-cols-4 gap-3 p-1">
 				{#each recipes as recipeId}
+					{@const isSelected = currentRecipeId === recipeId}
 					<button
 						on:click={() => selectRecipe(recipeId)}
-						class="group rounded-xl overflow-hidden border-2 transition-all hover:scale-105 {currentRecipeId === recipeId ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'}"
+						class="group relative rounded-lg overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
 					>
-						<!-- Preview -->
+						<!-- Preview Container -->
 						<div
-							class="aspect-square p-3 flex items-center justify-center relative"
-							style="background: {previewBackground};"
+							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-blue-500 bg-blue-50/30' : 'border-gray-200 bg-white'}"
+							style="background: {isSelected ? 'linear-gradient(to bottom, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.02))' : previewBackground};"
 						>
 							{#if $appearance?.tokens}
 								{@const displayStyle = displayStyles[recipeId]}
 								<div
-									class="w-full h-6 transition-all flex items-center justify-center {shapeClass} relative z-10"
+									class="w-full h-7 transition-all flex items-center justify-center {shapeClass} relative z-10"
 									style="
 										background-color: {displayStyle.backgroundColor};
 										color: {displayStyle.color};
@@ -227,14 +228,14 @@
 										-webkit-backdrop-filter: {displayStyle.backdropFilter || 'none'};
 									"
 								>
-									<span class="text-[10px] font-medium">Text</span>
+									<span class="text-[10px] font-semibold">Button</span>
 								</div>
 							{/if}
 						</div>
 						
-						<!-- Name & Description -->
-						<div class="py-2 px-2 bg-white border-t border-gray-100">
-							<p class="text-xs font-semibold text-gray-900 truncate text-center">
+						<!-- Name Label -->
+						<div class="py-2 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
+							<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
 								{getBlockStyleRecipeName(recipeId)}
 							</p>
 						</div>

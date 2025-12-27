@@ -5,62 +5,98 @@
 
 	const dispatch = createEventDispatcher();
 
-	const layouts = [
-		{
-			id: 'list',
-			name: 'Classic',
-			icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="2" rx="1"/><rect x="4" y="11" width="16" height="2" rx="1"/><rect x="4" y="17" width="16" height="2" rx="1"/></svg>`
-		},
-		{
-			id: 'carousel',
-			name: 'Carousel',
-			icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="5" height="10" rx="1"/><rect x="9.5" y="7" width="5" height="10" rx="1"/><rect x="17" y="7" width="5" height="10" rx="1"/></svg>`
-		},
-		{
-			id: 'grid',
-			name: 'Image grid',
-			icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="5.5" height="5.5" rx="1"/><rect x="10.25" y="3" width="5.5" height="5.5" rx="1"/><rect x="17.5" y="3" width="5.5" height="5.5" rx="1"/><rect x="3" y="10.25" width="5.5" height="5.5" rx="1"/><rect x="10.25" y="10.25" width="5.5" height="5.5" rx="1"/><rect x="17.5" y="10.25" width="5.5" height="5.5" rx="1"/><rect x="3" y="17.5" width="5.5" height="5.5" rx="1"/><rect x="10.25" y="17.5" width="5.5" height="5.5" rx="1"/><rect x="17.5" y="17.5" width="5.5" height="5.5" rx="1"/></svg>`
-		},
-		{
-			id: 'cards',
-			name: 'Card',
-			icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="7" width="8" height="3" rx="0.5"/><rect x="13" y="12" width="8" height="3" rx="0.5"/></svg>`
-		}
-	];
-
 	function selectLayout(layoutId: typeof selectedLayout) {
 		dispatch('select', layoutId);
 	}
 </script>
 
 <div class="py-6">
-	<h3 class="text-lg font-semibold text-gray-900 mb-4">Layout</h3>
+	<h3 class="text-sm font-medium text-gray-900 mb-3">Layout</h3>
 	
-	<div class="grid grid-cols-2 gap-4">
-		{#each layouts as layout}
-			<button
-				on:click={() => selectLayout(layout.id)}
-				class="relative p-6 rounded-xl border-2 transition-all hover:shadow-md {selectedLayout === layout.id 
-					? 'border-gray-900 bg-gray-50' 
-					: 'border-gray-200 hover:border-gray-300'}"
-			>
-				<!-- Icon -->
-				<div class="flex items-center justify-center mb-3 text-gray-700">
-					{@html layout.icon}
-				</div>
-				
-				<!-- Name -->
-				<p class="text-sm font-medium text-gray-900 text-center">{layout.name}</p>
-				
-				<!-- Selected indicator -->
-				{#if selectedLayout === layout.id}
-					<div class="absolute top-3 right-3 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
-						<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-						</svg>
+	<div class="grid grid-cols-4 gap-3 p-1">
+		<!-- Classic Layout -->
+		<button
+			on:click={() => selectLayout('list')}
+			class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLayout === 'list' 
+				? 'bg-blue-50 ring-2 ring-blue-500' 
+				: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
+		>
+			<!-- Preview -->
+			<div class="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 rounded-md p-2.5 flex flex-col gap-1.5 shadow-sm">
+				<div class="w-full h-3 bg-gray-300 rounded"></div>
+				<div class="w-full h-3 bg-gray-300 rounded"></div>
+				<div class="w-full h-3 bg-gray-300 rounded"></div>
+				<div class="w-full h-3 bg-gray-300 rounded"></div>
+				<div class="w-full h-3 bg-gray-300 rounded"></div>
+			</div>
+			<p class="text-xs font-semibold {selectedLayout === 'list' ? 'text-blue-700' : 'text-gray-700'}">Classic</p>
+		</button>
+
+		<!-- Carousel Layout -->
+		<button
+			on:click={() => selectLayout('carousel')}
+			class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLayout === 'carousel' 
+				? 'bg-blue-50 ring-2 ring-blue-500' 
+				: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
+		>
+			<!-- Preview -->
+			<div class="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 rounded-md p-2.5 flex gap-1.5 shadow-sm">
+				<div class="flex-1 bg-gray-300 rounded"></div>
+				<div class="flex-1 bg-gray-300 rounded"></div>
+				<div class="flex-1 bg-gray-300 rounded"></div>
+			</div>
+			<p class="text-xs font-semibold {selectedLayout === 'carousel' ? 'text-blue-700' : 'text-gray-700'}">Carousel</p>
+		</button>
+
+		<!-- Grid Layout -->
+		<button
+			on:click={() => selectLayout('grid')}
+			class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLayout === 'grid' 
+				? 'bg-blue-50 ring-2 ring-blue-500' 
+				: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
+		>
+			<!-- Preview -->
+			<div class="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 rounded-md p-2.5 grid grid-cols-2 gap-1.5 shadow-sm">
+				<div class="bg-gray-300 rounded"></div>
+				<div class="bg-gray-300 rounded"></div>
+				<div class="bg-gray-300 rounded"></div>
+				<div class="bg-gray-300 rounded"></div>
+			</div>
+			<p class="text-xs font-semibold {selectedLayout === 'grid' ? 'text-blue-700' : 'text-gray-700'}">Grid</p>
+		</button>
+
+		<!-- Card Layout -->
+		<button
+			on:click={() => selectLayout('cards')}
+			class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLayout === 'cards' 
+				? 'bg-blue-50 ring-2 ring-blue-500' 
+				: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
+		>
+			<!-- Preview -->
+			<div class="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 rounded-md p-2.5 flex flex-col gap-1.5 shadow-sm">
+				<div class="flex gap-1.5 items-center">
+					<div class="w-8 h-8 bg-blue-300 rounded"></div>
+					<div class="flex-1 flex flex-col gap-1">
+						<div class="w-full h-1.5 bg-gray-300 rounded"></div>
+						<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
 					</div>
-				{/if}
-			</button>
-		{/each}
+				</div>
+				<div class="flex gap-1.5 items-center">
+					<div class="w-8 h-8 bg-blue-300 rounded"></div>
+					<div class="flex-1 flex flex-col gap-1">
+						<div class="w-full h-1.5 bg-gray-300 rounded"></div>
+						<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
+					</div>
+				</div>
+				<div class="flex gap-1.5 items-center">
+					<div class="w-8 h-8 bg-blue-300 rounded"></div>
+					<div class="flex-1 flex flex-col gap-1">
+						<div class="w-full h-1.5 bg-gray-300 rounded"></div>
+						<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
+					</div>
+				</div>
+			</div>
+			<p class="text-xs font-semibold {selectedLayout === 'cards' ? 'text-blue-700' : 'text-gray-700'}">Card</p>
+		</button>
 	</div>
 </div>

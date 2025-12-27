@@ -4,13 +4,17 @@
 	export let config: {
 		imagePosition: 'left' | 'right' | 'alternate';
 		imageSize: 40 | 50 | 60;
+		imageAspect: 'square' | 'landscape' | 'portrait'; // Image aspect ratio
 		showSubtitle: boolean;
+		imagePadding: boolean; // Add padding around image (inset style)
 		shadowEnabled?: boolean;
 		borderEnabled?: boolean;
 	} = {
 		imagePosition: 'left',
 		imageSize: 50,
-		showSubtitle: true
+		imageAspect: 'square',
+		showSubtitle: true,
+		imagePadding: false
 	};
 	
 	export let themeHasShadow: boolean = false;
@@ -120,6 +124,46 @@
 			</div>
 		</div>
 
+		<!-- Image Aspect Ratio -->
+		<div>
+			<label class="block text-xs font-medium text-gray-700 mb-2">Image Aspect</label>
+			<div class="flex gap-2">
+				<button
+					on:click={() => updateConfig({ imageAspect: 'square' })}
+					class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all {config.imageAspect === 'square'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="flex flex-col items-center gap-1">
+						<div class="w-4 h-4 border-2 border-current rounded"></div>
+						<span class="text-xs">Square</span>
+					</div>
+				</button>
+				<button
+					on:click={() => updateConfig({ imageAspect: 'landscape' })}
+					class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all {config.imageAspect === 'landscape'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="flex flex-col items-center gap-1">
+						<div class="w-5 h-3 border-2 border-current rounded"></div>
+						<span class="text-xs">Landscape</span>
+					</div>
+				</button>
+				<button
+					on:click={() => updateConfig({ imageAspect: 'portrait' })}
+					class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all {config.imageAspect === 'portrait'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="flex flex-col items-center gap-1">
+						<div class="w-3 h-4 border-2 border-current rounded"></div>
+						<span class="text-xs">Portrait</span>
+					</div>
+				</button>
+			</div>
+		</div>
+
 		<!-- Show Subtitle -->
 		<div class="flex items-center justify-between">
 			<label class="text-xs font-medium text-gray-700">Show Subtitle</label>
@@ -131,6 +175,23 @@
 			>
 				<span
 					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.showSubtitle
+						? 'translate-x-6'
+						: 'translate-x-1'}"
+				></span>
+			</button>
+		</div>
+
+		<!-- Image Padding -->
+		<div class="flex items-center justify-between">
+			<label class="text-xs font-medium text-gray-700">Image Padding</label>
+			<button
+				on:click={() => updateConfig({ imagePadding: !config.imagePadding })}
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {config.imagePadding
+					? 'bg-gray-900'
+					: 'bg-gray-200'}"
+			>
+				<span
+					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {config.imagePadding
 						? 'translate-x-6'
 						: 'translate-x-1'}"
 				></span>
