@@ -438,7 +438,7 @@
 						
 						<!-- Content below cover (only for non-avatar-cover) -->
 						{#if !isAvatarCover}
-							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 16 : 0}px; text-align: {header.contentAlign};">
+							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
 								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$page?.title || 'Your Name'}</h1>
 								{#if header.showBio && $page?.bio}
 									<p 
@@ -462,7 +462,7 @@
 								<img 
 									src={$page.avatar_url} 
 									alt="Avatar" 
-									class="header-avatar object-cover mb-3 {header?.avatarBorder !== false ? 'border-4' : ''}"
+									class="header-avatar object-cover mb-2 {header?.avatarBorder !== false ? 'border-4' : ''}"
 									style="
 										width: {avatarWidth}px;
 										height: {avatarHeight}px;
@@ -472,7 +472,7 @@
 								/>
 							{:else}
 								<div 
-									class="header-avatar mb-3 flex items-center justify-center text-white font-bold {header?.avatarBorder !== false ? 'border-4' : ''}"
+									class="header-avatar mb-2 flex items-center justify-center text-white font-bold {header?.avatarBorder !== false ? 'border-4' : ''}"
 									style="
 										width: {avatarWidth}px;
 										height: {avatarHeight}px;
@@ -637,6 +637,11 @@
 										$appearance?.blockStyle?.border,
 										$appearance?.tokens?.blockBase || '#3b82f6'
 									)}
+									{@const imageRadius = config.imagePadding 
+										? '0.5rem' 
+										: config.showLabels 
+											? `${blockBorderRadius} ${blockBorderRadius} 0 0` 
+											: blockBorderRadius}
 									
 									<div class="grid gap-2" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr));">
 										{#each groupLinks as link}
@@ -662,7 +667,7 @@
 														src={link.icon_url} 
 														alt="" 
 														class="w-full object-cover {aspectClass}"
-														style="{config.imagePadding ? 'border-radius: 0.5rem;' : config.showLabels ? `border-radius: ${blockBorderRadius} ${blockBorderRadius} 0 0;` : `border-radius: ${blockBorderRadius};`}"
+														style="border-radius: {imageRadius};"
 													/>
 												{/if}
 												{#if config.showLabels}
@@ -774,7 +779,7 @@
 											href={link.url}
 											target="_blank"
 											rel="noopener"
-											class="link-button block w-full py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
+											class="link-button block w-full py-1.5 px-3 text-sm font-medium transition-transform hover:scale-[1.02]"
 											style="
 												background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 												color: {$appearance?.blockStyle?.text || 'white'};
