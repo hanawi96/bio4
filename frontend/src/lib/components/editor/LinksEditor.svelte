@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { appearance } from '$lib/stores/appearance';
+	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { resolveShadow } from '$lib/appearance/tokenResolver';
 	import LinkCard from './LinkCard.svelte';
 	import LinkForm from './LinkForm.svelte';
@@ -22,24 +23,39 @@
 	type TabType = 'links' | 'layouts';
 	let activeTab: TabType = 'links';
 
+	// Get current recipe ID (shared for multiple checks)
+	$: currentRecipeId = $appearanceState?.overrides?.['block.stylePreset'] 
+		|| $appearance?.theme?.config?.defaults?.blockStylePreset 
+		|| 'solid';
+
+	// Check if current recipe is Neon (uses glow instead of shadow)
+	$: isNeonRecipe = currentRecipeId === 'neon';
+
 	// Check if theme has shadow or glow (neon)
 	$: themeHasShadow = (() => {
+		// Neon uses glow, not shadow
+		if (isNeonRecipe) {
+			return false;
+		}
+		
+		// First check if there's a shadow override from BlockStyleSection
+		const shadowOverride = $appearanceState?.overrides?.['block.shadow'];
+		if (shadowOverride && shadowOverride !== 'none') {
+			return resolveShadow(shadowOverride, $appearance?.tokens?.shadowColor || '#000000') !== 'none';
+		}
+		
+		// Then check recipe default shadow
 		if ($appearance?.blockStyle?.shadow) {
 			return resolveShadow($appearance.blockStyle.shadow, $appearance?.tokens?.shadowColor || '#000000') !== 'none';
 		}
-		if ($appearance?.blockStyle?.glow) {
-			return true; // Neon has glow
-		}
+		
 		return false;
 	})();
 
 	// Check if theme has border
 	$: themeHasBorder = (() => {
 		const border = $appearance?.blockStyle?.border;
-		if (border && border !== 'none') {
-			return true;
-		}
-		return false;
+		return border && border !== 'none';
 	})();
 
 	// Parse layout config with 3-state shadow/border logic
@@ -282,6 +298,7 @@
 						config={gridConfig}
 						themeHasShadow={themeHasShadow}
 						themeHasBorder={themeHasBorder}
+						isNeonRecipe={isNeonRecipe}
 						on:change={handleGridConfigChange}
 					/>
 				{:else if layoutType === 'list'}
@@ -289,6 +306,7 @@
 						config={classicConfig}
 						themeHasShadow={themeHasShadow}
 						themeHasBorder={themeHasBorder}
+						isNeonRecipe={isNeonRecipe}
 						on:change={handleClassicConfigChange}
 					/>
 				{:else if layoutType === 'cards'}
@@ -296,6 +314,7 @@
 						config={cardConfig}
 						themeHasShadow={themeHasShadow}
 						themeHasBorder={themeHasBorder}
+						isNeonRecipe={isNeonRecipe}
 						on:change={handleCardConfigChange}
 					/>
 				{/if}

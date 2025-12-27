@@ -22,6 +22,17 @@
 	// Select recipe
 	function selectRecipe(recipeId: BlockStylePresetId) {
 		updateAppearance('block.stylePreset', recipeId);
+		
+		// Special case: Brutal always uses hard shadow
+		if (recipeId === 'brutal') {
+			const hardShadow = `4px 4px 0px ${$appearance?.tokens?.shadowColor || '#000000'}`;
+			updateAppearance('block.shadow', hardShadow);
+		}
+		// Clear shadow override for recipes that don't support custom shadows
+		else if (recipeId === 'neon' || recipeId === 'glass') {
+			// Neon uses glow, Glass uses blur - clear any shadow override
+			updateAppearance('block.shadow', 'none');
+		}
 	}
 
 	// Get preview style for each recipe (resolve with current theme tokens)
@@ -58,53 +69,92 @@
 	// Shadow options
 	const shadowOptions = [
 		{ id: 'none', label: 'None', value: 'none' },
-		{ id: 'subtle', label: 'Subtle', value: '0 1px 2px rgba(0,0,0,0.05)' },
-		{ id: 'strong', label: 'Strong', value: '0 4px 6px rgba(0,0,0,0.1)' },
+		{ id: 'subtle', label: 'Subtle', value: '0 1px 3px rgba(0,0,0,0.12)' },
+		{ id: 'strong', label: 'Strong', value: '0 4px 8px rgba(0,0,0,0.16)' },
 		{ id: 'hard', label: 'Hard', value: '4px 4px 0px rgba(0,0,0,1)' }
 	];
 
 	$: currentShadow = (() => {
-		// If on Brutal recipe, always show Hard as selected
-		if (currentRecipeId === 'brutal') {
-			return '4px 4px 0px rgba(0,0,0,1)';
+		// Special case: Neon uses glow, not shadow - always return 'none'
+		if (currentRecipeId === 'neon') {
+			return 'none';
 		}
 		
-		// Otherwise use override or theme default
-		return $appearanceState.overrides?.['block.shadow'] 
-			|| $appearance?.theme?.config?.defaults?.blockShadow 
-			|| 'none';
+		// Use override first, then theme default, then recipe default
+		const override = $appearanceState.overrides?.['block.shadow'];
+		const themeDefault = $appearance?.theme?.config?.defaults?.blockShadow;
+		const recipeDefault = $appearance?.blockStyle?.shadow;
+		
+		// Special case: If Brutal recipe and no override, ensure hard shadow is shown
+		if (currentRecipeId === 'brutal' && !override) {
+			return recipeDefault || `4px 4px 0px ${$appearance?.tokens?.shadowColor || '#000000'}`;
+		}
+		
+		return override || themeDefault || recipeDefault || 'none';
 	})();
 
 	// Track current shadow type (none/subtle/strong/hard)
+	// Compare with actual shadowOptions values for accuracy
 	$: currentShadowType = (() => {
 		const shadow = currentShadow;
 		if (!shadow || shadow === 'none') return 'none';
-		if (shadow.includes('4px 4px 0px')) return 'hard';
-		if (shadow.includes('0 4px 6px')) return 'strong';
-		if (shadow.includes('0 1px 2px')) return 'subtle';
-		return 'none';
+		
+		// Find matching shadow option by comparing values
+		const matchedOption = shadowOptions.find(opt => {
+			if (opt.value === 'none') return false;
+			// For hard shadow, check if it contains the pattern (handles dynamic shadowColor)
+			if (opt.id === 'hard') {
+				return shadow.includes('4px 4px 0px');
+			}
+			// For other shadows, do exact match
+			return shadow === opt.value;
+		});
+		
+		return matchedOption ? matchedOption.id : 'none';
 	})();
 
 	// Get current block style from appearance (for applying to preview)
 	$: currentBlockStyle = $appearance?.blockStyle;
 
-	// Memoize display styles for all recipes (reactive)
-	$: displayStyles = recipes.reduce((acc, recipeId) => {
-		if (recipeId === currentRecipeId && currentBlockStyle) {
-			// For current recipe, use resolved block style with shadow override
-			const shadowToUse = currentShadow !== 'none' ? currentShadow : (currentBlockStyle.shadow || '');
+	// Helper: Get display style for a recipe
+	function getDisplayStyle(recipeId: BlockStylePresetId): any {
+		const isCurrentRecipe = recipeId === currentRecipeId;
+		
+		if (isCurrentRecipe && currentBlockStyle) {
+			// For current recipe, use resolved block style
+			const shadowToUse = recipeId === 'neon' 
+				? '' // Neon: ignore shadow override, only use glow
+				: (currentShadow !== 'none' ? currentShadow : (currentBlockStyle.shadow || ''));
+			
 			const resolvedShadow = resolveShadow(shadowToUse, $appearance?.tokens?.shadowColor || '#000000');
 			
-			acc[recipeId] = {
+			return {
 				backgroundColor: currentBlockStyle.fill,
 				color: currentBlockStyle.text,
 				border: currentBlockStyle.border ? `1px solid ${currentBlockStyle.border}` : 'none',
 				boxShadow: resolvedShadow !== 'none' ? resolvedShadow : (currentBlockStyle.glow ? `0 0 20px ${currentBlockStyle.glow}` : 'none'),
 				backdropFilter: currentBlockStyle.blur ? `blur(${currentBlockStyle.blur}px)` : 'none'
 			};
-		} else {
-			acc[recipeId] = getPreviewStyle(recipeId);
 		}
+		
+		// For other recipes, get base style
+		const baseStyle = getPreviewStyle(recipeId);
+		
+		// Apply shadow overrides based on recipe type
+		if (recipeId === 'brutal') {
+			// Brutal: always show hard shadow
+			baseStyle.boxShadow = `4px 4px 0px ${$appearance?.tokens?.shadowColor || '#000000'}`;
+		} else if (recipeId !== 'neon' && currentShadow && currentShadow !== 'none') {
+			// Other recipes (except Neon): apply shadow override
+			baseStyle.boxShadow = resolveShadow(currentShadow, $appearance?.tokens?.shadowColor || '#000000');
+		}
+		
+		return baseStyle;
+	}
+
+	// Memoize display styles for all recipes (reactive)
+	$: displayStyles = recipes.reduce((acc, recipeId) => {
+		acc[recipeId] = getDisplayStyle(recipeId);
 		return acc;
 	}, {} as Record<BlockStylePresetId, any>);
 
@@ -137,17 +187,6 @@
 		// If selecting hard shadow, use shadowColor token instead of fixed black
 		if (shadowId === 'hard' && $appearance?.tokens?.shadowColor) {
 			shadowValue = `4px 4px 0px ${$appearance.tokens.shadowColor}`;
-		}
-		
-		// If currently on Brutal and user selects a different shadow, switch to Solid
-		if (currentRecipeId === 'brutal' && shadowId !== 'hard') {
-			updateAppearance('block.stylePreset', 'solid');
-		}
-		
-		// If currently on Solid and user selects Hard shadow, switch to Brutal (Brutal = Solid + Hard)
-		if (currentRecipeId === 'solid' && shadowId === 'hard') {
-			updateAppearance('block.stylePreset', 'brutal');
-			return; // Don't set shadow override, let Brutal use its built-in shadow
 		}
 		
 		updateAppearance('block.shadow', shadowValue);
@@ -228,15 +267,26 @@
 		{#if currentRecipeId !== 'neon'}
 			<div>
 				<h3 class="text-sm font-medium text-gray-900 mb-3">Shadows</h3>
+				{#if currentRecipeId === 'brutal'}
+					<p class="text-xs text-gray-500 mb-2">Brutal style uses hard shadow by default</p>
+				{/if}
 				<div class="grid grid-cols-4 gap-2">
 					{#each shadowOptions as shadow}
+						{@const isDisabled = currentRecipeId === 'brutal' && shadow.id !== 'hard'}
+						{@const isActive = currentShadowType === shadow.id}
 						<button
 							on:click={() => selectShadow(shadow.id)}
-							class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all hover:scale-105 {currentShadowType === shadow.id
-								? 'border-blue-500 bg-blue-50 text-blue-700'
-								: 'border-gray-200 text-gray-700 hover:border-gray-300'}"
+							disabled={isDisabled}
+							class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {isDisabled 
+								? 'opacity-50 cursor-not-allowed border-gray-200 text-gray-400'
+								: isActive
+									? 'border-blue-500 bg-blue-50 text-blue-700 hover:scale-105'
+									: 'border-gray-200 text-gray-700 hover:border-gray-300 hover:scale-105'}"
 						>
 							{shadow.label}
+							{#if isActive && currentRecipeId === 'brutal'}
+								<span class="ml-1">✓</span>
+							{/if}
 						</button>
 					{/each}
 				</div>

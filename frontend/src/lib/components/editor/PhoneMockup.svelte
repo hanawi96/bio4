@@ -175,10 +175,48 @@
 		|| 'none';
 	
 	// Resolve shadow with shadowColor token (for hard shadows)
-	$: resolvedBlockShadow = resolveShadow(
-		$appearance?.blockStyle?.shadow || blockShadow,
-		tokens?.shadowColor || '#000000'
-	);
+	// Special handling: If recipe has glow (Neon), ignore shadow override
+	$: resolvedBlockShadow = (() => {
+		// If current recipe has glow (Neon), don't use shadow
+		if ($appearance?.blockStyle?.glow) {
+			return 'none';
+		}
+		// Otherwise use recipe shadow or override
+		return resolveShadow(
+			$appearance?.blockStyle?.shadow || blockShadow,
+			tokens?.shadowColor || '#000000'
+		);
+	})();
+
+	// Helper function: Resolve layout shadow (DRY - used by grid, list, card)
+	function resolveLayoutShadow(
+		shadowEnabled: boolean | undefined,
+		resolvedBlockShadow: string,
+		glow: string | undefined
+	): string {
+		// If recipe has glow (Neon), always show glow regardless of shadowEnabled
+		if (glow) {
+			return `0 0 20px ${glow}`;
+		}
+		
+		// For non-glow recipes, handle shadow normally
+		if (shadowEnabled === false) return 'none';
+		if (resolvedBlockShadow !== 'none') return resolvedBlockShadow;
+		if (shadowEnabled === true) return '0 2px 8px rgba(0,0,0,0.1)'; // Force ON
+		return 'none';
+	}
+
+	// Helper function: Resolve layout border (DRY - used by grid, list, card)
+	function resolveLayoutBorder(
+		borderEnabled: boolean | undefined,
+		themeBorder: string | undefined,
+		blockBase: string
+	): string {
+		if (borderEnabled === false) return 'none';
+		if (themeBorder && themeBorder !== 'none') return `1px solid ${themeBorder}`;
+		if (borderEnabled === true) return `1px solid ${blockBase}`;
+		return 'none';
+	}
 
 	// Page settings - read from appearanceState.overrides
 	$: showShareButton = ($appearanceState.overrides?.['page.showShareButton'] as boolean) ?? true;
@@ -589,46 +627,16 @@
 										}
 									})()}
 									{@const aspectClass = config.aspectRatio === 'portrait' ? 'aspect-[3/4]' : config.aspectRatio === 'landscape' ? 'aspect-video' : 'aspect-square'}
-									{@const gridShadow = (() => {
-										// 3-state logic:
-										// undefined/null = follow theme
-										// true = force ON (use theme if available, else default)
-										// false = force OFF
-										if (config.shadowEnabled === false) {
-											return 'none';
-										}
-										// Check for shadow first
-										if (resolvedBlockShadow !== 'none') {
-											return resolvedBlockShadow; // Follow theme shadow
-										}
-										// Check for glow (neon effect)
-										if ($appearance?.blockStyle?.glow) {
-											return `0 0 20px ${$appearance.blockStyle.glow}`; // Follow theme glow
-										}
-										// Force ON with default shadow
-										if (config.shadowEnabled === true) {
-											return '0 2px 8px rgba(0,0,0,0.1)';
-										}
-										return 'none'; // undefined + no theme shadow/glow = none
-									})()}
-									{@const gridBorder = (() => {
-										// 3-state logic:
-										// undefined/null = follow theme
-										// true = force ON (use blockBase color)
-										// false = force OFF
-										if (config.borderEnabled === false) {
-											return 'none';
-										}
-										// Follow theme border
-										if ($appearance?.blockStyle?.border && $appearance.blockStyle.border !== 'none') {
-											return `1px solid ${$appearance.blockStyle.border}`;
-										}
-										// Force ON: use blockBase color (like soft/outline styles)
-										if (config.borderEnabled === true) {
-											return `1px solid ${$appearance?.tokens?.blockBase || '#3b82f6'}`;
-										}
-										return 'none'; // undefined + no theme border = none
-									})()}
+									{@const gridShadow = resolveLayoutShadow(
+										config.shadowEnabled,
+										resolvedBlockShadow,
+										$appearance?.blockStyle?.glow
+									)}
+									{@const gridBorder = resolveLayoutBorder(
+										config.borderEnabled,
+										$appearance?.blockStyle?.border,
+										$appearance?.tokens?.blockBase || '#3b82f6'
+									)}
 									
 									<div class="grid gap-2" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr));">
 										{#each groupLinks as link}
@@ -674,33 +682,16 @@
 											return { imagePosition: 'left', imageSize: 50, showSubtitle: true };
 										}
 									})()}
-									{@const cardShadow = (() => {
-										if (config.shadowEnabled === false) {
-											return 'none';
-										}
-										if (resolvedBlockShadow !== 'none') {
-											return resolvedBlockShadow;
-										}
-										if ($appearance?.blockStyle?.glow) {
-											return `0 0 20px ${$appearance.blockStyle.glow}`;
-										}
-										if (config.shadowEnabled === true) {
-											return '0 2px 8px rgba(0,0,0,0.1)';
-										}
-										return 'none';
-									})()}
-									{@const cardBorder = (() => {
-										if (config.borderEnabled === false) {
-											return 'none';
-										}
-										if ($appearance?.blockStyle?.border && $appearance.blockStyle.border !== 'none') {
-											return `1px solid ${$appearance.blockStyle.border}`;
-										}
-										if (config.borderEnabled === true) {
-											return `1px solid ${$appearance?.tokens?.blockBase || '#3b82f6'}`;
-										}
-										return 'none';
-									})()}
+									{@const cardShadow = resolveLayoutShadow(
+										config.shadowEnabled,
+										resolvedBlockShadow,
+										$appearance?.blockStyle?.glow
+									)}
+									{@const cardBorder = resolveLayoutBorder(
+										config.borderEnabled,
+										$appearance?.blockStyle?.border,
+										$appearance?.tokens?.blockBase || '#3b82f6'
+									)}
 									
 									<div class="flex flex-col" style="gap: {blockGap}px;">
 										{#each groupLinks as link, index}
@@ -761,50 +752,16 @@
 									{@const iconShapeClass = config.iconShape === 'circle' ? 'rounded-full' : config.iconShape === 'rounded' ? 'rounded-lg' : ''}
 									{@const showIcon = config.iconPosition !== 'none'}
 									{@const iconOnTop = config.iconPosition === 'top'}
-									{@const listShadow = (() => {
-										// 3-state logic:
-										// undefined/null = follow theme
-										// true = force ON (use theme if available, else default)
-										// false = force OFF
-										if (config.shadowEnabled === false) {
-											return 'none';
-										}
-										// Check for shadow first
-										if (resolvedBlockShadow !== 'none') {
-											return resolvedBlockShadow; // Follow theme shadow
-										}
-										// Check for glow (neon effect)
-										if ($appearance?.blockStyle?.glow) {
-											return `0 0 20px ${$appearance.blockStyle.glow}`; // Follow theme glow
-										}
-										// Force ON with default shadow - BUT respect if theme explicitly set to 'none'
-										if (config.shadowEnabled === true) {
-											// If theme explicitly disabled shadow (blockShadow === 'none'), respect it
-											if (blockShadow === 'none') {
-												return 'none';
-											}
-											return '0 2px 8px rgba(0,0,0,0.1)';
-										}
-										return 'none'; // undefined + no theme shadow/glow = none
-									})()}
-									{@const listBorder = (() => {
-										// 3-state logic:
-										// undefined/null = follow theme
-										// true = force ON (use blockBase color)
-										// false = force OFF
-										if (config.borderEnabled === false) {
-											return 'none';
-										}
-										// Follow theme border
-										if ($appearance?.blockStyle?.border && $appearance.blockStyle.border !== 'none') {
-											return `1px solid ${$appearance.blockStyle.border}`;
-										}
-										// Force ON: use blockBase color (like soft/outline styles)
-										if (config.borderEnabled === true) {
-											return `1px solid ${$appearance?.tokens?.blockBase || '#3b82f6'}`;
-										}
-										return 'none'; // undefined + no theme border = none
-									})()}
+									{@const listShadow = resolveLayoutShadow(
+										config.shadowEnabled,
+										resolvedBlockShadow,
+										$appearance?.blockStyle?.glow
+									)}
+									{@const listBorder = resolveLayoutBorder(
+										config.borderEnabled,
+										$appearance?.blockStyle?.border,
+										$appearance?.tokens?.blockBase || '#3b82f6'
+									)}
 									
 									{#each groupLinks as link}
 										{@const parts = link.title.split(' - ')}

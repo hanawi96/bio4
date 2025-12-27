@@ -15,6 +15,7 @@
 	
 	export let themeHasShadow: boolean = false; // Does current theme have shadow?
 	export let themeHasBorder: boolean = false; // Does current theme have border?
+	export let isNeonRecipe: boolean = false; // Is current recipe Neon (uses glow)?
 
 	const dispatch = createEventDispatcher();
 
@@ -140,9 +141,12 @@
 						updateConfig({ shadowEnabled: true });
 					}
 				}}
-				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {(config.shadowEnabled === undefined && themeHasShadow) || config.shadowEnabled === true
-					? 'bg-gray-900'
-					: 'bg-gray-200'}"
+				disabled={isNeonRecipe}
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {isNeonRecipe 
+					? 'opacity-50 cursor-not-allowed bg-gray-200'
+					: (config.shadowEnabled === undefined && themeHasShadow) || config.shadowEnabled === true
+						? 'bg-gray-900'
+						: 'bg-gray-200'}"
 			>
 				<span
 					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {(config.shadowEnabled === undefined && themeHasShadow) || config.shadowEnabled === true
@@ -151,7 +155,9 @@
 				></span>
 			</button>
 		</div>
-		{#if config.shadowEnabled === undefined}
+		{#if isNeonRecipe}
+			<p class="text-xs text-gray-500 -mt-2">Neon style uses glow effect instead of shadow</p>
+		{:else if config.shadowEnabled === undefined}
 			<p class="text-xs text-gray-500 -mt-2">Following theme style</p>
 		{/if}
 
