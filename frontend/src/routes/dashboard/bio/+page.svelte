@@ -346,6 +346,43 @@
 		}
 	}
 
+	async function handleToggleNewTab(event: CustomEvent<any>) {
+		const { linkId, openInNewTab } = event.detail;
+		
+		// OPTIMISTIC UI: Update immediately in both currentLinks and $groups store
+		const newLinks = currentLinks.map(link => 
+			link.id === linkId ? { ...link, open_in_new_tab: openInNewTab } : link
+		);
+		currentLinks = newLinks;
+		
+		// Update $groups store for PhoneMockup
+		groups.update(g => g.map(group => 
+			group.id === currentGroupId 
+				? { ...group, links: newLinks }
+				: group
+		));
+		
+		// Update in background
+		try {
+			await api.updateLink(linkId, { open_in_new_tab: openInNewTab });
+			// Success - keep optimistic state, no reload needed
+		} catch (e: any) {
+			// Revert on error
+			const revertedLinks = currentLinks.map(link => 
+				link.id === linkId ? { ...link, open_in_new_tab: openInNewTab === 1 ? 0 : 1 } : link
+			);
+			currentLinks = revertedLinks;
+			
+			groups.update(g => g.map(group => 
+				group.id === currentGroupId 
+					? { ...group, links: revertedLinks }
+					: group
+			));
+			
+			error = e.message || 'Failed to update link';
+		}
+	}
+
 	async function handleDeleteLink(event: CustomEvent<number>) {
 		const linkId = event.detail;
 		
@@ -577,6 +614,7 @@
 					on:addLink={handleAddLink}
 					on:updateLink={handleUpdateLink}
 					on:toggleLink={handleToggleLink}
+					on:toggleNewTab={handleToggleNewTab}
 					on:deleteLink={handleDeleteLink}
 					on:moveLink={handleMoveLink}
 					on:updateLayout={handleUpdateLayout}

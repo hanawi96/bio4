@@ -301,6 +301,10 @@
 		dispatch('toggleLink', event.detail);
 	}
 
+	function handleToggleNewTab(event: CustomEvent<any>) {
+		dispatch('toggleNewTab', event.detail);
+	}
+
 	function handleDelete(event: CustomEvent<number>) {
 		dispatch('deleteLink', event.detail);
 	}
@@ -534,6 +538,7 @@
 						isLast={i === links.length - 1}
 						on:edit={handleEdit}
 						on:toggle={handleToggle}
+						on:toggleNewTab={handleToggleNewTab}
 						on:delete={handleDelete}
 						on:move={handleMove}
 					/>

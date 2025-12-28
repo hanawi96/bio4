@@ -69,6 +69,7 @@ export interface Link {
 	icon_url: string | null;
 	sort_order: number;
 	is_active: number;
+	open_in_new_tab?: number; // 0 = same tab, 1 = new tab
 	created_at: string;
 	updated_at: string;
 }

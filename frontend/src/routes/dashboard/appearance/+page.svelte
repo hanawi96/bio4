@@ -258,23 +258,6 @@
 				{:else if error}
 					<div class="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
 				{:else}
-					<!-- Info Banner -->
-					<div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mb-8">
-						<div class="flex items-start gap-3">
-							<div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-								<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-								</svg>
-							</div>
-							<div class="flex-1">
-								<h4 class="text-sm font-semibold text-gray-900 mb-1">Customize Your Bio Page</h4>
-								<p class="text-sm text-gray-600">
-									Use the navigation menu to jump between sections. All changes are previewed in real-time.
-								</p>
-							</div>
-						</div>
-					</div>
-
 					<!-- Sections -->
 					<div class="space-y-8">
 						<!-- Theme Section -->

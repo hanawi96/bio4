@@ -28,7 +28,6 @@
 	}
 
 	.btn-ios-primary:hover {
-		@apply scale-[1.02];
 		background: #008f42;
 		box-shadow: 0 4px 12px rgba(0, 170, 79, 0.3);
 	}
@@ -38,7 +37,7 @@
 	}
 
 	.btn-ios-secondary:hover {
-		@apply bg-gray-200 scale-[1.02];
+		@apply bg-gray-200;
 	}
 
 	.icon-ios {

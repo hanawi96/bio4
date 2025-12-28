@@ -43,7 +43,7 @@
 		<!-- Logo with Toggle -->
 		<div class="h-16 flex items-center {sidebarCollapsed ? 'justify-center px-4' : 'justify-between px-6'} border-b border-gray-200">
 			<a href="/" class="flex items-center gap-2 min-w-0">
-				<div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+				<div class="w-8 h-8 bg-gradient-to-br from-[#00aa4f] to-[#008f42] rounded-lg flex items-center justify-center flex-shrink-0">
 					<span class="text-white text-sm font-bold">B</span>
 				</div>
 				{#if !sidebarCollapsed}
@@ -79,7 +79,7 @@
 
 			<a 
 				href="/dashboard" 
-				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Overview' : ''}
 			>
 				<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +92,7 @@
 
 			<a 
 				href="/dashboard/profile" 
-				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/profile' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/profile' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Profile' : ''}
 			>
 				<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +105,7 @@
 
 			<a 
 				href="/dashboard/bio" 
-				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/bio' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/bio' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'My Bio' : ''}
 			>
 				<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,7 +118,7 @@
 
 			<a 
 				href="/dashboard/appearance" 
-				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/appearance' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/appearance' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Appearance' : ''}
 			>
 				<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,7 +131,7 @@
 
 			<a 
 				href="/dashboard/analytics" 
-				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/analytics' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/analytics' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Analytics' : ''}
 			>
 				<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +145,7 @@
 			<div class="pt-4 mt-4 border-t border-gray-200">
 				<a 
 					href="/dashboard/settings" 
-					class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/settings' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+					class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/settings' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 					title={sidebarCollapsed ? 'Settings' : ''}
 				>
 					<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
