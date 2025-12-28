@@ -4,117 +4,481 @@
 	const dispatch = createEventDispatcher();
 
 	let isOpen = false;
+	let selectedCategory = 'link';
+	let searchQuery = '';
+	let recentlyUsed: string[] = ['link', 'text', 'image'];
 
 	export function open() {
 		isOpen = true;
+		selectedCategory = 'link';
+		searchQuery = '';
 	}
 
 	export function close() {
 		isOpen = false;
 	}
 
-	const blockTypes = [
-		{
-			id: 'link',
-			name: 'Link',
-			description: 'Add a clickable link',
-			icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>`,
+	const categories = [
+		{ 
+			id: 'link', 
+			name: 'Links', 
+			icon: '🔗', 
+			color: 'bg-green-500', 
+			section: 'Content',
+			description: 'Add clickable links',
 			available: true
 		},
-		{
-			id: 'image',
-			name: 'Image',
-			description: 'Add an image',
-			icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`,
-			available: false
+		{ 
+			id: 'text', 
+			name: 'Text', 
+			icon: '📝', 
+			color: 'bg-orange-500', 
+			section: 'Content',
+			description: 'Add headings and paragraphs',
+			available: true
 		},
-		{
-			id: 'text',
-			name: 'Text',
-			description: 'Add a text block',
-			icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
-			available: false
+		{ 
+			id: 'image', 
+			name: 'Image', 
+			icon: '🖼️', 
+			color: 'bg-gray-700', 
+			section: 'Content',
+			description: 'Upload and display images',
+			available: true
 		},
-		{
-			id: 'video',
-			name: 'Video',
-			description: 'Embed a video',
-			icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>`,
-			available: false
+		{ 
+			id: 'video', 
+			name: 'Video', 
+			icon: '▶️', 
+			color: 'bg-red-500', 
+			section: 'Content',
+			description: 'Embed YouTube, TikTok videos',
+			available: true
 		},
-		{
-			id: 'divider',
-			name: 'Divider',
-			description: 'Add a divider line',
-			icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>`,
-			available: false
+		{ 
+			id: 'divider', 
+			name: 'Divider', 
+			icon: '➖', 
+			color: 'bg-gray-500', 
+			section: 'Content',
+			description: 'Add visual separators',
+			available: true
 		},
-		{
-			id: 'social',
-			name: 'Social Icons',
-			description: 'Add social media icons',
-			icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
-			available: false
+		{ 
+			id: 'social', 
+			name: 'Social Links', 
+			icon: '📱', 
+			color: 'bg-pink-500', 
+			section: 'Content',
+			description: 'Link to social profiles',
+			available: true
 		}
 	];
 
-	function selectBlock(blockType: typeof blockTypes[0]) {
-		if (!blockType.available) return;
-		dispatch('select', blockType.id);
+	const quickAddItems = [
+		{ id: 'link', name: 'Link', icon: '🔗', shortcut: 'Ctrl+L' },
+		{ id: 'text', name: 'Text', icon: '📝', shortcut: 'Ctrl+T' },
+		{ id: 'image', name: 'Image', icon: '🖼️', shortcut: 'Ctrl+I' }
+	];
+
+	const layouts = {
+		link: [
+			{
+				id: 'classic',
+				name: 'Classic',
+				description: 'Simple stacked links',
+				badge: 'Most popular',
+				badgeColor: 'bg-green-100 text-green-700'
+			},
+			{
+				id: 'carousel',
+				name: 'Carousel',
+				description: 'Swipeable link cards',
+				badge: null
+			},
+			{
+				id: 'grid',
+				name: 'Image Grid',
+				description: 'Grid of image links',
+				badge: null
+			},
+			{
+				id: 'card',
+				name: 'Card',
+				description: 'Links with thumbnails',
+				badge: null
+			}
+		],
+		text: [
+			{
+				id: 'heading',
+				name: 'Heading',
+				description: 'Large title text',
+				badge: null
+			},
+			{
+				id: 'paragraph',
+				name: 'Paragraph',
+				description: 'Body text content',
+				badge: null
+			}
+		],
+		image: [
+			{
+				id: 'single',
+				name: 'Single Image',
+				description: 'One large image',
+				badge: 'Recommended'
+			},
+			{
+				id: 'gallery',
+				name: 'Gallery',
+				description: 'Multiple images grid',
+				badge: null
+			}
+		],
+		video: [
+			{
+				id: 'embed',
+				name: 'Video Embed',
+				description: 'Embedded video player',
+				badge: null
+			}
+		],
+		divider: [
+			{
+				id: 'line',
+				name: 'Line',
+				description: 'Simple horizontal line',
+				badge: null
+			},
+			{
+				id: 'spacer',
+				name: 'Spacer',
+				description: 'Empty space',
+				badge: null
+			}
+		],
+		social: [
+			{
+				id: 'icons',
+				name: 'Icon Bar',
+				description: 'Social media icons',
+				badge: 'Popular'
+			}
+		]
+	};
+
+	$: filteredCategories = categories.filter(cat => 
+		cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+		cat.description.toLowerCase().includes(searchQuery.toLowerCase())
+	);
+
+	$: recentCategories = categories.filter(cat => recentlyUsed.includes(cat.id));
+
+	function selectCategory(categoryId: string) {
+		selectedCategory = categoryId;
+	}
+
+	function selectLayout(layoutId: string) {
+		// Add to recently used
+		if (!recentlyUsed.includes(selectedCategory)) {
+			recentlyUsed = [selectedCategory, ...recentlyUsed.slice(0, 2)];
+		}
+		
+		dispatch('select', { type: selectedCategory, layout: layoutId });
 		close();
+	}
+
+	function quickAdd(blockId: string) {
+		selectedCategory = blockId;
+		// Auto-select first layout
+		const firstLayout = layouts[blockId]?.[0];
+		if (firstLayout) {
+			selectLayout(firstLayout.id);
+		}
 	}
 </script>
 
 {#if isOpen}
 	<!-- Backdrop -->
-	<div class="fixed inset-0 bg-black/50 z-40 animate-fade-in" on:click={close}></div>
+	<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in" on:click={close}></div>
 
 	<!-- Modal -->
 	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-		<div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scale-in">
-			<!-- Header -->
-			<div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+		<div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[900px] overflow-hidden animate-scale-in flex flex-col">
+			<!-- Single Header for entire modal -->
+			<div class="px-8 py-5 border-b border-gray-200 flex items-center justify-between bg-white">
 				<div>
-					<h2 class="text-xl font-semibold text-gray-900">Add Block</h2>
-					<p class="text-sm text-gray-500 mt-1">Choose a block type to add to your bio</p>
+					<h2 class="text-2xl font-bold text-gray-900">Add a block</h2>
+					<p class="text-sm text-gray-500 mt-0.5">Choose a block type to add to your bio page</p>
 				</div>
-				<button on:click={close} class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				<button on:click={close} class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
 					</svg>
 				</button>
 			</div>
 
-			<!-- Content -->
-			<div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-				<div class="grid grid-cols-2 gap-4">
-					{#each blockTypes as blockType}
-						<button
-							on:click={() => selectBlock(blockType)}
-							disabled={!blockType.available}
-							class="relative p-6 rounded-xl border-2 transition-all text-left {blockType.available 
-								? 'border-gray-200 hover:border-blue-500 hover:shadow-lg cursor-pointer' 
-								: 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-60'}"
-						>
-							<!-- Icon -->
-							<div class="w-12 h-12 rounded-lg flex items-center justify-center mb-4 {blockType.available ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-400'}">
-								{@html blockType.icon}
+			<!-- Content: Sidebar + Main Area -->
+			<div class="flex flex-1 overflow-hidden">
+				<!-- Sidebar -->
+				<div class="w-80 bg-gray-50 flex flex-col overflow-hidden">
+					<!-- Search Bar -->
+					<div class="px-4 pt-4 pb-3">
+						<div class="relative">
+							<svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+							</svg>
+							<input
+								type="text"
+								bind:value={searchQuery}
+								placeholder="Search blocks..."
+								class="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+							/>
+						</div>
+					</div>
+
+					<!-- Categories -->
+					<div class="flex-1 overflow-y-auto py-2">
+						{#if searchQuery === ''}
+							<!-- Quick Add -->
+							<div class="px-4 mb-4">
+								<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">Quick Add</h3>
+								<div class="space-y-1">
+									{#each quickAddItems as item}
+										<button
+											on:click={() => quickAdd(item.id)}
+											class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all hover:bg-white/60 group"
+										>
+											<span class="text-lg">{item.icon}</span>
+											<span class="text-sm font-medium text-gray-900">{item.name}</span>
+											<span class="ml-auto text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">{item.shortcut}</span>
+										</button>
+									{/each}
+								</div>
 							</div>
 
-							<!-- Info -->
-							<h3 class="font-semibold text-gray-900 mb-1">{blockType.name}</h3>
-							<p class="text-sm text-gray-500">{blockType.description}</p>
-
-							<!-- Coming Soon Badge -->
-							{#if !blockType.available}
-								<div class="absolute top-4 right-4">
-									<span class="px-2 py-1 bg-gray-200 text-gray-600 text-xs font-medium rounded-full">
-										Coming Soon
-									</span>
+							<!-- Recently Used -->
+							{#if recentCategories.length > 0}
+								<div class="px-4 mb-4">
+									<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">Recently Used</h3>
+									<div class="space-y-1">
+										{#each recentCategories as category}
+											<button
+												on:click={() => selectCategory(category.id)}
+												class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all {selectedCategory === category.id ? 'bg-white shadow-sm' : 'hover:bg-white/60'}"
+											>
+												<div class="w-8 h-8 rounded-lg {category.color} flex items-center justify-center text-white text-base shadow-sm">
+													{category.icon}
+												</div>
+												<div class="flex-1 text-left">
+													<div class="text-sm font-semibold text-gray-900">{category.name}</div>
+												</div>
+												<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+												</svg>
+											</button>
+										{/each}
+									</div>
 								</div>
 							{/if}
-						</button>
-					{/each}
+
+							<!-- All Blocks -->
+							<div class="px-4 mb-4">
+								<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">All Blocks</h3>
+								<div class="space-y-1">
+									{#each categories as category}
+										<button
+											on:click={() => selectCategory(category.id)}
+											class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all {selectedCategory === category.id ? 'bg-white shadow-sm' : 'hover:bg-white/60'}"
+										>
+											<div class="w-8 h-8 rounded-lg {category.color} flex items-center justify-center text-white text-base shadow-sm">
+												{category.icon}
+											</div>
+											<div class="flex-1 text-left">
+												<div class="text-sm font-semibold text-gray-900">{category.name}</div>
+												<div class="text-xs text-gray-500">{category.description}</div>
+											</div>
+											<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+											</svg>
+										</button>
+									{/each}
+								</div>
+							</div>
+						{:else}
+							<!-- Search Results -->
+							<div class="px-4">
+								{#if filteredCategories.length > 0}
+									<div class="space-y-1">
+										{#each filteredCategories as category}
+											<button
+												on:click={() => selectCategory(category.id)}
+												class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all {selectedCategory === category.id ? 'bg-white shadow-sm' : 'hover:bg-white/60'}"
+											>
+												<div class="w-8 h-8 rounded-lg {category.color} flex items-center justify-center text-white text-base shadow-sm">
+													{category.icon}
+												</div>
+												<div class="flex-1 text-left">
+													<div class="text-sm font-semibold text-gray-900">{category.name}</div>
+													<div class="text-xs text-gray-500">{category.description}</div>
+												</div>
+												<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+												</svg>
+											</button>
+										{/each}
+									</div>
+								{:else}
+									<div class="text-center py-8">
+										<div class="text-4xl mb-2">🔍</div>
+										<p class="text-sm font-medium text-gray-900 mb-1">No blocks found</p>
+										<p class="text-xs text-gray-500">Try a different search term</p>
+									</div>
+								{/if}
+							</div>
+						{/if}
+					</div>
+				</div>
+
+				<!-- Content Area -->
+				<div class="flex-1 flex flex-col bg-white overflow-hidden">
+					<!-- Section Title -->
+					<div class="px-8 py-4 bg-gray-50 border-b border-gray-200">
+						{#if categories.find(c => c.id === selectedCategory)}
+							{@const category = categories.find(c => c.id === selectedCategory)}
+							<h3 class="text-lg font-bold text-gray-900">{category.name}</h3>
+							<p class="text-sm text-gray-500 mt-0.5">{category.description}</p>
+						{/if}
+					</div>
+
+					<!-- Layouts -->
+					<div class="flex-1 overflow-y-auto p-8 bg-white">
+						{#if layouts[selectedCategory] && layouts[selectedCategory].length > 0}
+							{@const currentLayouts = layouts[selectedCategory]}
+							<div class="grid grid-cols-2 gap-6">
+								{#each currentLayouts as layout}
+									<button
+										on:click={() => selectLayout(layout.id)}
+										class="group relative rounded-2xl border-2 border-gray-200 hover:border-green-500 transition-all overflow-hidden bg-white hover:shadow-xl"
+									>
+										<!-- Preview Area -->
+										<div class="aspect-[4/3] bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex items-center justify-center relative">
+											{#if selectedCategory === 'link'}
+												{#if layout.id === 'classic'}
+													<div class="w-full space-y-3">
+														<div class="h-12 bg-white rounded-xl shadow-sm"></div>
+														<div class="h-12 bg-white rounded-xl shadow-sm"></div>
+														<div class="h-12 bg-white rounded-xl shadow-sm"></div>
+													</div>
+												{:else if layout.id === 'carousel'}
+													<div class="flex gap-3 overflow-hidden">
+														<div class="w-36 h-36 bg-white rounded-2xl shadow-sm flex-shrink-0"></div>
+														<div class="w-36 h-36 bg-white rounded-2xl shadow-sm flex-shrink-0"></div>
+													</div>
+												{:else if layout.id === 'grid'}
+													<div class="grid grid-cols-3 gap-2 w-full">
+														<div class="aspect-square bg-white rounded-xl shadow-sm"></div>
+														<div class="aspect-square bg-white rounded-xl shadow-sm"></div>
+														<div class="aspect-square bg-white rounded-xl shadow-sm"></div>
+														<div class="aspect-square bg-white rounded-xl shadow-sm"></div>
+														<div class="aspect-square bg-white rounded-xl shadow-sm"></div>
+														<div class="aspect-square bg-white rounded-xl shadow-sm"></div>
+													</div>
+												{:else if layout.id === 'card'}
+													<div class="w-full space-y-3">
+														<div class="flex gap-3 h-16 bg-white rounded-xl shadow-sm p-3">
+															<div class="w-10 h-10 bg-gray-200 rounded-lg"></div>
+															<div class="flex-1 space-y-1">
+																<div class="h-2 bg-gray-200 rounded w-3/4"></div>
+																<div class="h-2 bg-gray-200 rounded w-1/2"></div>
+															</div>
+														</div>
+														<div class="flex gap-3 h-16 bg-white rounded-xl shadow-sm p-3">
+															<div class="w-10 h-10 bg-gray-200 rounded-lg"></div>
+															<div class="flex-1 space-y-1">
+																<div class="h-2 bg-gray-200 rounded w-3/4"></div>
+																<div class="h-2 bg-gray-200 rounded w-1/2"></div>
+															</div>
+														</div>
+													</div>
+												{/if}
+											{:else if selectedCategory === 'text'}
+												{#if layout.id === 'heading'}
+													<div class="w-full space-y-2">
+														<div class="h-8 bg-white rounded-lg shadow-sm"></div>
+														<div class="h-6 bg-white/60 rounded-lg w-3/4"></div>
+													</div>
+												{:else if layout.id === 'paragraph'}
+													<div class="w-full space-y-2">
+														<div class="h-3 bg-white rounded w-full"></div>
+														<div class="h-3 bg-white rounded w-full"></div>
+														<div class="h-3 bg-white rounded w-4/5"></div>
+														<div class="h-3 bg-white rounded w-full"></div>
+														<div class="h-3 bg-white rounded w-3/4"></div>
+													</div>
+												{/if}
+											{:else if selectedCategory === 'image'}
+												{#if layout.id === 'single'}
+													<div class="w-full h-full bg-white rounded-xl shadow-sm"></div>
+												{:else if layout.id === 'gallery'}
+													<div class="grid grid-cols-2 gap-2 w-full">
+														<div class="aspect-square bg-white rounded-lg shadow-sm"></div>
+														<div class="aspect-square bg-white rounded-lg shadow-sm"></div>
+														<div class="aspect-square bg-white rounded-lg shadow-sm"></div>
+														<div class="aspect-square bg-white rounded-lg shadow-sm"></div>
+													</div>
+												{/if}
+											{:else if selectedCategory === 'video'}
+												<div class="w-full aspect-video bg-white rounded-xl shadow-sm flex items-center justify-center">
+													<svg class="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+														<path d="M8 5v14l11-7z"/>
+													</svg>
+												</div>
+											{:else if selectedCategory === 'divider'}
+												{#if layout.id === 'line'}
+													<div class="w-full">
+														<div class="h-0.5 bg-white rounded-full shadow-sm"></div>
+													</div>
+												{:else if layout.id === 'spacer'}
+													<div class="w-full h-16 border-2 border-dashed border-white/50 rounded-lg"></div>
+												{/if}
+											{:else if selectedCategory === 'social'}
+												<div class="flex gap-3">
+													<div class="w-10 h-10 bg-white rounded-full shadow-sm"></div>
+													<div class="w-10 h-10 bg-white rounded-full shadow-sm"></div>
+													<div class="w-10 h-10 bg-white rounded-full shadow-sm"></div>
+													<div class="w-10 h-10 bg-white rounded-full shadow-sm"></div>
+												</div>
+											{/if}
+
+											<!-- Badge -->
+											{#if layout.badge}
+												<div class="absolute top-3 right-3 px-2 py-1 {layout.badgeColor || 'bg-green-100 text-green-700'} rounded-full text-xs font-semibold">
+													{layout.badge}
+												</div>
+											{/if}
+										</div>
+
+										<!-- Info -->
+										<div class="px-4 py-4 bg-white border-t border-gray-100">
+											<p class="text-sm font-semibold text-gray-900 text-center mb-1">{layout.name}</p>
+											<p class="text-xs text-gray-500 text-center">{layout.description}</p>
+										</div>
+									</button>
+								{/each}
+							</div>
+						{:else}
+							<div class="flex items-center justify-center h-full">
+								<div class="text-center">
+									<div class="text-4xl mb-3">🎨</div>
+									<h3 class="text-lg font-bold text-gray-900 mb-2">No layouts available</h3>
+									<p class="text-sm text-gray-500 max-w-xs mx-auto">This block type doesn't have any layouts yet.</p>
+								</div>
+							</div>
+						{/if}
+					</div>
 				</div>
 			</div>
 		</div>

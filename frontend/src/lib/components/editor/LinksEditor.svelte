@@ -480,10 +480,10 @@
 		{#if !showAddForm}
 			<button
 				on:click={toggleAddForm}
-				class="w-full py-3.5 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition flex items-center justify-center gap-2"
+				class="btn-ios-primary w-full flex items-center justify-center gap-2"
 			>
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 				</svg>
 				Add link
 			</button>

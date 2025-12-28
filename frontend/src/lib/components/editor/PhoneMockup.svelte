@@ -570,7 +570,7 @@
 							></div>
 						{/if}
 						
-						{#each $groups as group}
+						{#each $groups.filter(g => (g.is_visible ?? 1) === 1) as group}
 							{@const groupLinks = group.links.filter(l => l.is_active === 1)}
 							{#if groupLinks.length > 0}
 								{#if group.layout_type === 'carousel'}
@@ -835,7 +835,7 @@
 							{/if}
 						{/each}
 						
-						{#if $groups.every(g => g.links.filter(l => l.is_active === 1).length === 0)}
+						{#if $groups.filter(g => (g.is_visible ?? 1) === 1).every(g => g.links.filter(l => l.is_active === 1).length === 0)}
 							<div class="text-center py-8 opacity-50">
 								<p class="text-sm">No links yet</p>
 							</div>

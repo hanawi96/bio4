@@ -99,6 +99,25 @@
 		}
 	}
 
+	async function handleToggleGroupVisible(event: CustomEvent<any>) {
+		const { groupId, isVisible } = event.detail;
+		
+		// OPTIMISTIC UI: Update immediately
+		const oldGroups = [...$groups];
+		groups.update(g => g.map(group => 
+			group.id === groupId ? { ...group, is_visible: isVisible } : group
+		));
+
+		// Update in background
+		try {
+			await api.updateGroup(groupId, { is_visible: isVisible });
+		} catch (e: any) {
+			// Revert on error
+			groups.set(oldGroups);
+			error = e.message || 'Failed to update group visibility';
+		}
+	}
+
 	async function handleMoveGroup(groupId: number, direction: 'up' | 'down') {
 		const currentIndex = $groups.findIndex(g => g.id === groupId);
 		if (currentIndex === -1) return;
@@ -125,16 +144,26 @@
 		}
 	}
 
-	async function handleBlockTypeSelect(event: CustomEvent<string>) {
-		const blockType = event.detail;
+	async function handleBlockTypeSelect(event: CustomEvent<{ type: string; layout: string }>) {
+		const { type: blockType, layout } = event.detail;
 		if (blockType === 'link') {
 			// Generate unique group name
 			const groupName = generateUniqueGroupName();
+			
+			// Map layout to layout_type
+			const layoutTypeMap: Record<string, 'list' | 'carousel' | 'grid' | 'cards'> = {
+				'classic': 'list',
+				'carousel': 'carousel',
+				'grid': 'grid',
+				'card': 'cards'
+			};
+			const layoutType = layoutTypeMap[layout] || 'list';
 			
 			// OPTIMISTIC UI: Show editor immediately
 			currentGroupId = null; // Temp null, will be set when API returns
 			currentGroupName = groupName;
 			currentLinks = [];
+			currentLayoutType = layoutType;
 			viewMode = 'edit-links';
 			isCreatingGroup = true;
 			
@@ -142,7 +171,7 @@
 			try {
 				const groupResult = await api.createGroup(username, {
 					title: groupName,
-					layout_type: 'list',
+					layout_type: layoutType,
 					sort_order: $groups.length
 				});
 				
@@ -494,12 +523,12 @@
 				<div class="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
 			{:else if viewMode === 'list'}
 				<!-- List View -->
-				<div class="flex items-center justify-between mb-6">
-					<div>
+				<div class="mb-6">
+					<div class="mb-4">
 						<h2 class="text-xl font-semibold text-gray-900 tracking-tight">Manage Bio Content</h2>
 						<p class="text-sm text-gray-500 mt-0.5">Add, edit, and organize your links and content blocks</p>
 					</div>
-					<button on:click={handleAddBlock} class="btn-ios-primary flex items-center gap-2">
+					<button on:click={handleAddBlock} class="btn-ios-primary w-full flex items-center justify-center gap-2">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 						</svg>
@@ -531,6 +560,7 @@
 								on:moveUp={(e) => handleMoveGroup(e.detail, 'up')}
 								on:moveDown={(e) => handleMoveGroup(e.detail, 'down')}
 								on:delete={(e) => handleDeleteGroup(e.detail)}
+								on:toggleVisible={handleToggleGroupVisible}
 							/>
 						{/each}
 					</div>
@@ -564,7 +594,7 @@
 						
 						<div class="flex items-center gap-2 flex-wrap">
 							<!-- URL Display -->
-							<div class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg flex-1 min-w-[200px] bg-white">
+							<div class="flex items-center gap-2 px-3 h-[38px] border border-gray-200 rounded-lg flex-1 min-w-[200px] bg-white">
 								<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
 								</svg>
@@ -574,7 +604,7 @@
 							<!-- Copy Button -->
 							<button 
 								on:click={copyLink}
-								class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+								class="w-[38px] h-[38px] flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
 								title="Copy link"
 							>
 								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -585,7 +615,7 @@
 							<!-- External Link Button -->
 							<button 
 								on:click={openInNewTab}
-								class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+								class="w-[38px] h-[38px] flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
 								title="Open in new tab"
 							>
 								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -594,7 +624,7 @@
 							</button>
 
 							<!-- Share Button -->
-							<button class="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">
+							<button class="px-4 h-[38px] flex items-center justify-center text-white text-sm font-semibold rounded-lg transition-colors bg-[#00aa4f] hover:bg-[#008f42] leading-none">
 								SHARE
 							</button>
 						</div>

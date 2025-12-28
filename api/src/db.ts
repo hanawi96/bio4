@@ -167,9 +167,9 @@ export async function createGroup(
 ) {
 	const result = await db
 		.prepare(
-			'INSERT INTO link_groups (page_id, title, layout_type, sort_order) VALUES (?, ?, ?, ?)'
+			'INSERT INTO link_groups (page_id, title, layout_type, sort_order, is_visible) VALUES (?, ?, ?, ?, ?)'
 		)
-		.bind(pageId, data.title || null, data.layout_type || 'list', data.sort_order || 0)
+		.bind(pageId, data.title || null, data.layout_type || 'list', data.sort_order || 0, 1)
 		.run();
 
 	return result.meta.last_row_id;
@@ -178,7 +178,7 @@ export async function createGroup(
 export async function updateGroup(
 	db: D1Database,
 	groupId: number,
-	data: { title?: string; layout_type?: string; layout_config?: string; sort_order?: number }
+	data: { title?: string; layout_type?: string; layout_config?: string; sort_order?: number; is_visible?: number }
 ) {
 	const fields: string[] = [];
 	const values: any[] = [];
@@ -198,6 +198,10 @@ export async function updateGroup(
 	if (data.sort_order !== undefined) {
 		fields.push('sort_order = ?');
 		values.push(data.sort_order);
+	}
+	if (data.is_visible !== undefined) {
+		fields.push('is_visible = ?');
+		values.push(data.is_visible);
 	}
 
 	if (fields.length === 0) return;

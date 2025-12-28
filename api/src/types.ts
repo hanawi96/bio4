@@ -56,6 +56,7 @@ export interface LinkGroup {
 	layout_type: 'list' | 'carousel' | 'grid' | 'cards';
 	layout_config: string | null; // JSON string
 	sort_order: number;
+	is_visible: number;
 	created_at: string;
 	updated_at: string;
 }

@@ -26,17 +26,19 @@
 		}
 	}
 
-	function handleMenuClick(e: MouseEvent) {
-		e.stopPropagation();
-		// TODO: Show menu
-	}
-
 	function handleDeleteClick(e: MouseEvent) {
 		e.stopPropagation();
 		dispatch('delete', group.id);
 	}
 
+	function handleToggleVisible(e: MouseEvent) {
+		e.stopPropagation();
+		const currentVisible = group.is_visible ?? 1;
+		dispatch('toggleVisible', { groupId: group.id, isVisible: currentVisible === 1 ? 0 : 1 });
+	}
+
 	const linkCount = group.links?.length || 0;
+	$: isVisible = group.is_visible ?? 1;
 </script>
 
 <button
@@ -81,6 +83,21 @@
 			<div class="flex items-center justify-between gap-2 mb-1.5">
 				<h3 class="font-semibold text-gray-900 text-base tracking-tight">{group.title || 'Untitled'}</h3>
 				<div class="flex items-center gap-1">
+					<!-- Toggle Visible Switch -->
+					<button
+						on:click={handleToggleVisible}
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+						class:bg-green-500={isVisible === 1}
+						class:bg-gray-300={isVisible === 0}
+						title={isVisible === 1 ? 'Hide group' : 'Show group'}
+					>
+						<span
+							class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+							class:translate-x-6={isVisible === 1}
+							class:translate-x-1={isVisible === 0}
+						/>
+					</button>
+					
 					<button
 						on:click={handleDeleteClick}
 						class="p-2 text-gray-400 rounded-xl"
@@ -96,6 +113,9 @@
 			<!-- Meta Info -->
 			<div class="flex items-center gap-2 text-sm text-gray-500">
 				<span class="font-medium">{linkCount} {linkCount === 1 ? 'link' : 'links'}</span>
+				{#if isVisible === 0}
+					<span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">Hidden</span>
+				{/if}
 			</div>
 		</div>
 	</div>

@@ -34,6 +34,7 @@ export interface LinkGroup {
 	layout_type: 'list' | 'carousel' | 'grid' | 'cards';
 	layout_config: string | null;
 	sort_order: number;
+	is_visible?: number;
 	links: Link[];
 }
 

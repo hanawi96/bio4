@@ -11,7 +11,7 @@
 </script>
 
 <div class="flex flex-col gap-6 px-8 max-w-2xl mx-auto">
-	{#each $groups as group}
+	{#each $groups.filter(g => (g.is_visible ?? 1) === 1) as group}
 		{#if group.title}
 			<h3 class="text-sm font-semibold opacity-60 uppercase tracking-wide">{group.title}</h3>
 		{/if}

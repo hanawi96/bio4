@@ -8,10 +8,9 @@
 
 	const dispatch = createEventDispatcher();
 
-	function handleToggle(e: Event) {
+	function handleToggle(e: MouseEvent) {
 		e.stopPropagation();
-		const target = e.currentTarget as HTMLInputElement;
-		dispatch('toggle', { linkId: link.id, isActive: target.checked });
+		dispatch('toggle', { linkId: link.id, isActive: link.is_active === 1 ? 0 : 1 });
 	}
 
 	function handleDelete(e: MouseEvent) {
@@ -75,19 +74,20 @@
 			<p class="text-sm text-gray-500 truncate mt-0.5">{link.url}</p>
 		</div>
 
-		<!-- Toggle -->
-		<label 
-			on:click={(e) => e.stopPropagation()}
-			class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+		<!-- Toggle Switch -->
+		<button
+			on:click={handleToggle}
+			class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0"
+			class:bg-green-500={link.is_active === 1}
+			class:bg-gray-300={link.is_active === 0}
+			title={link.is_active === 1 ? 'Hide link' : 'Show link'}
 		>
-			<input 
-				type="checkbox" 
-				checked={link.is_active === 1} 
-				on:change={handleToggle}
-				class="sr-only peer" 
+			<span
+				class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+				class:translate-x-6={link.is_active === 1}
+				class:translate-x-1={link.is_active === 0}
 			/>
-			<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#007AFF]"></div>
-		</label>
+		</button>
 
 		<!-- Delete -->
 		<button
