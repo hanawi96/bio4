@@ -43,7 +43,9 @@
 	});
 
 	onDestroy(() => {
-		window.removeEventListener('resize', handleResize);
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('resize', handleResize);
+		}
 	});
 
 	async function handlePublish() {
