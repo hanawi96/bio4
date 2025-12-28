@@ -488,7 +488,7 @@
 			<div class="w-full max-w-3xl">
 			{#if loading}
 				<div class="flex items-center justify-center py-12">
-					<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+					<div class="animate-spin w-8 h-8 border-2 border-gray-300 rounded-full" style="border-top-color: #00aa4f;"></div>
 				</div>
 			{:else if error}
 				<div class="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>

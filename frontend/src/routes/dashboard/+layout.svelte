@@ -4,12 +4,9 @@
 	import { themes } from '$lib/stores/themes';
 	import { publishChanges, saveStatus } from '$lib/stores/autosave';
 	
-	let themesLoaded = false;
-	
 	// Load themes on mount - MUST complete before pages load
 	onMount(async () => {
 		await themes.load();
-		themesLoaded = true;
 	});
 	
 	// Suppress params warning
@@ -40,7 +37,6 @@
 	$: buttonDisabled = publishing || $saveStatus === 'saving';
 </script>
 
-{#if themesLoaded}
 <div class="min-h-screen bg-gray-50 flex">
 	<!-- Left Sidebar -->
 	<aside class="{sidebarCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 fixed h-full transition-all duration-300 overflow-hidden">
@@ -268,12 +264,3 @@
 		</main>
 	</div>
 </div>
-{:else}
-	<!-- Loading themes -->
-	<div class="min-h-screen flex items-center justify-center" style="background-color: #f6f1eb;">
-		<div class="flex flex-col items-center gap-3">
-			<div class="animate-spin w-8 h-8 border-2 border-gray-300 border-t-green-600 rounded-full"></div>
-			<p class="text-sm text-gray-600">Loading...</p>
-		</div>
-	</div>
-{/if}

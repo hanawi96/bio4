@@ -354,7 +354,7 @@
 					<!-- Loading State -->
 					<div class="w-full h-full flex items-center justify-center">
 						<div class="flex flex-col items-center gap-3">
-							<div class="animate-spin w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+							<div class="animate-spin w-8 h-8 border-2 border-gray-300 rounded-full" style="border-top-color: #00aa4f;"></div>
 							<p class="text-xs text-gray-500">Loading preview...</p>
 						</div>
 					</div>
