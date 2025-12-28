@@ -3,10 +3,13 @@
 	import type { Link } from '$lib/types';
 
 	export let link: Link;
+	export let isFirst = false;
+	export let isLast = false;
 
 	const dispatch = createEventDispatcher();
 
 	function handleToggle(e: Event) {
+		e.stopPropagation();
 		const target = e.currentTarget as HTMLInputElement;
 		dispatch('toggle', { linkId: link.id, isActive: target.checked });
 	}
@@ -19,19 +22,41 @@
 	function handleEdit() {
 		dispatch('edit', link.id);
 	}
+
+	function handleMove(e: MouseEvent, direction: 'up' | 'down') {
+		e.stopPropagation();
+		dispatch('move', { linkId: link.id, direction });
+	}
 </script>
 
 <button 
 	on:click={handleEdit}
-	class="card-ios p-4 group w-full text-left cursor-pointer"
+	class="card-ios p-4 w-full text-left cursor-pointer"
 >
 	<div class="flex items-center gap-4">
-		<!-- Drag Handle -->
-		<button class="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing transition-colors">
-			<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-				<path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
-			</svg>
-		</button>
+		<!-- Move Buttons -->
+		<div class="flex flex-col gap-1">
+			<button
+				on:click={(e) => handleMove(e, 'up')}
+				disabled={isFirst}
+				class="p-1.5 text-gray-400 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
+				title="Move up"
+			>
+				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
+				</svg>
+			</button>
+			<button
+				on:click={(e) => handleMove(e, 'down')}
+				disabled={isLast}
+				class="p-1.5 text-gray-400 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
+				title="Move down"
+			>
+				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
+				</svg>
+			</button>
+		</div>
 
 		<!-- Icon/Favicon -->
 		<div class="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -51,7 +76,10 @@
 		</div>
 
 		<!-- Toggle -->
-		<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+		<label 
+			on:click={(e) => e.stopPropagation()}
+			class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+		>
 			<input 
 				type="checkbox" 
 				checked={link.is_active === 1} 
@@ -64,7 +92,7 @@
 		<!-- Delete -->
 		<button
 			on:click={handleDelete}
-			class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 active:scale-95"
+			class="p-2 text-gray-400 rounded-xl"
 			title="Delete link"
 		>
 			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">

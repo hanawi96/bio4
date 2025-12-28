@@ -187,29 +187,40 @@
 	}
 </script>
 
-<div class="flex h-[calc(100vh-64px)] bg-gray-50">
+<div class="flex h-[calc(100vh-64px)]" style="background-color: #f6f1eb;">
 	<!-- Left Sidebar Navigation -->
-	<aside class="{sidebarCollapsed ? 'w-16' : 'w-56'} bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300">
+	<aside class="{sidebarCollapsed ? 'w-16' : 'w-56'} bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300 overflow-hidden">
 		<div class="sticky top-0 p-4">
 			<!-- Header with Toggle -->
-			<div class="flex items-center justify-between mb-3 {sidebarCollapsed ? '' : 'px-3'}">
+			<div class="flex items-center {sidebarCollapsed ? 'justify-center' : 'justify-between px-3'} mb-3">
 				{#if !sidebarCollapsed}
-					<h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+					<h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">
 						Appearance
 					</h3>
+					<button
+						on:click={() => sidebarCollapsed = !sidebarCollapsed}
+						class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+						title="Collapse sidebar"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+						</svg>
+					</button>
 				{/if}
-				<button
-					on:click={() => sidebarCollapsed = !sidebarCollapsed}
-					class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors {sidebarCollapsed ? 'mx-auto' : ''}"
-					title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-				>
-					<svg class="w-4 h-4 transition-transform duration-300 {sidebarCollapsed ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-					</svg>
-				</button>
 			</div>
 
 			<nav class="space-y-1">
+				{#if sidebarCollapsed}
+					<button
+						on:click={() => sidebarCollapsed = !sidebarCollapsed}
+						class="w-full p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center mb-2"
+						title="Expand sidebar"
+					>
+						<svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+						</svg>
+					</button>
+				{/if}
 				{#each navItems as item}
 					<button
 						on:click={() => scrollToSection(item.id)}
@@ -218,16 +229,16 @@
 							: 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}"
 						title={sidebarCollapsed ? item.label : ''}
 					>
-						<div class="flex items-center gap-3">
+						<div class="flex items-center gap-3 min-w-0">
 							<span class="flex-shrink-0">
 								{@html item.icon}
 							</span>
 							{#if !sidebarCollapsed}
-								<span>{item.label}</span>
+								<span class="whitespace-nowrap">{item.label}</span>
 							{/if}
 						</div>
 						{#if activeSection === item.id && !sidebarCollapsed}
-							<div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+							<div class="w-1 h-6 bg-blue-600 rounded-full flex-shrink-0"></div>
 						{/if}
 					</button>
 				{/each}

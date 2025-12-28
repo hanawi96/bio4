@@ -305,6 +305,31 @@
 		dispatch('deleteLink', event.detail);
 	}
 
+	function handleMove(event: CustomEvent<any>) {
+		const { linkId, direction } = event.detail;
+		
+		const currentIndex = links.findIndex(l => l.id === linkId);
+		if (currentIndex === -1) return;
+
+		const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+		if (targetIndex < 0 || targetIndex >= links.length) return;
+
+		// Optimistic UI: Swap links
+		const newLinks = [...links];
+		[newLinks[currentIndex], newLinks[targetIndex]] = [newLinks[targetIndex], newLinks[currentIndex]];
+		
+		// Update local state
+		links = newLinks;
+		
+		// Dispatch to parent
+		dispatch('moveLink', {
+			linkId1: newLinks[currentIndex].id,
+			linkId2: newLinks[targetIndex].id,
+			index1: currentIndex,
+			index2: targetIndex
+		});
+	}
+
 	function handleLayoutSelect(event: CustomEvent<string>) {
 		dispatch('updateLayout', event.detail);
 	}
@@ -325,7 +350,8 @@
 	}
 </script>
 
-<div class="h-full flex flex-col">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+	<div class="h-full flex flex-col -m-1">
 	<!-- Header -->
 	<div class="flex-shrink-0 pb-4 border-b border-gray-200">
 		<button 
@@ -414,7 +440,7 @@
 	</div>
 
 	<!-- Content -->
-	<div class="flex-1 overflow-y-auto">
+	<div class="flex-1 overflow-y-auto overflow-x-visible">
 		{#if activeTab === 'layouts'}
 			<div class="py-6">
 				<LayoutSelector 
@@ -449,7 +475,7 @@
 				{/if}
 			</div>
 		{:else}
-		<div class="py-6 space-y-3">
+		<div class="py-6 space-y-3 px-1">
 		<!-- Add Link Button/Form -->
 		{#if !showAddForm}
 			<button
@@ -487,7 +513,7 @@
 				<p class="text-gray-500">No links yet. Add your first link above.</p>
 			</div>
 		{:else}
-			{#each links as link (link.id)}
+			{#each links as link, i (link.id)}
 				{#if editingLink && editingLink.id === link.id}
 					<LinkForm
 						bind:headline={linkHeadline}
@@ -504,9 +530,12 @@
 				{:else}
 					<LinkCard 
 						{link}
+						isFirst={i === 0}
+						isLast={i === links.length - 1}
 						on:edit={handleEdit}
 						on:toggle={handleToggle}
 						on:delete={handleDelete}
+						on:move={handleMove}
 					/>
 				{/if}
 			{/each}
@@ -514,4 +543,5 @@
 		</div>
 		{/if}
 	</div>
+</div>
 </div>

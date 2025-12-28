@@ -39,30 +39,43 @@
 
 <div class="min-h-screen bg-gray-50 flex">
 	<!-- Left Sidebar -->
-	<aside class="{sidebarCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 fixed h-full transition-all duration-300">
+	<aside class="{sidebarCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 fixed h-full transition-all duration-300 overflow-hidden">
 		<!-- Logo with Toggle -->
-		<div class="h-16 flex items-center justify-between {sidebarCollapsed ? 'px-4' : 'px-6'} border-b border-gray-200">
-			<a href="/" class="flex items-center gap-2">
+		<div class="h-16 flex items-center {sidebarCollapsed ? 'justify-center px-4' : 'justify-between px-6'} border-b border-gray-200">
+			<a href="/" class="flex items-center gap-2 min-w-0">
 				<div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
 					<span class="text-white text-sm font-bold">B</span>
 				</div>
 				{#if !sidebarCollapsed}
-					<span class="text-lg font-bold text-gray-900">Bio Link</span>
+					<span class="text-lg font-bold text-gray-900 whitespace-nowrap">Bio Link</span>
 				{/if}
 			</a>
-			<button
-				on:click={() => sidebarCollapsed = !sidebarCollapsed}
-				class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-				title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-			>
-				<svg class="w-4 h-4 transition-transform duration-300 {sidebarCollapsed ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-				</svg>
-			</button>
+			{#if !sidebarCollapsed}
+				<button
+					on:click={() => sidebarCollapsed = !sidebarCollapsed}
+					class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+					title="Collapse sidebar"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+					</svg>
+				</button>
+			{/if}
 		</div>
 
 		<!-- Navigation -->
 		<nav class="p-4 space-y-1">
+			{#if sidebarCollapsed}
+				<button
+					on:click={() => sidebarCollapsed = !sidebarCollapsed}
+					class="w-full p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center"
+					title="Expand sidebar"
+				>
+					<svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+					</svg>
+				</button>
+			{/if}
 
 			<a 
 				href="/dashboard" 
@@ -73,7 +86,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
 				</svg>
 				{#if !sidebarCollapsed}
-					<span>Overview</span>
+					<span class="whitespace-nowrap">Overview</span>
 				{/if}
 			</a>
 
@@ -86,7 +99,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
 				</svg>
 				{#if !sidebarCollapsed}
-					<span>Profile</span>
+					<span class="whitespace-nowrap">Profile</span>
 				{/if}
 			</a>
 
@@ -99,7 +112,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
 				</svg>
 				{#if !sidebarCollapsed}
-					<span>My Bio</span>
+					<span class="whitespace-nowrap">My Bio</span>
 				{/if}
 			</a>
 
@@ -112,7 +125,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
 				</svg>
 				{#if !sidebarCollapsed}
-					<span>Appearance</span>
+					<span class="whitespace-nowrap">Appearance</span>
 				{/if}
 			</a>
 
@@ -125,7 +138,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
 				</svg>
 				{#if !sidebarCollapsed}
-					<span>Analytics</span>
+					<span class="whitespace-nowrap">Analytics</span>
 				{/if}
 			</a>
 
@@ -140,7 +153,7 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
 					</svg>
 					{#if !sidebarCollapsed}
-						<span>Settings</span>
+						<span class="whitespace-nowrap">Settings</span>
 					{/if}
 				</a>
 			</div>
@@ -246,7 +259,7 @@
 		{/if}
 
 		<!-- Page Content -->
-		<main>
+		<main style="background-color: #f6f1eb; min-height: calc(100vh - 64px);">
 			<slot />
 		</main>
 	</div>

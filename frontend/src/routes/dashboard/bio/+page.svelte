@@ -283,29 +283,36 @@
 	async function handleToggleLink(event: CustomEvent<any>) {
 		const { linkId, isActive } = event.detail;
 		
-		// OPTIMISTIC UI: Update immediately
-		currentLinks = currentLinks.map(link => 
+		// OPTIMISTIC UI: Update immediately in both currentLinks and $groups store
+		const newLinks = currentLinks.map(link => 
 			link.id === linkId ? { ...link, is_active: isActive ? 1 : 0 } : link
 		);
+		currentLinks = newLinks;
+		
+		// Update $groups store for PhoneMockup
+		groups.update(g => g.map(group => 
+			group.id === currentGroupId 
+				? { ...group, links: newLinks }
+				: group
+		));
 		
 		// Update in background
 		try {
 			await api.updateLink(linkId, { is_active: isActive ? 1 : 0 });
-			
-			// Reload data silently
-			const data = await api.getEditorData(username);
-			loadEditorData(data);
-			
-			// Update current links
-			const group = $groups.find(g => g.id === currentGroupId);
-			if (group) {
-				currentLinks = group.links || [];
-			}
+			// Success - keep optimistic state, no reload needed
 		} catch (e: any) {
 			// Revert on error
-			currentLinks = currentLinks.map(link => 
+			const revertedLinks = currentLinks.map(link => 
 				link.id === linkId ? { ...link, is_active: isActive ? 0 : 1 } : link
 			);
+			currentLinks = revertedLinks;
+			
+			groups.update(g => g.map(group => 
+				group.id === currentGroupId 
+					? { ...group, links: revertedLinks }
+					: group
+			));
+			
 			error = e.message || 'Failed to update link';
 		}
 	}
@@ -338,6 +345,45 @@
 				currentLinks = [...currentLinks, deletedLink].sort((a, b) => a.sort_order - b.sort_order);
 			}
 			error = e.message || 'Failed to delete link';
+		}
+	}
+
+	async function handleMoveLink(event: CustomEvent<any>) {
+		const { linkId1, linkId2, index1, index2 } = event.detail;
+		
+		// Optimistic UI: Update both currentLinks AND $groups store immediately
+		const newLinks = [...currentLinks];
+		const idx1 = newLinks.findIndex(l => l.id === linkId1);
+		const idx2 = newLinks.findIndex(l => l.id === linkId2);
+		
+		if (idx1 !== -1 && idx2 !== -1) {
+			[newLinks[idx1], newLinks[idx2]] = [newLinks[idx2], newLinks[idx1]];
+			currentLinks = newLinks; // Update local
+			
+			// Update $groups store for PhoneMockup
+			groups.update(g => g.map(group => 
+				group.id === currentGroupId 
+					? { ...group, links: newLinks }
+					: group
+			));
+		}
+		
+		// API call in background (don't wait)
+		try {
+			await Promise.all([
+				api.updateLink(linkId1, { sort_order: index1 }),
+				api.updateLink(linkId2, { sort_order: index2 })
+			]);
+			// Success - keep optimistic state, no reload needed
+		} catch (e: any) {
+			// Only reload on error to revert
+			const data = await api.getEditorData(username);
+			loadEditorData(data);
+			const group = $groups.find(g => g.id === currentGroupId);
+			if (group) {
+				currentLinks = group.links || [];
+			}
+			error = e.message || 'Failed to reorder links';
 		}
 	}
 
@@ -434,7 +480,7 @@
 	}
 </script>
 
-<div class="flex h-[calc(100vh-64px)] bg-gray-50">
+<div class="flex h-[calc(100vh-64px)]" style="background-color: #f6f1eb;">
 	<!-- Main Content + Preview (Scrollable together) -->
 	<div class="flex-1 overflow-y-auto">
 		<div class="flex gap-8 p-8 justify-center">
@@ -502,6 +548,7 @@
 					on:updateLink={handleUpdateLink}
 					on:toggleLink={handleToggleLink}
 					on:deleteLink={handleDeleteLink}
+					on:moveLink={handleMoveLink}
 					on:updateLayout={handleUpdateLayout}
 					on:updateLayoutConfig={handleUpdateLayoutConfig}
 				/>
@@ -555,7 +602,7 @@
 
 					<!-- Phone Mockup -->
 					<div class="pt-16 pb-8">
-						<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 rounded-lg py-8">
+						<div class="flex items-center justify-center py-8">
 							<PhoneMockup />
 						</div>
 					</div>

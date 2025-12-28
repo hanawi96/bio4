@@ -16,26 +16,21 @@
 /* iOS Style Utilities */
 @layer components {
 	.card-ios {
-		@apply rounded-2xl border border-gray-100 bg-gradient-to-b from-white to-gray-50 transition-all duration-200;
+		@apply rounded-2xl border border-gray-100 bg-gradient-to-b from-white to-gray-50;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-	}
-
-	.card-ios:hover {
-		@apply scale-[1.01];
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
 	}
 
 	.btn-ios-primary {
 		@apply font-semibold rounded-xl px-5 py-3 transition-all duration-200;
-		background: #007AFF;
+		background: #00aa4f;
 		color: white;
-		box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+		box-shadow: 0 2px 8px rgba(0, 170, 79, 0.2);
 	}
 
 	.btn-ios-primary:hover {
 		@apply scale-[1.02];
-		background: #0051D5;
-		box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+		background: #008f42;
+		box-shadow: 0 4px 12px rgba(0, 170, 79, 0.3);
 	}
 
 	.btn-ios-secondary {
@@ -48,7 +43,30 @@
 
 	.icon-ios {
 		@apply rounded-2xl flex items-center justify-center;
-		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-		box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+		background: linear-gradient(135deg, #00aa4f 0%, #008f42 100%);
+		box-shadow: 0 2px 8px rgba(0, 170, 79, 0.2);
+	}
+
+	.input-ios {
+		@apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm;
+		transition: all 0.2s;
+	}
+
+	.input-ios:focus {
+		@apply outline-none ring-2;
+		border-color: #00aa4f;
+		--tw-ring-color: #00aa4f;
+	}
+
+	.input-ios::placeholder {
+		@apply text-gray-400;
+	}
+
+	.form-section-ios {
+		@apply space-y-3;
+	}
+
+	.form-label-ios {
+		@apply flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2;
 	}
 }

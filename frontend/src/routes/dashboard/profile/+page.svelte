@@ -207,7 +207,7 @@
 	}
 </script>
 
-<div class="min-h-[calc(100vh-64px)] bg-gray-50 py-8">
+<div class="min-h-[calc(100vh-64px)] py-8" style="background-color: #f6f1eb;">
 	<div class="max-w-3xl mx-auto px-8">
 		{#if loading}
 			<div class="flex items-center justify-center py-20">

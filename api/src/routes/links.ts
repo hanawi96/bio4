@@ -136,8 +136,8 @@ app.put('/:linkId', async (c) => {
 		'SELECT icon_url FROM links WHERE id = ?'
 	).bind(linkId).first() as { icon_url: string | null } | null;
 
-	// Delete old icon if changed
-	if (oldLink?.icon_url && body.icon_url !== oldLink.icon_url) {
+	// Delete old icon ONLY if icon_url is explicitly provided and changed
+	if (body.icon_url !== undefined && oldLink?.icon_url && body.icon_url !== oldLink.icon_url) {
 		await deleteLinkIconFromR2(c.env.STORAGE, oldLink.icon_url);
 	}
 

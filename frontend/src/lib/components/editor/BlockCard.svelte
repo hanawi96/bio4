@@ -41,7 +41,7 @@
 
 <button
 	on:click={handleClick}
-	class="w-full card-ios p-5 text-left group cursor-pointer"
+	class="w-full card-ios p-5 text-left cursor-pointer"
 >
 	<div class="flex items-start gap-4">
 		<!-- Move Up/Down Buttons -->
@@ -49,21 +49,21 @@
 			<button
 				on:click={handleMoveUp}
 				disabled={isFirst}
-				class="p-1.5 text-gray-400 rounded-lg transition-all duration-200 disabled:opacity-20 disabled:cursor-not-allowed {isFirst ? '' : 'hover:text-gray-700 hover:bg-gray-100 active:scale-95'}"
+				class="p-1.5 text-gray-400 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
 				title="Move up"
 			>
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
 				</svg>
 			</button>
 			<button
 				on:click={handleMoveDown}
 				disabled={isLast}
-				class="p-1.5 text-gray-400 rounded-lg transition-all duration-200 disabled:opacity-20 disabled:cursor-not-allowed {isLast ? '' : 'hover:text-gray-700 hover:bg-gray-100 active:scale-95'}"
+				class="p-1.5 text-gray-400 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
 				title="Move down"
 			>
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
 				</svg>
 			</button>
 		</div>
@@ -80,10 +80,10 @@
 			<!-- Title & Meta -->
 			<div class="flex items-center justify-between gap-2 mb-1.5">
 				<h3 class="font-semibold text-gray-900 text-base tracking-tight">{group.title || 'Untitled'}</h3>
-				<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+				<div class="flex items-center gap-1">
 					<button
 						on:click={handleDeleteClick}
-						class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95"
+						class="p-2 text-gray-400 rounded-xl"
 						title="Delete group"
 					>
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
