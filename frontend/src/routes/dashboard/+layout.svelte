@@ -14,6 +14,7 @@
 	let showPublishSuccess = false;
 
 	function handleResize() {
+		if (typeof window === 'undefined') return;
 		if (!manualToggle) {
 			sidebarCollapsed = window.innerWidth < 1024;
 		}
@@ -22,8 +23,10 @@
 	function toggleSidebar() {
 		sidebarCollapsed = !sidebarCollapsed;
 		manualToggle = true;
-		localStorage.setItem('sidebarManualToggle', 'true');
-		localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed));
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('sidebarManualToggle', 'true');
+			localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed));
+		}
 	}
 
 	onMount(async () => {

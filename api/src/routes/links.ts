@@ -77,7 +77,8 @@ app.put('/groups/:groupId', async (c) => {
 		title: body.title,
 		layout_type: body.layout_type,
 		layout_config: body.layout_config,
-		sort_order: body.sort_order
+		sort_order: body.sort_order,
+		is_visible: body.is_visible
 	});
 
 	return c.json({ success: true });

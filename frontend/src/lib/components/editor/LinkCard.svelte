@@ -9,6 +9,7 @@
 	const dispatch = createEventDispatcher();
 	let showMenu = false;
 	let menuButton: HTMLButtonElement;
+	let menuPosition = { top: 0, right: 0 };
 
 	function handleToggle(e: MouseEvent) {
 		e.stopPropagation();
@@ -33,6 +34,14 @@
 	function toggleMenu(e: MouseEvent) {
 		e.stopPropagation();
 		showMenu = !showMenu;
+		
+		if (showMenu && menuButton) {
+			const rect = menuButton.getBoundingClientRect();
+			menuPosition = {
+				top: rect.bottom + 8,
+				right: window.innerWidth - rect.right
+			};
+		}
 	}
 
 	function handleToggleNewTab(e: MouseEvent) {
@@ -148,8 +157,8 @@
 			{#if showMenu}
 				<div 
 					id="menu-{link.id}"
-					class="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50 animate-scale-in"
-					style="transform-origin: top right;"
+					class="fixed w-72 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50 animate-scale-in"
+					style="top: {menuPosition.top}px; right: {menuPosition.right}px; transform-origin: top right;"
 				>
 					<!-- Open in New Tab Toggle -->
 					<button
