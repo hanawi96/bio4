@@ -187,19 +187,6 @@
 	}
 </script>
 
-<style>
-	/* Hide scrollbar for Chrome, Safari and Opera */
-	.scrollbar-hide::-webkit-scrollbar {
-		display: none;
-	}
-
-	/* Hide scrollbar for IE, Edge and Firefox */
-	.scrollbar-hide {
-		-ms-overflow-style: none;  /* IE and Edge */
-		scrollbar-width: none;  /* Firefox */
-	}
-</style>
-
 <div class="flex h-[calc(100vh-64px)] bg-gray-50">
 	<!-- Left Sidebar Navigation -->
 	<aside class="{sidebarCollapsed ? 'w-16' : 'w-56'} bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300">
@@ -248,142 +235,147 @@
 		</div>
 	</aside>
 
-	<!-- Middle: Content Area (Scrollable) -->
-	<div class="flex-1 overflow-y-auto scrollbar-hide" bind:this={contentContainer}>
-		<div class="max-w-3xl mx-auto p-8">
-			{#if loading}
-				<div class="flex items-center justify-center py-20">
-					<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-				</div>
-			{:else if error}
-				<div class="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
-			{:else}
-				<!-- Info Banner -->
-				<div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mb-8">
-					<div class="flex items-start gap-3">
-						<div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-							<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-							</svg>
+	<!-- Main Content + Preview (Scrollable together) -->
+	<div class="flex-1 overflow-y-auto" bind:this={contentContainer}>
+		<div class="flex gap-8 p-8 justify-center">
+			<!-- Left: Content Area -->
+			<div class="w-full max-w-3xl">
+				{#if loading}
+					<div class="flex items-center justify-center py-20">
+						<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+					</div>
+				{:else if error}
+					<div class="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
+				{:else}
+					<!-- Info Banner -->
+					<div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mb-8">
+						<div class="flex items-start gap-3">
+							<div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+								<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+								</svg>
+							</div>
+							<div class="flex-1">
+								<h4 class="text-sm font-semibold text-gray-900 mb-1">Customize Your Bio Page</h4>
+								<p class="text-sm text-gray-600">
+									Use the navigation menu to jump between sections. All changes are previewed in real-time.
+								</p>
+							</div>
 						</div>
-						<div class="flex-1">
-							<h4 class="text-sm font-semibold text-gray-900 mb-1">Customize Your Bio Page</h4>
-							<p class="text-sm text-gray-600">
-								Use the navigation menu to jump between sections. All changes are previewed in real-time.
-							</p>
+					</div>
+
+					<!-- Sections -->
+					<div class="space-y-8">
+						<!-- Theme Section -->
+						<section id="theme" class="scroll-mt-6">
+							<ThemeSection />
+						</section>
+
+						<!-- Header Section -->
+						<section id="header" class="scroll-mt-6">
+							<HeaderSection />
+						</section>
+
+						<!-- Background Section -->
+						<section id="background" class="scroll-mt-6">
+							<BackgroundSection />
+						</section>
+
+						<!-- Block Style Section -->
+						<section id="blocks" class="scroll-mt-6">
+							<BlockStyleSection />
+						</section>
+
+						<!-- Font Section -->
+						<section id="fonts" class="scroll-mt-6">
+							<FontSection />
+						</section>
+
+						<!-- Spacing Section -->
+						<section id="spacing" class="scroll-mt-6">
+							<SpacingSection />
+						</section>
+
+						<!-- Page Settings Section -->
+						<section id="settings" class="scroll-mt-6">
+							<PageSettingsSection />
+						</section>
+					</div>
+
+					<!-- Bottom Spacer -->
+					<div class="h-20"></div>
+				{/if}
+			</div>
+
+			<!-- Right: Preview -->
+			<div class="w-[520px] flex-shrink-0 -mr-8 pr-8">
+				<div class="sticky top-8 space-y-4">
+					<!-- Selected Domain Section -->
+					<div class="pb-4">
+						<p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Selected Domain</p>
+						
+						<div class="flex items-center gap-2 flex-wrap">
+							<!-- URL Display -->
+							<div class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg flex-1 min-w-[200px] bg-white">
+								<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+								</svg>
+								<span class="text-sm font-medium text-gray-900 truncate">biolink.com/{username}</span>
+							</div>
+
+							<!-- Copy Button -->
+							<button 
+								on:click={copyLink}
+								class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+								title="Copy link"
+							>
+								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+								</svg>
+							</button>
+
+							<!-- External Link Button -->
+							<button 
+								on:click={openInNewTab}
+								class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+								title="Open in new tab"
+							>
+								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+								</svg>
+							</button>
+
+							<!-- Reset Button (only show when has customizations) -->
+							{#if hasCustomizations}
+								<button 
+									on:click={() => showResetModal = true}
+									class="px-3 py-2 border border-orange-300 text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors text-sm font-medium flex items-center gap-1.5"
+									title="Reset to theme default"
+								>
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+									</svg>
+									Reset
+								</button>
+							{/if}
+
+							<!-- Share Button -->
+							<button class="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">
+								SHARE
+							</button>
+						</div>
+					</div>
+
+					<!-- Phone Mockup - với padding để tránh scale-125 tràn ra -->
+					<div class="pt-16 pb-8">
+						<div class="flex items-center justify-center">
+							<PhoneMockup />
 						</div>
 					</div>
 				</div>
-
-				<!-- Sections -->
-				<div class="space-y-8">
-					<!-- Theme Section -->
-					<section id="theme" class="scroll-mt-6">
-						<ThemeSection />
-					</section>
-
-					<!-- Header Section -->
-					<section id="header" class="scroll-mt-6">
-						<HeaderSection />
-					</section>
-
-					<!-- Background Section -->
-					<section id="background" class="scroll-mt-6">
-						<BackgroundSection />
-					</section>
-
-					<!-- Block Style Section -->
-					<section id="blocks" class="scroll-mt-6">
-						<BlockStyleSection />
-					</section>
-
-					<!-- Font Section -->
-					<section id="fonts" class="scroll-mt-6">
-						<FontSection />
-					</section>
-
-					<!-- Spacing Section -->
-					<section id="spacing" class="scroll-mt-6">
-						<SpacingSection />
-					</section>
-
-					<!-- Page Settings Section -->
-					<section id="settings" class="scroll-mt-6">
-						<PageSettingsSection />
-					</section>
-				</div>
-
-				<!-- Bottom Spacer -->
-				<div class="h-20"></div>
-			{/if}
+			</div>
 		</div>
 	</div>
-
-	<!-- Right: Preview (Sticky) -->
-	<aside class="w-[520px] bg-white border-l border-gray-200 flex-shrink-0">
-		<div class="sticky top-0 h-[calc(100vh-64px)] flex flex-col">
-			<!-- Selected Domain Section (Fixed at top) -->
-			<div class="p-6 pb-4">
-				<p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Selected Domain</p>
-				
-				<div class="flex items-center gap-2">
-					<!-- URL Display (Shorter) -->
-					<div class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg flex-1">
-						<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-						</svg>
-						<span class="text-sm font-medium text-gray-900 truncate">biolink.com/{username}</span>
-					</div>
-
-					<!-- Copy Button -->
-					<button 
-						on:click={copyLink}
-						class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-						title="Copy link"
-					>
-						<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-						</svg>
-					</button>
-
-					<!-- External Link Button -->
-					<button 
-						on:click={openInNewTab}
-						class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-						title="Open in new tab"
-					>
-						<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-						</svg>
-					</button>
-
-					<!-- Reset Button (only show when has customizations) -->
-					{#if hasCustomizations}
-						<button 
-							on:click={() => showResetModal = true}
-							class="px-3 py-2 border border-orange-300 text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors text-sm font-medium flex items-center gap-1.5"
-							title="Reset to theme default"
-						>
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-							</svg>
-							Reset
-						</button>
-					{/if}
-
-					<!-- Share Button -->
-					<button class="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">
-						SHARE
-					</button>
-				</div>
-			</div>
-
-			<!-- Phone Mockup Container -->
-			<div class="flex-1 flex items-center justify-center px-6 pb-6">
-				<PhoneMockup />
-			</div>
-		</div>
-	</aside>
 
 	<!-- Debug Panel -->
 	<AppearanceDebug />

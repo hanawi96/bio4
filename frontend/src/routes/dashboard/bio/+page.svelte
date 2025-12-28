@@ -14,6 +14,29 @@
 	let loading = true;
 	let error = '';
 
+	// Bio URL
+	$: bioUrl = `https://biolink.com/${username}`;
+
+	// Copy link function
+	async function copyLink() {
+		try {
+			await navigator.clipboard.writeText(bioUrl);
+		} catch (e) {
+			console.error('Failed to copy:', e);
+			const input = document.createElement('input');
+			input.value = bioUrl;
+			document.body.appendChild(input);
+			input.select();
+			document.execCommand('copy');
+			document.body.removeChild(input);
+		}
+	}
+
+	// Open in new tab
+	function openInNewTab() {
+		window.open(bioUrl, '_blank', 'noopener,noreferrer');
+	}
+
 	// View state
 	type ViewMode = 'list' | 'edit-links';
 	let viewMode: ViewMode = 'list';
@@ -412,9 +435,11 @@
 </script>
 
 <div class="flex h-[calc(100vh-64px)] bg-gray-50">
-	<!-- Left: Content Area -->
-	<div class="flex-1 overflow-y-auto p-8">
-		<div class="max-w-3xl mx-auto h-full">
+	<!-- Main Content + Preview (Scrollable together) -->
+	<div class="flex-1 overflow-y-auto">
+		<div class="flex gap-8 p-8 justify-center">
+			<!-- Left: Content Area -->
+			<div class="w-full max-w-3xl">
 			{#if loading}
 				<div class="flex items-center justify-center py-12">
 					<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
@@ -481,18 +506,63 @@
 					on:updateLayoutConfig={handleUpdateLayoutConfig}
 				/>
 			{/if}
-		</div>
-	</div>
+			</div>
 
-	<!-- Right: Preview (Sticky) -->
-	<aside class="w-[440px] bg-white border-l border-gray-200 flex-shrink-0">
-		<div class="sticky top-0 h-[calc(100vh-64px)] flex flex-col">
-			<!-- Phone Mockup Container -->
-			<div class="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 overflow-hidden">
-				<PhoneMockup />
+			<!-- Right: Preview -->
+			<div class="w-[440px] flex-shrink-0 -mr-8 pr-8">
+				<div class="sticky top-8 space-y-4">
+					<!-- Selected Domain Section -->
+					<div class="pb-4">
+						<p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Selected Domain</p>
+						
+						<div class="flex items-center gap-2 flex-wrap">
+							<!-- URL Display -->
+							<div class="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg flex-1 min-w-[200px] bg-white">
+								<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+								</svg>
+								<span class="text-sm font-medium text-gray-900 truncate">biolink.com/{username}</span>
+							</div>
+
+							<!-- Copy Button -->
+							<button 
+								on:click={copyLink}
+								class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+								title="Copy link"
+							>
+								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+								</svg>
+							</button>
+
+							<!-- External Link Button -->
+							<button 
+								on:click={openInNewTab}
+								class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+								title="Open in new tab"
+							>
+								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+								</svg>
+							</button>
+
+							<!-- Share Button -->
+							<button class="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">
+								SHARE
+							</button>
+						</div>
+					</div>
+
+					<!-- Phone Mockup -->
+					<div class="pt-16 pb-8">
+						<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 rounded-lg py-8">
+							<PhoneMockup />
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
-	</aside>
+	</div>
 </div>
 
 <!-- Modals -->
