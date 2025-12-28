@@ -6,6 +6,8 @@
 
 	export let params = {};
 	import AddBlockModal from '$lib/components/modals/AddBlockModal.svelte';
+	import RenameGroupModal from '$lib/components/modals/RenameGroupModal.svelte';
+	import DeleteGroupModal from '$lib/components/modals/DeleteGroupModal.svelte';
 	import LinksEditor from '$lib/components/editor/LinksEditor.svelte';
 	import BlockCard from '$lib/components/editor/BlockCard.svelte';
 	import type { Link } from '$lib/types';
@@ -48,6 +50,10 @@
 	let isCreatingGroup = false; // Track group creation status
 
 	let addBlockModal: AddBlockModal;
+	let renameGroupModal: RenameGroupModal;
+	let deleteGroupModal: DeleteGroupModal;
+	let renamingGroupId: number | null = null;
+	let deletingGroupId: number | null = null;
 
 	onMount(async () => {
 		try {
@@ -77,7 +83,18 @@
 	}
 
 	async function handleDeleteGroup(groupId: number) {
-		if (!confirm('Are you sure you want to delete this group and all its links?')) return;
+		const group = $groups.find(g => g.id === groupId);
+		if (!group) return;
+
+		deletingGroupId = groupId;
+		deleteGroupModal.open(group.title || 'Untitled', group.links?.length || 0);
+	}
+
+	async function handleDeleteConfirm() {
+		if (!deletingGroupId) return;
+
+		const groupId = deletingGroupId;
+		deletingGroupId = null;
 
 		// OPTIMISTIC UI: Remove group immediately
 		const deletedGroup = $groups.find(g => g.id === groupId);
@@ -115,6 +132,37 @@
 			// Revert on error
 			groups.set(oldGroups);
 			error = e.message || 'Failed to update group visibility';
+		}
+	}
+
+	async function handleRenameGroup(groupId: number) {
+		const group = $groups.find(g => g.id === groupId);
+		if (!group) return;
+
+		renamingGroupId = groupId;
+		renameGroupModal.open(group.title || '');
+	}
+
+	async function handleRenameSubmit(event: CustomEvent<string>) {
+		const newTitle = event.detail;
+		if (!renamingGroupId || !newTitle) return;
+
+		const groupId = renamingGroupId;
+		renamingGroupId = null;
+
+		// OPTIMISTIC UI: Update immediately
+		const oldGroups = [...$groups];
+		groups.update(g => g.map(grp => 
+			grp.id === groupId ? { ...grp, title: newTitle } : grp
+		));
+
+		// Update in background
+		try {
+			await api.updateGroup(groupId, { title: newTitle });
+		} catch (e: any) {
+			// Revert on error
+			groups.set(oldGroups);
+			error = e.message || 'Failed to rename group';
 		}
 	}
 
@@ -598,6 +646,7 @@
 								on:moveDown={(e) => handleMoveGroup(e.detail, 'down')}
 								on:delete={(e) => handleDeleteGroup(e.detail)}
 								on:toggleVisible={handleToggleGroupVisible}
+								on:rename={(e) => handleRenameGroup(e.detail)}
 							/>
 						{/each}
 					</div>
@@ -682,3 +731,5 @@
 
 <!-- Modals -->
 <AddBlockModal bind:this={addBlockModal} on:select={handleBlockTypeSelect} />
+<RenameGroupModal bind:this={renameGroupModal} on:rename={handleRenameSubmit} />
+<DeleteGroupModal bind:this={deleteGroupModal} on:confirm={handleDeleteConfirm} />

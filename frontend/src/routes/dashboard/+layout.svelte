@@ -1,21 +1,50 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { themes } from '$lib/stores/themes';
 	import { publishChanges, saveStatus } from '$lib/stores/autosave';
-	
-	// Load themes on mount - MUST complete before pages load
-	onMount(async () => {
-		await themes.load();
-	});
 	
 	// Suppress params warning
 	export let params = {};
 	
 	$: currentPath = $page.url.pathname;
 	let sidebarCollapsed = false;
+	let manualToggle = false;
 	let publishing = false;
 	let showPublishSuccess = false;
+
+	function handleResize() {
+		if (!manualToggle) {
+			sidebarCollapsed = window.innerWidth < 1024;
+		}
+	}
+
+	function toggleSidebar() {
+		sidebarCollapsed = !sidebarCollapsed;
+		manualToggle = true;
+		localStorage.setItem('sidebarManualToggle', 'true');
+		localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed));
+	}
+
+	onMount(async () => {
+		await themes.load();
+		
+		const savedManualToggle = localStorage.getItem('sidebarManualToggle');
+		const savedCollapsed = localStorage.getItem('sidebarCollapsed');
+		
+		if (savedManualToggle === 'true' && savedCollapsed) {
+			manualToggle = true;
+			sidebarCollapsed = savedCollapsed === 'true';
+		} else {
+			sidebarCollapsed = window.innerWidth < 1024;
+		}
+		
+		window.addEventListener('resize', handleResize);
+	});
+
+	onDestroy(() => {
+		window.removeEventListener('resize', handleResize);
+	});
 
 	async function handlePublish() {
 		if (publishing) return;
@@ -52,7 +81,7 @@
 			</a>
 			{#if !sidebarCollapsed}
 				<button
-					on:click={() => sidebarCollapsed = !sidebarCollapsed}
+					on:click={toggleSidebar}
 					class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
 					title="Collapse sidebar"
 				>
@@ -67,7 +96,7 @@
 		<nav class="p-4 space-y-1">
 			{#if sidebarCollapsed}
 				<button
-					on:click={() => sidebarCollapsed = !sidebarCollapsed}
+					on:click={toggleSidebar}
 					class="w-full p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex items-center justify-center"
 					title="Expand sidebar"
 				>
