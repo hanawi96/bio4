@@ -14,7 +14,6 @@
 	let showPublishSuccess = false;
 
 	function handleResize() {
-		if (typeof window === 'undefined') return;
 		if (!manualToggle) {
 			sidebarCollapsed = window.innerWidth < 1024;
 		}
@@ -23,10 +22,8 @@
 	function toggleSidebar() {
 		sidebarCollapsed = !sidebarCollapsed;
 		manualToggle = true;
-		if (typeof window !== 'undefined') {
-			localStorage.setItem('sidebarManualToggle', 'true');
-			localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed));
-		}
+		localStorage.setItem('sidebarManualToggle', 'true');
+		localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed));
 	}
 
 	onMount(async () => {
@@ -46,9 +43,7 @@
 	});
 
 	onDestroy(() => {
-		if (typeof window !== 'undefined') {
-			window.removeEventListener('resize', handleResize);
-		}
+		window.removeEventListener('resize', handleResize);
 	});
 
 	async function handlePublish() {
