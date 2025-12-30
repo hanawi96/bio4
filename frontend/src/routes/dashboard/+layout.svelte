@@ -2,6 +2,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { themes } from '$lib/stores/themes';
+	import { loadHeaderPresets } from '$lib/stores/headerPresets';
+	import { loadBlockPresets } from '$lib/stores/blockPresets';
 	import { publishChanges, saveStatus } from '$lib/stores/autosave';
 	
 	// Suppress params warning
@@ -31,6 +33,8 @@
 
 	onMount(async () => {
 		await themes.load();
+		await loadHeaderPresets();
+		await loadBlockPresets();
 		
 		const savedManualToggle = localStorage.getItem('sidebarManualToggle');
 		const savedCollapsed = localStorage.getItem('sidebarCollapsed');

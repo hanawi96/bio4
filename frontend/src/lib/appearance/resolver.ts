@@ -2,6 +2,9 @@ import type { ResolvedAppearance, Theme, ThemeTokens, ResolvedBlockStyle } from 
 import { HEADER_PRESETS, BLOCK_PRESETS } from './presets';
 import { getBlockStyleRecipe, type BlockStylePresetId } from './blockStyles';
 import { resolveToken, resolveAutoTextColor } from './tokenResolver';
+import { get } from 'svelte/store';
+import { headerPresets } from '$lib/stores/headerPresets';
+import { blockPresets } from '$lib/stores/blockPresets';
 
 // ============================================
 // CONSTANTS
@@ -83,13 +86,23 @@ function expandThemeTokens(config: any): ThemeTokens {
 		backgroundColor.includes('#000') ||
 		backgroundColor.includes('#111');
 
+	// Extract blockBase - handle both string and object formats
+	let blockBase = '#3b82f6';
+	if (tokens.blockBase) {
+		if (typeof tokens.blockBase === 'string') {
+			blockBase = tokens.blockBase;
+		} else if (typeof tokens.blockBase === 'object' && tokens.blockBase.value) {
+			blockBase = tokens.blockBase.value;
+		}
+	}
+
 	return {
 		bg: tokens.bg || { type: 'color', value: '#ffffff' },
 		text: tokens.text || '#000000',
 		primary: tokens.primary || '#3b82f6',
 		surface: tokens.surface || '#fafafa',
 		border: tokens.border || '#e5e5e5',
-		blockBase: tokens.blockBase || '#3b82f6',
+		blockBase,
 		shadowColor: tokens.shadowColor || '#000000',
 		fontFamily: tokens.fontFamily || 'Inter, sans-serif',
 		secondary: adjustColor(tokens.primary || '#3b82f6', -20),
@@ -144,7 +157,7 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 			return;
 		}
 
-		// Handle nested keys (e.g., "tokens.bg", "page.blockGap")
+		// Handle nested keys (e.g., "tokens.bg", "tokens.blockBase", "page.blockGap")
 		const keys = key.split('.');
 		let target = config;
 		for (let i = 0; i < keys.length - 1; i++) {
@@ -286,6 +299,10 @@ export function resolveAppearance(
 		)
 		: (pageState.headerStyle?.overrides || {});
 
+	// Get header preset from store (with fallback to hardcoded)
+	const $headerPresets = get(headerPresets);
+	const headerPresetsMap = Object.keys($headerPresets).length > 0 ? $headerPresets : HEADER_PRESETS;
+
 	// Resolve block preset
 	const defaultBlockId = theme?.defaultBlockPresetId || themeConfig.defaults?.blockPreset || 'rounded-solid';
 	const blockPresetId = isNewFormat
@@ -300,6 +317,10 @@ export function resolveAppearance(
 		)
 		: (pageState.blockStyle?.overrides || {});
 
+	// Get block preset from store (with fallback to hardcoded)
+	const $blockPresets = get(blockPresets);
+	const blockPresetsMap = Object.keys($blockPresets).length > 0 ? $blockPresets : BLOCK_PRESETS;
+
 	// Resolve block style recipe
 	const defaultBlockStyleId = themeConfig.defaults?.blockStylePreset || 'solid';
 	const blockStyleId = (blockOverrides.stylePreset || defaultBlockStyleId) as BlockStylePresetId;
@@ -313,8 +334,8 @@ export function resolveAppearance(
 			config: themeConfig
 		},
 		tokens,
-		header: { ...(HEADER_PRESETS[headerPresetId] || HEADER_PRESETS['no-cover']), ...headerOverrides },
-		block: { ...(BLOCK_PRESETS[blockPresetId] || BLOCK_PRESETS['rounded-solid']), ...blockOverrides },
+		header: { ...(headerPresetsMap[headerPresetId] || headerPresetsMap['no-cover'] || HEADER_PRESETS['no-cover']), ...headerOverrides },
+		block: { ...(blockPresetsMap[blockPresetId] || blockPresetsMap['rounded-default'] || BLOCK_PRESETS['rounded-solid']), ...blockOverrides },
 		blockStyle
 	};
 }

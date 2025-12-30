@@ -3,7 +3,7 @@
 // ============================================
 // Resolves token references like "blockBase@0.14" to actual CSS colors
 
-import type { ThemeConfigTokens } from './types';
+import type { ThemeTokens } from './types';
 
 // Parse token reference string
 // Examples:
@@ -26,7 +26,7 @@ export function parseTokenReference(ref: string): { token: string; opacity: numb
 // Examples:
 //   resolveToken("blockBase", tokens) → "#2563EB"
 //   resolveToken("blockBase@0.14", tokens) → "rgba(37, 99, 235, 0.14)"
-export function resolveToken(ref: string, tokens: ThemeConfigTokens): string {
+export function resolveToken(ref: string, tokens: ThemeTokens): string {
 	const { token, opacity } = parseTokenReference(ref);
 
 	// Handle special cases
@@ -34,7 +34,7 @@ export function resolveToken(ref: string, tokens: ThemeConfigTokens): string {
 	if (token === 'none') return 'none';
 
 	// Get color from tokens
-	const color = tokens[token as keyof ThemeConfigTokens];
+	const color = tokens[token as keyof ThemeTokens];
 	if (!color || typeof color !== 'string') {
 		console.warn(`[tokenResolver] Token "${token}" not found, using fallback`);
 		return '#000000';
@@ -95,7 +95,7 @@ export function getAutoTextColor(bgColor: string): string {
 }
 
 // Resolve "auto" text color based on fill color
-export function resolveAutoTextColor(fillRef: string, tokens: ThemeConfigTokens): string {
+export function resolveAutoTextColor(fillRef: string, tokens: ThemeTokens): string {
 	// If fill is transparent, use default text color
 	if (fillRef === 'transparent') {
 		return tokens.text;

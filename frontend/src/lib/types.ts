@@ -62,49 +62,159 @@ export interface ThemePreset {
 	id: number;
 	key: string;
 	name: string;
-	config: {
-		meta: {
-			id: string;
-			name: string;
-			schemaVersion: number;
-			version: string;
+	config: ThemeConfig;
+}
+
+export interface ThemeConfig {
+	meta: ThemeMeta;
+	tokens: ThemeTokens;
+	semantic?: ThemeSemantic;
+	recipes?: ThemeRecipes;
+	page: ThemePage;
+	background?: ThemeBackground;
+	modes?: Record<string, Partial<ThemeConfig>>;
+}
+
+export interface ThemeMeta {
+	id: string;
+	name: string;
+	schemaVersion: number;
+	version: string;
+	author?: string;
+	description?: string;
+	tier?: 'free' | 'pro';
+	category?: string;
+	contract?: ThemeContract;
+}
+
+export interface ThemeContract {
+	controls: ThemeControl[];
+}
+
+export interface ThemeControl {
+	keyPath: string;
+	type: 'select' | 'slider' | 'color' | 'toggle' | 'number';
+	label: string;
+	default?: any;
+	options?: string[];
+	min?: number;
+	max?: number;
+	step?: number;
+}
+
+export interface ThemeTokens {
+	color?: {
+		[key: string]: any;
+	};
+	typography?: {
+		fontFamily?: any;
+		fontSize?: any;
+		fontWeight?: any;
+		lineHeight?: any;
+	};
+	space?: Record<string, number>;
+	radius?: Record<string, number>;
+	elevation?: Record<string, string>;
+	// Legacy support
+	bg?: { type: 'color' | 'gradient'; value: string | { from: string; to: string; angle: number } };
+	text?: any;
+	primary?: any;
+	surface?: string;
+	border?: string;
+	blockBase?: string;
+	fontFamily?: string;
+	shadowColor?: string;
+}
+
+export interface ThemeSemantic {
+	color?: {
+		primary?: string;
+		primaryHover?: string;
+		secondary?: string;
+		text?: {
+			default?: string;
+			muted?: string;
+			subtle?: string;
+			invert?: string;
 		};
-		tokens: {
-			bg: { type: 'color' | 'gradient'; value: string | { from: string; to: string; angle: number } };
-			text: string;
-			primary: string;
-			surface: string;
-			border: string;
-			blockBase: string;
-			fontFamily: string;
+		surface?: {
+			page?: string;
+			card?: string;
+			elevated?: string;
+			overlay?: string;
 		};
-		defaults: {
-			headerPreset: string;
-			blockPreset: string;
-			blockStylePreset: string;
+		border?: {
+			default?: string;
+			subtle?: string;
+			strong?: string;
 		};
-		page: {
-			mode: 'light' | 'dark';
-			layout: {
-				maxWidth: number;
-				pagePadding: number;
-				blockGap: number;
-				textAlign: 'left' | 'center' | 'right';
-			};
-		};
-		modes?: {
-			dark?: {
-				tokens: any;
-			};
-			light?: {
-				tokens: any;
-			};
-		};
+	};
+	typography?: {
+		heading?: any;
+		body?: any;
+		caption?: any;
+	};
+}
+
+export interface ThemeRecipes {
+	linkItem?: {
+		base?: any;
+		hover?: any;
+		variants?: any;
+	};
+	linkGroup?: {
+		base?: any;
+		variants?: any;
+	};
+	header?: {
+		base?: any;
+		variants?: any;
+	};
+	button?: {
+		base?: any;
+	};
+}
+
+export interface ThemePage {
+	mode: 'light' | 'dark';
+	layout: {
+		maxWidth: number;
+		pagePadding: number;
+		blockGap: number;
+		textAlign: 'left' | 'center' | 'right';
+		baseFontSize?: string;
+	};
+	defaults?: {
+		// v2.2: Reference preset IDs instead of full config
+		headerPresetId?: string;
+		blockPresetId?: string;
+		linkStyle?: string; // 'solid' | 'outline' | 'soft'
+		linkGroupLayout?: string; // 'list' | 'cards' | 'grid'
+		
+		// Legacy support (v2.0-2.1)
+		header?: any;
+		linkGroup?: any;
+		block?: any;
+		textBlock?: any;
+		imageBlock?: any;
+	};
+}
+
+export interface ThemeBackground {
+	wallpaper?: {
+		kind: 'preset' | 'upload';
+		assetId?: number | null;
+		url?: string | null;
+	};
+	effects?: {
+		blur?: number;
+		dim?: number;
+		overlayColor?: string;
 	};
 }
 
 // Legacy ThemeConfig (for backward compatibility)
-export interface ThemeConfig {
+export interface LegacyThemeConfig {
 	backgroundColor: string;
 	textColor: string;
 	primaryColor: string;
@@ -118,7 +228,7 @@ export interface EditorData {
 	page: BioPage;
 	groups: LinkGroup[];
 	blocks: Block[];
-	theme: ThemeConfig | null;
+	theme: ThemeConfig | LegacyThemeConfig | null;
 }
 
 export interface PublicBioData extends EditorData {}

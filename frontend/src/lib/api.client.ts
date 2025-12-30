@@ -190,6 +190,34 @@ class ApiClient {
 		return res.json();
 	}
 
+	// ============ HEADER PRESETS ============
+
+	async getHeaderPresets(): Promise<{ presets: any[] }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/header-presets`);
+		if (!res.ok) throw new Error('Failed to load header presets');
+		return res.json();
+	}
+
+	async getHeaderPreset(key: string): Promise<{ preset: any }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/header-presets/${key}`);
+		if (!res.ok) throw new Error('Header preset not found');
+		return res.json();
+	}
+
+	// ============ BLOCK PRESETS ============
+
+	async getBlockPresets(): Promise<{ presets: any[] }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/block-presets`);
+		if (!res.ok) throw new Error('Failed to load block presets');
+		return res.json();
+	}
+
+	async getBlockPreset(key: string): Promise<{ preset: any }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/block-presets/${key}`);
+		if (!res.ok) throw new Error('Block preset not found');
+		return res.json();
+	}
+
 	// ============ UPLOAD ============
 
 	async uploadImage(file: File, userId?: number): Promise<{ url: string; storage_key: string }> {

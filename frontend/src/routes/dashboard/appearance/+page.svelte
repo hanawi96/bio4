@@ -3,7 +3,7 @@
 	import { api } from '$lib/api.client';
 	import { loadEditorData, setAutosaveTrigger } from '$lib/stores/page';
 	import { triggerAutosave, initializeAutosave } from '$lib/stores/autosave';
-	import { appearanceState, resetToThemeDefault } from '$lib/stores/appearanceManager';
+	import { appearanceState, resetToThemeDefault, hasCustomizations } from '$lib/stores/appearanceManager';
 	import { appearance } from '$lib/stores/appearance';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 	import ThemeSection from '$lib/components/editor/sections/ThemeSection.svelte';
@@ -29,8 +29,6 @@
 	let showResetModal = false;
 	let resetting = false;
 
-	// Check if has customizations
-	$: hasCustomizations = Object.keys($appearanceState.overrides || {}).length > 0;
 	$: themeName = $appearance?.theme?.name || 'Default';
 	$: bioUrl = `https://biolink.com/${username}`;
 
@@ -340,7 +338,7 @@
 							</button>
 
 							<!-- Reset Button (only show when has customizations) -->
-							{#if hasCustomizations}
+							{#if $hasCustomizations}
 								<button 
 									on:click={() => showResetModal = true}
 									class="px-3 py-2 border border-orange-300 text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors text-sm font-medium flex items-center gap-1.5"

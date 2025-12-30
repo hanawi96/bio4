@@ -113,50 +113,36 @@
 		return matchedOption ? matchedOption.id : 'none';
 	})();
 
-	// Get current block style from appearance (for applying to preview)
-	$: currentBlockStyle = $appearance?.blockStyle;
-
 	// Helper: Get display style for a recipe
 	function getDisplayStyle(recipeId: BlockStylePresetId): any {
-		const isCurrentRecipe = recipeId === currentRecipeId;
-		
-		if (isCurrentRecipe && currentBlockStyle) {
-			// For current recipe, use resolved block style
-			const shadowToUse = recipeId === 'neon' 
-				? '' // Neon: ignore shadow override, only use glow
-				: (currentShadow !== 'none' ? currentShadow : (currentBlockStyle.shadow || ''));
-			
-			const resolvedShadow = resolveShadow(shadowToUse, $appearance?.tokens?.shadowColor || '#000000');
-			
-			return {
-				backgroundColor: currentBlockStyle.fill,
-				color: currentBlockStyle.text,
-				border: currentBlockStyle.border ? `1px solid ${currentBlockStyle.border}` : 'none',
-				boxShadow: resolvedShadow !== 'none' ? resolvedShadow : (currentBlockStyle.glow ? `0 0 20px ${currentBlockStyle.glow}` : 'none'),
-				backdropFilter: currentBlockStyle.blur ? `blur(${currentBlockStyle.blur}px)` : 'none'
-			};
-		}
-		
-		// For other recipes, get base style
+		// Get base style from recipe
 		const baseStyle = getPreviewStyle(recipeId);
 		
-		// Apply shadow overrides based on recipe type
+		// Apply shadow based on recipe type and current shadow selection
 		if (recipeId === 'brutal') {
-			// Brutal: always show hard shadow
+			// Brutal: always use hard shadow (with current shadowColor)
 			baseStyle.boxShadow = `4px 4px 0px ${$appearance?.tokens?.shadowColor || '#000000'}`;
 		} else if (recipeId !== 'neon' && currentShadow && currentShadow !== 'none') {
-			// Other recipes (except Neon): apply shadow override
+			// Other recipes (except Neon): apply current shadow selection
 			baseStyle.boxShadow = resolveShadow(currentShadow, $appearance?.tokens?.shadowColor || '#000000');
 		}
+		// Neon keeps its glow from baseStyle, others keep recipe default if no shadow selected
 		
 		return baseStyle;
 	}
 
 	// Memoize display styles for all recipes (reactive)
-	$: displayStyles = recipes.reduce((acc, recipeId) => {
-		acc[recipeId] = getDisplayStyle(recipeId);
-		return acc;
-	}, {} as Record<BlockStylePresetId, any>);
+	// Dependencies: recipes, currentShadow, $appearance.tokens (blockBase, shadowColor, etc.)
+	$: displayStyles = (() => {
+		// Track dependencies
+		const _shadow = currentShadow;
+		const _tokens = $appearance?.tokens;
+		
+		return recipes.reduce((acc, recipeId) => {
+			acc[recipeId] = getDisplayStyle(recipeId);
+			return acc;
+		}, {} as Record<BlockStylePresetId, any>);
+	})();
 
 	// Get background style from theme
 	$: previewBackground = $appearance?.tokens?.backgroundColor || '#ffffff';

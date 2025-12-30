@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
-	import { appearanceState, changeThemePreset, resetToThemeDefault } from '$lib/stores/appearanceManager';
+	import { appearanceState, changeThemePreset, resetToThemeDefault, hasCustomizations } from '$lib/stores/appearanceManager';
 	import { appearance } from '$lib/stores/appearance';
 	import ResetThemeModal from '$lib/components/modals/ResetThemeModal.svelte';
 	import type { ThemePreset } from '$lib/types';
@@ -10,15 +10,12 @@
 	let loading = true;
 	let selecting = false;
 	let selectingThemeKey: string | null = null;
-	let activeTab = 'Classic';
 	let currentPage = 0;
 	const itemsPerPage = 4;
 
 	// Reset modal state
 	let showResetModal = false;
 	let resetting = false;
-
-	const tabs = ['Classic', 'Vibrant', 'Cozy', 'Bold'];
 
 	onMount(async () => {
 		try {
@@ -31,15 +28,13 @@
 		}
 	});
 
-	// Check if has customizations
-	$: hasCustomizations = Object.keys($appearanceState.overrides || {}).length > 0;
 	$: themeName = $appearance?.theme?.name || 'Default';
 
 	async function selectTheme(preset: ThemePreset) {
 		if (selecting) return;
 
 		// If clicking current theme and has customizations, show reset modal
-		if (preset.key === $appearanceState.themeKey && hasCustomizations) {
+		if (preset.key === $appearanceState.presetKey && $hasCustomizations) {
 			showResetModal = true;
 			return;
 		}
@@ -69,8 +64,46 @@
 		}
 	}
 	
-	// Helper: Convert bg token to CSS value
+	// Helper: Resolve token reference (supports "ref:tokens.color.gray.50" or "tokens.color.gray.50")
+	function resolveTokenValue(preset: ThemePreset, value: any, fallback: string): string {
+		if (typeof value !== 'string') return value || fallback;
+		
+		// Remove "ref:" prefix if exists
+		const cleanValue = value.startsWith('ref:') ? value.substring(4) : value;
+		
+		// Check if it's a token/semantic reference
+		if (cleanValue.startsWith('tokens.') || cleanValue.startsWith('semantic.')) {
+			const path = cleanValue.split('.');
+			const root = path[0]; // 'tokens' or 'semantic'
+			const keys = path.slice(1);
+			
+			let resolved: any = root === 'tokens' ? preset.config.tokens : preset.config.semantic;
+			
+			for (const key of keys) {
+				resolved = resolved?.[key];
+				if (resolved === undefined) return fallback;
+			}
+			
+			// If resolved value is also a reference, resolve it recursively
+			if (typeof resolved === 'string' && (resolved.startsWith('ref:') || resolved.startsWith('tokens.') || resolved.startsWith('semantic.'))) {
+				return resolveTokenValue(preset, resolved, fallback);
+			}
+			
+			return resolved;
+		}
+		
+		return value || fallback;
+	}
+
+	// Helper: Convert bg token to CSS value (supports both old and new config)
 	function getBgStyle(preset: ThemePreset): string {
+		// New config: use semantic.color.surface.page
+		const semanticBg = preset.config?.semantic?.color?.surface?.page;
+		if (semanticBg) {
+			return resolveTokenValue(preset, semanticBg, '#ffffff');
+		}
+		
+		// Old config: use tokens.bg
 		const bgToken = preset.config?.tokens?.bg;
 		if (!bgToken) return '#ffffff';
 		
@@ -83,24 +116,56 @@
 		return '#ffffff';
 	}
 
+	// Helper: Get primary color (supports both old and new config)
+	function getPrimaryColor(preset: ThemePreset): string {
+		// New config: use semantic.color.primary
+		const semanticPrimary = preset.config?.semantic?.color?.primary;
+		if (semanticPrimary) {
+			return resolveTokenValue(preset, semanticPrimary, '#3b82f6');
+		}
+		
+		// Old config: use tokens.primary
+		const primary = preset.config?.tokens?.primary;
+		if (typeof primary === 'object' && primary.value) {
+			return primary.value;
+		}
+		return primary || '#3b82f6';
+	}
+
+	// Helper: Get text color (supports both old and new config)
+	function getTextColor(preset: ThemePreset): string {
+		// New config: use semantic.color.text.default
+		const semanticText = preset.config?.semantic?.color?.text?.default;
+		if (semanticText) {
+			return resolveTokenValue(preset, semanticText, '#000000');
+		}
+		
+		// Old config: use tokens.text
+		const text = preset.config?.tokens?.text;
+		if (typeof text === 'object' && text.value) {
+			return text.value;
+		}
+		return text || '#000000';
+	}
+
 	// Check if current preset is selected - fallback to appearance.theme.key
 	$: currentThemeKey = $appearanceState.themeKey || $appearance?.theme?.key;
 
 	// Pagination
-	$: totalThemes = hasCustomizations ? themes.length + 1 : themes.length;
+	$: totalThemes = $hasCustomizations ? themes.length + 1 : themes.length;
 	$: totalPages = Math.ceil(totalThemes / itemsPerPage);
 	$: visibleThemes = (() => {
 		const start = currentPage * itemsPerPage;
 		const end = start + itemsPerPage;
 		
-		if (hasCustomizations) {
-			if (currentPage === 0) {
-				return themes.slice(0, itemsPerPage - 1);
-			} else {
-				return themes.slice(start - 1, end - 1);
-			}
+		// If has customizations, reserve 1 slot on first page
+		if ($hasCustomizations && currentPage === 0) {
+			return themes.slice(0, itemsPerPage - 1);
 		}
-		return themes.slice(start, end);
+		
+		// Adjust indices if customization takes a slot
+		const offset = $hasCustomizations ? 1 : 0;
+		return themes.slice(start - offset, end - offset);
 	})();
 
 	function nextPage() {
@@ -131,7 +196,7 @@
 				<!-- Grid -->
 				<div class="grid grid-cols-5 gap-3">
 					<!-- Custom Theme Card -->
-					{#if hasCustomizations && currentPage === 0}
+					{#if $hasCustomizations && currentPage === 0}
 						<button
 							class="group aspect-[3/4] rounded-lg overflow-hidden border-2 border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 transition-all hover:shadow-lg hover:-translate-y-0.5"
 						>
@@ -149,7 +214,7 @@
 
 					<!-- Theme Presets -->
 					{#each visibleThemes as preset}
-						{@const isSelected = currentThemeKey === preset.key && !hasCustomizations}
+						{@const isSelected = currentThemeKey === preset.key && !$hasCustomizations}
 						<button
 							on:click={() => selectTheme(preset)}
 							disabled={selecting}
@@ -169,13 +234,13 @@
 								<div class="flex-1 flex flex-col justify-center space-y-1">
 									<div 
 										class="w-5 h-5 rounded-full mx-auto"
-										style="background: {preset.config.tokens.primary};"
+										style="background: {getPrimaryColor(preset)};"
 									></div>
 									<div class="space-y-1">
 										{#each [1, 2] as _}
 											<div 
 												class="h-2 rounded-sm"
-												style="background: {preset.config.tokens.primary}; opacity: 0.8;"
+												style="background: {getPrimaryColor(preset)}; opacity: 0.8;"
 											></div>
 										{/each}
 									</div>
@@ -183,7 +248,7 @@
 								
 								<!-- Name -->
 								<div class="mt-1.5 text-center">
-									<p class="text-[9px] font-medium truncate" style="color: {preset.config.tokens.text};">
+									<p class="text-[9px] font-medium truncate" style="color: {getTextColor(preset)};">
 										{preset.name}
 									</p>
 								</div>

@@ -63,6 +63,25 @@ export const isCustom = derived([appearanceState, themes], ([$state, $themes]) =
 });
 
 // ============================================
+// DERIVED: Has customizations (overrides or preset changes)
+// ============================================
+
+export const hasCustomizations = derived([appearanceState, themes], ([$state, $themes]) => {
+    const hasOverrides = Object.keys($state.overrides || {}).length > 0;
+
+    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+    const theme = themesMap[$state.presetKey || 'minimal'];
+    const themeDefaults = theme?.config?.page?.defaults;
+
+    const headerChanged = themeDefaults && $state.headerPresetId &&
+        $state.headerPresetId !== themeDefaults.headerPresetId;
+    const blockChanged = themeDefaults && $state.blockPresetId &&
+        $state.blockPresetId !== themeDefaults.blockPresetId;
+
+    return hasOverrides || headerChanged || blockChanged;
+});
+
+// ============================================
 // CORE: Update appearance value
 // ============================================
 
@@ -70,7 +89,7 @@ export function updateAppearance(path: string, value: any) {
     const currentState = get(appearanceState);
     const $themes = get(themes);
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
-    
+
     const newState = setAppearanceHelper(themesMap, currentState, path, value);
     const oldFormat = migrateNewToOld(themesMap, newState);
 
@@ -103,7 +122,7 @@ export function updateAppearance(path: string, value: any) {
 export async function changeThemePreset(presetKey: string) {
     const $themes = get(themes);
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
-    
+
     const newState = resetToPreset(themesMap, presetKey);
     const oldFormat = migrateNewToOld(themesMap, newState);
 
@@ -134,7 +153,7 @@ export async function changeHeaderPreset(headerPresetId: string) {
     const currentState = get(appearanceState);
     const $themes = get(themes);
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
-    
+
     const newState = setHeaderPresetHelper(currentState, headerPresetId);
     const oldFormat = migrateNewToOld(themesMap, newState);
 
@@ -163,7 +182,7 @@ export async function changeBlockPreset(blockPresetId: string) {
     const currentState = get(appearanceState);
     const $themes = get(themes);
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
-    
+
     const newState = setBlockPresetHelper(currentState, blockPresetId);
     const oldFormat = migrateNewToOld(themesMap, newState);
 
@@ -203,15 +222,16 @@ export async function resetToThemeDefault() {
     const currentState = get(appearanceState);
     const $themes = get(themes);
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
-    
-    // Keep themeKey, headerPresetId, blockPresetId but clear all overrides
+
+    // Reset to theme defaults (clear overrides AND reset preset IDs)
+    const theme = themesMap[currentState.presetKey || 'minimal'];
     const newState: AppearanceState = {
-        themeKey: currentState.themeKey,
-        headerPresetId: currentState.headerPresetId,
-        blockPresetId: currentState.blockPresetId,
+        presetKey: currentState.presetKey || 'minimal',
+        headerPresetId: theme?.defaultHeaderPresetId || theme?.config?.page?.defaults?.headerPresetId || 'no-cover',
+        blockPresetId: theme?.defaultBlockPresetId || theme?.config?.page?.defaults?.blockPresetId || 'rounded-solid',
         overrides: {} // Clear all overrides
     };
-    
+
     const oldFormat = migrateNewToOld(themesMap, newState);
 
     page.update(p => {

@@ -1,6 +1,8 @@
 import { derived, get } from 'svelte/store';
 import { page } from './page';
 import { themes } from './themes';
+import { headerPresets } from './headerPresets';
+import { blockPresets } from './blockPresets';
 import { resolveAppearance } from '$lib/appearance/resolver';
 import { FALLBACK_THEME } from '$lib/appearance/presets';
 import type { ResolvedAppearance } from '$lib/appearance/types';
@@ -8,10 +10,11 @@ import type { ResolvedAppearance } from '$lib/appearance/types';
 /**
  * Derived store that automatically resolves appearance from page state
  * Tracks all changes: theme, colors, fonts, spacing, header, blocks, etc.
+ * Now also tracks headerPresets and blockPresets to ensure they're loaded
  */
-export const appearance = derived<[typeof page, typeof themes], ResolvedAppearance | null>(
-	[page, themes],
-	([$page, $themes]) => {
+export const appearance = derived<[typeof page, typeof themes, typeof headerPresets, typeof blockPresets], ResolvedAppearance | null>(
+	[page, themes, headerPresets, blockPresets],
+	([$page, $themes, $headerPresets, $blockPresets]) => {
 		if (!$page) {
 			return null;
 		}
