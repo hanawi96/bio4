@@ -72,7 +72,6 @@ export interface ThemeConfig {
 	recipes?: ThemeRecipes;
 	page: ThemePage;
 	background?: ThemeBackground;
-	modes?: Record<string, Partial<ThemeConfig>>;
 }
 
 export interface ThemeMeta {

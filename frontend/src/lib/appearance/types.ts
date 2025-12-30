@@ -43,15 +43,6 @@ export interface ThemeConfigPage {
 	layout: ThemeConfigPageLayout;
 }
 
-export interface ThemeConfigModes {
-	dark?: {
-		tokens: Partial<ThemeConfigTokens>;
-	};
-	light?: {
-		tokens: Partial<ThemeConfigTokens>;
-	};
-}
-
 export interface ThemeConfig {
 	meta: {
 		id: string;
@@ -62,7 +53,6 @@ export interface ThemeConfig {
 	tokens: ThemeConfigTokens;
 	defaults: ThemeConfigDefaults;
 	page: ThemeConfigPage;
-	modes?: ThemeConfigModes;
 }
 
 export interface Theme {

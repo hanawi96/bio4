@@ -71,12 +71,12 @@ export const hasCustomizations = derived([appearanceState, themes], ([$state, $t
 
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
     const theme = themesMap[$state.presetKey || 'minimal'];
-    const themeDefaults = theme?.config?.page?.defaults;
+    const themeDefaults = theme?.config?.defaults;
 
     const headerChanged = themeDefaults && $state.headerPresetId &&
-        $state.headerPresetId !== themeDefaults.headerPresetId;
+        $state.headerPresetId !== themeDefaults.headerPreset;
     const blockChanged = themeDefaults && $state.blockPresetId &&
-        $state.blockPresetId !== themeDefaults.blockPresetId;
+        $state.blockPresetId !== themeDefaults.blockPreset;
 
     return hasOverrides || headerChanged || blockChanged;
 });
@@ -227,8 +227,8 @@ export async function resetToThemeDefault() {
     const theme = themesMap[currentState.presetKey || 'minimal'];
     const newState: AppearanceState = {
         presetKey: currentState.presetKey || 'minimal',
-        headerPresetId: theme?.defaultHeaderPresetId || theme?.config?.page?.defaults?.headerPresetId || 'no-cover',
-        blockPresetId: theme?.defaultBlockPresetId || theme?.config?.page?.defaults?.blockPresetId || 'rounded-solid',
+        headerPresetId: theme?.defaultHeaderPresetId || theme?.config?.defaults?.headerPreset || 'no-cover',
+        blockPresetId: theme?.defaultBlockPresetId || theme?.config?.defaults?.blockPreset || 'rounded-solid',
         overrides: {} // Clear all overrides
     };
 

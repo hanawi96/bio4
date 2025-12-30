@@ -1,0 +1,71 @@
+{
+  "meta": {
+    "id": "preset.gradient",
+    "name": "Gradient",
+    "schemaVersion": 2,
+    "version": "2.2.2",
+    "author": "system",
+    "description": "Purple gradient background with white text",
+    "tier": "free",
+    "category": "gradient"
+  },
+  "tokens": {
+    "color": {
+      "purple": {
+        "400": "#a78bfa",
+        "500": "#8b5cf6",
+        "600": "#7c3aed"
+      },
+      "white": "#ffffff",
+      "overlay": {
+        "10": "rgba(255, 255, 255, 0.1)",
+        "20": "rgba(255, 255, 255, 0.2)"
+      }
+    },
+    "typography": {
+      "fontFamily": {
+        "sans": "Poppins, system-ui, -apple-system, sans-serif"
+      }
+    }
+  },
+  "semantic": {
+    "color": {
+      "primary": "ref:tokens.color.white",
+      "primaryHover": "ref:tokens.color.white",
+      "text": {
+        "default": "ref:tokens.color.white",
+        "muted": "ref:tokens.color.white"
+      },
+      "surface": {
+        "page": "linear-gradient(135deg, #667eea, #764ba2)",
+        "card": "ref:tokens.color.overlay.10"
+      },
+      "border": {
+        "default": "ref:tokens.color.overlay.20"
+      }
+    }
+  },
+  "page": {
+    "layout": {
+      "maxWidth": 480,
+      "pagePadding": 24,
+      "blockGap": 24,
+      "textAlign": "center"
+    },
+    "defaults": {
+      "headerPresetId": "with-cover",
+      "blockPresetId": "rounded-solid"
+    }
+  },
+  "background": {
+    "wallpaper": {
+      "kind": "preset",
+      "assetId": null,
+      "url": null
+    },
+    "effects": {
+      "blur": 0,
+      "dim": 0
+    }
+  }
+}

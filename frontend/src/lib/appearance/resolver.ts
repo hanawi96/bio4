@@ -75,42 +75,94 @@ function adjustColor(hex: string, percent: number): string {
 	return '#' + (0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1);
 }
 
+// Resolve semantic token reference (v2 schema)
+function resolveSemanticToken(ref: string, config: any): string | null {
+	if (!ref || !ref.startsWith('ref:')) return ref;
+	
+	const path = ref.replace('ref:', '').split('.');
+	let value: any = config;
+	
+	for (const key of path) {
+		value = value?.[key];
+		if (value === undefined) return null;
+	}
+	
+	// Recursive resolve if value is also a reference
+	if (typeof value === 'string' && value.startsWith('ref:')) {
+		return resolveSemanticToken(value, config);
+	}
+	
+	return value;
+}
+
+// Detect dark mode from background color
+function isDarkBackground(bgColor: string): boolean {
+	return bgColor.includes('#000') || bgColor.includes('#18181b') || bgColor.includes('#111');
+}
+
 // Expand ThemeConfig to full ThemeTokens
 function expandThemeTokens(config: any): ThemeTokens {
 	const tokens = config.tokens || {};
+	const semantic = config.semantic || {};
 	const layout = config.page?.layout || {};
-	const backgroundColor = bgTokenToCSS(tokens.bg);
+	const schemaVersion = config.meta?.schemaVersion || 1;
 
-	// Better dark mode detection
-	const isDark = config.page?.mode === 'dark' ||
-		backgroundColor.includes('#000') ||
-		backgroundColor.includes('#111');
+	let backgroundColor: string;
+	let text: string;
+	let primary: string;
+	let surface: string;
+	let border: string;
+	let blockBase: string;
+	let fontFamily: string;
 
-	// Extract blockBase - handle both string and object formats
-	let blockBase = '#3b82f6';
-	if (tokens.blockBase) {
-		if (typeof tokens.blockBase === 'string') {
-			blockBase = tokens.blockBase;
-		} else if (typeof tokens.blockBase === 'object' && tokens.blockBase.value) {
-			blockBase = tokens.blockBase.value;
+	// Schema v2: Use semantic tokens
+	if (schemaVersion === 2) {
+		backgroundColor = resolveSemanticToken(semantic.color?.surface?.page, config) || '#ffffff';
+		text = resolveSemanticToken(semantic.color?.text?.default, config) || '#000000';
+		primary = resolveSemanticToken(semantic.color?.primary, config) || '#3b82f6';
+		surface = resolveSemanticToken(semantic.color?.surface?.card, config) || '#fafafa';
+		border = resolveSemanticToken(semantic.color?.border?.default, config) || '#e5e5e5';
+		blockBase = primary; // Use primary as blockBase for v2
+		fontFamily = resolveSemanticToken(semantic.typography?.body?.fontFamily, config) || 
+		             tokens.typography?.fontFamily?.sans || 'Inter, sans-serif';
+	} else {
+		// Schema v1: Use flat tokens (legacy)
+		backgroundColor = bgTokenToCSS(tokens.bg);
+		text = tokens.text || '#000000';
+		primary = tokens.primary || '#3b82f6';
+		surface = tokens.surface || '#fafafa';
+		border = tokens.border || '#e5e5e5';
+		fontFamily = tokens.fontFamily || 'Inter, sans-serif';
+		
+		// Extract blockBase - handle both string and object formats
+		if (tokens.blockBase) {
+			blockBase = typeof tokens.blockBase === 'string' 
+				? tokens.blockBase 
+				: tokens.blockBase.value || '#3b82f6';
+		} else {
+			blockBase = '#3b82f6';
 		}
 	}
 
+	const isDark = isDarkBackground(backgroundColor);
+
 	return {
-		bg: tokens.bg || { type: 'color', value: '#ffffff' },
-		text: tokens.text || '#000000',
-		primary: tokens.primary || '#3b82f6',
-		surface: tokens.surface || '#fafafa',
-		border: tokens.border || '#e5e5e5',
+		bg: schemaVersion === 2 
+			? { type: 'color', value: backgroundColor }
+			: tokens.bg || { type: 'color', value: '#ffffff' },
+		text,
+		primary,
+		surface,
+		border,
 		blockBase,
 		shadowColor: tokens.shadowColor || '#000000',
-		fontFamily: tokens.fontFamily || 'Inter, sans-serif',
-		secondary: adjustColor(tokens.primary || '#3b82f6', -20),
-		textSecondary: adjustColor(tokens.text || '#000000', isDark ? -30 : 30),
+		fontFamily,
+		secondary: adjustColor(primary, -20),
+		textSecondary: adjustColor(text, isDark ? -30 : 30),
 		shadowLevel: (layout.pagePadding || 16) > 18 ? 'md' : 'sm',
 		backgroundColor,
-		textColor: tokens.text || '#000000',
-		primaryColor: tokens.primary || '#3b82f6',
+		textColor: text,
+		primaryColor: primary,
 		spacing: layout.pagePadding || 16
 	};
 }
