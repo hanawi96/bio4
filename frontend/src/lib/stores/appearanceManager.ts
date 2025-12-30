@@ -14,7 +14,6 @@ import {
     getResolvedValue,
     resetToPreset,
     setHeaderPreset as setHeaderPresetHelper,
-    setBlockPreset as setBlockPresetHelper,
     migrateOldToNew,
     migrateNewToOld
 } from '$lib/appearance/manager';
@@ -75,10 +74,8 @@ export const hasCustomizations = derived([appearanceState, themes], ([$state, $t
 
     const headerChanged = themeDefaults && $state.headerPresetId &&
         $state.headerPresetId !== themeDefaults.headerPreset;
-    const blockChanged = themeDefaults && $state.blockPresetId &&
-        $state.blockPresetId !== themeDefaults.blockPreset;
 
-    return hasOverrides || headerChanged || blockChanged;
+    return hasOverrides || headerChanged;
 });
 
 // ============================================
@@ -175,35 +172,6 @@ export async function changeHeaderPreset(headerPresetId: string) {
 }
 
 // ============================================
-// HELPER: Change block preset
-// ============================================
-
-export async function changeBlockPreset(blockPresetId: string) {
-    const currentState = get(appearanceState);
-    const $themes = get(themes);
-    const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
-
-    const newState = setBlockPresetHelper(currentState, blockPresetId);
-    const oldFormat = migrateNewToOld(themesMap, newState);
-
-    page.update(p => {
-        if (!p) return p;
-        return {
-            ...p,
-            draft_appearance: JSON.stringify(oldFormat)
-        };
-    });
-
-    try {
-        await api.saveDraft(username, {
-            draft_appearance: JSON.stringify(oldFormat)
-        });
-    } catch (e) {
-        console.error('[appearanceManager] Failed to change block preset:', e);
-    }
-}
-
-// ============================================
 // HELPER: Get resolved value
 // ============================================
 
@@ -228,7 +196,6 @@ export async function resetToThemeDefault() {
     const newState: AppearanceState = {
         presetKey: currentState.presetKey || 'minimal',
         headerPresetId: theme?.defaultHeaderPresetId || theme?.config?.defaults?.headerPreset || 'no-cover',
-        blockPresetId: theme?.defaultBlockPresetId || theme?.config?.defaults?.blockPreset || 'rounded-solid',
         overrides: {} // Clear all overrides
     };
 

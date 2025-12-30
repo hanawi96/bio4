@@ -275,7 +275,7 @@
     },
     "defaults": {
       "headerPresetId": "no-cover",
-      "blockPresetId": "rounded-solid",
+      "blockStylePreset": "solid",
       "linkStyle": "soft",
       "linkGroupLayout": "list"
     }

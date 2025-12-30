@@ -8,7 +8,6 @@ import uploadRoutes from './routes/upload';
 import linksRoutes from './routes/links';
 import blocksRoutes from './routes/blocks';
 import themesRoutes from './routes/themes';
-import blockPresetsRoutes from './routes/block-presets';
 import headerPresetsRoutes from './routes/header-presets';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -47,7 +46,6 @@ app.route('/upload', uploadRoutes);
 app.route('/links', linksRoutes);
 app.route('/blocks', blocksRoutes);
 app.route('/themes', themesRoutes);
-app.route('/block-presets', blockPresetsRoutes);
 app.route('/header-presets', headerPresetsRoutes);
 
 // Health check

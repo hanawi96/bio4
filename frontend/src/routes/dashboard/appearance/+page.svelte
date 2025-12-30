@@ -9,14 +9,14 @@
 	import ThemeSection from '$lib/components/editor/sections/ThemeSection.svelte';
 	import HeaderSection from '$lib/components/editor/sections/HeaderSection.svelte';
 	import BackgroundSection from '$lib/components/editor/sections/BackgroundSection.svelte';
-	import AppearanceDebug from '$lib/components/debug/AppearanceDebug.svelte';
-	import ResetThemeModal from '$lib/components/modals/ResetThemeModal.svelte';
-
-	export let params = {};
 	import BlockStyleSection from '$lib/components/editor/sections/BlockStyleSection.svelte';
 	import FontSection from '$lib/components/editor/sections/FontSection.svelte';
 	import SpacingSection from '$lib/components/editor/sections/SpacingSection.svelte';
 	import PageSettingsSection from '$lib/components/editor/sections/PageSettingsSection.svelte';
+	import AppearanceDebug from '$lib/components/debug/AppearanceDebug.svelte';
+	import ResetThemeModal from '$lib/components/modals/ResetThemeModal.svelte';
+
+	export let params = {};
 
 	const username = 'demo';
 	let loading = true;

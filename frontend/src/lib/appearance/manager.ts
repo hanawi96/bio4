@@ -2,7 +2,7 @@
 // APPEARANCE MANAGER - Centralized Logic
 // ============================================
 
-import { HEADER_PRESETS, BLOCK_PRESETS } from './presets';
+import { HEADER_PRESETS } from './presets';
 import type { Theme } from './types';
 
 // ============================================
@@ -13,7 +13,6 @@ export interface AppearanceState {
     presetKey: string;                    // "minimal", "dark", "gradient"
     overrides: Record<string, any>;       // Flat key-path: { "backgroundColor": "#fff", "header.coverType": "solid" }
     headerPresetId?: string;              // Track current header preset (for getPresetValue)
-    blockPresetId?: string;               // Track current block preset (for getPresetValue)
 }
 
 // ============================================
@@ -45,8 +44,7 @@ export function getPresetValue(
     themesMap: Record<string, Theme>,
     presetKey: string,
     path: string,
-    headerPresetId?: string,
-    blockPresetId?: string
+    headerPresetId?: string
 ): any {
     const preset = themesMap[presetKey];
     if (!preset) return undefined;
@@ -59,17 +57,15 @@ export function getPresetValue(
         const headerPreset = HEADER_PRESETS[currentHeaderId];
         return headerPreset?.[headerKey as keyof typeof headerPreset];
     } else if (path.startsWith('block.')) {
-        // Block preset value
+        // Block value - stylePreset comes from theme config
         const blockKey = path.replace('block.', '');
         
-        // Special case: block.stylePreset comes from theme config, not BLOCK_PRESETS
         if (blockKey === 'stylePreset') {
             return preset.config.defaults?.blockStylePreset || 'solid';
         }
         
-        const currentBlockId = blockPresetId || preset.defaultBlockPresetId || 'rounded-solid';
-        const blockPreset = BLOCK_PRESETS[currentBlockId];
-        return blockPreset?.[blockKey as keyof typeof blockPreset];
+        // Other block properties (borderRadius, etc.) have no preset
+        return undefined;
     } else if (path === 'backgroundColor') {
         // Special case: Convert bg token to CSS string for comparison
         const bgToken = preset.config.tokens?.bg;
@@ -160,8 +156,7 @@ export function setAppearance(
         themesMap,
         state.presetKey,
         path,
-        state.headerPresetId,
-        state.blockPresetId
+        state.headerPresetId
     );
     const newOverrides = { ...state.overrides };
 
@@ -199,12 +194,6 @@ export function isCustomTheme(themesMap: Record<string, Theme>, state: Appearanc
         return true;
     }
     
-    // Check 3: Block preset different from theme default
-    const defaultBlockId = preset?.defaultBlockPresetId || 'rounded-solid';
-    if (state.blockPresetId && state.blockPresetId !== defaultBlockId) {
-        return true;
-    }
-    
     return false;
 }
 
@@ -223,8 +212,7 @@ export function getResolvedValue(themesMap: Record<string, Theme>, state: Appear
         themesMap,
         state.presetKey,
         path,
-        state.headerPresetId,
-        state.blockPresetId
+        state.headerPresetId
     );
 }
 
@@ -237,8 +225,7 @@ export function resetToPreset(themesMap: Record<string, Theme>, presetKey: strin
     return {
         presetKey,
         overrides: {},
-        headerPresetId: preset?.defaultHeaderPresetId || 'no-cover',
-        blockPresetId: preset?.defaultBlockPresetId || 'rounded-solid'
+        headerPresetId: preset?.defaultHeaderPresetId || 'no-cover'
     };
 }
 
@@ -266,29 +253,6 @@ export function setHeaderPreset(
 }
 
 // ============================================
-// HELPER: Change block preset
-// ============================================
-
-export function setBlockPreset(
-    state: AppearanceState,
-    blockPresetId: string
-): AppearanceState {
-    // Remove all block.* overrides when changing preset
-    const newOverrides: Record<string, any> = {};
-    Object.entries(state.overrides).forEach(([path, value]) => {
-        if (!path.startsWith('block.')) {
-            newOverrides[path] = value;
-        }
-    });
-
-    return {
-        ...state,
-        blockPresetId,
-        overrides: newOverrides
-    };
-}
-
-// ============================================
 // MIGRATION: Convert DB format to internal state (NEW FORMAT)
 // ============================================
 
@@ -299,16 +263,12 @@ export function migrateOldToNew(themesMap: Record<string, Theme>, dbState: any):
     
     // NEW FORMAT: Already flat
     if (dbState.overrides !== undefined) {
-        // Priority: DB value > theme default > fallback
-        // If themes not loaded yet, DB value will be used
         const headerPresetId = dbState.headerPresetId || preset?.defaultHeaderPresetId || 'no-cover';
-        const blockPresetId = dbState.blockPresetId || preset?.defaultBlockPresetId || 'rounded-solid';
         
         return {
             presetKey,
             overrides: dbState.overrides || {},
-            headerPresetId,
-            blockPresetId
+            headerPresetId
         };
     }
     
@@ -317,7 +277,6 @@ export function migrateOldToNew(themesMap: Record<string, Theme>, dbState: any):
 
     // Track preset IDs
     const headerPresetId = dbState.headerStyle?.presetId || preset?.defaultHeaderPresetId || 'no-cover';
-    const blockPresetId = dbState.blockStyle?.presetId || preset?.defaultBlockPresetId || 'rounded-solid';
 
     // Migrate customTheme fields
     if (dbState.customTheme) {
@@ -357,8 +316,7 @@ export function migrateOldToNew(themesMap: Record<string, Theme>, dbState: any):
     return {
         presetKey,
         overrides,
-        headerPresetId,
-        blockPresetId
+        headerPresetId
     };
 }
 
@@ -367,21 +325,10 @@ export function migrateOldToNew(themesMap: Record<string, Theme>, dbState: any):
 // ============================================
 
 export function migrateNewToOld(themesMap: Record<string, Theme>, newState: AppearanceState): any {
-    // NEW FORMAT: Flat structure
-    // {
-    //   themeKey: "dark",
-    //   overrides: { "backgroundColor": "#fff", "header.coverType": "solid" },
-    //   headerPresetId: "with-cover",
-    //   blockPresetId: "rounded-solid"
-    // }
-    
     const dbState: any = {
         themeKey: newState.presetKey,
         overrides: newState.overrides,
-        // Always save preset IDs so they persist across page reloads
-        // even when themes store hasn't loaded yet
-        headerPresetId: newState.headerPresetId,
-        blockPresetId: newState.blockPresetId
+        headerPresetId: newState.headerPresetId
     };
     
     return dbState;

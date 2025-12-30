@@ -3,7 +3,6 @@
 	import { page } from '$app/stores';
 	import { themes } from '$lib/stores/themes';
 	import { loadHeaderPresets } from '$lib/stores/headerPresets';
-	import { loadBlockPresets } from '$lib/stores/blockPresets';
 	import { publishChanges, saveStatus } from '$lib/stores/autosave';
 	
 	// Suppress params warning
@@ -34,7 +33,6 @@
 	onMount(async () => {
 		await themes.load();
 		await loadHeaderPresets();
-		await loadBlockPresets();
 		
 		const savedManualToggle = localStorage.getItem('sidebarManualToggle');
 		const savedCollapsed = localStorage.getItem('sidebarCollapsed');
@@ -168,6 +166,19 @@
 			</a>
 
 			<a 
+				href="/dashboard/themes" 
+				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/themes' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
+				title={sidebarCollapsed ? 'Themes' : ''}
+			>
+				<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+				</svg>
+				{#if !sidebarCollapsed}
+					<span class="whitespace-nowrap">Themes</span>
+				{/if}
+			</a>
+
+			<a 
 				href="/dashboard/analytics" 
 				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/analytics' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Analytics' : ''}
@@ -233,6 +244,8 @@
 						My Bio
 					{:else if currentPath === '/dashboard/appearance'}
 						Appearance
+					{:else if currentPath === '/dashboard/themes'}
+						Themes
 					{:else if currentPath === '/dashboard/analytics'}
 						Analytics
 					{:else if currentPath === '/dashboard/settings'}

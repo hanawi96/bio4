@@ -68,4 +68,84 @@ app.get('/:key', async (c) => {
 	}
 });
 
+// Create new theme
+app.post('/', async (c) => {
+	try {
+		const body = await c.req.json();
+		const { key, name, config, description, category, tier } = body;
+		
+		// Validation
+		if (!key || !name || !config) {
+			return c.json({ error: 'Missing required fields: key, name, config' }, 400);
+		}
+		
+		const db = c.env.DB;
+		
+		// Check if key already exists
+		const existing = await db.prepare('SELECT id FROM theme_presets WHERE key = ?').bind(key).first();
+		if (existing) {
+			return c.json({ error: 'Theme key already exists' }, 409);
+		}
+		
+		// Extract default preset IDs from config
+		const defaultHeaderPresetId = config.page?.defaults?.headerPresetId || 'no-cover';
+		const defaultBlockPresetId = config.page?.defaults?.blockPresetId || 'rounded-solid';
+		
+		// Insert theme with preset IDs
+		const result = await db.prepare(`
+			INSERT INTO theme_presets (
+				key, name, config, description, category, tier,
+				default_header_preset_id, default_block_preset_id
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		`).bind(
+			key,
+			name,
+			JSON.stringify(config),
+			description || null,
+			category || 'minimal',
+			tier || 'free',
+			defaultHeaderPresetId,
+			defaultBlockPresetId
+		).run();
+		
+		return c.json({ 
+			success: true, 
+			id: result.meta.last_row_id,
+			key 
+		}, 201);
+	} catch (error: any) {
+		console.error('Error creating theme:', error);
+		return c.json({ error: 'Failed to create theme' }, 500);
+	}
+});
+
+// Delete theme
+app.delete('/:key', async (c) => {
+	try {
+		const key = c.req.param('key');
+		const db = c.env.DB;
+		
+		// Check if theme exists
+		const theme = await db.prepare('SELECT id FROM theme_presets WHERE key = ?').bind(key).first();
+		if (!theme) {
+			return c.json({ error: 'Theme not found' }, 404);
+		}
+		
+		// Check if theme is being used by any page
+		const usedBy = await db.prepare('SELECT COUNT(*) as count FROM bio_pages WHERE theme_preset_key = ?').bind(key).first();
+		if (usedBy && (usedBy as any).count > 0) {
+			return c.json({ error: 'Cannot delete theme that is currently in use' }, 400);
+		}
+		
+		// Delete theme
+		await db.prepare('DELETE FROM theme_presets WHERE key = ?').bind(key).run();
+		
+		return c.json({ success: true });
+	} catch (error: any) {
+		console.error('Error deleting theme:', error);
+		return c.json({ error: 'Failed to delete theme' }, 500);
+	}
+});
+
 export default app;

@@ -190,6 +190,30 @@ class ApiClient {
 		return res.json();
 	}
 
+	async createTheme(data: { key: string; name: string; config: any; description?: string; category?: string; tier?: string }): Promise<{ success: boolean; id: number; key: string }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/themes`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(data)
+		});
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Failed to create theme');
+		}
+		return res.json();
+	}
+
+	async deleteTheme(key: string): Promise<{ success: boolean }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/themes/${key}`, {
+			method: 'DELETE'
+		});
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Failed to delete theme');
+		}
+		return res.json();
+	}
+
 	// ============ HEADER PRESETS ============
 
 	async getHeaderPresets(): Promise<{ presets: any[] }> {
@@ -201,20 +225,6 @@ class ApiClient {
 	async getHeaderPreset(key: string): Promise<{ preset: any }> {
 		const res = await this.fetchWithRetry(`${this.baseUrl}/header-presets/${key}`);
 		if (!res.ok) throw new Error('Header preset not found');
-		return res.json();
-	}
-
-	// ============ BLOCK PRESETS ============
-
-	async getBlockPresets(): Promise<{ presets: any[] }> {
-		const res = await this.fetchWithRetry(`${this.baseUrl}/block-presets`);
-		if (!res.ok) throw new Error('Failed to load block presets');
-		return res.json();
-	}
-
-	async getBlockPreset(key: string): Promise<{ preset: any }> {
-		const res = await this.fetchWithRetry(`${this.baseUrl}/block-presets/${key}`);
-		if (!res.ok) throw new Error('Block preset not found');
 		return res.json();
 	}
 

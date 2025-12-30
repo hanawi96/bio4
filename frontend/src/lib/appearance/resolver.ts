@@ -1,10 +1,9 @@
 import type { ResolvedAppearance, Theme, ThemeTokens, ResolvedBlockStyle } from './types';
-import { HEADER_PRESETS, BLOCK_PRESETS } from './presets';
+import { HEADER_PRESETS } from './presets';
 import { getBlockStyleRecipe, type BlockStylePresetId } from './blockStyles';
 import { resolveToken, resolveAutoTextColor } from './tokenResolver';
 import { get } from 'svelte/store';
 import { headerPresets } from '$lib/stores/headerPresets';
-import { blockPresets } from '$lib/stores/blockPresets';
 
 // ============================================
 // CONSTANTS
@@ -311,7 +310,7 @@ export function resolveAppearance(
 	let themeName = 'Custom';
 
 	if (isNewFormat) {
-		// NEW FORMAT: { themeKey, overrides, headerPresetId, blockPresetId }
+		// NEW FORMAT: { themeKey, overrides, headerPresetId }
 		const baseConfig = theme?.config || DEFAULT_CONFIG;
 
 		// Filter theme-level overrides (not header.* or block.*)
@@ -355,12 +354,7 @@ export function resolveAppearance(
 	const $headerPresets = get(headerPresets);
 	const headerPresetsMap = Object.keys($headerPresets).length > 0 ? $headerPresets : HEADER_PRESETS;
 
-	// Resolve block preset
-	const defaultBlockId = theme?.defaultBlockPresetId || themeConfig.defaults?.blockPreset || 'rounded-solid';
-	const blockPresetId = isNewFormat
-		? (pageState.blockPresetId || defaultBlockId)
-		: (pageState.blockStyle?.presetId || defaultBlockId);
-
+	// Resolve block overrides
 	const blockOverrides = isNewFormat
 		? Object.fromEntries(
 			Object.entries(pageState.overrides || {})
@@ -369,14 +363,16 @@ export function resolveAppearance(
 		)
 		: (pageState.blockStyle?.overrides || {});
 
-	// Get block preset from store (with fallback to hardcoded)
-	const $blockPresets = get(blockPresets);
-	const blockPresetsMap = Object.keys($blockPresets).length > 0 ? $blockPresets : BLOCK_PRESETS;
-
 	// Resolve block style recipe
 	const defaultBlockStyleId = themeConfig.defaults?.blockStylePreset || 'solid';
 	const blockStyleId = (blockOverrides.stylePreset || defaultBlockStyleId) as BlockStylePresetId;
 	const blockStyle = resolveBlockStyle(blockStyleId, tokens);
+
+	// Default block config (simple, no preset needed)
+	const defaultBlockConfig = {
+		borderRadius: 12,
+		shape: 'rounded'
+	};
 
 	return {
 		theme: theme || {
@@ -387,7 +383,7 @@ export function resolveAppearance(
 		},
 		tokens,
 		header: { ...(headerPresetsMap[headerPresetId] || headerPresetsMap['no-cover'] || HEADER_PRESETS['no-cover']), ...headerOverrides },
-		block: { ...(blockPresetsMap[blockPresetId] || blockPresetsMap['rounded-default'] || BLOCK_PRESETS['rounded-solid']), ...blockOverrides },
+		block: { ...defaultBlockConfig, ...blockOverrides },
 		blockStyle
 	};
 }
@@ -398,8 +394,4 @@ export function resolveAppearance(
 
 export function getAvailableHeaderPresets() {
 	return Object.values(HEADER_PRESETS);
-}
-
-export function getAvailableBlockPresets() {
-	return Object.values(BLOCK_PRESETS);
 }
