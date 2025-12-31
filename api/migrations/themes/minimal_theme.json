@@ -109,12 +109,15 @@
       },
       "white": "#ffffff",
       "black": "#000000",
+      "blockText": "#ffffff",
+      "shadowColor": "#000000",
       "overlay": {
         "10": "rgba(0, 0, 0, 0.1)",
         "20": "rgba(0, 0, 0, 0.2)",
         "50": "rgba(0, 0, 0, 0.5)",
         "80": "rgba(0, 0, 0, 0.8)"
-      }
+      },
+      "blockText": "#ffffff"
     },
     "typography": {
       "fontFamily": {
@@ -192,6 +195,9 @@
         "default": "ref:tokens.color.gray.200",
         "subtle": "ref:tokens.color.gray.100",
         "strong": "ref:tokens.color.gray.300"
+      },
+      "block": {
+        "text": "ref:tokens.color.blockText"
       }
     },
     "typography": {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	export let selectedHeaderPreset: string;
 	export let selectedBlockStyle: string;
+	export let selectedShadowStyle: string;
 	export let blockBorderRadiusType: string;
 	export let textAlign: string;
 	export let maxWidth: number;
@@ -39,6 +40,7 @@
 			<div class="text-blue-400 font-bold mb-1">BLOCK STYLE</div>
 			<div class="pl-2 space-y-0.5">
 				<div>Style: <span class="text-green-400">{selectedBlockStyle}</span></div>
+				<div>Shadow: <span class="text-green-400">{selectedShadowStyle}</span></div>
 				<div>Radius: <span class="text-green-400">{blockBorderRadiusType}</span></div>
 			</div>
 		</div>
@@ -126,6 +128,7 @@
 					{@const config = JSON.parse(configJson)}
 					<div>✓ page.defaults.headerPresetId: <span class="text-green-400">{config.page?.defaults?.headerPresetId}</span></div>
 					<div>✓ page.defaults.blockStylePreset: <span class="text-green-400">{config.page?.defaults?.blockStylePreset}</span></div>
+					<div>✓ page.defaults.shadowStyle: <span class="text-green-400">{config.page?.defaults?.shadowStyle}</span></div>
 					<div>✓ page.layout.textAlign: <span class="text-green-400">{config.page?.layout?.textAlign}</span></div>
 					<div>✓ page.layout.maxWidth: <span class="text-green-400">{config.page?.layout?.maxWidth}</span></div>
 					<div>✓ semantic.color.surface.page: <span class="text-green-400">{config.semantic?.color?.surface?.page?.substring(0, 30)}{config.semantic?.color?.surface?.page?.length > 30 ? '...' : ''}</span></div>

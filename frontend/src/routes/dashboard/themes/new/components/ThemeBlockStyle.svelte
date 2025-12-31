@@ -1,47 +1,311 @@
 <script lang="ts">
-	export let selectedBlockStyle: 'solid' | 'soft' | 'outline' | 'glass' | 'neon' | 'brutal';
+	import {
+		getBlockStyleRecipeIds,
+		getBlockStyleRecipeName,
+		getBlockStyleRecipe,
+		getShadowStyleIds,
+		getShadowStyleName,
+		getShadowRecipe,
+		type BlockStylePresetId,
+		type ShadowStylePreset
+	} from '$lib/appearance/blockStyles';
+	import { resolveToken, resolveAutoTextColor } from '$lib/appearance/tokenResolver';
+
+	export let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient';
 	export let selectedLinkIconShape: 'square' | 'rounded' | 'circle';
-	export let selectedLinkGroupLayout: 'list' | 'grid' | 'cards';
+	export let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' = 'none';
+	export let blockOpacity: number = 100;
+	export let primaryColor: string = '#3b82f6';
+	export let textColor: string = '#18181b';
+	export let borderColor: string = '#e4e4e7';
+	export let borderWidth: number = 1;
+	export let blockTextColor: string = '#ffffff';
+	export let shadowColor: string = '#000000';
+	export let bgType: 'solid' | 'gradient' | 'image' = 'solid';
+	export let bgSolidColor: string = '#ffffff';
+	export let bgGradientFrom: string = '#667eea';
+	export let bgGradientTo: string = '#764ba2';
+	export let bgGradientDirection: string = '135deg';
+	export let bgImageUrl: string = '';
+
+	// Get all available recipes
+	const recipes = getBlockStyleRecipeIds();
+	const shadowStyles = getShadowStyleIds();
+
+	// Default opacity for each block style (only used for initial preview cards display)
+	const defaultOpacity: Record<BlockStylePresetId, number> = {
+		solid: 100,
+		outline: 100,
+		glass: 35, // surface@0.35
+		neon: 100,
+		brutal: 100,
+		gradient: 100
+	};
+
+	// Track if user has manually adjusted opacity (to show default opacity for non-selected cards)
+	let userHasAdjustedOpacity = false;
+
+	// Detect manual opacity adjustment
+	$: if (blockOpacity !== defaultOpacity[selectedBlockStyle]) {
+		userHasAdjustedOpacity = true;
+	}
+
+	// Reactive tokens based on props
+	$: mockTokens = {
+		blockBase: primaryColor,
+		blockText: blockTextColor,
+		text: textColor,
+		surface: '#ffffff',
+		border: borderColor,
+		shadowColor: shadowColor,
+		backgroundColor: bgSolidColor
+	};
+
+	// Compute background value
+	$: previewBackground = (() => {
+		if (bgType === 'solid') {
+			return bgSolidColor;
+		} else if (bgType === 'gradient') {
+			return `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
+		} else if (bgType === 'image' && bgImageUrl) {
+			return `url('${bgImageUrl}')`;
+		}
+		return '#fafafa';
+	})();
+
+	// Helper: Apply opacity to color
+	function applyOpacity(color: string, opacity: number): string {
+		if (color.startsWith('rgba(')) {
+			// Already has alpha, replace it
+			return color.replace(/[\d.]+\)$/, `${opacity / 100})`);
+		}
+		if (color.startsWith('rgb(')) {
+			return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity / 100})`);
+		}
+		if (color.startsWith('#')) {
+			const hex = color.replace('#', '');
+			const r = parseInt(hex.substring(0, 2), 16);
+			const g = parseInt(hex.substring(2, 4), 16);
+			const b = parseInt(hex.substring(4, 6), 16);
+			return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+		}
+		return color;
+	}
+
+	// Helper: Apply opacity to gradient
+	function applyOpacityToGradient(gradient: string, opacity: number): string {
+		if (opacity >= 100) return gradient;
+		// Extract colors from gradient and apply opacity
+		return gradient.replace(/#[0-9a-fA-F]{6}/g, (color) => applyOpacity(color, opacity));
+	}
+
+	// Helper: Darken color by percentage
+	function darkenColor(hex: string, percent: number): string {
+		const num = parseInt(hex.replace('#', ''), 16);
+		const r = Math.max(0, ((num >> 16) & 0xff) * (1 - percent / 100));
+		const g = Math.max(0, ((num >> 8) & 0xff) * (1 - percent / 100));
+		const b = Math.max(0, (num & 0xff) * (1 - percent / 100));
+		return '#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
+	}
+
+	// Get preview style for each recipe
+	function getPreviewStyle(recipeId: BlockStylePresetId, shadowId: ShadowStylePreset, opacity: number, useDefaultOpacity: boolean) {
+		const recipe = getBlockStyleRecipe(recipeId);
+		const shadowRecipe = getShadowRecipe(shadowId);
+		const tokens = mockTokens;
+
+		let fill = resolveToken(recipe.fill, tokens);
+		
+		// Determine which opacity to use
+		let effectiveOpacity = opacity;
+		if (useDefaultOpacity && recipeId !== selectedBlockStyle) {
+			// For non-selected cards, show their default opacity
+			effectiveOpacity = defaultOpacity[recipeId];
+		}
+		
+		// Handle gradient fill
+		if (recipe.fill.startsWith('gradient:')) {
+			const baseColor = resolveToken(recipe.fill.replace('gradient:', ''), tokens);
+			const darkColor = darkenColor(baseColor, 20);
+			fill = `linear-gradient(135deg, ${baseColor} 0%, ${darkColor} 100%)`;
+			// Apply opacity to gradient
+			if (effectiveOpacity < 100) {
+				fill = applyOpacityToGradient(fill, effectiveOpacity);
+			}
+		} else if (recipeId !== 'outline') {
+			// Apply opacity to all fills (except Outline which is transparent)
+			fill = applyOpacity(fill, effectiveOpacity);
+		}
+
+		const text =
+			recipe.text === 'auto'
+				? resolveAutoTextColor(recipe.fill, tokens)
+				: resolveToken(recipe.text, tokens);
+		const border = recipe.border ? resolveToken(recipe.border, tokens) : undefined;
+		const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
+
+		// Resolve shadow from shadow recipe
+		// Special cases: Neon has its own glow effect
+		let shadow = undefined;
+		if (recipeId !== 'neon' && shadowRecipe.value !== 'none') {
+			shadow = resolveToken(shadowRecipe.value, tokens);
+		}
+
+		const borderStyle = border ? `${borderWidth}px solid ${border}` : 'none';
+
+		return {
+			backgroundColor: fill,
+			backgroundImage: recipe.fill.startsWith('gradient:') ? fill : 'none',
+			color: text,
+			border: borderStyle,
+			boxShadow: shadow || (glow ? `0 0 20px ${glow}` : 'none'),
+			backdropFilter: recipe.blur ? `blur(${recipe.blur}px)` : 'none'
+		};
+	}
+
+	// Reactive: Recompute all styles when dependencies change
+	$: displayStyles = (mockTokens && borderWidth !== undefined && selectedShadowStyle && blockOpacity !== undefined) ? recipes.reduce((acc, recipeId) => {
+		acc[recipeId] = getPreviewStyle(recipeId, selectedShadowStyle, blockOpacity, !userHasAdjustedOpacity);
+		return acc;
+	}, {} as Record<BlockStylePresetId, any>) : {};
+
+	// Icon shape options
+	const iconShapes = [
+		{ value: 'square', label: 'Square', preview: 'rounded-none' },
+		{ value: 'rounded', label: 'Rounded', preview: 'rounded-lg' },
+		{ value: 'circle', label: 'Circle', preview: 'rounded-full' }
+	];
 </script>
 
 <section class="card-ios p-6">
 	<h2 class="text-lg font-semibold text-gray-900 mb-4">Block Style</h2>
-	<div class="space-y-4">
+	<div class="space-y-6">
+		<!-- Block Style Grid -->
 		<div>
-			<label for="blockStyle" class="block text-sm font-medium text-gray-700 mb-2">
-				Block Style
+			<label class="block text-sm font-medium text-gray-700 mb-3">
+				Button Style
 			</label>
-			<select id="blockStyle" bind:value={selectedBlockStyle} class="input-ios">
-				<option value="solid">Solid - Full color with contrast text</option>
-				<option value="soft">Soft - Subtle tint with border</option>
-				<option value="outline">Outline - Transparent with border</option>
-				<option value="glass">Glass - Frosted glass effect</option>
-				<option value="neon">Neon - Solid with glow</option>
-				<option value="brutal">Brutal - Hard shadow brutalism</option>
-			</select>
-			<p class="text-xs text-gray-500 mt-1">Button color and visual effect style</p>
+			<div class="grid grid-cols-3 gap-3">
+				{#each recipes as recipeId}
+					{@const isSelected = selectedBlockStyle === recipeId}
+					{@const displayStyle = displayStyles[recipeId] || {}}
+					<button
+						type="button"
+						on:click={() => selectedBlockStyle = recipeId}
+						class="group relative rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+					>
+						<!-- Preview Container -->
+						<div
+							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white overflow-hidden"
+							style="background: {previewBackground}; background-size: cover; background-position: center;"
+						>
+							<div
+								class="w-full h-8 transition-all flex items-center justify-center rounded-lg relative z-10"
+								style="
+									background: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : displayStyle.backgroundColor};
+									color: {displayStyle.color};
+									border: {displayStyle.border};
+									box-shadow: {displayStyle.boxShadow || 'none'};
+									backdrop-filter: {displayStyle.backdropFilter || 'none'};
+									-webkit-backdrop-filter: {displayStyle.backdropFilter || 'none'};
+								"
+							>
+								<span class="text-xs font-semibold">Button</span>
+							</div>
+						</div>
+						
+						<!-- Name Label -->
+						<div class="py-2 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
+							<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
+								{getBlockStyleRecipeName(recipeId)}
+							</p>
+						</div>
+					</button>
+				{/each}
+			</div>
+			<p class="text-xs text-gray-500 mt-2">Button color and visual effect style</p>
 		</div>
+
+		<!-- Block Opacity Slider -->
 		<div>
-			<label for="linkIconShape" class="block text-sm font-medium text-gray-700 mb-2">
+			<label class="block text-sm font-medium text-gray-700 mb-3">
+				Block Opacity: {blockOpacity}%
+			</label>
+			<input
+				type="range"
+				bind:value={blockOpacity}
+				min="10"
+				max="100"
+				step="1"
+				class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+			/>
+			<div class="flex justify-between text-xs text-gray-500 mt-1">
+				<span>10% (Subtle)</span>
+				<span>100% (Solid)</span>
+			</div>
+			<p class="text-xs text-gray-500 mt-2">Transparency level (not applied to Outline)</p>
+		</div>
+
+		<!-- Shadow Style Selector -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-3">
+				Shadow Style {#if selectedBlockStyle === 'neon'}<span class="text-orange-600 text-xs">(disabled for Neon)</span>{/if}
+			</label>
+			<div class="grid grid-cols-5 gap-2">
+				{#each shadowStyles as shadowId}
+					{@const isSelected = selectedShadowStyle === shadowId}
+					{@const isDisabled = selectedBlockStyle === 'neon'}
+					<button
+						type="button"
+						on:click={() => selectedShadowStyle = shadowId}
+						disabled={isDisabled}
+						class="px-3 py-2 rounded-lg text-sm font-medium transition-all {isDisabled ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-500' : isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+					>
+						{getShadowStyleName(shadowId)}
+					</button>
+				{/each}
+			</div>
+			<p class="text-xs text-gray-500 mt-2">
+				{#if selectedBlockStyle === 'neon'}
+					Neon style uses glow effect instead of shadow
+				{:else}
+					Shadow depth applied to buttons
+				{/if}
+			</p>
+		</div>
+
+		<!-- Link Icon Shape -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-3">
 				Link Icon Shape
 			</label>
-			<select id="linkIconShape" bind:value={selectedLinkIconShape} class="input-ios">
-				<option value="square">Square - Sharp corners</option>
-				<option value="rounded">Rounded - Soft corners</option>
-				<option value="circle">Circle - Fully rounded</option>
-			</select>
-			<p class="text-xs text-gray-500 mt-1">Default shape for link thumbnails/icons</p>
-		</div>
-		<div>
-			<label for="linkGroupLayout" class="block text-sm font-medium text-gray-700 mb-2">
-				Link Group Layout
-			</label>
-			<select id="linkGroupLayout" bind:value={selectedLinkGroupLayout} class="input-ios">
-				<option value="list">List - Vertical stacked links</option>
-				<option value="grid">Grid - 2 column grid layout</option>
-				<option value="cards">Cards - Card style with images</option>
-			</select>
-			<p class="text-xs text-gray-500 mt-1">Default layout style for link groups</p>
+			<div class="grid grid-cols-3 gap-3">
+				{#each iconShapes as shape}
+					{@const isSelected = selectedLinkIconShape === shape.value}
+					<button
+						type="button"
+						on:click={() => selectedLinkIconShape = shape.value}
+						class="group relative rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+					>
+						<!-- Preview Container -->
+						<div
+							class="aspect-square p-4 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white"
+						>
+							<div
+								class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 {shape.preview}"
+							></div>
+						</div>
+						
+						<!-- Name Label -->
+						<div class="py-2 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
+							<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
+								{shape.label}
+							</p>
+						</div>
+					</button>
+				{/each}
+			</div>
+			<p class="text-xs text-gray-500 mt-2">Default shape for link thumbnails/icons</p>
 		</div>
 	</div>
 </section>

@@ -161,13 +161,13 @@
 										<img 
 											src={$previewPage.avatar_url} 
 											alt="Avatar" 
-											class="header-avatar object-cover {header.avatarBorder !== false ? 'border-4' : ''}"
-											style="width: {avatarWidth}px; height: {avatarHeight}px; {header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)};"
+											class="header-avatar object-cover"
+											style="width: {avatarWidth}px; height: {avatarHeight}px; {header.avatarBorder !== false ? `border: ${header.avatarBorderWidth || 4}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)};"
 										/>
 									{:else}
 										<div 
-											class="header-avatar flex items-center justify-center text-white font-bold {header.avatarBorder !== false ? 'border-4' : ''}"
-											style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; font-size: {avatarSize / 2.5}px;"
+											class="header-avatar flex items-center justify-center text-white font-bold"
+											style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${header.avatarBorderWidth || 4}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; font-size: {avatarSize / 2.5}px;"
 										>
 											{($previewPage?.title || 'U').charAt(0).toUpperCase()}
 										</div>
@@ -193,13 +193,13 @@
 								<img 
 									src={$previewPage.avatar_url} 
 									alt="Avatar" 
-									class="header-avatar object-cover mb-2 {header?.avatarBorder !== false ? 'border-4' : ''}"
-									style="width: {avatarWidth}px; height: {avatarHeight}px; {header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)};"
+									class="header-avatar object-cover mb-2"
+									style="width: {avatarWidth}px; height: {avatarHeight}px; {header?.avatarBorder !== false ? `border: ${header?.avatarBorderWidth || 4}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)};"
 								/>
 							{:else}
 								<div 
-									class="header-avatar mb-2 flex items-center justify-center text-white font-bold {header?.avatarBorder !== false ? 'border-4' : ''}"
-									style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {avatarSize / 2.5}px;"
+									class="header-avatar mb-2 flex items-center justify-center text-white font-bold"
+									style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border: ${header?.avatarBorderWidth || 4}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {avatarSize / 2.5}px;"
 								>
 									{($previewPage?.title || 'U').charAt(0).toUpperCase()}
 								</div>
@@ -258,7 +258,9 @@
 											background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 											color: {$previewAppearance?.blockStyle?.text || 'white'};
 											border: {$previewAppearance?.blockStyle?.border || 'none'};
-											box-shadow: {$previewAppearance?.blockStyle?.shadow || 'none'};
+											box-shadow: {$previewAppearance?.blockStyle?.glow ? `0 0 20px ${$previewAppearance.blockStyle.glow}` : ($previewAppearance?.blockStyle?.shadow || 'none')};
+											backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
+											-webkit-backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
 											border-radius: {blockBorderRadius};
 											text-align: center;
 											padding: {Math.round(blockPaddingY * 0.67)}px {Math.round(blockPaddingX * 0.5)}px;
@@ -289,7 +291,9 @@
 											background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 											color: {$previewAppearance?.blockStyle?.text || 'white'};
 											border: {$previewAppearance?.blockStyle?.border || 'none'};
-											box-shadow: {$previewAppearance?.blockStyle?.shadow || 'none'};
+											box-shadow: {$previewAppearance?.blockStyle?.glow ? `0 0 20px ${$previewAppearance.blockStyle.glow}` : ($previewAppearance?.blockStyle?.shadow || 'none')};
+											backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
+											-webkit-backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
 											border-radius: {blockBorderRadius};
 											padding: {blockPaddingY}px {blockPaddingX}px;
 										"

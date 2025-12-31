@@ -12,8 +12,9 @@
 	import ThemeLayout from './components/ThemeLayout.svelte';
 	import ThemeBaseSelector from './components/ThemeBaseSelector.svelte';
 	import ThemeJsonEditor from './components/ThemeJsonEditor.svelte';
-	import ThemeHeaderStyle from './components/ThemeHeaderStyle.svelte';
+	import HeaderStyleManager from './components/HeaderStyleManager.svelte';
 	import ThemeBlockStyle from './components/ThemeBlockStyle.svelte';
+	import ThemeLinkGroupLayout from './components/ThemeLinkGroupLayout.svelte';
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
@@ -37,7 +38,11 @@
 	
 	// Quick edit fields
 	let selectedHeaderPreset = 'no-cover';
-	let selectedBlockStyle: 'solid' | 'soft' | 'outline' | 'glass' | 'neon' | 'brutal' = 'solid';
+	let avatarBorderColor = '#ffffff';
+	let avatarBorderWidth = 4;
+	let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient' = 'solid';
+	let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' = 'none';
+	let blockOpacity: number = 100;
 	let selectedLinkIconShape: 'square' | 'rounded' | 'circle' = 'rounded';
 	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
@@ -55,6 +60,8 @@
 	let borderColor = '#e4e4e7';
 	let borderWidth = 1;
 	let mutedTextColor = '#71717a';
+	let blockTextColor = '#ffffff';
+	let shadowColor = '#000000';
 	let pageBgColor = '#fafafa';
 	
 	// Typography fields
@@ -145,7 +152,11 @@
 		category = theme.config.meta?.category || 'minimal';
 		tier = theme.config.meta?.tier || 'free';
 		selectedHeaderPreset = theme.config.page?.defaults?.headerPresetId || 'no-cover';
+		avatarBorderColor = theme.config.page?.defaults?.avatarBorderColor || '#ffffff';
+		avatarBorderWidth = theme.config.page?.defaults?.avatarBorderWidth || 4;
 		selectedBlockStyle = theme.config.page?.defaults?.blockStylePreset || 'solid';
+		selectedShadowStyle = theme.config.page?.defaults?.shadowStyle || 'none';
+		blockOpacity = theme.config.page?.defaults?.blockOpacity || 100;
 		selectedLinkIconShape = theme.config.page?.defaults?.linkIconShape || 'rounded';
 		selectedLinkGroupLayout = theme.config.page?.defaults?.linkGroupLayout || 'list';
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
@@ -203,6 +214,8 @@
 		
 		// Extract more colors
 		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
+		blockTextColor = resolveRef(theme.config.semantic?.color?.block?.text) || '#ffffff';
+		shadowColor = resolveRef(theme.config.tokens?.color?.shadowColor) || '#000000';
 		pageBgColor = resolveRef(theme.config.semantic?.color?.surface?.page) || '#fafafa';
 		
 		// Extract elevation
@@ -259,7 +272,11 @@
 			if (!config.page) config.page = {};
 			if (!config.page.defaults) config.page.defaults = {};
 			config.page.defaults.headerPresetId = selectedHeaderPreset;
+			config.page.defaults.avatarBorderColor = avatarBorderColor;
+			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
 			config.page.defaults.blockStylePreset = selectedBlockStyle;
+			config.page.defaults.shadowStyle = selectedShadowStyle;
+			config.page.defaults.blockOpacity = blockOpacity;
 			config.page.defaults.linkIconShape = selectedLinkIconShape;
 			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
 			
@@ -297,6 +314,13 @@
 			config.semantic.color.primary = primaryColor;
 			config.semantic.color.text.default = textColor;
 			config.semantic.color.border.default = borderColor;
+			
+			// Update block text color
+			if (!config.semantic.color.block) config.semantic.color.block = {};
+			config.semantic.color.block.text = `ref:tokens.color.blockText`;
+			if (!config.tokens.color) config.tokens.color = {};
+			config.tokens.color.blockText = blockTextColor;
+			config.tokens.color.shadowColor = shadowColor;
 			
 			// Update border width in tokens
 			if (!config.tokens) config.tokens = {};
@@ -348,15 +372,15 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || selectedBlockStyle || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientDirection || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientDirection || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
 		updateConfig();
 	}
 
-	// Update preview stores when config changes
-	$: if (configJson) {
+	// Update preview stores - optimized for fast opacity changes
+	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined) {
 		try {
 			const config = JSON.parse(configJson);
-			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle));
+			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity));
 			
 			// Resolve blockBorderRadius from type
 			const radiusMap: Record<string, number> = {
@@ -378,6 +402,8 @@
 					'block.borderRadius': radiusMap[blockBorderRadiusType] || 12,
 					'header.titleFontFamily': fontFamily,
 					'header.coverValue': coverImageUrl || undefined,
+					'header.avatarBorderColor': avatarBorderColor,
+					'header.avatarBorderWidth': avatarBorderWidth,
 					'backgroundColor': backgroundValue,
 					'backgroundBlur': bgBlur,
 					'backgroundBrightness': bgBrightness,
@@ -541,45 +567,8 @@
 					bind:borderColor
 					bind:borderWidth
 					bind:mutedTextColor
-				/>
-
-				<!-- Typography -->
-				<ThemeTypography
-					bind:fontFamily
-					bind:baseFontSize
-					bind:headingFontSize
-					bind:bodyFontWeight
-					bind:headingFontWeight
-					bind:bodyLineHeight
-					bind:headingLineHeight
-				/>
-
-				<!-- Header Style -->
-				<ThemeHeaderStyle
-					bind:selectedHeaderPreset
-					bind:coverImageUrl
-					{headerPresets}
-					{uploading}
-					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}
-				/>
-
-				<!-- Block Style -->
-				<ThemeBlockStyle
-					bind:selectedBlockStyle
-					bind:selectedLinkIconShape
-					bind:selectedLinkGroupLayout
-				/>
-
-				<!-- Layout -->
-				<ThemeLayout
-					bind:maxWidth
-					bind:textAlign
-					bind:pagePadding
-					bind:blockGap
-					bind:blockPaddingX
-					bind:blockPaddingY
-					bind:blockBorderRadiusType
-					bind:cardElevation
+					bind:blockTextColor
+					bind:shadowColor
 				/>
 
 				<!-- Page Background -->
@@ -596,6 +585,65 @@
 					bind:bgGrayscale
 					{uploading}
 					on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)}
+				/>
+
+				<!-- Header Style -->
+				<HeaderStyleManager
+					bind:selectedHeaderPreset
+					bind:coverImageUrl
+					bind:avatarBorderColor
+					bind:avatarBorderWidth
+					bind:headerPresets
+					{uploading}
+					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}
+				/>
+
+				<!-- Block Style -->
+				<ThemeBlockStyle
+					bind:selectedBlockStyle
+					bind:selectedShadowStyle
+					bind:blockOpacity
+					bind:selectedLinkIconShape
+					{primaryColor}
+					{textColor}
+					{borderColor}
+					{borderWidth}
+					{blockTextColor}
+					{shadowColor}
+					{bgType}
+					{bgSolidColor}
+					{bgGradientFrom}
+					{bgGradientTo}
+					{bgGradientDirection}
+					{bgImageUrl}
+				/>
+
+				<!-- Typography -->
+				<ThemeTypography
+					bind:fontFamily
+					bind:baseFontSize
+					bind:headingFontSize
+					bind:bodyFontWeight
+					bind:headingFontWeight
+					bind:bodyLineHeight
+					bind:headingLineHeight
+				/>
+
+				<!-- Link Group Layout -->
+				<ThemeLinkGroupLayout
+					bind:selectedLinkGroupLayout
+				/>
+
+				<!-- Layout -->
+				<ThemeLayout
+					bind:maxWidth
+					bind:textAlign
+					bind:pagePadding
+					bind:blockGap
+					bind:blockPaddingX
+					bind:blockPaddingY
+					bind:blockBorderRadiusType
+					bind:cardElevation
 				/>
 
 				<!-- Theme Configuration -->
@@ -635,6 +683,7 @@
 				<ThemeDebugPanel
 					{selectedHeaderPreset}
 					{selectedBlockStyle}
+					{selectedShadowStyle}
 					{blockBorderRadiusType}
 					{textAlign}
 					{maxWidth}

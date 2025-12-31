@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 
-	export let selectedHeaderPreset: string;
 	export let headerPresets: any[];
+	export let selectedHeaderPreset: string;
 	export let coverImageUrl: string;
 	export let uploading: boolean;
 	export let avatarBorderColor: string;
@@ -10,12 +10,20 @@
 
 	const dispatch = createEventDispatcher();
 
+	// Group presets by category
+	$: groupedPresets = headerPresets.reduce((acc, preset) => {
+		const category = preset.category || 'basic';
+		if (!acc[category]) acc[category] = [];
+		acc[category].push(preset);
+		return acc;
+	}, {} as Record<string, any[]>);
+
+	$: categories = Object.keys(groupedPresets).sort();
+
 	// Check if selected preset has cover
 	$: selectedPreset = headerPresets.find((p) => p.key === selectedHeaderPreset);
-	// Hardcode check: with-cover and avatar-cover have cover
 	$: hasCover = selectedHeaderPreset === 'with-cover' || selectedHeaderPreset === 'avatar-cover';
-	// Check if preset has avatar border
-	$: hasAvatarBorder = selectedPreset?.avatarBorder === true || hasCover;
+	$: hasAvatarBorder = selectedPreset?.config?.avatarBorder === true || hasCover;
 
 	function handleCoverUpload(event: Event) {
 		dispatch('coverUpload', { originalEvent: event });
@@ -24,17 +32,57 @@
 
 <section class="card-ios p-6">
 	<h2 class="text-lg font-semibold text-gray-900 mb-4">Header Style</h2>
-	<div class="space-y-4">
+
+	<div class="space-y-6">
+		<!-- Preset Selection Grid -->
 		<div>
-			<label for="headerPreset" class="block text-sm font-medium text-gray-700 mb-2">
-				Header Preset
+			<label class="block text-sm font-medium text-gray-700 mb-3">
+				Choose Header Preset
 			</label>
-			<select id="headerPreset" bind:value={selectedHeaderPreset} class="input-ios">
-				{#each headerPresets as preset}
-					<option value={preset.key}>{preset.name}</option>
-				{/each}
-			</select>
-			<p class="text-xs text-gray-500 mt-1">Default header style for this theme</p>
+			
+			{#each categories as category}
+				<div class="mb-4">
+					<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+						{category}
+					</h3>
+					<div class="grid grid-cols-2 gap-3">
+						{#each groupedPresets[category] as preset}
+							<button
+								type="button"
+								on:click={() => selectedHeaderPreset = preset.key}
+								class="relative group text-left rounded-xl border-2 transition-all overflow-hidden {selectedHeaderPreset === preset.key ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+							>
+								<!-- Preview Thumbnail -->
+								<div class="aspect-[3/2] bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
+									{#if preset.config?.hasCover}
+										<div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-500"></div>
+										<div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-white shadow-lg"></div>
+									{:else if preset.config?.avatarSize === 'xl'}
+										<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
+									{:else}
+										<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
+									{/if}
+									
+									<!-- Selected Indicator -->
+									{#if selectedHeaderPreset === preset.key}
+										<div class="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+											<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+												<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+											</svg>
+										</div>
+									{/if}
+								</div>
+								
+								<!-- Info -->
+								<div class="p-3">
+									<div class="font-medium text-sm text-gray-900">{preset.name}</div>
+									<div class="text-xs text-gray-500 mt-0.5 line-clamp-2">{preset.description || ''}</div>
+								</div>
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/each}
 		</div>
 
 		<!-- Cover Image Upload (only show if preset has cover) -->
@@ -127,39 +175,41 @@
 			</div>
 		{/if}
 
-		<!-- Avatar Border Color (only show if preset has avatar border) -->
+		<!-- Avatar Border Settings (only show if preset has avatar border) -->
 		{#if hasAvatarBorder}
-			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Avatar Border Color</label>
-				<div class="flex items-center gap-3">
-					<input
-						type="color"
-						bind:value={avatarBorderColor}
-						class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-					/>
-					<input
-						type="text"
-						bind:value={avatarBorderColor}
-						class="flex-1 input-ios font-mono text-sm"
-						placeholder="#ffffff"
-					/>
+			<div class="space-y-4">
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">Avatar Border Color</label>
+					<div class="flex items-center gap-3">
+						<input
+							type="color"
+							bind:value={avatarBorderColor}
+							class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
+						/>
+						<input
+							type="text"
+							bind:value={avatarBorderColor}
+							class="flex-1 input-ios font-mono text-sm"
+							placeholder="#ffffff"
+						/>
+					</div>
+					<p class="text-xs text-gray-500 mt-1">Border color for avatar (default: white)</p>
 				</div>
-				<p class="text-xs text-gray-500 mt-1">Border color for avatar (default: white)</p>
-			</div>
-			<div>
-				<label for="avatarBorderWidth" class="block text-sm font-medium text-gray-700 mb-2">
-					Avatar Border Width: {avatarBorderWidth}px
-				</label>
-				<input
-					id="avatarBorderWidth"
-					type="range"
-					bind:value={avatarBorderWidth}
-					min="1"
-					max="8"
-					step="1"
-					class="w-full"
-				/>
-				<p class="text-xs text-gray-500 mt-1">Border thickness (1-8px)</p>
+				<div>
+					<label for="avatarBorderWidth" class="block text-sm font-medium text-gray-700 mb-2">
+						Avatar Border Width: {avatarBorderWidth}px
+					</label>
+					<input
+						id="avatarBorderWidth"
+						type="range"
+						bind:value={avatarBorderWidth}
+						min="1"
+						max="8"
+						step="1"
+						class="w-full"
+					/>
+					<p class="text-xs text-gray-500 mt-1">Border thickness (1-8px)</p>
+				</div>
 			</div>
 		{/if}
 	</div>

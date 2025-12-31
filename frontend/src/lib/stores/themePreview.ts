@@ -5,65 +5,81 @@ export const previewAppearance = writable<any>(null);
 export const previewAppearanceState = writable<any>({});
 export const previewPage = writable<any>(null);
 
-// Block style presets mapping
+// Shadow style presets mapping
+const SHADOW_PRESETS: Record<string, (shadowColor: string) => string> = {
+	none: () => 'none',
+	soft: (shadowColor: string) => `0 2px 8px ${shadowColor}26`, // 15% opacity
+	medium: (shadowColor: string) => `0 4px 12px ${shadowColor}33`, // 20% opacity
+	hard: (shadowColor: string) => `0 6px 16px ${shadowColor}4D`, // 30% opacity
+	brutal: (shadowColor: string) => `4px 4px 0px ${shadowColor}`
+};
+
+// Block style presets mapping (without shadow - shadow is now separate)
 const BLOCK_STYLE_PRESETS: Record<string, any> = {
-	solid: (primaryColor: string, borderColor: string, borderWidth: number) => ({
+	solid: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
 		fill: primaryColor,
-		text: '#ffffff',
+		text: blockTextColor,
 		border: 'none',
-		shadow: 'none',
 		glow: null,
 		blur: null
 	}),
-	soft: (primaryColor: string, borderColor: string, borderWidth: number) => ({
-		fill: `${primaryColor}15`, // 15 = ~8% opacity in hex
-		text: primaryColor,
-		border: `${borderWidth}px solid ${borderColor}`,
-		shadow: 'none',
-		glow: null,
-		blur: null
-	}),
-	outline: (primaryColor: string, borderColor: string, borderWidth: number) => ({
+	outline: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
 		fill: 'transparent',
-		text: primaryColor,
+		text: blockTextColor,
 		border: `${borderWidth}px solid ${borderColor}`,
-		shadow: 'none',
 		glow: null,
 		blur: null
 	}),
-	glass: (primaryColor: string, borderColor: string, borderWidth: number) => ({
+	glass: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
 		fill: 'rgba(255, 255, 255, 0.1)',
-		text: primaryColor,
+		text: blockTextColor,
 		border: `${borderWidth}px solid ${borderColor}`,
-		shadow: 'none',
 		glow: null,
 		blur: 12
 	}),
-	neon: (primaryColor: string, borderColor: string, borderWidth: number) => ({
+	neon: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
 		fill: primaryColor,
-		text: '#ffffff',
+		text: blockTextColor,
 		border: 'none',
-		shadow: 'none',
 		glow: primaryColor,
 		blur: null
 	}),
-	brutal: (primaryColor: string, borderColor: string, borderWidth: number) => ({
+	brutal: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
 		fill: primaryColor,
-		text: '#ffffff',
+		text: blockTextColor,
 		border: `${borderWidth}px solid ${borderColor}`,
-		shadow: `4px 4px 0 ${borderColor}`,
 		glow: null,
 		blur: null
-	})
+	}),
+	gradient: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => {
+		const darken = (hex: string, percent: number) => {
+			const num = parseInt(hex.replace('#', ''), 16);
+			const r = Math.max(0, ((num >> 16) & 0xff) * (1 - percent / 100));
+			const g = Math.max(0, ((num >> 8) & 0xff) * (1 - percent / 100));
+			const b = Math.max(0, (num & 0xff) * (1 - percent / 100));
+			return '#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
+		};
+		return {
+			fill: `linear-gradient(135deg, ${primaryColor} 0%, ${darken(primaryColor, 20)} 100%)`,
+			text: blockTextColor,
+			border: 'none',
+			glow: null,
+			blur: null
+		};
+	}
 };
 
 // Helper to build appearance from theme config
-export function buildPreviewAppearance(config: any, blockStylePreset: string = 'solid') {
+export function buildPreviewAppearance(
+	config: any,
+	blockStylePreset: string = 'solid',
+	shadowStylePreset: string = 'none',
+	blockOpacity: number = 100
+) {
 	if (!config) return null;
 
 	const tokens = config.tokens || {};
 	const semantic = config.semantic || {};
-	const recipes = config.recipes || {};
 
 	// Resolve refs
 	const resolveRef = (value: any, config: any): any => {
@@ -86,11 +102,46 @@ export function buildPreviewAppearance(config: any, blockStylePreset: string = '
 	const mutedTextColor = resolveRef(semantic?.color?.text?.muted, config) || '#71717a';
 	const borderColor = resolveRef(semantic?.color?.border?.default, config) || '#e4e4e7';
 	const borderWidth = resolveRef(tokens?.border?.width?.default, config) || 1;
-	const blockBase = primaryColor;
+	const blockTextColor = resolveRef(semantic?.color?.block?.text, config) || '#ffffff';
+	const shadowColor = resolveRef(tokens?.color?.shadowColor, config) || '#000000';
 
-	// Build block style from preset
+	// Build block style from preset (without shadow)
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;
-	const blockStyle = styleBuilder(primaryColor, borderColor, borderWidth);
+	let blockStyle = styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor);
+
+	// Apply opacity to fill (except for outline which is already transparent)
+	// Always apply to override any existing opacity (e.g., Glass has rgba with opacity)
+	if (blockStylePreset !== 'outline') {
+		const applyOpacity = (color: string, opacity: number): string => {
+			if (color.startsWith('rgba(')) {
+				return color.replace(/[\d.]+\)$/, `${opacity / 100})`);
+			}
+			if (color.startsWith('rgb(')) {
+				return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity / 100})`);
+			}
+			if (color.startsWith('#')) {
+				const hex = color.replace('#', '');
+				const r = parseInt(hex.substring(0, 2), 16);
+				const g = parseInt(hex.substring(2, 4), 16);
+				const b = parseInt(hex.substring(4, 6), 16);
+				return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+			}
+			if (color.includes('linear-gradient')) {
+				// Apply opacity to gradient colors
+				return color.replace(/#[0-9a-fA-F]{6}/g, (hex) => applyOpacity(hex, opacity));
+			}
+			return color;
+		};
+
+		blockStyle = {
+			...blockStyle,
+			fill: applyOpacity(blockStyle.fill, blockOpacity)
+		};
+	}
+
+	// Build shadow separately (but not for Neon - it has glow instead)
+	const shadowBuilder = SHADOW_PRESETS[shadowStylePreset] || SHADOW_PRESETS.none;
+	const shadow = blockStylePreset !== 'neon' ? shadowBuilder(shadowColor) : 'none';
 
 	return {
 		tokens: {
@@ -98,11 +149,14 @@ export function buildPreviewAppearance(config: any, blockStylePreset: string = '
 			primaryColor,
 			textColor,
 			mutedTextColor,
-			blockBase,
+			blockBase: primaryColor,
 			fontFamily: tokens?.typography?.fontFamily?.sans || 'Inter, sans-serif'
 		},
 		theme: { config },
-		blockStyle,
+		blockStyle: {
+			...blockStyle,
+			shadow // Add shadow to blockStyle
+		},
 		block: {
 			borderRadius: 12
 		}

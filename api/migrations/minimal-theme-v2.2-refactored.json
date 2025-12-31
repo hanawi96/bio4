@@ -13,14 +13,23 @@
         {
           "keyPath": "page.layout.textAlign",
           "type": "select",
-          "options": ["left", "center", "right"],
+          "options": [
+            "left",
+            "center",
+            "right"
+          ],
           "label": "Text Alignment",
           "default": "center"
         },
         {
           "keyPath": "page.layout.baseFontSize",
           "type": "select",
-          "options": ["S", "M", "L", "XL"],
+          "options": [
+            "S",
+            "M",
+            "L",
+            "XL"
+          ],
           "label": "Font Size",
           "default": "M",
           "map": {
@@ -105,7 +114,8 @@
         "20": "rgba(0, 0, 0, 0.2)",
         "50": "rgba(0, 0, 0, 0.5)",
         "80": "rgba(0, 0, 0, 0.8)"
-      }
+      },
+      "blockText": "#ffffff"
     },
     "typography": {
       "fontFamily": {
@@ -155,6 +165,11 @@
       "sm": "0 1px 3px rgba(0, 0, 0, 0.1)",
       "md": "0 4px 6px rgba(0, 0, 0, 0.1)",
       "lg": "0 10px 15px rgba(0, 0, 0, 0.1)"
+    },
+    "border": {
+      "width": {
+        "default": 1
+      }
     }
   },
   "semantic": {
@@ -178,6 +193,9 @@
         "default": "ref:tokens.color.gray.200",
         "subtle": "ref:tokens.color.gray.100",
         "strong": "ref:tokens.color.gray.300"
+      },
+      "block": {
+        "text": "ref:tokens.color.blockText"
       }
     },
     "typography": {
@@ -202,30 +220,7 @@
     }
   },
   "recipes": {
-    "link": {
-      "base": {
-        "paddingX": "ref:tokens.space.3",
-        "paddingY": "ref:tokens.space.3",
-        "radius": "ref:tokens.radius.lg",
-        "shadow": "ref:tokens.elevation.xs",
-        "background": "ref:semantic.color.surface.card",
-        "color": "ref:semantic.color.text.default",
-        "border": "1px solid",
-        "borderColor": "ref:semantic.color.border.default",
-        "transition": "all 0.2s ease"
-      },
-      "hover": {
-        "shadow": "ref:tokens.elevation.sm",
-        "borderColor": "ref:semantic.color.primary",
-        "transform": "translateY(-1px)"
-      }
-    },
     "linkGroup": {
-      "base": {
-        "gap": "ref:tokens.space.3",
-        "paddingX": "ref:tokens.space.4",
-        "paddingY": "ref:tokens.space.4"
-      },
       "variants": {
         "layout": {
           "list": {
@@ -252,11 +247,17 @@
       "pagePadding": 16,
       "blockGap": 14,
       "textAlign": "center",
-      "baseFontSize": "M"
+      "baseFontSize": "M",
+      "blockPadding": {
+        "x": 16,
+        "y": 12
+      }
     },
     "defaults": {
       "headerPresetId": "no-cover",
       "blockStylePreset": "solid",
+      "shadowStyle": "none",
+      "blockOpacity": 100,
       "linkStyle": "soft",
       "linkGroupLayout": "list",
       "linkIconShape": "rounded"

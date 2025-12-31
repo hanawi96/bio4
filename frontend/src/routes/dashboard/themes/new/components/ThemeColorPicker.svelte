@@ -4,6 +4,8 @@
 	export let borderColor: string;
 	export let borderWidth: number;
 	export let mutedTextColor: string;
+	export let blockTextColor: string;
+	export let shadowColor: string;
 </script>
 
 <section class="card-ios p-6">
@@ -81,6 +83,40 @@
 			<label class="block text-sm font-medium text-gray-700 mb-2">Border Width</label>
 			<input type="number" bind:value={borderWidth} min="1" max="5" class="input-ios" />
 			<p class="text-xs text-gray-500 mt-1">Border thickness (1-5px)</p>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Block Text Color</label>
+			<div class="flex items-center gap-3">
+				<input
+					type="color"
+					bind:value={blockTextColor}
+					class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
+				/>
+				<input
+					type="text"
+					bind:value={blockTextColor}
+					class="flex-1 input-ios font-mono text-sm"
+					placeholder="#ffffff"
+				/>
+			</div>
+			<p class="text-xs text-gray-500 mt-1">Text color for all button styles</p>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Shadow Color</label>
+			<div class="flex items-center gap-3">
+				<input
+					type="color"
+					bind:value={shadowColor}
+					class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
+				/>
+				<input
+					type="text"
+					bind:value={shadowColor}
+					class="flex-1 input-ios font-mono text-sm"
+					placeholder="#000000"
+				/>
+			</div>
+			<p class="text-xs text-gray-500 mt-1">Shadow color for brutal block style</p>
 		</div>
 	</div>
 </section>

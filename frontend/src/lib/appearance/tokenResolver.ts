@@ -22,16 +22,38 @@ export function parseTokenReference(ref: string): { token: string; opacity: numb
 	return { token, opacity };
 }
 
-// Resolve token to actual color
+// Resolve token to actual color or shadow value
 // Examples:
 //   resolveToken("blockBase", tokens) → "#2563EB"
 //   resolveToken("blockBase@0.14", tokens) → "rgba(37, 99, 235, 0.14)"
+//   resolveToken("0 2px 8px shadowColor@0.15", tokens) → "0 2px 8px rgba(0, 0, 0, 0.15)"
 export function resolveToken(ref: string, tokens: ThemeTokens): string {
-	const { token, opacity } = parseTokenReference(ref);
-
 	// Handle special cases
-	if (token === 'transparent') return 'transparent';
-	if (token === 'none') return 'none';
+	if (ref === 'transparent') return 'transparent';
+	if (ref === 'none') return 'none';
+	
+	// Handle gradient pattern (will be processed separately)
+	if (ref.startsWith('gradient:')) return ref;
+
+	// Check if it's a shadow pattern (contains px and a token reference)
+	if (ref.includes('px') && (ref.includes('shadowColor') || ref.includes('blockBase'))) {
+		// Parse shadow pattern: "0 2px 8px shadowColor@0.15" or "4px 4px 0px shadowColor"
+		return ref.replace(/(\w+)(@[\d.]+)?/g, (match, token, opacity) => {
+			if (token === 'shadowColor' || token === 'blockBase') {
+				const color = tokens[token as keyof ThemeTokens];
+				if (!color || typeof color !== 'string') return match;
+				
+				if (opacity) {
+					const opacityValue = parseFloat(opacity.substring(1));
+					return hexToRgba(color, opacityValue);
+				}
+				return color;
+			}
+			return match;
+		});
+	}
+
+	const { token, opacity } = parseTokenReference(ref);
 
 	// Get color from tokens
 	const color = tokens[token as keyof ThemeTokens];
@@ -111,19 +133,4 @@ export function resolveAutoTextColor(fillRef: string, tokens: ThemeTokens): stri
 
 	// Calculate contrast color
 	return getAutoTextColor(fillColor);
-}
-
-// Resolve shadow with shadowColor token (for hard shadows)
-// Examples:
-//   resolveShadow("4px 4px 0px #000000", "#ff0000") → "4px 4px 0px #ff0000"
-//   resolveShadow("0 4px 6px rgba(0,0,0,0.1)", "#ff0000") → "0 4px 6px rgba(0,0,0,0.1)"
-export function resolveShadow(shadow: string | undefined, shadowColor: string): string {
-	if (!shadow || shadow === 'none') return 'none';
-	
-	// If it's a hard shadow (4px 4px 0px), replace the color with shadowColor token
-	if (shadow.includes('4px 4px 0px')) {
-		return `4px 4px 0px ${shadowColor}`;
-	}
-	
-	return shadow;
 }
