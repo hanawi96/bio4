@@ -56,10 +56,17 @@ export function resolveToken(ref: string, tokens: ThemeTokens): string {
 	const { token, opacity } = parseTokenReference(ref);
 
 	// Get color from tokens
-	const color = tokens[token as keyof ThemeTokens];
+	let color = tokens[token as keyof ThemeTokens];
+	
+	// Smart fallback for missing tokens
 	if (!color || typeof color !== 'string') {
-		console.warn(`[tokenResolver] Token "${token}" not found, using fallback`);
-		return '#000000';
+		// Special fallback for blockText (commonly missing in old themes)
+		if (token === 'blockText') {
+			color = '#ffffff'; // Default white for block text
+		} else {
+			console.warn(`[tokenResolver] Token "${token}" not found, using fallback`);
+			color = '#000000';
+		}
 	}
 
 	// If opacity is 1, return as-is

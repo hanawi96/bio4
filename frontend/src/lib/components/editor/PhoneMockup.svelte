@@ -3,11 +3,21 @@
 	import { appearance } from '$lib/stores/appearance';
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
-	import { resolveShadow } from '$lib/appearance/tokenResolver';
 	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
+	
+	// Get background with override priority
+	$: resolvedBackground = (() => {
+		// Check override first for immediate update
+		const override = $appearanceState.overrides?.['backgroundColor'];
+		if (override) {
+			return override;
+		}
+		// Fallback to theme default
+		return tokens?.backgroundColor || '#ffffff';
+	})();
 	
 	// Get global iconShape from theme config (fallback for groups without custom config)
 	$: globalIconShape = (() => {
@@ -82,6 +92,33 @@
 		video.src = DEFAULT_VIDEO;
 	});
 
+	// Helper: Darken color for gradient
+	function darkenColor(hex: string, percent: number): string {
+		const num = parseInt(hex.replace('#', ''), 16);
+		const r = Math.max(0, ((num >> 16) & 0xff) * (1 - percent / 100));
+		const g = Math.max(0, ((num >> 8) & 0xff) * (1 - percent / 100));
+		const b = Math.max(0, (num & 0xff) * (1 - percent / 100));
+		return '#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
+	}
+
+	// Helper: Get block background style (handles gradient)
+	function getBlockBackground(fill: string | undefined): string {
+		if (!fill) {
+			return tokens?.primaryColor || '#3b82f6';
+		}
+		
+		// Handle gradient pattern
+		if (fill.startsWith('gradient:')) {
+			const tokenName = fill.replace('gradient:', '');
+			// Resolve token to actual color
+			const baseColor = tokens?.[tokenName as keyof typeof tokens] || tokens?.blockBase || '#3b82f6';
+			const darkColor = darkenColor(baseColor as string, 20);
+			return `linear-gradient(135deg, ${baseColor} 0%, ${darkColor} 100%)`;
+		}
+		
+		return fill;
+	}
+
 	// Avatar size mapping
 	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };
 	$: avatarSize = header ? avatarSizes[header.avatarSize] : 80;
@@ -129,9 +166,7 @@
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
 	
 	// Get block gap from appearance
-	$: blockGap = ($appearanceState.overrides?.['page.blockGap'] as number)
-		|| $appearance?.theme?.config?.page?.layout?.blockGap
-		|| 16;
+	$: blockGap = $appearance?.page?.blockGap ?? 16;
 	
 	// Get title font size from appearance
 	$: titleFontSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
@@ -167,51 +202,32 @@
 		return 'rgba(0, 0, 0, 0.7)';
 	})();
 
-	// Get block border-radius from block preset or override
-	$: blockBorderRadius = (() => {
-		// Priority 1: Override
-		const overrideBorderRadius = $appearanceState.overrides?.['block.borderRadius'];
-		if (overrideBorderRadius !== undefined) {
-			return `${overrideBorderRadius}px`;
-		}
-		
-		// Priority 2: Theme config recipes.link.base.radius
-		const themeConfig = $appearance?.theme?.config;
-		const radiusRef = themeConfig?.recipes?.link?.base?.radius;
-		if (radiusRef && typeof radiusRef === 'string' && radiusRef.startsWith('ref:tokens.radius.')) {
-			const radiusType = radiusRef.replace('ref:tokens.radius.', '');
-			const radiusValue = themeConfig?.tokens?.radius?.[radiusType];
-			if (radiusValue !== undefined) {
-				return `${radiusValue}px`;
-			}
-		}
-		
-		// Priority 3: Preset
-		const presetBorderRadius = $appearance?.block?.borderRadius;
-		if (presetBorderRadius !== undefined) {
-			return `${presetBorderRadius}px`;
-		}
-		
-		return '12px'; // Default fallback
-	})();
-
-	// Get block shadow from override or theme default
-	$: blockShadow = $appearanceState.overrides?.['block.shadow'] 
-		|| $appearance?.theme?.config?.defaults?.blockShadow 
-		|| 'none';
+	// Get block border-radius from appearance
+	$: blockBorderRadius = `${$appearance?.block?.borderRadius ?? 12}px`;
 	
-	// Resolve shadow with shadowColor token (for hard shadows)
-	// Special handling: If recipe has glow (Neon), ignore shadow override
+	// Get block padding from appearance
+	$: blockPaddingX = $appearance?.block?.padding?.x ?? 16;
+	$: blockPaddingY = $appearance?.block?.padding?.y ?? 12;
+	
+	// Get border width from appearance
+	$: borderWidth = $appearance?.block?.borderWidth ?? 1;
+	
+	// Resolve shadow with shadowColor token
 	$: resolvedBlockShadow = (() => {
 		// If current recipe has glow (Neon), don't use shadow
 		if ($appearance?.blockStyle?.glow) {
 			return 'none';
 		}
-		// Otherwise use recipe shadow or override
-		return resolveShadow(
-			$appearance?.blockStyle?.shadow || blockShadow,
-			tokens?.shadowColor || '#000000'
-		);
+		
+		const shadow = $appearance?.blockStyle?.shadow;
+		if (!shadow || shadow === 'none') return 'none';
+		
+		// If it's a hard shadow pattern (4px 4px 0px), ensure shadowColor is applied
+		if (shadow.includes('4px 4px 0px')) {
+			return `4px 4px 0px ${tokens?.shadowColor || '#000000'}`;
+		}
+		
+		return shadow;
 	})();
 
 	// Helper function: Resolve layout shadow (DRY - used by grid, list, card)
@@ -239,8 +255,8 @@
 		blockBase: string
 	): string {
 		if (borderEnabled === false) return 'none';
-		if (themeBorder && themeBorder !== 'none') return `1px solid ${themeBorder}`;
-		if (borderEnabled === true) return `1px solid ${blockBase}`;
+		if (themeBorder && themeBorder !== 'none') return `${borderWidth}px solid ${themeBorder}`;
+		if (borderEnabled === true) return `${borderWidth}px solid ${blockBase}`;
 		return 'none';
 	}
 
@@ -305,11 +321,11 @@
 			{/if}
 
 			<!-- Background Image Layer (separate from content) -->
-			{#if !hasVideoInDraft && tokens?.backgroundColor && tokens.backgroundColor.includes('url(')}
+			{#if !hasVideoInDraft && resolvedBackground && resolvedBackground.includes('url(')}
 				<div 
 					class="absolute inset-0 w-full h-full"
 					style="
-						background: {tokens.backgroundColor} center/cover no-repeat;
+						background: {resolvedBackground} center/cover no-repeat;
 						filter: {backgroundFilters};
 					"
 				></div>
@@ -319,14 +335,14 @@
 			<div 
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
-					{!hasVideoInDraft && tokens?.backgroundColor 
-						? (tokens.backgroundColor.includes('background:') && tokens.backgroundColor.includes('background-size:')
-							? tokens.backgroundColor
-							: tokens.backgroundColor.includes('background:') 
-								? tokens.backgroundColor 
-								: tokens.backgroundColor.includes('url(')
+					{!hasVideoInDraft && resolvedBackground 
+						? (resolvedBackground.includes('background:') && resolvedBackground.includes('background-size:')
+							? resolvedBackground
+							: resolvedBackground.includes('background:') 
+								? resolvedBackground 
+								: resolvedBackground.includes('url(')
 									? 'background: transparent;'
-									: `background: ${tokens.backgroundColor};`)
+									: `background: ${resolvedBackground};`)
 						: !hasVideoInDraft ? 'background: #ffffff;' : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
@@ -592,7 +608,7 @@
 						{#if isAvatarCover}
 							<div 
 								class="absolute pointer-events-none z-10 -mx-4"
-								style="left: 0; right: 0; top: -24px; height: 60px; background: linear-gradient(to bottom, transparent 0%, {tokens?.backgroundColor || '#ffffff'} 100%);"
+								style="left: 0; right: 0; top: -24px; height: 60px; background: linear-gradient(to bottom, transparent 0%, {resolvedBackground || '#ffffff'} 100%);"
 							></div>
 						{/if}
 						
@@ -615,9 +631,9 @@
 													class="link-button block flex-shrink-0 py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
 													style="
 														width: 200px;
-														background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+														background: {getBlockBackground($appearance?.blockStyle?.fill)};
 														color: {$appearance?.blockStyle?.text || 'white'};
-														border: {$appearance?.blockStyle?.border ? `1px solid ${$appearance.blockStyle.border}` : 'none'};
+														border: {$appearance?.blockStyle?.border ? `${borderWidth}px solid ${$appearance.blockStyle.border}` : 'none'};
 														box-shadow: {resolvedBlockShadow !== 'none' 
 															? resolvedBlockShadow 
 															: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
@@ -680,7 +696,7 @@
 												rel="noopener"
 												class="link-button block text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? 'p-2' : 'overflow-hidden'}"
 												style="
-													background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+													background: {getBlockBackground($appearance?.blockStyle?.fill)};
 													color: {$appearance?.blockStyle?.text || 'white'};
 													border: {gridBorder};
 													box-shadow: {gridShadow};
@@ -741,7 +757,7 @@
 												rel="noopener"
 												class="link-button block w-full transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'}"
 												style="
-													background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+													background: {getBlockBackground($appearance?.blockStyle?.fill)};
 													color: {$appearance?.blockStyle?.text || 'white'};
 													border: {cardBorder};
 													box-shadow: {cardShadow} !important;
@@ -807,7 +823,7 @@
 											rel="noopener"
 											class="link-button block w-full py-1.5 px-3 text-sm font-medium transition-transform hover:scale-[1.02]"
 											style="
-												background-color: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+												background: {getBlockBackground($appearance?.blockStyle?.fill)};
 												color: {$appearance?.blockStyle?.text || 'white'};
 												border: {listBorder};
 												box-shadow: {listShadow};

@@ -109,9 +109,9 @@ export function buildPreviewAppearance(
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;
 	let blockStyle = styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor);
 
-	// Apply opacity to fill (except for outline which is already transparent)
-	// Always apply to override any existing opacity (e.g., Glass has rgba with opacity)
-	if (blockStylePreset !== 'outline') {
+	// Apply opacity to fill (except for outline and glass)
+	// Glass always uses 35% opacity, never affected by slider
+	if (blockStylePreset !== 'outline' && blockStylePreset !== 'glass') {
 		const applyOpacity = (color: string, opacity: number): string => {
 			if (color.startsWith('rgba(')) {
 				return color.replace(/[\d.]+\)$/, `${opacity / 100})`);

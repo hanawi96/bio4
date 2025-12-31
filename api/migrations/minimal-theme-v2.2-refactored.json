@@ -115,7 +115,8 @@
         "50": "rgba(0, 0, 0, 0.5)",
         "80": "rgba(0, 0, 0, 0.8)"
       },
-      "blockText": "#ffffff"
+      "blockText": "#ffffff",
+      "shadowColor": "#000000"
     },
     "typography": {
       "fontFamily": {
@@ -256,8 +257,6 @@
     "defaults": {
       "headerPresetId": "no-cover",
       "blockStylePreset": "solid",
-      "shadowStyle": "none",
-      "blockOpacity": 100,
       "linkStyle": "soft",
       "linkGroupLayout": "list",
       "linkIconShape": "rounded"

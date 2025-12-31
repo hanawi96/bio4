@@ -6,12 +6,17 @@
 		getBlockStyleRecipeName,
 		getBlockStyleRecipeDescription,
 		getBlockStyleRecipe,
-		type BlockStylePresetId
+		getShadowStyleIds,
+		getShadowStyleName,
+		getShadowRecipe,
+		type BlockStylePresetId,
+		type ShadowStylePreset
 	} from '$lib/appearance/blockStyles';
-	import { resolveToken, resolveAutoTextColor, resolveShadow } from '$lib/appearance/tokenResolver';
+	import { resolveToken, resolveAutoTextColor } from '$lib/appearance/tokenResolver';
 
 	// Get all available recipes
 	const recipes = getBlockStyleRecipeIds();
+	const shadowStyles = getShadowStyleIds();
 
 	// Current selected recipe (simplified logic)
 	$: currentRecipeId =
@@ -23,16 +28,20 @@
 	function selectRecipe(recipeId: BlockStylePresetId) {
 		updateAppearance('block.stylePreset', recipeId);
 		
-		// Special case: Brutal always uses hard shadow
-		if (recipeId === 'brutal') {
-			const hardShadow = `4px 4px 0px ${$appearance?.tokens?.shadowColor || '#000000'}`;
-			updateAppearance('block.shadow', hardShadow);
-		}
 		// Clear shadow override for recipes that don't support custom shadows
-		else if (recipeId === 'neon' || recipeId === 'glass') {
+		if (recipeId === 'neon' || recipeId === 'glass') {
 			// Neon uses glow, Glass uses blur - clear any shadow override
 			updateAppearance('block.shadow', 'none');
 		}
+	}
+
+	// Helper: Darken color for gradient
+	function darkenColor(hex: string, percent: number): string {
+		const num = parseInt(hex.replace('#', ''), 16);
+		const r = Math.max(0, ((num >> 16) & 0xff) * (1 - percent / 100));
+		const g = Math.max(0, ((num >> 8) & 0xff) * (1 - percent / 100));
+		const b = Math.max(0, (num & 0xff) * (1 - percent / 100));
+		return '#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
 	}
 
 	// Get preview style for each recipe (resolve with current theme tokens)
@@ -42,7 +51,15 @@
 		const recipe = getBlockStyleRecipe(recipeId);
 		const tokens = $appearance.tokens;
 
-		const fill = resolveToken(recipe.fill, tokens);
+		let fill = resolveToken(recipe.fill, tokens);
+		
+		// Handle gradient fill
+		if (recipe.fill.startsWith('gradient:')) {
+			const baseColor = resolveToken(recipe.fill.replace('gradient:', ''), tokens);
+			const darkColor = darkenColor(baseColor, 20);
+			fill = `linear-gradient(135deg, ${baseColor} 0%, ${darkColor} 100%)`;
+		}
+		
 		const text =
 			recipe.text === 'auto'
 				? resolveAutoTextColor(recipe.fill, tokens)
@@ -59,20 +76,13 @@
 
 		return {
 			backgroundColor: fill,
+			backgroundImage: recipe.fill.startsWith('gradient:') ? fill : 'none',
 			color: text,
 			border: border ? `1px solid ${border}` : 'none',
 			boxShadow: shadow || (glow ? `0 0 20px ${glow}` : 'none'),
 			backdropFilter: recipe.blur ? `blur(${recipe.blur}px)` : 'none'
 		};
 	}
-
-	// Shadow options
-	const shadowOptions = [
-		{ id: 'none', label: 'None', value: 'none' },
-		{ id: 'subtle', label: 'Subtle', value: '0 1px 3px rgba(0,0,0,0.12)' },
-		{ id: 'strong', label: 'Strong', value: '0 4px 8px rgba(0,0,0,0.16)' },
-		{ id: 'hard', label: 'Hard', value: '4px 4px 0px rgba(0,0,0,1)' }
-	];
 
 	$: currentShadow = (() => {
 		// Special case: Neon uses glow, not shadow - always return 'none'
@@ -85,32 +95,31 @@
 		const themeDefault = $appearance?.theme?.config?.defaults?.blockShadow;
 		const recipeDefault = $appearance?.blockStyle?.shadow;
 		
-		// Special case: If Brutal recipe and no override, ensure hard shadow is shown
-		if (currentRecipeId === 'brutal' && !override) {
-			return recipeDefault || `4px 4px 0px ${$appearance?.tokens?.shadowColor || '#000000'}`;
-		}
-		
 		return override || themeDefault || recipeDefault || 'none';
 	})();
 
-	// Track current shadow type (none/subtle/strong/hard)
-	// Compare with actual shadowOptions values for accuracy
-	$: currentShadowType = (() => {
+	// Get current shadow style ID from shadow value
+	$: currentShadowStyleId = (() => {
 		const shadow = currentShadow;
 		if (!shadow || shadow === 'none') return 'none';
 		
-		// Find matching shadow option by comparing values
-		const matchedOption = shadowOptions.find(opt => {
-			if (opt.value === 'none') return false;
-			// For hard shadow, check if it contains the pattern (handles dynamic shadowColor)
-			if (opt.id === 'hard') {
-				return shadow.includes('4px 4px 0px');
+		// Try to match with shadow recipes
+		for (const styleId of shadowStyles) {
+			const recipe = getShadowRecipe(styleId as ShadowStylePreset);
+			const resolvedValue = resolveToken(recipe.value, $appearance?.tokens || {});
+			
+			// For brutal shadow, check pattern
+			if (styleId === 'brutal' && shadow.includes('4px 4px 0px')) {
+				return 'brutal';
 			}
-			// For other shadows, do exact match
-			return shadow === opt.value;
-		});
+			
+			// For other shadows, check if values match
+			if (resolvedValue === shadow) {
+				return styleId;
+			}
+		}
 		
-		return matchedOption ? matchedOption.id : 'none';
+		return 'none';
 	})();
 
 	// Helper: Get display style for a recipe
@@ -118,13 +127,10 @@
 		// Get base style from recipe
 		const baseStyle = getPreviewStyle(recipeId);
 		
-		// Apply shadow based on recipe type and current shadow selection
-		if (recipeId === 'brutal') {
-			// Brutal: always use hard shadow (with current shadowColor)
-			baseStyle.boxShadow = `4px 4px 0px ${$appearance?.tokens?.shadowColor || '#000000'}`;
-		} else if (recipeId !== 'neon' && currentShadow && currentShadow !== 'none') {
-			// Other recipes (except Neon): apply current shadow selection
-			baseStyle.boxShadow = resolveShadow(currentShadow, $appearance?.tokens?.shadowColor || '#000000');
+		// Apply shadow based on current shadow selection
+		if (recipeId !== 'neon' && currentShadow && currentShadow !== 'none') {
+			// Apply current shadow selection (except for Neon which uses glow)
+			baseStyle.boxShadow = currentShadow;
 		}
 		// Neon keeps its glow from baseStyle, others keep recipe default if no shadow selected
 		
@@ -144,20 +150,14 @@
 		}, {} as Record<BlockStylePresetId, any>);
 	})();
 
-	// Get background style from theme
-	$: previewBackground = $appearance?.tokens?.backgroundColor || '#ffffff';
+	// Get background style from theme - check override first, then theme default
+	$: previewBackground = $appearanceState.overrides?.['backgroundColor'] || $appearance?.tokens?.backgroundColor || '#ffffff';
 
 	// Get block shape from current block preset
 	$: blockShape = $appearance?.block?.shape || 'rounded';
 
 	// Get border-radius from preset or override
-	$: blockBorderRadius = (() => {
-		const overrideBorderRadius = $appearanceState.overrides?.['block.borderRadius'];
-		if (overrideBorderRadius !== undefined) {
-			return overrideBorderRadius;
-		}
-		return $appearance?.block?.borderRadius || 12;
-	})();
+	$: blockBorderRadius = $appearanceState.overrides?.['block.borderRadius'] ?? $appearance?.block?.borderRadius ?? 12;
 
 	// Map shape to border-radius class for preview
 	$: shapeClass = {
@@ -166,15 +166,9 @@
 		square: 'rounded-none'
 	}[blockShape] || 'rounded-lg';
 
-	function selectShadow(shadowId: string) {
-		const shadow = shadowOptions.find((s) => s.id === shadowId);
-		let shadowValue = shadow?.value || 'none';
-		
-		// If selecting hard shadow, use shadowColor token instead of fixed black
-		if (shadowId === 'hard' && $appearance?.tokens?.shadowColor) {
-			shadowValue = `4px 4px 0px ${$appearance.tokens.shadowColor}`;
-		}
-		
+	function selectShadow(shadowId: ShadowStylePreset) {
+		const recipe = getShadowRecipe(shadowId);
+		const shadowValue = resolveToken(recipe.value, $appearance?.tokens || {});
 		updateAppearance('block.shadow', shadowValue);
 	}
 </script>
@@ -189,34 +183,32 @@
 		<!-- Button Style -->
 		<div>
 			<h3 class="text-sm font-medium text-gray-900 mb-3">Button style</h3>
-			<div class="grid grid-cols-4 gap-3 p-1">
+			<div class="grid grid-cols-3 gap-3">
 				{#each recipes as recipeId}
 					{@const isSelected = currentRecipeId === recipeId}
+					{@const displayStyle = displayStyles[recipeId] || {}}
 					<button
 						on:click={() => selectRecipe(recipeId)}
-						class="group relative rounded-lg overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+						class="group relative rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
 					>
 						<!-- Preview Container -->
 						<div
-							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white"
-							style="background: {previewBackground};"
+							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white overflow-hidden"
+							style="background: {previewBackground}; background-size: cover; background-position: center;"
 						>
-							{#if $appearance?.tokens}
-								{@const displayStyle = displayStyles[recipeId]}
-								<div
-									class="w-full h-7 transition-all flex items-center justify-center {shapeClass} relative z-10"
-									style="
-										background-color: {displayStyle.backgroundColor};
-										color: {displayStyle.color};
-										border: {displayStyle.border};
-										box-shadow: {displayStyle.boxShadow || 'none'};
-										backdrop-filter: {displayStyle.backdropFilter || 'none'};
-										-webkit-backdrop-filter: {displayStyle.backdropFilter || 'none'};
-									"
-								>
-									<span class="text-[10px] font-semibold">Button</span>
-								</div>
-							{/if}
+							<div
+								class="w-full h-8 transition-all flex items-center justify-center {shapeClass} relative z-10"
+								style="
+									background: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : displayStyle.backgroundColor};
+									color: {displayStyle.color};
+									border: {displayStyle.border};
+									box-shadow: {displayStyle.boxShadow || 'none'};
+									backdrop-filter: {displayStyle.backdropFilter || 'none'};
+									-webkit-backdrop-filter: {displayStyle.backdropFilter || 'none'};
+								"
+							>
+								<span class="text-xs font-semibold">Button</span>
+							</div>
 						</div>
 						
 						<!-- Name Label -->
@@ -253,30 +245,19 @@
 		<!-- Shadows (hide when Neon is selected) -->
 		{#if currentRecipeId !== 'neon'}
 			<div>
-				<h3 class="text-sm font-medium text-gray-900 mb-3">Shadows</h3>
-				{#if currentRecipeId === 'brutal'}
-					<p class="text-xs text-gray-500 mb-2">Brutal style uses hard shadow by default</p>
-				{/if}
-				<div class="grid grid-cols-4 gap-2">
-					{#each shadowOptions as shadow}
-						{@const isDisabled = currentRecipeId === 'brutal' && shadow.id !== 'hard'}
-						{@const isActive = currentShadowType === shadow.id}
+				<h3 class="text-sm font-medium text-gray-900 mb-3">Shadow Style</h3>
+				<div class="grid grid-cols-5 gap-2">
+					{#each shadowStyles as shadowId}
+						{@const isSelected = currentShadowStyleId === shadowId}
 						<button
-							on:click={() => selectShadow(shadow.id)}
-							disabled={isDisabled}
-							class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {isDisabled 
-								? 'opacity-50 cursor-not-allowed border-gray-200 text-gray-400'
-								: isActive
-									? 'border-blue-500 bg-blue-50 text-blue-700 hover:scale-105'
-									: 'border-gray-200 text-gray-700 hover:border-gray-300 hover:scale-105'}"
+							on:click={() => selectShadow(shadowId)}
+							class="px-3 py-2 rounded-lg text-sm font-medium transition-all {isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
 						>
-							{shadow.label}
-							{#if isActive && currentRecipeId === 'brutal'}
-								<span class="ml-1">✓</span>
-							{/if}
+							{getShadowStyleName(shadowId)}
 						</button>
 					{/each}
 				</div>
+				<p class="text-xs text-gray-500 mt-2">Shadow depth applied to buttons</p>
 			</div>
 		{/if}
 
@@ -315,8 +296,8 @@
 			</p>
 		</div>
 
-		<!-- Shadow Color (only show when Hard shadow is selected) -->
-		{#if currentShadowType === 'hard'}
+		<!-- Shadow Color (only show when Hard or Brutal shadow is selected) -->
+		{#if currentShadowStyleId === 'hard' || currentShadowStyleId === 'brutal'}
 			<div class="pt-6 border-t border-gray-100">
 				<div class="flex items-center justify-between mb-3">
 					<div>

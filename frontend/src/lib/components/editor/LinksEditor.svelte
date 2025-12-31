@@ -3,7 +3,6 @@
 	import { appearance } from '$lib/stores/appearance';
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { groups } from '$lib/stores/page';
-	import { resolveShadow } from '$lib/appearance/tokenResolver';
 	import LinkCard from './LinkCard.svelte';
 	import LinkForm from './LinkForm.svelte';
 	import LayoutSelector from './LayoutSelector.svelte';

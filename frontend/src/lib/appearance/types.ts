@@ -180,7 +180,18 @@ export interface ResolvedAppearance {
 	theme: Theme;
 	tokens: ThemeTokens;
 	header: HeaderPreset & HeaderOverrides;
-	block: BlockPreset & BlockOverrides;
+	page: {
+		maxWidth: number;
+		pagePadding: number;
+		blockGap: number;
+		textAlign: 'left' | 'center' | 'right';
+	};
+	block: {
+		borderRadius: number;
+		shape: string;
+		padding: { x: number; y: number };
+		borderWidth: number;
+	};
 	blockStyle: ResolvedBlockStyle; // Resolved block style with actual colors
 }
 

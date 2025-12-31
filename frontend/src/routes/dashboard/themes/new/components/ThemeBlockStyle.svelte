@@ -123,6 +123,11 @@
 			effectiveOpacity = defaultOpacity[recipeId];
 		}
 		
+		// Glass always uses 35% opacity, never affected by slider
+		if (recipeId === 'glass') {
+			effectiveOpacity = 35;
+		}
+		
 		// Handle gradient fill
 		if (recipe.fill.startsWith('gradient:')) {
 			const baseColor = resolveToken(recipe.fill.replace('gradient:', ''), tokens);

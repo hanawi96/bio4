@@ -77,20 +77,20 @@ function adjustColor(hex: string, percent: number): string {
 // Resolve semantic token reference (v2 schema)
 function resolveSemanticToken(ref: string, config: any): string | null {
 	if (!ref || !ref.startsWith('ref:')) return ref;
-	
+
 	const path = ref.replace('ref:', '').split('.');
 	let value: any = config;
-	
+
 	for (const key of path) {
 		value = value?.[key];
 		if (value === undefined) return null;
 	}
-	
+
 	// Recursive resolve if value is also a reference
 	if (typeof value === 'string' && value.startsWith('ref:')) {
 		return resolveSemanticToken(value, config);
 	}
-	
+
 	return value;
 }
 
@@ -122,8 +122,8 @@ function expandThemeTokens(config: any): ThemeTokens {
 		surface = resolveSemanticToken(semantic.color?.surface?.card, config) || '#fafafa';
 		border = resolveSemanticToken(semantic.color?.border?.default, config) || '#e5e5e5';
 		blockBase = primary; // Use primary as blockBase for v2
-		fontFamily = resolveSemanticToken(semantic.typography?.body?.fontFamily, config) || 
-		             tokens.typography?.fontFamily?.sans || 'Inter, sans-serif';
+		fontFamily = resolveSemanticToken(semantic.typography?.body?.fontFamily, config) ||
+			tokens.typography?.fontFamily?.sans || 'Inter, sans-serif';
 	} else {
 		// Schema v1: Use flat tokens (legacy)
 		backgroundColor = bgTokenToCSS(tokens.bg);
@@ -132,11 +132,11 @@ function expandThemeTokens(config: any): ThemeTokens {
 		surface = tokens.surface || '#fafafa';
 		border = tokens.border || '#e5e5e5';
 		fontFamily = tokens.fontFamily || 'Inter, sans-serif';
-		
+
 		// Extract blockBase - handle both string and object formats
 		if (tokens.blockBase) {
-			blockBase = typeof tokens.blockBase === 'string' 
-				? tokens.blockBase 
+			blockBase = typeof tokens.blockBase === 'string'
+				? tokens.blockBase
 				: tokens.blockBase.value || '#3b82f6';
 		} else {
 			blockBase = '#3b82f6';
@@ -146,7 +146,7 @@ function expandThemeTokens(config: any): ThemeTokens {
 	const isDark = isDarkBackground(backgroundColor);
 
 	return {
-		bg: schemaVersion === 2 
+		bg: schemaVersion === 2
 			? { type: 'color', value: backgroundColor }
 			: tokens.bg || { type: 'color', value: '#ffffff' },
 		text,
@@ -179,7 +179,7 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 				config.tokens.bg = { type: 'color', value };
 				return;
 			}
-			
+
 			// Detect type from value
 			if (value.includes('gradient')) {
 				// Parse gradient to extract colors and angle
@@ -258,7 +258,8 @@ function convertOldFormat(customTheme: any): any {
 // Resolve block style recipe with theme tokens
 function resolveBlockStyle(
 	recipeId: BlockStylePresetId,
-	tokens: ThemeTokens
+	tokens: ThemeTokens,
+	overrides?: Record<string, any>
 ): ResolvedBlockStyle {
 	const recipe = getBlockStyleRecipe(recipeId);
 
@@ -279,12 +280,8 @@ function resolveBlockStyle(
 	// Resolve glow color (optional)
 	const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
 
-	// Resolve shadow - if it's a token reference, resolve it; otherwise use as-is
-	const shadow = recipe.shadow 
-		? (recipe.shadow.includes('px') 
-			? recipe.shadow 
-			: `4px 4px 0px ${resolveToken(recipe.shadow, tokens)}`)
-		: undefined;
+	// Resolve shadow - from override only (shadow is not part of recipe)
+	const shadow = overrides?.shadow || undefined;
 
 	return {
 		recipe,
@@ -337,9 +334,9 @@ export function resolveAppearance(
 	const tokens = expandThemeTokens(themeConfig);
 
 	// Resolve header preset
-	const defaultHeaderId = theme?.defaultHeaderPresetId 
-		|| themeConfig.page?.defaults?.headerPresetId 
-		|| themeConfig.defaults?.headerPreset 
+	const defaultHeaderId = theme?.defaultHeaderPresetId
+		|| themeConfig.page?.defaults?.headerPresetId
+		|| themeConfig.defaults?.headerPreset
 		|| 'no-cover';
 	const headerPresetId = isNewFormat
 		? (pageState.headerPresetId || defaultHeaderId)
@@ -367,16 +364,39 @@ export function resolveAppearance(
 		: (pageState.blockStyle?.overrides || {});
 
 	// Resolve block style recipe
-	const defaultBlockStyleId = themeConfig.page?.defaults?.blockStylePreset 
-		|| themeConfig.defaults?.blockStylePreset 
+	const defaultBlockStyleId = themeConfig.page?.defaults?.blockStylePreset
+		|| themeConfig.defaults?.blockStylePreset
 		|| 'solid';
 	const blockStyleId = (blockOverrides.stylePreset || defaultBlockStyleId) as BlockStylePresetId;
-	const blockStyle = resolveBlockStyle(blockStyleId, tokens);
+	const blockStyle = resolveBlockStyle(blockStyleId, tokens, blockOverrides);
 
-	// Default block config (simple, no preset needed)
-	const defaultBlockConfig = {
-		borderRadius: 12,
-		shape: 'rounded'
+	// Resolve page layout
+	const pageLayout = {
+		maxWidth: (pageState.overrides?.['page.maxWidth'] as number)
+			?? themeConfig.page?.layout?.maxWidth
+			?? 480,
+		pagePadding: (pageState.overrides?.['page.pagePadding'] as number)
+			?? themeConfig.page?.layout?.pagePadding
+			?? 16,
+		blockGap: (pageState.overrides?.['page.blockGap'] as number)
+			?? themeConfig.page?.layout?.blockGap
+			?? 16,
+		textAlign: (pageState.overrides?.['page.textAlign'] as 'left' | 'center' | 'right')
+			?? themeConfig.page?.layout?.textAlign
+			?? 'center'
+	};
+
+	// Resolve block config
+	const blockConfig = {
+		borderRadius: (blockOverrides.borderRadius as number)
+			?? themeConfig.tokens?.radius?.lg
+			?? 12,
+		shape: 'rounded' as const,
+		padding: {
+			x: themeConfig.page?.layout?.blockPadding?.x ?? 16,
+			y: themeConfig.page?.layout?.blockPadding?.y ?? 12
+		},
+		borderWidth: themeConfig.tokens?.border?.width?.default ?? 1
 	};
 
 	return {
@@ -388,7 +408,8 @@ export function resolveAppearance(
 		},
 		tokens,
 		header: { ...(headerPresetsMap[headerPresetId] || headerPresetsMap['no-cover'] || HEADER_PRESETS['no-cover']), ...headerOverrides },
-		block: { ...defaultBlockConfig, ...blockOverrides },
+		page: pageLayout,
+		block: blockConfig,
 		blockStyle
 	};
 }
