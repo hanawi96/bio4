@@ -89,7 +89,7 @@ app.post('/', async (c) => {
 		
 		// Extract default preset IDs from config
 		const defaultHeaderPresetId = config.page?.defaults?.headerPresetId || 'no-cover';
-		const defaultBlockPresetId = config.page?.defaults?.blockPresetId || 'rounded-solid';
+		const defaultBlockPresetId = config.page?.defaults?.blockStylePreset || 'solid';
 		
 		// Insert theme with preset IDs
 		const result = await db.prepare(`

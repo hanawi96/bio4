@@ -337,7 +337,10 @@ export function resolveAppearance(
 	const tokens = expandThemeTokens(themeConfig);
 
 	// Resolve header preset
-	const defaultHeaderId = theme?.defaultHeaderPresetId || themeConfig.defaults?.headerPreset || 'no-cover';
+	const defaultHeaderId = theme?.defaultHeaderPresetId 
+		|| themeConfig.page?.defaults?.headerPresetId 
+		|| themeConfig.defaults?.headerPreset 
+		|| 'no-cover';
 	const headerPresetId = isNewFormat
 		? (pageState.headerPresetId || defaultHeaderId)
 		: (pageState.headerStyle?.presetId || defaultHeaderId);
@@ -364,7 +367,9 @@ export function resolveAppearance(
 		: (pageState.blockStyle?.overrides || {});
 
 	// Resolve block style recipe
-	const defaultBlockStyleId = themeConfig.defaults?.blockStylePreset || 'solid';
+	const defaultBlockStyleId = themeConfig.page?.defaults?.blockStylePreset 
+		|| themeConfig.defaults?.blockStylePreset 
+		|| 'solid';
 	const blockStyleId = (blockOverrides.stylePreset || defaultBlockStyleId) as BlockStylePresetId;
 	const blockStyle = resolveBlockStyle(blockStyleId, tokens);
 

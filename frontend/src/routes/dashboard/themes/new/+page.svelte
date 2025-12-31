@@ -4,9 +4,21 @@
 	import { api } from '$lib/api.client';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import ThemePreviewMockup from '$lib/components/editor/ThemePreviewMockup.svelte';
+	import ThemeDebugPanel from './components/ThemeDebugPanel.svelte';
+	import ThemeBackground from './components/ThemeBackground.svelte';
+	import ThemeBasicInfo from './components/ThemeBasicInfo.svelte';
+	import ThemeColorPicker from './components/ThemeColorPicker.svelte';
+	import ThemeTypography from './components/ThemeTypography.svelte';
+	import ThemePresets from './components/ThemePresets.svelte';
+	import ThemeLayout from './components/ThemeLayout.svelte';
+	import ThemeBaseSelector from './components/ThemeBaseSelector.svelte';
+	import ThemeJsonEditor from './components/ThemeJsonEditor.svelte';
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
+
+	// Debug mode toggle
+	let showDebug = false;
 
 	let themes: ThemePreset[] = [];
 	let headerPresets: any[] = [];
@@ -25,25 +37,35 @@
 	// Quick edit fields
 	let selectedHeaderPreset = 'no-cover';
 	let selectedBlockStyle: 'solid' | 'soft' | 'outline' | 'glass' | 'neon' | 'brutal' = 'solid';
+	let selectedLinkIconShape: 'square' | 'rounded' | 'circle' = 'rounded';
+	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
 	let maxWidth = 480;
 	let pagePadding = 16;
 	let blockGap = 14;
+	let blockPaddingX = 16;
+	let blockPaddingY = 12;
 	let textAlign: 'left' | 'center' | 'right' = 'center';
 	let blockBorderRadiusType: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'lg';
 	
 	// Color fields
 	let primaryColor = '#3b82f6';
 	let textColor = '#18181b';
-	let mutedTextColor = '#71717a';
 	let borderColor = '#e4e4e7';
-	let cardBgColor = '#ffffff';
+	let borderWidth = 1;
+	let mutedTextColor = '#71717a';
+	let pageBgColor = '#fafafa';
 	
 	// Typography fields
 	let baseFontSize: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' = 'base';
 	let headingFontSize: 'lg' | 'xl' | '2xl' = '2xl';
 	let bodyFontWeight: 'normal' | 'medium' = 'normal';
 	let headingFontWeight: 'medium' | 'semibold' | 'bold' = 'bold';
+	let bodyLineHeight: 'tight' | 'normal' | 'relaxed' = 'normal';
+	let headingLineHeight: 'tight' | 'normal' | 'relaxed' = 'tight';
+	
+	// Layout fields
+	let cardElevation: 'none' | 'xs' | 'sm' | 'md' | 'lg' = 'sm';
 	
 	// Background fields
 	let bgType: 'solid' | 'gradient' | 'image' = 'solid';
@@ -52,6 +74,10 @@
 	let bgGradientTo = '#764ba2';
 	let bgGradientDirection = '135deg';
 	let bgImageUrl = '';
+	let bgBlur = 0;
+	let bgDim = 0;
+	let bgBrightness = 100;
+	let bgGrayscale = 0;
 	
 	// Image upload state
 	let uploading = false;
@@ -115,10 +141,14 @@
 		tier = theme.config.meta?.tier || 'free';
 		selectedHeaderPreset = theme.config.page?.defaults?.headerPresetId || 'no-cover';
 		selectedBlockStyle = theme.config.page?.defaults?.blockStylePreset || 'solid';
+		selectedLinkIconShape = theme.config.page?.defaults?.linkIconShape || 'rounded';
+		selectedLinkGroupLayout = theme.config.page?.defaults?.linkGroupLayout || 'list';
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
 		maxWidth = theme.config.page?.layout?.maxWidth || 480;
 		pagePadding = theme.config.page?.layout?.pagePadding || 16;
 		blockGap = theme.config.page?.layout?.blockGap || 14;
+		blockPaddingX = theme.config.page?.layout?.blockPadding?.x || 16;
+		blockPaddingY = theme.config.page?.layout?.blockPadding?.y || 12;
 		textAlign = theme.config.page?.layout?.textAlign || 'center';
 		
 		// Extract radius
@@ -132,9 +162,8 @@
 		// Extract colors
 		primaryColor = resolveRef(theme.config.semantic?.color?.primary) || '#3b82f6';
 		textColor = resolveRef(theme.config.semantic?.color?.text?.default) || '#18181b';
-		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
 		borderColor = resolveRef(theme.config.semantic?.color?.border?.default) || '#e4e4e7';
-		cardBgColor = resolveRef(theme.config.semantic?.color?.surface?.card) || '#ffffff';
+		borderWidth = resolveRef(theme.config.tokens?.border?.width?.default) || 1;
 		
 		// Extract typography - font sizes
 		const sizeMap: Record<number, typeof baseFontSize> = {
@@ -157,12 +186,41 @@
 		const headingWeight = resolveRef(theme.config.semantic?.typography?.heading?.fontWeight);
 		headingFontWeight = headingWeight === 600 ? 'semibold' : headingWeight === 500 ? 'medium' : 'bold';
 		
+		// Extract typography - line heights
+		const lineHeightMap: Record<number, typeof bodyLineHeight> = {
+			1.25: 'tight', 1.5: 'normal', 1.75: 'relaxed'
+		};
+		const bodyLH = resolveRef(theme.config.semantic?.typography?.body?.lineHeight);
+		bodyLineHeight = (typeof bodyLH === 'number' && lineHeightMap[bodyLH]) || 'normal';
+		
+		const headingLH = resolveRef(theme.config.semantic?.typography?.heading?.lineHeight);
+		headingLineHeight = (typeof headingLH === 'number' && lineHeightMap[headingLH]) || 'tight';
+		
+		// Extract more colors
+		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
+		pageBgColor = resolveRef(theme.config.semantic?.color?.surface?.page) || '#fafafa';
+		
+		// Extract elevation
+		const elevationRef = theme.config.recipes?.link?.base?.elevation;
+		if (elevationRef && typeof elevationRef === 'string' && elevationRef.startsWith('ref:tokens.elevation.')) {
+			cardElevation = elevationRef.replace('ref:tokens.elevation.', '') as any;
+		} else {
+			cardElevation = 'sm';
+		}
+		
+		// Extract background effects
+		bgBlur = theme.config.background?.effects?.blur || 0;
+		bgDim = theme.config.background?.effects?.dim || 0;
+		bgBrightness = theme.config.background?.effects?.brightness || 100;
+		bgGrayscale = theme.config.background?.effects?.grayscale || 0;
+		
 		// Extract background
 		const bgValue = resolveRef(theme.config.semantic?.color?.surface?.page);
 		if (typeof bgValue === 'string') {
 			if (bgValue.match(/^#[0-9a-fA-F]{6}$/)) {
 				bgType = 'solid';
 				bgSolidColor = bgValue;
+				pageBgColor = bgValue;
 			} else if (bgValue.includes('gradient')) {
 				bgType = 'gradient';
 				const colorMatches = bgValue.match(/#[0-9a-fA-F]{6}/g);
@@ -197,6 +255,8 @@
 			if (!config.page.defaults) config.page.defaults = {};
 			config.page.defaults.headerPresetId = selectedHeaderPreset;
 			config.page.defaults.blockStylePreset = selectedBlockStyle;
+			config.page.defaults.linkIconShape = selectedLinkIconShape;
+			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
 			
 			// Update layout
 			if (!config.page.layout) config.page.layout = {};
@@ -204,6 +264,11 @@
 			config.page.layout.pagePadding = pagePadding;
 			config.page.layout.blockGap = blockGap;
 			config.page.layout.textAlign = textAlign;
+			
+			// Update block padding
+			if (!config.page.layout.blockPadding) config.page.layout.blockPadding = {};
+			config.page.layout.blockPadding.x = blockPaddingX;
+			config.page.layout.blockPadding.y = blockPaddingY;
 			
 			// Update typography
 			if (!config.tokens) config.tokens = {};
@@ -226,9 +291,13 @@
 			
 			config.semantic.color.primary = primaryColor;
 			config.semantic.color.text.default = textColor;
-			config.semantic.color.text.muted = mutedTextColor;
 			config.semantic.color.border.default = borderColor;
-			config.semantic.color.surface.card = cardBgColor;
+			
+			// Update border width in tokens
+			if (!config.tokens) config.tokens = {};
+			if (!config.tokens.border) config.tokens.border = {};
+			if (!config.tokens.border.width) config.tokens.border.width = {};
+			config.tokens.border.width.default = borderWidth;
 			
 			// Update typography
 			if (!config.semantic.typography) config.semantic.typography = {};
@@ -237,8 +306,25 @@
 			
 			config.semantic.typography.body.fontSize = `ref:tokens.typography.fontSize.${baseFontSize}`;
 			config.semantic.typography.body.fontWeight = `ref:tokens.typography.fontWeight.${bodyFontWeight}`;
+			config.semantic.typography.body.lineHeight = `ref:tokens.typography.lineHeight.${bodyLineHeight}`;
 			config.semantic.typography.heading.fontSize = `ref:tokens.typography.fontSize.${headingFontSize}`;
 			config.semantic.typography.heading.fontWeight = `ref:tokens.typography.fontWeight.${headingFontWeight}`;
+			config.semantic.typography.heading.lineHeight = `ref:tokens.typography.lineHeight.${headingLineHeight}`;
+			
+			// Update more colors
+			config.semantic.color.text.muted = mutedTextColor;
+			
+			// Update elevation in recipes
+			config.recipes.link.base.elevation = `ref:tokens.elevation.${cardElevation}`;
+			
+			// Update background effects
+			if (!config.background) config.background = {};
+			if (!config.background.effects) config.background.effects = {};
+			config.background.effects.blur = bgBlur;
+			config.background.effects.dim = bgDim;
+			config.background.effects.brightness = bgBrightness;
+			config.background.effects.grayscale = bgGrayscale;
+			config.background.effects.overlayColor = 'ref:tokens.color.overlay.10';
 			
 			// Update background
 			let bgValue = '';
@@ -257,7 +343,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || selectedBlockStyle || fontFamily || maxWidth || pagePadding || blockGap || textAlign || blockBorderRadiusType || primaryColor || textColor || mutedTextColor || borderColor || cardBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientDirection || bgImageUrl) {
+	$: if (selectedHeaderPreset || selectedBlockStyle || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientDirection || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale) {
 		updateConfig();
 	}
 
@@ -272,6 +358,8 @@
 				none: 0, sm: 4, md: 8, lg: 12, xl: 16, full: 9999
 			};
 			
+			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})` : bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
+			
 			previewAppearanceState.set({
 				headerPresetId: selectedHeaderPreset,
 				overrides: {
@@ -280,9 +368,16 @@
 					'page.maxWidth': maxWidth,
 					'page.textAlign': textAlign,
 					'page.pagePadding': pagePadding,
+					'page.blockPaddingX': blockPaddingX,
+					'page.blockPaddingY': blockPaddingY,
 					'block.borderRadius': radiusMap[blockBorderRadiusType] || 12,
 					'header.titleFontFamily': fontFamily,
-					'backgroundColor': bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})` : bgImageUrl
+					'backgroundColor': backgroundValue,
+					'backgroundBlur': bgBlur,
+					'backgroundBrightness': bgBrightness,
+					'backgroundGrayscale': bgGrayscale,
+					'page.linkIconShape': selectedLinkIconShape,
+					'page.linkGroupLayout': selectedLinkGroupLayout
 				}
 			});
 			// Don't override previewPage - keep real user data
@@ -414,544 +509,78 @@
 					{:else}
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 				<!-- Base Theme Selection -->
-				<section class="card-ios p-6">
-					<h2 class="text-lg font-semibold text-gray-900 mb-4">Base Theme</h2>
-					<div>
-						<label for="baseTheme" class="block text-sm font-medium text-gray-700 mb-2">
-							Start from existing theme
-						</label>
-						<select
-							id="baseTheme"
-							bind:value={baseThemeKey}
-							class="input-ios"
-						>
-							{#each themes as theme}
-								<option value={theme.key}>{theme.name}</option>
-							{/each}
-						</select>
-						<p class="text-xs text-gray-500 mt-2">
-							The configuration will be loaded and you can edit it below
-						</p>
-					</div>
-				</section>
+				<ThemeBaseSelector
+					bind:baseThemeKey
+					{themes}
+				/>
 
 				<!-- Basic Info -->
-				<section class="card-ios p-6">
-					<h2 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
-					<div class="space-y-4">
-						<div>
-							<label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-								Theme Name *
-							</label>
-							<input
-								id="name"
-								type="text"
-								bind:value={name}
-								required
-								class="input-ios"
-								placeholder="My Custom Theme"
-							/>
-						</div>
-						<div>
-							<label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-								Description
-							</label>
-							<textarea
-								id="description"
-								bind:value={description}
-								rows="2"
-								class="input-ios"
-								placeholder="A beautiful theme with..."
-							></textarea>
-						</div>
-						<div class="grid grid-cols-2 gap-4">
-							<div>
-								<label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-									Category
-								</label>
-								<select id="category" bind:value={category} class="input-ios">
-									<option value="minimal">Minimal</option>
-									<option value="dark">Dark</option>
-									<option value="gradient">Gradient</option>
-									<option value="colorful">Colorful</option>
-								</select>
-							</div>
-							<div>
-								<label for="tier" class="block text-sm font-medium text-gray-700 mb-2">
-									Tier
-								</label>
-								<select id="tier" bind:value={tier} class="input-ios">
-									<option value="free">Free</option>
-									<option value="pro">Pro</option>
-								</select>
-							</div>
-						</div>
-					</div>
-				</section>
+				<ThemeBasicInfo
+					bind:name
+					bind:description
+					bind:category
+					bind:tier
+				/>
 
 				<!-- Theme Colors -->
-				<section class="card-ios p-6">
-					<h2 class="text-lg font-semibold text-gray-900 mb-4">Theme Colors</h2>
-					<div class="grid grid-cols-2 gap-4">
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
-							<div class="flex items-center gap-3">
-								<input
-									type="color"
-									bind:value={primaryColor}
-									class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-								/>
-								<input
-									type="text"
-									bind:value={primaryColor}
-									class="flex-1 input-ios font-mono text-sm"
-									placeholder="#3b82f6"
-								/>
-							</div>
-							<p class="text-xs text-gray-500 mt-1">Main accent color for buttons and links</p>
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
-							<div class="flex items-center gap-3">
-								<input
-									type="color"
-									bind:value={textColor}
-									class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-								/>
-								<input
-									type="text"
-									bind:value={textColor}
-									class="flex-1 input-ios font-mono text-sm"
-									placeholder="#18181b"
-								/>
-							</div>
-							<p class="text-xs text-gray-500 mt-1">Primary text color</p>
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Muted Text Color</label>
-							<div class="flex items-center gap-3">
-								<input
-									type="color"
-									bind:value={mutedTextColor}
-									class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-								/>
-								<input
-									type="text"
-									bind:value={mutedTextColor}
-									class="flex-1 input-ios font-mono text-sm"
-									placeholder="#71717a"
-								/>
-							</div>
-							<p class="text-xs text-gray-500 mt-1">Secondary/muted text color</p>
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Border Color</label>
-							<div class="flex items-center gap-3">
-								<input
-									type="color"
-									bind:value={borderColor}
-									class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-								/>
-								<input
-									type="text"
-									bind:value={borderColor}
-									class="flex-1 input-ios font-mono text-sm"
-									placeholder="#e4e4e7"
-								/>
-							</div>
-							<p class="text-xs text-gray-500 mt-1">Border and divider color</p>
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-2">Card Background</label>
-							<div class="flex items-center gap-3">
-								<input
-									type="color"
-									bind:value={cardBgColor}
-									class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-								/>
-								<input
-									type="text"
-									bind:value={cardBgColor}
-									class="flex-1 input-ios font-mono text-sm"
-									placeholder="#ffffff"
-								/>
-							</div>
-							<p class="text-xs text-gray-500 mt-1">Background color for cards/blocks</p>
-						</div>
-					</div>
-				</section>
+				<ThemeColorPicker
+					bind:primaryColor
+					bind:textColor
+					bind:borderColor
+					bind:borderWidth
+					bind:mutedTextColor
+				/>
 
 				<!-- Typography -->
-				<section class="card-ios p-6">
-					<h2 class="text-lg font-semibold text-gray-900 mb-4">Typography</h2>
-					<div class="grid grid-cols-2 gap-4">
-						<div>
-							<label for="baseFontSize" class="block text-sm font-medium text-gray-700 mb-2">
-								Base Font Size
-							</label>
-							<select id="baseFontSize" bind:value={baseFontSize} class="input-ios">
-								<option value="xs">Extra Small (12px)</option>
-								<option value="sm">Small (14px)</option>
-								<option value="base">Base (16px)</option>
-								<option value="lg">Large (18px)</option>
-								<option value="xl">Extra Large (20px)</option>
-								<option value="2xl">2X Large (24px)</option>
-							</select>
-							<p class="text-xs text-gray-500 mt-1">Body text size</p>
-						</div>
-						<div>
-							<label for="headingFontSize" class="block text-sm font-medium text-gray-700 mb-2">
-								Heading Font Size
-							</label>
-							<select id="headingFontSize" bind:value={headingFontSize} class="input-ios">
-								<option value="lg">Large (18px)</option>
-								<option value="xl">Extra Large (20px)</option>
-								<option value="2xl">2X Large (24px)</option>
-							</select>
-							<p class="text-xs text-gray-500 mt-1">Name/title size</p>
-						</div>
-						<div>
-							<label for="bodyFontWeight" class="block text-sm font-medium text-gray-700 mb-2">
-								Body Font Weight
-							</label>
-							<select id="bodyFontWeight" bind:value={bodyFontWeight} class="input-ios">
-								<option value="normal">Normal (400)</option>
-								<option value="medium">Medium (500)</option>
-							</select>
-							<p class="text-xs text-gray-500 mt-1">Body text weight</p>
-						</div>
-						<div>
-							<label for="headingFontWeight" class="block text-sm font-medium text-gray-700 mb-2">
-								Heading Font Weight
-							</label>
-							<select id="headingFontWeight" bind:value={headingFontWeight} class="input-ios">
-								<option value="medium">Medium (500)</option>
-								<option value="semibold">Semibold (600)</option>
-								<option value="bold">Bold (700)</option>
-							</select>
-							<p class="text-xs text-gray-500 mt-1">Name/title weight</p>
-						</div>
-					</div>
-				</section>
+				<ThemeTypography
+					bind:baseFontSize
+					bind:headingFontSize
+					bind:bodyFontWeight
+					bind:headingFontWeight
+					bind:bodyLineHeight
+					bind:headingLineHeight
+				/>
 
 				<!-- Quick Edit: Presets -->
-				<section class="card-ios p-6">
-					<h2 class="text-lg font-semibold text-gray-900 mb-4">Default Presets</h2>
-					<div class="space-y-4">
-						<div>
-							<label for="headerPreset" class="block text-sm font-medium text-gray-700 mb-2">
-								Header Preset
-							</label>
-							<select id="headerPreset" bind:value={selectedHeaderPreset} class="input-ios">
-								{#each headerPresets as preset}
-									<option value={preset.key}>{preset.name}</option>
-								{/each}
-							</select>
-							<p class="text-xs text-gray-500 mt-1">
-								Default header style for this theme
-							</p>
-						</div>
-						<div>
-							<label for="blockStyle" class="block text-sm font-medium text-gray-700 mb-2">
-								Block Style
-							</label>
-							<select id="blockStyle" bind:value={selectedBlockStyle} class="input-ios">
-								<option value="solid">Solid - Full color with contrast text</option>
-								<option value="soft">Soft - Subtle tint with border</option>
-								<option value="outline">Outline - Transparent with border</option>
-								<option value="glass">Glass - Frosted glass effect</option>
-								<option value="neon">Neon - Solid with glow</option>
-								<option value="brutal">Brutal - Hard shadow brutalism</option>
-							</select>
-							<p class="text-xs text-gray-500 mt-1">
-								Button color and visual effect style
-							</p>
-						</div>
-					</div>
-				</section>
+				<ThemePresets
+					bind:selectedHeaderPreset
+					bind:selectedBlockStyle
+					bind:selectedLinkIconShape
+					bind:selectedLinkGroupLayout
+					{headerPresets}
+				/>
 
 				<!-- Layout & Typography -->
-				<section class="card-ios p-6">
-					<h2 class="text-lg font-semibold text-gray-900 mb-4">Layout & Typography</h2>
-					<div class="space-y-4">
-						<div>
-							<label for="fontFamily" class="block text-sm font-medium text-gray-700 mb-2">
-								Font Family
-							</label>
-							<input
-								id="fontFamily"
-								type="text"
-								bind:value={fontFamily}
-								class="input-ios"
-								placeholder="Inter, system-ui, sans-serif"
-							/>
-							<p class="text-xs text-gray-500 mt-1">
-								CSS font-family value
-							</p>
-						</div>
-						<div class="grid grid-cols-2 gap-4">
-							<div>
-								<label for="maxWidth" class="block text-sm font-medium text-gray-700 mb-2">
-									Max Width (px)
-								</label>
-								<input
-									id="maxWidth"
-									type="number"
-									bind:value={maxWidth}
-									min="320"
-									max="1200"
-									class="input-ios"
-								/>
-							</div>
-							<div>
-								<label for="textAlign" class="block text-sm font-medium text-gray-700 mb-2">
-									Text Align
-								</label>
-								<select id="textAlign" bind:value={textAlign} class="input-ios">
-									<option value="left">Left</option>
-									<option value="center">Center</option>
-									<option value="right">Right</option>
-								</select>
-							</div>
-							<div>
-								<label for="pagePadding" class="block text-sm font-medium text-gray-700 mb-2">
-									Page Padding (px)
-								</label>
-								<input
-									id="pagePadding"
-									type="number"
-									bind:value={pagePadding}
-									min="8"
-									max="48"
-									class="input-ios"
-								/>
-							</div>
-							<div>
-								<label for="blockGap" class="block text-sm font-medium text-gray-700 mb-2">
-									Block Gap (px)
-								</label>
-								<input
-									id="blockGap"
-									type="number"
-									bind:value={blockGap}
-									min="8"
-									max="48"
-									class="input-ios"
-								/>
-							</div>
-							<div>
-								<label for="blockBorderRadius" class="block text-sm font-medium text-gray-700 mb-2">
-									Block Border Radius
-								</label>
-								<select id="blockBorderRadius" bind:value={blockBorderRadiusType} class="input-ios">
-									<option value="none">None (0px - Square)</option>
-									<option value="sm">Small (4px)</option>
-									<option value="md">Medium (8px)</option>
-									<option value="lg">Large (12px)</option>
-									<option value="xl">Extra Large (16px)</option>
-									<option value="full">Full (Pill/Rounded)</option>
-								</select>
-								<p class="text-xs text-gray-500 mt-1">
-									Border radius style for blocks/links
-								</p>
-							</div>
-						</div>
-					</div>
-				</section>
+				<ThemeLayout
+					bind:fontFamily
+					bind:maxWidth
+					bind:textAlign
+					bind:pagePadding
+					bind:blockGap
+					bind:blockPaddingX
+					bind:blockPaddingY
+					bind:blockBorderRadiusType
+					bind:cardElevation
+				/>
 
 				<!-- Page Background -->
-				<section class="card-ios p-6">
-					<h2 class="text-lg font-semibold text-gray-900 mb-4">Page Background</h2>
-					
-					<!-- Background Type Tabs -->
-					<div class="grid grid-cols-3 gap-2 mb-4">
-						<button
-							type="button"
-							on:click={() => bgType = 'solid'}
-							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgType === 'solid' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-						>
-							Solid Color
-						</button>
-						<button
-							type="button"
-							on:click={() => bgType = 'gradient'}
-							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgType === 'gradient' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-						>
-							Gradient
-						</button>
-						<button
-							type="button"
-							on:click={() => bgType = 'image'}
-							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgType === 'image' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-						>
-							Image
-						</button>
-					</div>
-
-					<!-- Solid Color -->
-					{#if bgType === 'solid'}
-						<div class="space-y-3">
-							<label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
-							<div class="flex items-center gap-3">
-								<input
-									type="color"
-									bind:value={bgSolidColor}
-									class="w-16 h-16 rounded-lg border-2 border-gray-200 cursor-pointer"
-								/>
-								<input
-									type="text"
-									bind:value={bgSolidColor}
-									class="flex-1 input-ios font-mono"
-									placeholder="#ffffff"
-								/>
-							</div>
-						</div>
-					{/if}
-
-					<!-- Gradient -->
-					{#if bgType === 'gradient'}
-						<div class="space-y-4">
-							<div class="grid grid-cols-2 gap-4">
-								<div>
-									<label class="block text-sm font-medium text-gray-700 mb-2">From Color</label>
-									<div class="flex items-center gap-2">
-										<input
-											type="color"
-											bind:value={bgGradientFrom}
-											class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-										/>
-										<input
-											type="text"
-											bind:value={bgGradientFrom}
-											class="flex-1 input-ios font-mono text-sm"
-											placeholder="#667eea"
-										/>
-									</div>
-								</div>
-								<div>
-									<label class="block text-sm font-medium text-gray-700 mb-2">To Color</label>
-									<div class="flex items-center gap-2">
-										<input
-											type="color"
-											bind:value={bgGradientTo}
-											class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-										/>
-										<input
-											type="text"
-											bind:value={bgGradientTo}
-											class="flex-1 input-ios font-mono text-sm"
-											placeholder="#764ba2"
-										/>
-									</div>
-								</div>
-							</div>
-							<div>
-								<label class="block text-sm font-medium text-gray-700 mb-2">Direction</label>
-								<select bind:value={bgGradientDirection} class="input-ios">
-									<option value="0deg">Top to Bottom (0°)</option>
-									<option value="90deg">Left to Right (90°)</option>
-									<option value="135deg">Diagonal (135°)</option>
-									<option value="180deg">Bottom to Top (180°)</option>
-									<option value="270deg">Right to Left (270°)</option>
-								</select>
-							</div>
-							<!-- Preview -->
-							<div class="mt-3">
-								<p class="text-xs text-gray-500 mb-2">Preview:</p>
-								<div
-									class="h-20 rounded-lg border-2 border-gray-200"
-									style="background: linear-gradient({bgGradientDirection}, {bgGradientFrom} 0%, {bgGradientTo} 100%);"
-								></div>
-							</div>
-						</div>
-					{/if}
-
-					<!-- Image Upload -->
-					{#if bgType === 'image'}
-						<div class="space-y-3">
-							{#if bgImageUrl}
-								<!-- Preview with uploaded image -->
-								<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
-									<img 
-										src={bgImageUrl} 
-										alt="Background" 
-										class="w-full h-48 object-cover" 
-									/>
-									<div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
-										<label class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-											<input
-												type="file"
-												accept="image/*"
-												on:change={handleImageUpload}
-												disabled={uploading}
-												class="hidden"
-											/>
-											<div class="px-4 py-2 bg-white text-gray-900 rounded-lg font-medium text-sm shadow-lg hover:bg-gray-100 transition flex items-center gap-2">
-												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-												</svg>
-												Change Image
-											</div>
-										</label>
-									</div>
-									{#if uploading}
-										<div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-											<div class="flex items-center gap-3 text-white">
-												<div class="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full"></div>
-												<span class="font-medium">Uploading...</span>
-											</div>
-										</div>
-									{/if}
-								</div>
-							{:else}
-								<!-- Upload button -->
-								<label class="block cursor-pointer">
-									<input
-										type="file"
-										accept="image/jpeg,image/png,image/webp"
-										on:change={handleImageUpload}
-										disabled={uploading}
-										class="hidden"
-									/>
-									<div class="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all">
-										<div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-											<svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-											</svg>
-										</div>
-										<div class="text-center">
-											<p class="text-sm font-medium text-gray-900">Upload Background Image</p>
-											<p class="text-xs text-gray-500 mt-1">JPG, PNG or WebP (max 5MB)</p>
-										</div>
-										<div class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-											Choose File
-										</div>
-									</div>
-								</label>
-							{/if}
-						</div>
-					{/if}
-				</section>
+				<ThemeBackground
+					bind:bgType
+					bind:bgSolidColor
+					bind:bgGradientFrom
+					bind:bgGradientTo
+					bind:bgGradientDirection
+					bind:bgImageUrl
+					bind:bgBlur
+					bind:bgDim
+					bind:bgBrightness
+					bind:bgGrayscale
+					{uploading}
+					on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)}
+				/>
 
 				<!-- Theme Configuration -->
-				<section class="card-ios p-6">
-					<h2 class="text-lg font-semibold text-gray-900 mb-4">Advanced Configuration (JSON)</h2>
-					<div>
-						<label for="config" class="block text-sm font-medium text-gray-700 mb-2">
-							Full theme configuration
-						</label>
-						<textarea
-							id="config"
-							bind:value={configJson}
-							rows="20"
-							class="input-ios font-mono text-xs"
-							placeholder=""
-						></textarea>
-						<p class="text-xs text-gray-500 mt-2">
-							Edit colors, typography, layout, tokens, semantic mappings, and all advanced settings. Changes to presets above will update this JSON automatically.
-						</p>
-					</div>
-				</section>
+				<ThemeJsonEditor bind:configJson />
 
 				<!-- Actions -->
 				<div class="flex gap-3 justify-end">
@@ -972,6 +601,45 @@
 	<!-- Right: Preview -->
 	<div class="w-[520px] flex-shrink-0 -mr-8 pr-8">
 		<div class="sticky top-8">
+			<!-- Debug Toggle -->
+			<div class="mb-4 flex items-center justify-between">
+				<button
+					on:click={() => showDebug = !showDebug}
+					class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {showDebug ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+				>
+					{showDebug ? '✓ Debug Mode' : 'Debug Mode'}
+				</button>
+			</div>
+
+			<!-- Debug Panel -->
+			{#if showDebug}
+				<ThemeDebugPanel
+					{selectedHeaderPreset}
+					{selectedBlockStyle}
+					{blockBorderRadiusType}
+					{textAlign}
+					{maxWidth}
+					{pagePadding}
+					{blockGap}
+					{blockPaddingX}
+					{blockPaddingY}
+					{fontFamily}
+					{baseFontSize}
+					{headingFontSize}
+					{primaryColor}
+					{textColor}
+					{borderColor}
+					{borderWidth}
+					{bgType}
+					{bgSolidColor}
+					{bgGradientFrom}
+					{bgGradientTo}
+					{bgGradientDirection}
+					{bgImageUrl}
+					{configJson}
+				/>
+			{/if}
+
 			<div class="pt-16 pb-8">
 				<div class="flex items-center justify-center">
 					<ThemePreviewMockup />

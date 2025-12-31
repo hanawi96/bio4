@@ -75,7 +75,10 @@
 	})();
 
 	$: classicConfig = (() => {
-		const defaultConfig = { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center' };
+		const themeConfig = $appearance?.theme?.config;
+		const defaultIconShape = themeConfig?.page?.defaults?.linkIconShape || 'rounded';
+		const defaultTextAlign = themeConfig?.page?.layout?.textAlign || 'center';
+		const defaultConfig = { iconShape: defaultIconShape, iconPosition: 'left', textAlign: defaultTextAlign };
 		if (!layoutConfig) return defaultConfig;
 		try {
 			const parsed = JSON.parse(layoutConfig);

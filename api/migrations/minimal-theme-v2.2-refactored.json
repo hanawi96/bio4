@@ -218,25 +218,6 @@
         "shadow": "ref:tokens.elevation.sm",
         "borderColor": "ref:semantic.color.primary",
         "transform": "translateY(-1px)"
-      },
-      "variants": {
-        "style": {
-          "solid": {
-            "background": "ref:semantic.color.primary",
-            "color": "ref:semantic.color.text.invert",
-            "border": "none"
-          },
-          "outline": {
-            "background": "transparent",
-            "border": "2px solid",
-            "borderColor": "ref:semantic.color.primary"
-          },
-          "soft": {
-            "background": "ref:tokens.color.blue.50",
-            "color": "ref:semantic.color.primary",
-            "border": "none"
-          }
-        }
       }
     },
     "linkGroup": {
@@ -277,7 +258,8 @@
       "headerPresetId": "no-cover",
       "blockStylePreset": "solid",
       "linkStyle": "soft",
-      "linkGroupLayout": "list"
+      "linkGroupLayout": "list",
+      "linkIconShape": "rounded"
     }
   },
   "background": {

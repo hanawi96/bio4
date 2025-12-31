@@ -8,6 +8,21 @@
 	$: headerPresetId = $previewAppearanceState.headerPresetId || 'no-cover';
 	$: baseHeaderPreset = HEADER_PRESETS[headerPresetId];
 	
+	// Parse background value to separate image URL from other types
+	$: backgroundValue = tokens?.backgroundColor || '#ffffff';
+	$: isBackgroundImage = backgroundValue.startsWith('url(');
+	$: backgroundImageUrl = isBackgroundImage ? backgroundValue.match(/url\(['"]?([^'"]+)['"]?\)/)?.[1] || '' : '';
+	
+	// Get background filters from overrides
+	$: bgBlur = $previewAppearanceState.overrides?.['backgroundBlur'] ?? 0;
+	$: bgBrightness = $previewAppearanceState.overrides?.['backgroundBrightness'] ?? 100;
+	$: bgGrayscale = $previewAppearanceState.overrides?.['backgroundGrayscale'] ?? 0;
+	
+	// Build background style with filters
+	$: backgroundStyle = isBackgroundImage 
+		? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur(${bgBlur}px) brightness(${bgBrightness / 100}) grayscale(${bgGrayscale / 100});`
+		: `background: ${backgroundValue};`;
+	
 	// Merge preset with overrides
 	$: header = (() => {
 		const overrides = $previewAppearanceState.overrides || {};
@@ -53,6 +68,8 @@
 	
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
 	$: blockGap = $previewAppearanceState.overrides?.['page.blockGap'] || 16;
+	$: blockPaddingX = $previewAppearanceState.overrides?.['page.blockPaddingX'] || 16;
+	$: blockPaddingY = $previewAppearanceState.overrides?.['page.blockPaddingY'] || 12;
 	$: titleFontSize = $previewAppearanceState.overrides?.['page.titleFontSize'] || 20;
 	$: titleFontFamily = $previewAppearanceState.overrides?.['header.titleFontFamily'] || tokens?.fontFamily || 'Inter, sans-serif';
 	$: maxWidth = $previewAppearanceState.overrides?.['page.maxWidth'] || 480;
@@ -76,6 +93,15 @@
 		? `${$previewAppearanceState.overrides['block.borderRadius']}px`
 		: '12px';
 
+	// Get linkIconShape from overrides or default
+	$: linkIconShape = $previewAppearanceState.overrides?.['page.linkIconShape'] || 'rounded';
+	
+	// Get linkGroupLayout from overrides or default
+	$: linkGroupLayout = $previewAppearanceState.overrides?.['page.linkGroupLayout'] || 'list';
+	
+	// Calculate icon shape CSS class
+	$: iconShapeClass = linkIconShape === 'circle' ? 'rounded-full' : linkIconShape === 'rounded' ? 'rounded-lg' : '';
+
 	// Get real links from groups (only visible groups with active links)
 	$: realLinks = $groups
 		.filter(g => (g.is_visible ?? 1) === 1)
@@ -91,11 +117,16 @@
 			<!-- Notch -->
 			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
 
+			<!-- Background Layer (with filters) -->
+			<div 
+				class="absolute inset-0 z-0"
+				style="{backgroundStyle}"
+			></div>
+
 			<!-- Content -->
 			<div 
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
-					background: {tokens?.backgroundColor || '#ffffff'};
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 					max-width: {maxWidth}px;
@@ -149,7 +180,7 @@
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
 								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
 								{#if header.showBio && $previewPage?.bio}
-									<p class="bio-text text-sm opacity-70 mt-1" style="display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+									<p class="bio-text text-sm mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 										{$previewPage.bio}
 									</p>
 								{/if}
@@ -175,7 +206,7 @@
 							{/if}
 							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $previewPage?.bio}
-								<p class="bio-text text-sm opacity-70 mt-1" style="display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+								<p class="bio-text text-sm mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 									{$previewPage.bio}
 								</p>
 							{/if}
@@ -212,46 +243,83 @@
 					{/if}
 
 					<!-- Links -->
-					<div class="relative" style="display: flex; flex-direction: column; gap: {blockGap}px; margin-top: 24px;">
-						{#each realLinks as link}
-							{@const parts = link.title.split(' - ')}
-							{@const headline = parts[0]}
-							{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
-							
-							<div
-								class="link-button block py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
-								style="
-									background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
-									color: {$previewAppearance?.blockStyle?.text || 'white'};
-									border: {$previewAppearance?.blockStyle?.border || 'none'};
-									box-shadow: {$previewAppearance?.blockStyle?.shadow || 'none'};
-									border-radius: {blockBorderRadius};
-								"
-							>
-								{#if link.icon_url}
-									<div class="flex items-center gap-3" style="justify-content: {textAlign === 'right' ? 'flex-end' : textAlign === 'center' ? 'center' : 'flex-start'};">
-										<img 
-											src={link.icon_url} 
-											alt="" 
-											class="w-8 h-8 object-cover flex-shrink-0 rounded"
-										/>
-										<div class="flex-1" style="text-align: {textAlign};">
-											<div class="font-semibold">{headline}</div>
-											{#if subtitle}
-												<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
-											{/if}
-										</div>
+					<div class="relative" style="margin-top: 24px;">
+						{#if linkGroupLayout === 'grid'}
+							<!-- Grid Layout (2 columns) -->
+							<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: {blockGap}px;">
+								{#each realLinks as link}
+									{@const parts = link.title.split(' - ')}
+									{@const headline = parts[0]}
+									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+									
+									<div
+										class="link-button block text-xs font-medium transition-transform hover:scale-[1.02]"
+										style="
+											background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+											color: {$previewAppearance?.blockStyle?.text || 'white'};
+											border: {$previewAppearance?.blockStyle?.border || 'none'};
+											box-shadow: {$previewAppearance?.blockStyle?.shadow || 'none'};
+											border-radius: {blockBorderRadius};
+											text-align: center;
+											padding: {Math.round(blockPaddingY * 0.67)}px {Math.round(blockPaddingX * 0.5)}px;
+										"
+									>
+										{#if link.icon_url}
+											<img 
+												src={link.icon_url} 
+												alt="" 
+												class="w-full aspect-square object-cover mb-1 {iconShapeClass}"
+											/>
+										{/if}
+										<div class="font-semibold text-[10px] leading-tight">{headline}</div>
 									</div>
-								{:else}
-									<div style="text-align: {textAlign};">
-										<div class="font-semibold">{headline}</div>
-										{#if subtitle}
-											<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+								{/each}
+							</div>
+						{:else}
+							<!-- List Layout (default) -->
+							<div style="display: flex; flex-direction: column; gap: {blockGap}px;">
+								{#each realLinks as link}
+									{@const parts = link.title.split(' - ')}
+									{@const headline = parts[0]}
+									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+									
+									<div
+										class="link-button block text-sm font-medium transition-transform hover:scale-[1.02]"
+										style="
+											background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+											color: {$previewAppearance?.blockStyle?.text || 'white'};
+											border: {$previewAppearance?.blockStyle?.border || 'none'};
+											box-shadow: {$previewAppearance?.blockStyle?.shadow || 'none'};
+											border-radius: {blockBorderRadius};
+											padding: {blockPaddingY}px {blockPaddingX}px;
+										"
+									>
+										{#if link.icon_url}
+											<div class="flex items-center gap-3" style="justify-content: {textAlign === 'right' ? 'flex-end' : textAlign === 'center' ? 'center' : 'flex-start'};">
+												<img 
+													src={link.icon_url} 
+													alt="" 
+													class="w-8 h-8 object-cover flex-shrink-0 {iconShapeClass}"
+												/>
+												<div class="flex-1" style="text-align: {textAlign};">
+													<div class="font-semibold">{headline}</div>
+													{#if subtitle}
+														<div class="text-xs mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'};">{subtitle}</div>
+													{/if}
+												</div>
+											</div>
+										{:else}
+											<div style="text-align: {textAlign};">
+												<div class="font-semibold">{headline}</div>
+												{#if subtitle}
+													<div class="text-xs mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'};">{subtitle}</div>
+												{/if}
+											</div>
 										{/if}
 									</div>
-								{/if}
+								{/each}
 							</div>
-						{/each}
+						{/if}
 					</div>
 				</div>
 			</div>

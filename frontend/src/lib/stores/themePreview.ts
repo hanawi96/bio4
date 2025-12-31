@@ -7,7 +7,7 @@ export const previewPage = writable<any>(null);
 
 // Block style presets mapping
 const BLOCK_STYLE_PRESETS: Record<string, any> = {
-	solid: (primaryColor: string) => ({
+	solid: (primaryColor: string, borderColor: string, borderWidth: number) => ({
 		fill: primaryColor,
 		text: '#ffffff',
 		border: 'none',
@@ -15,31 +15,31 @@ const BLOCK_STYLE_PRESETS: Record<string, any> = {
 		glow: null,
 		blur: null
 	}),
-	soft: (primaryColor: string, borderColor: string) => ({
-		fill: `${primaryColor}15`,
+	soft: (primaryColor: string, borderColor: string, borderWidth: number) => ({
+		fill: `${primaryColor}15`, // 15 = ~8% opacity in hex
 		text: primaryColor,
-		border: `1px solid ${borderColor}`,
+		border: `${borderWidth}px solid ${borderColor}`,
 		shadow: 'none',
 		glow: null,
 		blur: null
 	}),
-	outline: (primaryColor: string) => ({
+	outline: (primaryColor: string, borderColor: string, borderWidth: number) => ({
 		fill: 'transparent',
 		text: primaryColor,
-		border: `2px solid ${primaryColor}`,
+		border: `${borderWidth}px solid ${borderColor}`,
 		shadow: 'none',
 		glow: null,
 		blur: null
 	}),
-	glass: (primaryColor: string) => ({
+	glass: (primaryColor: string, borderColor: string, borderWidth: number) => ({
 		fill: 'rgba(255, 255, 255, 0.1)',
 		text: primaryColor,
-		border: '1px solid rgba(255, 255, 255, 0.2)',
+		border: `${borderWidth}px solid ${borderColor}`,
 		shadow: 'none',
 		glow: null,
 		blur: 12
 	}),
-	neon: (primaryColor: string) => ({
+	neon: (primaryColor: string, borderColor: string, borderWidth: number) => ({
 		fill: primaryColor,
 		text: '#ffffff',
 		border: 'none',
@@ -47,11 +47,11 @@ const BLOCK_STYLE_PRESETS: Record<string, any> = {
 		glow: primaryColor,
 		blur: null
 	}),
-	brutal: (primaryColor: string) => ({
+	brutal: (primaryColor: string, borderColor: string, borderWidth: number) => ({
 		fill: primaryColor,
 		text: '#ffffff',
-		border: '3px solid #000000',
-		shadow: '4px 4px 0 #000000',
+		border: `${borderWidth}px solid ${borderColor}`,
+		shadow: `4px 4px 0 ${borderColor}`,
 		glow: null,
 		blur: null
 	})
@@ -83,18 +83,21 @@ export function buildPreviewAppearance(config: any, blockStylePreset: string = '
 	const backgroundColor = resolveRef(semantic?.color?.surface?.page, config) || '#ffffff';
 	const primaryColor = resolveRef(semantic?.color?.primary, config) || '#3b82f6';
 	const textColor = resolveRef(semantic?.color?.text?.default, config) || '#000000';
+	const mutedTextColor = resolveRef(semantic?.color?.text?.muted, config) || '#71717a';
 	const borderColor = resolveRef(semantic?.color?.border?.default, config) || '#e4e4e7';
+	const borderWidth = resolveRef(tokens?.border?.width?.default, config) || 1;
 	const blockBase = primaryColor;
 
 	// Build block style from preset
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;
-	const blockStyle = styleBuilder(primaryColor, borderColor);
+	const blockStyle = styleBuilder(primaryColor, borderColor, borderWidth);
 
 	return {
 		tokens: {
 			backgroundColor,
 			primaryColor,
 			textColor,
+			mutedTextColor,
 			blockBase,
 			fontFamily: tokens?.typography?.fontFamily?.sans || 'Inter, sans-serif'
 		},
@@ -102,22 +105,6 @@ export function buildPreviewAppearance(config: any, blockStylePreset: string = '
 		blockStyle,
 		block: {
 			borderRadius: 12
-		}
-	};
-}
-
-// Helper to build fake page data
-export function buildPreviewPage() {
-	return {
-		username: 'demo',
-		title: 'John Doe',
-		bio: 'Designer & Developer | Creating beautiful digital experiences',
-		avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo',
-		show_social_icons: true,
-		social_links: {
-			instagram: 'instagram.com/demo',
-			twitter: 'twitter.com/demo',
-			linkedin: 'linkedin.com/in/demo'
 		}
 	};
 }

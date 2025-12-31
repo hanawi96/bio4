@@ -16,10 +16,6 @@ export interface AppearanceState {
 }
 
 // ============================================
-// HELPER: Get value from preset by path
-// ============================================
-
-// ============================================
 // HELPER: Convert bg token to CSS string (for comparison)
 // ============================================
 
@@ -61,7 +57,7 @@ export function getPresetValue(
         const blockKey = path.replace('block.', '');
         
         if (blockKey === 'stylePreset') {
-            return preset.config.defaults?.blockStylePreset || 'solid';
+            return preset.config.page?.defaults?.blockStylePreset || 'solid';
         }
         
         // Other block properties (borderRadius, etc.) have no preset

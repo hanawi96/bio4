@@ -3,7 +3,7 @@
 // ============================================
 
 import { derived, get } from 'svelte/store';
-import { page } from './page';
+import { page, groups } from './page';
 import { themes } from './themes';
 import { api } from '$lib/api.client';
 import { FALLBACK_THEME } from '$lib/appearance/presets';
@@ -133,10 +133,23 @@ export async function changeThemePreset(presetKey: string) {
     });
 
     try {
+        // Save theme change
         await api.saveDraft(username, {
             theme_preset_key: presetKey,
             draft_appearance: JSON.stringify(oldFormat)
         });
+        
+        // Reset all groups layout_config to apply theme defaults
+        const $groups = get(groups);
+        const resetPromises = $groups.map(group => 
+            api.updateGroup(group.id, { layout_config: null })
+        );
+        await Promise.all(resetPromises);
+        
+        // Update local store
+        groups.update(g => g.map(group => ({ ...group, layout_config: null })));
+        
+        console.log('[appearanceManager] Reset all group layout configs to apply theme defaults');
     } catch (e) {
         console.error('[appearanceManager] Failed to change theme:', e);
     }

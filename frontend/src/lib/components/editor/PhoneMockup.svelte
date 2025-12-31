@@ -9,6 +9,19 @@
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
 	
+	// Get global iconShape from theme config (fallback for groups without custom config)
+	$: globalIconShape = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.page?.defaults?.linkIconShape || 'rounded';
+	})();
+	
+	// Get global textAlign from theme config (fallback for groups without custom config)
+	$: globalTextAlign = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		const overrideTextAlign = $appearanceState.overrides?.['page.textAlign'];
+		return overrideTextAlign || themeConfig?.page?.layout?.textAlign || 'center';
+	})();
+	
 	// Get header from NEW format appearanceState
 	$: headerPresetId = $appearanceState.headerPresetId || 'no-cover';
 	$: baseHeaderPreset = HEADER_PRESETS[headerPresetId];
@@ -156,11 +169,24 @@
 
 	// Get block border-radius from block preset or override
 	$: blockBorderRadius = (() => {
+		// Priority 1: Override
 		const overrideBorderRadius = $appearanceState.overrides?.['block.borderRadius'];
 		if (overrideBorderRadius !== undefined) {
 			return `${overrideBorderRadius}px`;
 		}
 		
+		// Priority 2: Theme config recipes.link.base.radius
+		const themeConfig = $appearance?.theme?.config;
+		const radiusRef = themeConfig?.recipes?.link?.base?.radius;
+		if (radiusRef && typeof radiusRef === 'string' && radiusRef.startsWith('ref:tokens.radius.')) {
+			const radiusType = radiusRef.replace('ref:tokens.radius.', '');
+			const radiusValue = themeConfig?.tokens?.radius?.[radiusType];
+			if (radiusValue !== undefined) {
+				return `${radiusValue}px`;
+			}
+		}
+		
+		// Priority 3: Preset
 		const presetBorderRadius = $appearance?.block?.borderRadius;
 		if (presetBorderRadius !== undefined) {
 			return `${presetBorderRadius}px`;
@@ -751,9 +777,9 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.list || { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center' };
+											return parsed?.list || { iconShape: globalIconShape, iconPosition: 'left', textAlign: globalTextAlign };
 										} catch {
-											return { iconShape: 'rounded', iconPosition: 'left', textAlign: 'center' };
+											return { iconShape: globalIconShape, iconPosition: 'left', textAlign: globalTextAlign };
 										}
 									})()}
 									{@const iconShapeClass = config.iconShape === 'circle' ? 'rounded-full' : config.iconShape === 'rounded' ? 'rounded-lg' : ''}

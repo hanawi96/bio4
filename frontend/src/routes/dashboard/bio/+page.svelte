@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
 	import { loadEditorData, groups } from '$lib/stores/page';
+	import { appearance } from '$lib/stores/appearance';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 
 	export let params = {};
@@ -524,11 +525,14 @@
 			});
 			currentLayoutConfig = newLayoutConfig;
 		} else if (newLayoutType === 'list' && !currentLayoutConfig) {
+			const themeConfig = $appearance?.theme?.config;
+			const defaultIconShape = themeConfig?.page?.defaults?.linkIconShape || 'rounded';
+			const defaultTextAlign = themeConfig?.page?.layout?.textAlign || 'center';
 			newLayoutConfig = JSON.stringify({ 
 				list: { 
-					iconShape: 'rounded', 
+					iconShape: defaultIconShape, 
 					iconPosition: 'left', 
-					textAlign: 'center' 
+					textAlign: defaultTextAlign 
 				} 
 			});
 			currentLayoutConfig = newLayoutConfig;
