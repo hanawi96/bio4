@@ -3,6 +3,9 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api.client';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
+	import ThemePreviewMockup from '$lib/components/editor/ThemePreviewMockup.svelte';
+	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
+	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
 
 	let themes: ThemePreset[] = [];
@@ -57,12 +60,23 @@
 
 	onMount(async () => {
 		try {
-			const [themesResult, headerResult] = await Promise.all([
+			const [themesResult, headerResult, editorData] = await Promise.all([
 				api.getThemes(),
-				api.getHeaderPresets()
+				api.getHeaderPresets(),
+				api.getEditorData('demo') // Load user's real data
 			]);
 			themes = themesResult.themes;
 			headerPresets = headerResult.presets;
+			
+			// Set real page data for preview
+			if (editorData?.page) {
+				previewPage.set(editorData.page);
+				
+				// Load groups/links
+				if (editorData.groups) {
+					groups.set(editorData.groups);
+				}
+			}
 			
 			if (themes.length > 0) {
 				loadBaseTheme(themes[0].key);
@@ -247,6 +261,36 @@
 		updateConfig();
 	}
 
+	// Update preview stores when config changes
+	$: if (configJson) {
+		try {
+			const config = JSON.parse(configJson);
+			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle));
+			
+			// Resolve blockBorderRadius from type
+			const radiusMap: Record<string, number> = {
+				none: 0, sm: 4, md: 8, lg: 12, xl: 16, full: 9999
+			};
+			
+			previewAppearanceState.set({
+				headerPresetId: selectedHeaderPreset,
+				overrides: {
+					'page.blockGap': blockGap,
+					'page.titleFontSize': 20,
+					'page.maxWidth': maxWidth,
+					'page.textAlign': textAlign,
+					'page.pagePadding': pagePadding,
+					'block.borderRadius': radiusMap[blockBorderRadiusType] || 12,
+					'header.titleFontFamily': fontFamily,
+					'backgroundColor': bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})` : bgImageUrl
+				}
+			});
+			// Don't override previewPage - keep real user data
+		} catch (e) {
+			// Invalid JSON, skip preview update
+		}
+	}
+
 	async function handleSubmit() {
 		if (!name.trim()) {
 			error = 'Theme name is required';
@@ -337,33 +381,38 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gray-50 p-6">
-	<div class="max-w-5xl mx-auto">
-		<!-- Header -->
-		<div class="mb-6">
-			<a href="/dashboard/themes" class="text-sm text-gray-600 hover:text-gray-900 mb-3 inline-flex items-center gap-1">
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-				</svg>
-				Back to Themes
-			</a>
-			<h1 class="text-3xl font-bold text-gray-900">Create New Theme</h1>
-			<p class="text-gray-600 mt-1">Duplicate an existing theme and customize it</p>
-		</div>
+<div class="min-h-screen" style="background-color: #f6f1eb;">
+	<div class="flex h-[calc(100vh-64px)]">
+		<!-- Main Content + Preview -->
+		<div class="flex-1 overflow-y-auto">
+			<div class="flex gap-8 p-8 justify-center">
+				<!-- Left: Content Area -->
+				<div class="flex-1 max-w-2xl">
+					<!-- Header -->
+					<div class="mb-6">
+						<a href="/dashboard/themes" class="text-sm text-gray-600 hover:text-gray-900 mb-3 inline-flex items-center gap-1">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+							</svg>
+							Back to Themes
+						</a>
+						<h1 class="text-3xl font-bold text-gray-900">Create New Theme</h1>
+						<p class="text-gray-600 mt-1">Duplicate an existing theme and customize it</p>
+					</div>
 
-		{#if error}
-			<div class="card-ios bg-red-50 border-red-200 text-red-700 px-4 py-3 mb-6">
-				{error}
-			</div>
-		{/if}
+					{#if error}
+						<div class="card-ios bg-red-50 border-red-200 text-red-700 px-4 py-3 mb-6">
+							{error}
+						</div>
+					{/if}
 
-		{#if loading}
-			<div class="card-ios p-8 text-center">
-				<div class="inline-block w-8 h-8 border-4 border-gray-300 border-t-green-600 rounded-full animate-spin"></div>
-				<p class="text-gray-600 mt-3">Loading themes...</p>
-			</div>
-		{:else}
-			<form on:submit|preventDefault={handleSubmit} class="space-y-6">
+					{#if loading}
+						<div class="card-ios p-8 text-center">
+							<div class="inline-block w-8 h-8 border-4 border-gray-300 border-t-green-600 rounded-full animate-spin"></div>
+							<p class="text-gray-600 mt-3">Loading themes...</p>
+						</div>
+					{:else}
+						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 				<!-- Base Theme Selection -->
 				<section class="card-ios p-6">
 					<h2 class="text-lg font-semibold text-gray-900 mb-4">Base Theme</h2>
@@ -914,7 +963,24 @@
 					</button>
 				</div>
 			</form>
+
+			<!-- Bottom Spacer -->
+			<div class="h-20"></div>
 		{/if}
+	</div>
+
+	<!-- Right: Preview -->
+	<div class="w-[520px] flex-shrink-0 -mr-8 pr-8">
+		<div class="sticky top-8">
+			<div class="pt-16 pb-8">
+				<div class="flex items-center justify-center">
+					<ThemePreviewMockup />
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+		</div>
 	</div>
 </div>
 

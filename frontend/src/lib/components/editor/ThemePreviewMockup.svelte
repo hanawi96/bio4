@@ -1,0 +1,270 @@
+<script lang="ts">
+	import { previewPage, previewAppearance, previewAppearanceState } from '$lib/stores/themePreview';
+	import { groups } from '$lib/stores/page';
+	import { HEADER_PRESETS } from '$lib/appearance/presets';
+
+	// Use preview stores instead of main stores
+	$: tokens = $previewAppearance?.tokens;
+	$: headerPresetId = $previewAppearanceState.headerPresetId || 'no-cover';
+	$: baseHeaderPreset = HEADER_PRESETS[headerPresetId];
+	
+	// Merge preset with overrides
+	$: header = (() => {
+		const overrides = $previewAppearanceState.overrides || {};
+		const merged: any = { ...baseHeaderPreset };
+		Object.entries(overrides).forEach(([key, value]) => {
+			if (key.startsWith('header.')) {
+				const field = key.replace('header.', '');
+				merged[field] = value;
+			}
+		});
+		return merged;
+	})();
+
+	// Avatar size mapping
+	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };
+	$: avatarSize = header ? avatarSizes[header.avatarSize] : 80;
+	$: avatarWidth = header?.avatarShape === 'oval' && header?.avatarSize === 'xl' ? 128 : avatarSize;
+	$: avatarHeight = header?.avatarShape === 'oval' && header?.avatarSize === 'xl' ? 160 : avatarSize;
+
+	// Cover height mapping
+	const coverHeights = { sm: 120, md: 160, lg: 200 };
+	$: coverHeight = header?.coverHeight ? coverHeights[header.coverHeight] : 160;
+	
+	function getAvatarBorderRadius(shape: string | undefined): string {
+		if (shape === 'circle') return '50%';
+		if (shape === 'rounded') return '20%';
+		if (shape === 'oval') return '50%';
+		return '0';
+	}
+
+	$: coverStyle = (() => {
+		if (!header?.hasCover) return '';
+		if (headerPresetId === 'avatar-cover' && $previewPage?.avatar_url) {
+			return `background: url('${$previewPage.avatar_url}') center/cover;`;
+		}
+		const coverValue = header?.coverValue;
+		if (!coverValue) return 'background: linear-gradient(135deg, #667eea, #764ba2);';
+		if (coverValue.startsWith('http') || coverValue.startsWith('/')) {
+			return `background: url('${coverValue}') center/cover;`;
+		}
+		return `background: ${coverValue};`;
+	})();
+	
+	$: isAvatarCover = headerPresetId === 'avatar-cover';
+	$: blockGap = $previewAppearanceState.overrides?.['page.blockGap'] || 16;
+	$: titleFontSize = $previewAppearanceState.overrides?.['page.titleFontSize'] || 20;
+	$: titleFontFamily = $previewAppearanceState.overrides?.['header.titleFontFamily'] || tokens?.fontFamily || 'Inter, sans-serif';
+	$: maxWidth = $previewAppearanceState.overrides?.['page.maxWidth'] || 480;
+	$: textAlign = $previewAppearanceState.overrides?.['page.textAlign'] || 'center';
+	$: pagePadding = $previewAppearanceState.overrides?.['page.pagePadding'] || 16;
+	
+	$: overlayGradientColor = (() => {
+		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
+		const bgColor = $previewAppearanceState.overrides?.['backgroundColor'];
+		if (!bgColor) return 'rgba(0, 0, 0, 0.7)';
+		if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			const r = parseInt(bgColor.slice(1, 3), 16);
+			const g = parseInt(bgColor.slice(3, 5), 16);
+			const b = parseInt(bgColor.slice(5, 7), 16);
+			return `rgba(${r}, ${g}, ${b}, 0.95)`;
+		}
+		return 'rgba(0, 0, 0, 0.7)';
+	})();
+
+	$: blockBorderRadius = $previewAppearanceState.overrides?.['block.borderRadius'] 
+		? `${$previewAppearanceState.overrides['block.borderRadius']}px`
+		: '12px';
+
+	// Get real links from groups (only visible groups with active links)
+	$: realLinks = $groups
+		.filter(g => (g.is_visible ?? 1) === 1)
+		.flatMap(g => g.links.filter(l => l.is_active === 1))
+		.slice(0, 5); // Limit to 5 links for preview
+
+</script>
+
+<!-- Phone Frame -->
+<div class="relative scale-125">
+	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
+		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
+			<!-- Notch -->
+			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
+
+			<!-- Content -->
+			<div 
+				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
+				style="
+					background: {tokens?.backgroundColor || '#ffffff'};
+					color: {tokens?.textColor || '#000000'};
+					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
+					max-width: {maxWidth}px;
+					margin: 0 auto;
+				"
+			>
+				<div class="pt-10 pb-8" style="padding-left: {pagePadding}px; padding-right: {pagePadding}px; text-align: {textAlign};">
+					<!-- Header with Cover -->
+					{#if header?.hasCover}
+						<div class="relative -mx-4 -mt-10 mb-6 header-cover">
+							<div 
+								class="w-full relative"
+								style="{coverStyle} height: {coverHeight}px;"
+							>
+								{#if isAvatarCover}
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 30%, {overlayGradientColor} 100%);"></div>
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);"></div>
+									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
+										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
+										{#if header.showBio && $previewPage?.bio}
+											<p class="bio-text text-sm text-white/90 mt-2 drop-shadow-md" style="display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+												{$previewPage.bio}
+											</p>
+										{/if}
+									</div>
+								{/if}
+							</div>
+							
+							{#if header.avatarPosition === 'overlap' && !isAvatarCover}
+								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarHeight / 2}px;">
+									{#if $previewPage?.avatar_url}
+										<img 
+											src={$previewPage.avatar_url} 
+											alt="Avatar" 
+											class="header-avatar object-cover {header.avatarBorder !== false ? 'border-4' : ''}"
+											style="width: {avatarWidth}px; height: {avatarHeight}px; {header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)};"
+										/>
+									{:else}
+										<div 
+											class="header-avatar flex items-center justify-center text-white font-bold {header.avatarBorder !== false ? 'border-4' : ''}"
+											style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; font-size: {avatarSize / 2.5}px;"
+										>
+											{($previewPage?.title || 'U').charAt(0).toUpperCase()}
+										</div>
+									{/if}
+								</div>
+							{/if}
+						</div>
+						
+						{#if !isAvatarCover}
+							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
+								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
+								{#if header.showBio && $previewPage?.bio}
+									<p class="bio-text text-sm opacity-70 mt-1" style="display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+										{$previewPage.bio}
+									</p>
+								{/if}
+							</div>
+						{/if}
+					{:else}
+						<!-- No Cover -->
+						<div class="header-content mb-6" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
+							{#if $previewPage?.avatar_url}
+								<img 
+									src={$previewPage.avatar_url} 
+									alt="Avatar" 
+									class="header-avatar object-cover mb-2 {header?.avatarBorder !== false ? 'border-4' : ''}"
+									style="width: {avatarWidth}px; height: {avatarHeight}px; {header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)};"
+								/>
+							{:else}
+								<div 
+									class="header-avatar mb-2 flex items-center justify-center text-white font-bold {header?.avatarBorder !== false ? 'border-4' : ''}"
+									style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {avatarSize / 2.5}px;"
+								>
+									{($previewPage?.title || 'U').charAt(0).toUpperCase()}
+								</div>
+							{/if}
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
+							{#if header?.showBio && $previewPage?.bio}
+								<p class="bio-text text-sm opacity-70 mt-1" style="display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+									{$previewPage.bio}
+								</p>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- Social Icons -->
+					{#if $previewPage?.show_social_icons && $previewPage?.social_links}
+						<div class="flex items-center justify-center gap-3 mt-3">
+							{#if $previewPage.social_links.instagram}
+								<div class="hover:scale-110 transition-transform" style="color: {tokens?.textColor || '#000000'};">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+										<rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+										<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+										<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+									</svg>
+								</div>
+							{/if}
+							{#if $previewPage.social_links.twitter}
+								<div class="hover:scale-110 transition-transform" style="color: {tokens?.textColor || '#000000'};">
+									<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+										<path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+									</svg>
+								</div>
+							{/if}
+							{#if $previewPage.social_links.linkedin}
+								<div class="hover:scale-110 transition-transform" style="color: {tokens?.textColor || '#000000'};">
+									<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+										<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+									</svg>
+								</div>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- Links -->
+					<div class="relative" style="display: flex; flex-direction: column; gap: {blockGap}px; margin-top: 24px;">
+						{#each realLinks as link}
+							{@const parts = link.title.split(' - ')}
+							{@const headline = parts[0]}
+							{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+							
+							<div
+								class="link-button block py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
+								style="
+									background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+									color: {$previewAppearance?.blockStyle?.text || 'white'};
+									border: {$previewAppearance?.blockStyle?.border || 'none'};
+									box-shadow: {$previewAppearance?.blockStyle?.shadow || 'none'};
+									border-radius: {blockBorderRadius};
+								"
+							>
+								{#if link.icon_url}
+									<div class="flex items-center gap-3" style="justify-content: {textAlign === 'right' ? 'flex-end' : textAlign === 'center' ? 'center' : 'flex-start'};">
+										<img 
+											src={link.icon_url} 
+											alt="" 
+											class="w-8 h-8 object-cover flex-shrink-0 rounded"
+										/>
+										<div class="flex-1" style="text-align: {textAlign};">
+											<div class="font-semibold">{headline}</div>
+											{#if subtitle}
+												<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+											{/if}
+										</div>
+									</div>
+								{:else}
+									<div style="text-align: {textAlign};">
+										<div class="font-semibold">{headline}</div>
+										{#if subtitle}
+											<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+										{/if}
+									</div>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	.scrollbar-hide::-webkit-scrollbar {
+		display: none;
+	}
+	.scrollbar-hide {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+</style>
