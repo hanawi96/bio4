@@ -9,10 +9,11 @@
 	import ThemeBasicInfo from './components/ThemeBasicInfo.svelte';
 	import ThemeColorPicker from './components/ThemeColorPicker.svelte';
 	import ThemeTypography from './components/ThemeTypography.svelte';
-	import ThemePresets from './components/ThemePresets.svelte';
 	import ThemeLayout from './components/ThemeLayout.svelte';
 	import ThemeBaseSelector from './components/ThemeBaseSelector.svelte';
 	import ThemeJsonEditor from './components/ThemeJsonEditor.svelte';
+	import ThemeHeaderStyle from './components/ThemeHeaderStyle.svelte';
+	import ThemeBlockStyle from './components/ThemeBlockStyle.svelte';
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
@@ -79,10 +80,14 @@
 	let bgBrightness = 100;
 	let bgGrayscale = 0;
 	
+	// Cover image field
+	let coverImageUrl = '';
+	
 	// Image upload state
 	let uploading = false;
 	let showCropModal = false;
 	let tempImageUrl = '';
+	let uploadTarget: 'background' | 'cover' = 'background';
 
 	onMount(async () => {
 		try {
@@ -343,7 +348,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || selectedBlockStyle || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientDirection || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale) {
+	$: if (selectedHeaderPreset || selectedBlockStyle || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientDirection || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
 		updateConfig();
 	}
 
@@ -372,6 +377,7 @@
 					'page.blockPaddingY': blockPaddingY,
 					'block.borderRadius': radiusMap[blockBorderRadiusType] || 12,
 					'header.titleFontFamily': fontFamily,
+					'header.coverValue': coverImageUrl || undefined,
 					'backgroundColor': backgroundValue,
 					'backgroundBlur': bgBlur,
 					'backgroundBrightness': bgBrightness,
@@ -426,7 +432,7 @@
 	}
 	
 	// Image upload handlers
-	function handleImageUpload(event: Event) {
+	function handleImageUpload(event: Event, target: 'background' | 'cover' = 'background') {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
@@ -441,6 +447,7 @@
 			return;
 		}
 
+		uploadTarget = target;
 		tempImageUrl = URL.createObjectURL(file);
 		showCropModal = true;
 		input.value = '';
@@ -451,18 +458,23 @@
 		uploading = true;
 
 		try {
-			const croppedFile = new File([croppedBlob], 'background.jpg', {
+			const croppedFile = new File([croppedBlob], uploadTarget === 'cover' ? 'cover.jpg' : 'background.jpg', {
 				type: 'image/jpeg'
 			});
 
 			const result = await api.uploadBackground('demo', croppedFile);
-			bgImageUrl = result.url;
+			
+			if (uploadTarget === 'cover') {
+				coverImageUrl = result.url;
+			} else {
+				bgImageUrl = result.url;
+			}
 
 			showCropModal = false;
 			URL.revokeObjectURL(tempImageUrl);
 			tempImageUrl = '';
 		} catch (e) {
-			console.error('Failed to upload background:', e);
+			console.error('Failed to upload image:', e);
 			alert('Failed to upload image. Please try again.');
 		} finally {
 			uploading = false;
@@ -533,6 +545,7 @@
 
 				<!-- Typography -->
 				<ThemeTypography
+					bind:fontFamily
 					bind:baseFontSize
 					bind:headingFontSize
 					bind:bodyFontWeight
@@ -541,18 +554,24 @@
 					bind:headingLineHeight
 				/>
 
-				<!-- Quick Edit: Presets -->
-				<ThemePresets
+				<!-- Header Style -->
+				<ThemeHeaderStyle
 					bind:selectedHeaderPreset
+					bind:coverImageUrl
+					{headerPresets}
+					{uploading}
+					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}
+				/>
+
+				<!-- Block Style -->
+				<ThemeBlockStyle
 					bind:selectedBlockStyle
 					bind:selectedLinkIconShape
 					bind:selectedLinkGroupLayout
-					{headerPresets}
 				/>
 
-				<!-- Layout & Typography -->
+				<!-- Layout -->
 				<ThemeLayout
-					bind:fontFamily
 					bind:maxWidth
 					bind:textAlign
 					bind:pagePadding
@@ -656,9 +675,9 @@
 {#if showCropModal}
 	<ImageCropModal
 		imageUrl={tempImageUrl}
-		aspectRatio={0.483}
-		outputWidth={1080}
-		outputHeight={2236}
+		aspectRatio={uploadTarget === 'cover' ? 3 : 0.483}
+		outputWidth={uploadTarget === 'cover' ? 1200 : 1080}
+		outputHeight={uploadTarget === 'cover' ? 400 : 2236}
 		on:accept={handleCropAccept}
 		on:cancel={handleCropCancel}
 	/>

@@ -1,5 +1,4 @@
 <script lang="ts">
-	export let fontFamily: string;
 	export let maxWidth: number;
 	export let textAlign: 'left' | 'center' | 'right';
 	export let pagePadding: number;
@@ -11,23 +10,8 @@
 </script>
 
 <section class="card-ios p-6">
-	<h2 class="text-lg font-semibold text-gray-900 mb-4">Layout & Typography</h2>
+	<h2 class="text-lg font-semibold text-gray-900 mb-4">Layout</h2>
 	<div class="space-y-4">
-		<div>
-			<label for="fontFamily" class="block text-sm font-medium text-gray-700 mb-2">
-				Font Family
-			</label>
-			<input
-				id="fontFamily"
-				type="text"
-				bind:value={fontFamily}
-				class="input-ios"
-				placeholder="Inter, system-ui, sans-serif"
-			/>
-			<p class="text-xs text-gray-500 mt-1">
-				CSS font-family value
-			</p>
-		</div>
 		<div class="grid grid-cols-2 gap-4">
 			<div>
 				<label for="maxWidth" class="block text-sm font-medium text-gray-700 mb-2">

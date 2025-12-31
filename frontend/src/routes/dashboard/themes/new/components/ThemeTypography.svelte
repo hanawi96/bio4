@@ -1,4 +1,5 @@
 <script lang="ts">
+	export let fontFamily: string;
 	export let baseFontSize: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
 	export let headingFontSize: 'lg' | 'xl' | '2xl';
 	export let bodyFontWeight: 'normal' | 'medium';
@@ -9,7 +10,21 @@
 
 <section class="card-ios p-6">
 	<h2 class="text-lg font-semibold text-gray-900 mb-4">Typography</h2>
-	<div class="grid grid-cols-2 gap-4">
+	<div class="space-y-4">
+		<div>
+			<label for="fontFamily" class="block text-sm font-medium text-gray-700 mb-2">
+				Font Family
+			</label>
+			<input
+				id="fontFamily"
+				type="text"
+				bind:value={fontFamily}
+				class="input-ios"
+				placeholder="Inter, system-ui, sans-serif"
+			/>
+			<p class="text-xs text-gray-500 mt-1">CSS font-family value</p>
+		</div>
+		<div class="grid grid-cols-2 gap-4">
 		<div>
 			<label for="baseFontSize" class="block text-sm font-medium text-gray-700 mb-2">
 				Base Font Size
@@ -78,5 +93,6 @@
 			</select>
 			<p class="text-xs text-gray-500 mt-1">Heading text spacing</p>
 		</div>
+	</div>
 	</div>
 </section>
