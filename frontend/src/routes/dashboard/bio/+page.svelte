@@ -56,6 +56,15 @@
 	let currentLayoutConfig: string | null = null;
 	let isCreatingGroup = false; // Track group creation status
 
+	// Reactive: Update currentLayoutConfig when groups store changes (e.g., theme reset)
+	$: if (currentGroupId && viewMode === 'edit-links') {
+		const group = $groups.find(g => g.id === currentGroupId);
+		if (group) {
+			currentLayoutType = group.layout_type || defaultLinkGroupLayout;
+			currentLayoutConfig = group.layout_config || null;
+		}
+	}
+
 	let addBlockModal: AddBlockModal;
 	let renameGroupModal: RenameGroupModal;
 	let deleteGroupModal: DeleteGroupModal;

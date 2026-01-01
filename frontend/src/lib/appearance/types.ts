@@ -185,6 +185,7 @@ export interface ResolvedAppearance {
 		pagePadding: number;
 		blockGap: number;
 		textAlign: 'left' | 'center' | 'right';
+		linkIconShape: 'square' | 'rounded' | 'circle';
 	};
 	block: {
 		borderRadius: number;

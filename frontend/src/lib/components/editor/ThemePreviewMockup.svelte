@@ -338,7 +338,7 @@
 											/>
 										{/if}
 										{#if gridConfig.showLabels}
-											<div class="font-semibold leading-tight truncate w-full text-center" style="margin-top: {isVeryCompactGrid ? '1px' : '2px'}; padding: {gridConfig.imagePadding ? '0' : '4px'};">{headline}</div>
+											<div class="font-semibold leading-tight truncate w-full text-center" style="margin-top: {isVeryCompactGrid ? '1px' : '2px'}; padding: {gridConfig.imagePadding ? '0' : `${blockPaddingY}px ${blockPaddingX}px`};">{headline}</div>
 										{/if}
 									</div>
 								{/each}
@@ -391,7 +391,7 @@
 												"
 											/>
 										{/if}
-										<div class="flex-1 min-w-0" style="padding: {cardConfig.imagePadding ? '0' : '8px'};">
+										<div class="flex-1 min-w-0" style="padding: {cardConfig.imagePadding ? '0' : `${blockPaddingY}px ${blockPaddingX}px`};">
 											<div class="font-semibold text-[10px] leading-tight truncate">{headline}</div>
 											{#if subtitle && cardConfig.showSubtitle}
 												<div class="text-[8px] mt-0.5 opacity-70 truncate">{subtitle}</div>

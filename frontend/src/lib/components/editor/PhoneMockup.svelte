@@ -19,18 +19,11 @@
 		return tokens?.backgroundColor || '#ffffff';
 	})();
 	
-	// Get global iconShape from theme config (fallback for groups without custom config)
-	$: globalIconShape = (() => {
-		const themeConfig = $appearance?.theme?.config;
-		return themeConfig?.page?.defaults?.linkIconShape || 'rounded';
-	})();
+	// Get global iconShape from appearance (resolved from theme config)
+	$: globalIconShape = $appearance?.page?.linkIconShape || 'rounded';
 	
-	// Get global textAlign from theme config (fallback for groups without custom config)
-	$: globalTextAlign = (() => {
-		const themeConfig = $appearance?.theme?.config;
-		const overrideTextAlign = $appearanceState.overrides?.['page.textAlign'];
-		return overrideTextAlign || themeConfig?.page?.layout?.textAlign || 'center';
-	})();
+	// Get global textAlign from appearance (resolved from theme config)
+	$: globalTextAlign = $appearance?.page?.textAlign || 'center';
 	
 	// Get default linkGroupLayout from theme config
 	$: defaultLinkGroupLayout = (() => {
@@ -51,7 +44,20 @@
 	
 	$: defaultListConfig = (() => {
 		const themeConfig = $appearance?.theme?.config;
-		return themeConfig?.page?.defaults?.linkGroupConfig?.list || { iconPosition: 'left', textAlign: 'center', iconShape: globalIconShape };
+		const textAlign = globalTextAlign;
+		const themeListConfig = themeConfig?.page?.defaults?.linkGroupConfig?.list;
+		
+		// If theme has list config, use it but ensure textAlign falls back to globalTextAlign if not specified
+		if (themeListConfig) {
+			return {
+				...themeListConfig,
+				textAlign: themeListConfig.textAlign || textAlign,
+				iconShape: themeListConfig.iconShape || globalIconShape
+			};
+		}
+		
+		// Otherwise use default with globalTextAlign
+		return { iconPosition: 'left', textAlign, iconShape: globalIconShape };
 	})();
 	
 	// Get header from NEW format appearanceState
@@ -189,6 +195,9 @@
 	
 	// Get block gap from appearance
 	$: blockGap = $appearance?.page?.blockGap ?? 16;
+	
+	// Get page padding from appearance
+	$: pagePadding = $appearance?.page?.pagePadding ?? 16;
 	
 	// Get title font size from appearance
 	$: titleFontSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
@@ -429,7 +438,7 @@
 						</div>
 					</div>
 				{:else}
-				<div class="pt-10 pb-8 px-4">
+				<div style="padding: {pagePadding}px; display: flex; flex-direction: column; height: 100%;">
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
 						<div class="relative -mx-4 -mt-10 mb-6 header-cover">
@@ -657,7 +666,7 @@
 													href={link.url}
 													target="_blank"
 													rel="noopener"
-													class="link-button block flex-shrink-0 py-3 px-4 text-sm font-medium transition-transform hover:scale-[1.02]"
+													class="link-button block flex-shrink-0 text-sm font-medium transition-transform hover:scale-[1.02]"
 													style="
 														width: 200px;
 														background: {getBlockBackground($appearance?.blockStyle?.fill)};
@@ -668,6 +677,7 @@
 															: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};
 														{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 														border-radius: {blockBorderRadius};
+														padding: {blockPaddingY}px {blockPaddingX}px;
 													"
 												>
 													{#if link.icon_url}
@@ -712,8 +722,7 @@
 									{@const blockRadiusNum = parseInt(blockBorderRadius)}
 									{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - gridPadding)}px`}
 									
-									<div class="grid gap-2" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr));">
-										{#each groupLinks as link}
+									<div class="grid" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr)); gap: {blockGap}px;">										{#each groupLinks as link}
 											{@const headline = link.title.split(' - ')[0]}
 											{@const hasImage = !!link.icon_url}
 											{@const showImageOnly = hasImage && !config.imagePadding && !config.showLabels}
@@ -735,7 +744,7 @@
 													box-shadow: {gridShadow};
 													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 													border-radius: {blockBorderRadius};
-													padding: {config.imagePadding ? `${gridPadding}px` : '0'};
+													padding: {config.imagePadding ? `${gridPadding}px` : config.showLabels ? `${blockPaddingY}px ${blockPaddingX}px` : '0'};
 												"
 											>
 												{#if hasImage}
@@ -747,10 +756,10 @@
 													/>
 												{/if}
 												{#if config.showLabels}
-													<div class="w-full text-center truncate text-[10px] {config.imagePadding ? 'mt-1' : 'mt-1 px-2 pb-1'}">
-														{headline}
-													</div>
-												{/if}
+												<div class="w-full truncate text-[10px] {config.imagePadding ? 'mt-1' : 'mt-1 px-2 pb-1'}" style="text-align: {globalTextAlign};">
+													{headline}
+												</div>
+											{/if}
 											</a>
 										{/each}
 									</div>
@@ -824,7 +833,7 @@
 														"
 													/>
 												{/if}
-												<div class="flex-1 min-w-0" style="padding: {config.imagePadding ? '0' : '12px'};">
+												<div class="flex-1 min-w-0" style="padding: {config.imagePadding ? '0' : `${blockPaddingY}px ${blockPaddingX}px`}; text-align: {globalTextAlign};">
 													<div class="font-semibold text-sm leading-tight truncate">{headline}</div>
 													{#if subtitle && config.showSubtitle}
 														<div class="text-xs mt-1 opacity-70 truncate">{subtitle}</div>
@@ -866,7 +875,7 @@
 											href={link.url}
 											target="_blank"
 											rel="noopener"
-											class="link-button block w-full py-1.5 px-3 text-sm font-medium transition-transform hover:scale-[1.02]"
+											class="link-button block w-full text-sm font-medium transition-transform hover:scale-[1.02]"
 											style="
 												background: {getBlockBackground($appearance?.blockStyle?.fill)};
 												color: {$appearance?.blockStyle?.text || 'white'};
@@ -875,6 +884,7 @@
 												{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 												border-radius: {blockBorderRadius};
 												text-align: {config.textAlign};
+												padding: {blockPaddingY}px {blockPaddingX}px;
 											"
 										>
 											{#if showIcon && link.icon_url && iconOnTop}

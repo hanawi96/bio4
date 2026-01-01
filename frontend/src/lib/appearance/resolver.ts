@@ -407,7 +407,10 @@ export function resolveAppearance(
 			?? 16,
 		textAlign: (pageState.overrides?.['page.textAlign'] as 'left' | 'center' | 'right')
 			?? themeConfig.page?.layout?.textAlign
-			?? 'center'
+			?? 'center',
+		linkIconShape: (pageState.overrides?.['page.linkIconShape'] as 'square' | 'rounded' | 'circle')
+			?? themeConfig.page?.defaults?.linkIconShape
+			?? 'rounded'
 	};
 
 	// Resolve block config
