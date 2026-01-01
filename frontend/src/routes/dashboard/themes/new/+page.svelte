@@ -80,6 +80,8 @@
 	let bgSolidColor = '#ffffff';
 	let bgGradientFrom = '#667eea';
 	let bgGradientTo = '#764ba2';
+	let bgGradientMiddle = '#a855f7';
+	let bgGradientMiddleEnabled = false;
 	let bgGradientDirection = '135deg';
 	let bgImageUrl = '';
 	let bgBlur = 0;
@@ -244,7 +246,13 @@
 				const colorMatches = bgValue.match(/#[0-9a-fA-F]{6}/g);
 				if (colorMatches?.length >= 2) {
 					bgGradientFrom = colorMatches[0];
-					bgGradientTo = colorMatches[1];
+					bgGradientTo = colorMatches[colorMatches.length - 1];
+					if (colorMatches.length >= 3) {
+						bgGradientMiddle = colorMatches[1];
+						bgGradientMiddleEnabled = true;
+					} else {
+						bgGradientMiddleEnabled = false;
+					}
 				}
 				const angleMatch = bgValue.match(/(\d+)deg/);
 				if (angleMatch) bgGradientDirection = angleMatch[1] + 'deg';
@@ -360,7 +368,11 @@
 			if (bgType === 'solid') {
 				bgValue = bgSolidColor;
 			} else if (bgType === 'gradient') {
-				bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
+				if (bgGradientMiddleEnabled) {
+					bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientMiddle} 50%, ${bgGradientTo} 100%)`;
+				} else {
+					bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
+				}
 			} else if (bgType === 'image') {
 				bgValue = bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
 			}
@@ -372,7 +384,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientDirection || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
 		updateConfig();
 	}
 
@@ -387,7 +399,7 @@
 				none: 0, sm: 4, md: 8, lg: 12, xl: 16, full: 9999
 			};
 			
-			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})` : bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
+			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? (bgGradientMiddleEnabled ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})`) : bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
 			
 			previewAppearanceState.set({
 				headerPresetId: selectedHeaderPreset,
@@ -577,6 +589,8 @@
 					bind:bgSolidColor
 					bind:bgGradientFrom
 					bind:bgGradientTo
+					bind:bgGradientMiddle
+					bind:bgGradientMiddleEnabled
 					bind:bgGradientDirection
 					bind:bgImageUrl
 					bind:bgBlur
