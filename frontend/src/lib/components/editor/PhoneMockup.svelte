@@ -744,7 +744,7 @@
 													box-shadow: {gridShadow};
 													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 													border-radius: {blockBorderRadius};
-													padding: {config.imagePadding ? `${gridPadding}px` : config.showLabels ? `${blockPaddingY}px ${blockPaddingX}px` : '0'};
+													padding: {config.imagePadding ? `${gridPadding}px` : '0'};
 												"
 											>
 												{#if hasImage}
@@ -756,10 +756,10 @@
 													/>
 												{/if}
 												{#if config.showLabels}
-												<div class="w-full truncate text-[10px] {config.imagePadding ? 'mt-1' : 'mt-1 px-2 pb-1'}" style="text-align: {globalTextAlign};">
-													{headline}
-												</div>
-											{/if}
+													<div class="w-full truncate text-[10px] {config.imagePadding ? 'mt-1' : 'px-2 pb-1'}" style="text-align: {globalTextAlign};">
+														{headline}
+													</div>
+												{/if}
 											</a>
 										{/each}
 									</div>

@@ -132,9 +132,12 @@
 		if (override) return override;
 		return {
 			iconPosition: 'left',
-			textAlign: 'center'
+			textAlign: textAlign  // Fallback to global textAlign
 		};
 	})();
+	
+	// Get effective textAlign for list layout (list-specific or global)
+	$: listTextAlign = listConfig.textAlign || textAlign;
 	
 	// Get socialIconPosition from overrides or default
 	$: socialIconPosition = $previewAppearanceState.overrides?.['page.socialIconPosition'] || 'header';
@@ -291,9 +294,9 @@
 					<div class="relative" style="margin-top: 24px;">
 						{#if linkGroupLayout === 'grid'}
 							<!-- Grid Layout -->
+							{@const gridPadding = 4}
 							{@const isCompactGrid = gridConfig.columns >= 3}
 							{@const isVeryCompactGrid = gridConfig.columns >= 4}
-							{@const gridPadding = isVeryCompactGrid ? 2 : (isCompactGrid ? 3 : 4)}
 							{@const gridGap = isVeryCompactGrid ? 2 : (isCompactGrid ? 3 : blockGap)}
 							{@const fontSize = isVeryCompactGrid ? '6px' : (isCompactGrid ? '7px' : '10px')}
 							{@const borderRadius = isVeryCompactGrid ? '4px' : (isCompactGrid ? '6px' : blockBorderRadius)}
@@ -309,6 +312,7 @@
 										: gridConfig.showLabels 
 											? `${borderRadius} ${borderRadius} 0 0` 
 											: borderRadius}
+									{@const aspectClass = gridConfig.aspectRatio === 'portrait' ? 'aspect-[3/4]' : gridConfig.aspectRatio === 'landscape' ? 'aspect-video' : 'aspect-square'}
 									
 									<div
 										class="link-button font-medium transition-transform hover:scale-[1.02] {gridConfig.imagePadding || gridConfig.showLabels ? 'flex flex-col items-center justify-center' : 'overflow-hidden'}"
@@ -321,7 +325,6 @@
 											-webkit-backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
 											border-radius: {borderRadius};
 											padding: {gridConfig.imagePadding ? `${gridPadding}px` : '0'};
-											aspect-ratio: {gridConfig.aspectRatio === 'square' ? '1' : gridConfig.aspectRatio === 'portrait' ? '3/4' : '4/3'};
 											font-size: {fontSize};
 											line-height: 1.2;
 										"
@@ -330,15 +333,12 @@
 											<img 
 												src={link.icon_url} 
 												alt="" 
-												class="object-cover {iconShapeClass} {showImageOnly ? 'w-full h-full' : 'w-full h-auto'}"
-												style="
-													{showImageOnly ? '' : 'flex: 1; min-height: 0;'}
-													border-radius: {imageRadius};
-												"
+												class="w-full object-cover {iconShapeClass} {aspectClass} {showImageOnly ? 'h-full' : ''}"
+												style="border-radius: {imageRadius};"
 											/>
 										{/if}
 										{#if gridConfig.showLabels}
-											<div class="font-semibold leading-tight truncate w-full text-center" style="margin-top: {isVeryCompactGrid ? '1px' : '2px'}; padding: {gridConfig.imagePadding ? '0' : `${blockPaddingY}px ${blockPaddingX}px`};">{headline}</div>
+											<div class="font-semibold leading-tight truncate w-full text-center" style="margin-top: {isVeryCompactGrid ? '1px' : '4px'}; padding: {gridConfig.imagePadding ? '0' : '0 8px 4px 8px'};">{headline}</div>
 										{/if}
 									</div>
 								{/each}
@@ -422,13 +422,13 @@
 										"
 									>
 										{#if link.icon_url}
-											<div class="flex items-center gap-3" style="justify-content: {textAlign === 'right' ? 'flex-end' : textAlign === 'center' ? 'center' : 'flex-start'};">
+											<div class="flex items-center gap-3" style="justify-content: {listTextAlign === 'right' ? 'flex-end' : listTextAlign === 'center' ? 'center' : 'flex-start'};">
 												<img 
 													src={link.icon_url} 
 													alt="" 
 													class="w-8 h-8 object-cover flex-shrink-0 {iconShapeClass}"
 												/>
-												<div class="flex-1" style="text-align: {textAlign};">
+												<div class="flex-1" style="text-align: {listTextAlign};">
 													<div class="font-semibold">{headline}</div>
 													{#if subtitle}
 														<div class="text-xs mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'};">{subtitle}</div>
@@ -436,7 +436,7 @@
 												</div>
 											</div>
 										{:else}
-											<div style="text-align: {textAlign};">
+											<div style="text-align: {listTextAlign};">
 												<div class="font-semibold">{headline}</div>
 												{#if subtitle}
 													<div class="text-xs mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'};">{subtitle}</div>
