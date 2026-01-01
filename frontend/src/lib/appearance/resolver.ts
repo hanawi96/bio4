@@ -2,6 +2,7 @@ import type { ResolvedAppearance, Theme, ThemeTokens, ResolvedBlockStyle } from 
 import { HEADER_PRESETS } from './presets';
 import { getBlockStyleRecipe, type BlockStylePresetId } from './blockStyles';
 import { resolveToken, resolveAutoTextColor } from './tokenResolver';
+import { RADIUS_TOKENS } from './spacingTokens';
 import { get } from 'svelte/store';
 import { headerPresets } from '$lib/stores/headerPresets';
 
@@ -376,14 +377,14 @@ export function resolveAppearance(
 	// Resolve block config
 	const blockConfig = {
 		borderRadius: (blockOverrides.borderRadius as number)
-			?? themeConfig.tokens?.radius?.lg
+			?? RADIUS_TOKENS.lg
 			?? 12,
 		shape: 'rounded' as const,
 		padding: {
 			x: themeConfig.page?.layout?.blockPadding?.x ?? 16,
 			y: themeConfig.page?.layout?.blockPadding?.y ?? 12
 		},
-		borderWidth: themeConfig.tokens?.border?.width?.default ?? 1
+		borderWidth: themeConfig.page?.defaults?.borderWidth ?? 1
 	};
 
 	return {

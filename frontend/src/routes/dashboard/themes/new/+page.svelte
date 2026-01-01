@@ -18,6 +18,7 @@
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
+	import { RADIUS_TOKENS } from '$lib/appearance/spacingTokens';
 
 	// Debug mode toggle
 	let showDebug = false;
@@ -55,6 +56,25 @@
 	let textAlign: 'left' | 'center' | 'right' = 'center';
 	let blockBorderRadiusType: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'lg';
 	
+	// Link Group Layout Config
+	let gridConfig: import('$lib/types').GridLayoutConfig = {
+		columns: 2,
+		aspectRatio: 'square',
+		showLabels: true,
+		imagePadding: false
+	};
+	let cardConfig: import('$lib/types').CardLayoutConfig = {
+		imagePosition: 'left',
+		imageSize: 50,
+		imageAspect: 'square',
+		showSubtitle: true,
+		imagePadding: false
+	};
+	let listConfig: import('$lib/types').ListLayoutConfig = {
+		iconPosition: 'left',
+		textAlign: 'center'
+	};
+	
 	// Color fields
 	let primaryColor = '#3b82f6';
 	let textColor = '#18181b';
@@ -72,9 +92,6 @@
 	let headingFontWeight: 'medium' | 'semibold' | 'bold' = 'bold';
 	let bodyLineHeight: 'tight' | 'normal' | 'relaxed' = 'normal';
 	let headingLineHeight: 'tight' | 'normal' | 'relaxed' = 'tight';
-	
-	// Layout fields
-	let cardElevation: 'none' | 'xs' | 'sm' | 'md' | 'lg' = 'sm';
 	
 	// Background fields
 	let bgType: 'solid' | 'gradient' | 'image' = 'solid';
@@ -164,6 +181,21 @@
 		blockOpacity = theme.config.page?.defaults?.blockOpacity || 100;
 		selectedLinkIconShape = theme.config.page?.defaults?.linkIconShape || 'rounded';
 		selectedLinkGroupLayout = theme.config.page?.defaults?.linkGroupLayout || 'list';
+		
+		// Load link group config
+		const linkGroupConfig = theme.config.page?.defaults?.linkGroupConfig;
+		if (linkGroupConfig) {
+			if (linkGroupConfig.grid) {
+				gridConfig = { ...gridConfig, ...linkGroupConfig.grid };
+			}
+			if (linkGroupConfig.cards) {
+				cardConfig = { ...cardConfig, ...linkGroupConfig.cards };
+			}
+			if (linkGroupConfig.list) {
+				listConfig = { ...listConfig, ...linkGroupConfig.list };
+			}
+		}
+		
 		socialIconPosition = theme.config.page?.defaults?.socialIconPosition || 'header';
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
 		maxWidth = theme.config.page?.layout?.maxWidth || 480;
@@ -185,7 +217,7 @@
 		primaryColor = resolveRef(theme.config.semantic?.color?.primary) || '#3b82f6';
 		textColor = resolveRef(theme.config.semantic?.color?.text?.default) || '#18181b';
 		borderColor = resolveRef(theme.config.semantic?.color?.border?.default) || '#e4e4e7';
-		borderWidth = resolveRef(theme.config.tokens?.border?.width?.default) || 1;
+		borderWidth = theme.config.page?.defaults?.borderWidth || 1;
 		
 		// Extract typography - font sizes
 		const sizeMap: Record<number, typeof baseFontSize> = {
@@ -223,14 +255,6 @@
 		blockTextColor = resolveRef(theme.config.semantic?.color?.block?.text) || '#ffffff';
 		shadowColor = resolveRef(theme.config.tokens?.color?.shadowColor) || '#000000';
 		pageBgColor = resolveRef(theme.config.semantic?.color?.surface?.page) || '#fafafa';
-		
-		// Extract elevation
-		const elevationRef = theme.config.recipes?.link?.base?.elevation;
-		if (elevationRef && typeof elevationRef === 'string' && elevationRef.startsWith('ref:tokens.elevation.')) {
-			cardElevation = elevationRef.replace('ref:tokens.elevation.', '') as any;
-		} else {
-			cardElevation = 'sm';
-		}
 		
 		// Extract background effects
 		bgBlur = theme.config.background?.effects?.blur || 0;
@@ -308,8 +332,17 @@
 			config.page.defaults.blockStylePreset = selectedBlockStyle;
 			config.page.defaults.shadowStyle = selectedShadowStyle;
 			config.page.defaults.blockOpacity = blockOpacity;
+			config.page.defaults.borderWidth = borderWidth;
 			config.page.defaults.linkIconShape = selectedLinkIconShape;
 			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
+			
+			// Update link group config
+			config.page.defaults.linkGroupConfig = {
+				list: { ...listConfig },
+				grid: { ...gridConfig },
+				cards: { ...cardConfig }
+			};
+			
 			config.page.defaults.socialIconPosition = socialIconPosition;
 			
 			// Update layout
@@ -354,12 +387,6 @@
 			config.tokens.color.blockText = blockTextColor;
 			config.tokens.color.shadowColor = shadowColor;
 			
-			// Update border width in tokens
-			if (!config.tokens) config.tokens = {};
-			if (!config.tokens.border) config.tokens.border = {};
-			if (!config.tokens.border.width) config.tokens.border.width = {};
-			config.tokens.border.width.default = borderWidth;
-			
 			// Update typography
 			if (!config.semantic.typography) config.semantic.typography = {};
 			if (!config.semantic.typography.body) config.semantic.typography.body = {};
@@ -374,9 +401,6 @@
 			
 			// Update more colors
 			config.semantic.color.text.muted = mutedTextColor;
-			
-			// Update elevation in recipes
-			config.recipes.link.base.elevation = `ref:tokens.elevation.${cardElevation}`;
 			
 			// Update background effects
 			if (!config.background) config.background = {};
@@ -418,7 +442,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || socialIconPosition || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
 		updateConfig();
 	}
 
@@ -428,10 +452,8 @@
 			const config = JSON.parse(configJson);
 			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity));
 			
-			// Resolve blockBorderRadius from type
-			const radiusMap: Record<string, number> = {
-				none: 0, sm: 4, md: 8, lg: 12, xl: 16, full: 9999
-			};
+			// Resolve blockBorderRadius from centralized tokens
+			const radiusValue = RADIUS_TOKENS[blockBorderRadiusType] || 12;
 			
 			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? (
 				bgGradientType === 'linear' 
@@ -449,7 +471,7 @@
 					'page.pagePadding': pagePadding,
 					'page.blockPaddingX': blockPaddingX,
 					'page.blockPaddingY': blockPaddingY,
-					'block.borderRadius': radiusMap[blockBorderRadiusType] || 12,
+					'block.borderRadius': radiusValue,
 					'header.titleFontFamily': fontFamily,
 					'header.coverValue': coverImageUrl || undefined,
 					'header.avatarBorderColor': avatarBorderColor,
@@ -460,6 +482,9 @@
 					'backgroundGrayscale': bgGrayscale,
 					'page.linkIconShape': selectedLinkIconShape,
 					'page.linkGroupLayout': selectedLinkGroupLayout,
+					'page.linkGroupConfig.grid': gridConfig,
+					'page.linkGroupConfig.cards': cardConfig,
+					'page.linkGroupConfig.list': listConfig,
 					'page.socialIconPosition': socialIconPosition
 				}
 			});
@@ -688,6 +713,9 @@
 				<!-- Link Group Layout -->
 				<ThemeLinkGroupLayout
 					bind:selectedLinkGroupLayout
+					bind:gridConfig
+					bind:cardConfig
+					bind:listConfig
 				/>
 
 				<!-- Layout -->
@@ -699,7 +727,6 @@
 					bind:blockPaddingX
 					bind:blockPaddingY
 					bind:blockBorderRadiusType
-					bind:cardElevation
 				/>
 
 				<!-- Theme Configuration -->

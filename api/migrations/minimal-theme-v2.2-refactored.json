@@ -121,55 +121,6 @@
     "typography": {
       "fontFamily": {
         "sans": "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
-      },
-      "fontSize": {
-        "xs": 12,
-        "sm": 14,
-        "base": 16,
-        "lg": 18,
-        "xl": 20,
-        "2xl": 24
-      },
-      "fontWeight": {
-        "normal": 400,
-        "medium": 500,
-        "semibold": 600,
-        "bold": 700
-      },
-      "lineHeight": {
-        "tight": 1.25,
-        "normal": 1.5,
-        "relaxed": 1.75
-      }
-    },
-    "space": {
-      "0": 0,
-      "1": 4,
-      "2": 8,
-      "3": 12,
-      "4": 16,
-      "5": 20,
-      "6": 24,
-      "8": 32
-    },
-    "radius": {
-      "none": 0,
-      "sm": 4,
-      "md": 8,
-      "lg": 12,
-      "xl": 16,
-      "full": 9999
-    },
-    "elevation": {
-      "none": "none",
-      "xs": "0 1px 2px rgba(0, 0, 0, 0.05)",
-      "sm": "0 1px 3px rgba(0, 0, 0, 0.1)",
-      "md": "0 4px 6px rgba(0, 0, 0, 0.1)",
-      "lg": "0 10px 15px rgba(0, 0, 0, 0.1)"
-    },
-    "border": {
-      "width": {
-        "default": 1
       }
     }
   },
@@ -220,28 +171,6 @@
       }
     }
   },
-  "recipes": {
-    "linkGroup": {
-      "variants": {
-        "layout": {
-          "list": {
-            "display": "flex",
-            "flexDirection": "column"
-          },
-          "cards": {
-            "display": "grid",
-            "gridTemplateColumns": "repeat(1, 1fr)",
-            "gap": "ref:tokens.space.4"
-          },
-          "grid": {
-            "display": "grid",
-            "gridTemplateColumns": "repeat(2, 1fr)",
-            "gap": "ref:tokens.space.3"
-          }
-        }
-      }
-    }
-  },
   "page": {
     "layout": {
       "maxWidth": 480,
@@ -257,8 +186,28 @@
     "defaults": {
       "headerPresetId": "no-cover",
       "blockStylePreset": "solid",
+      "borderWidth": 1,
       "linkStyle": "soft",
       "linkGroupLayout": "list",
+      "linkGroupConfig": {
+        "list": {
+          "iconPosition": "left",
+          "textAlign": "center"
+        },
+        "grid": {
+          "columns": 2,
+          "aspectRatio": "square",
+          "showLabels": true,
+          "imagePadding": false
+        },
+        "cards": {
+          "imagePosition": "left",
+          "imageSize": 50,
+          "imageAspect": "square",
+          "showSubtitle": true,
+          "imagePadding": false
+        }
+      },
       "linkIconShape": "rounded",
       "socialIconPosition": "header"
     }

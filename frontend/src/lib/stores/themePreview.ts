@@ -101,7 +101,7 @@ export function buildPreviewAppearance(
 	const textColor = resolveRef(semantic?.color?.text?.default, config) || '#000000';
 	const mutedTextColor = resolveRef(semantic?.color?.text?.muted, config) || '#71717a';
 	const borderColor = resolveRef(semantic?.color?.border?.default, config) || '#e4e4e7';
-	const borderWidth = resolveRef(tokens?.border?.width?.default, config) || 1;
+	const borderWidth = config.page?.defaults?.borderWidth || 1;
 	const blockTextColor = resolveRef(semantic?.color?.block?.text, config) || '#ffffff';
 	const shadowColor = resolveRef(tokens?.color?.shadowColor, config) || '#000000';
 

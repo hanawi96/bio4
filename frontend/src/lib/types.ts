@@ -174,6 +174,39 @@ export interface ThemeRecipes {
 	};
 }
 
+// Link Group Layout Config Types
+export interface GridLayoutConfig {
+	columns: 1 | 2 | 3 | 4;
+	aspectRatio: 'square' | 'portrait' | 'landscape';
+	showLabels: boolean;
+	imagePadding: boolean;
+	shadowEnabled?: boolean; // undefined = follow theme, true = force ON, false = force OFF
+	borderEnabled?: boolean; // undefined = follow theme, true = force ON, false = force OFF
+}
+
+export interface CardLayoutConfig {
+	imagePosition: 'left' | 'right' | 'alternate';
+	imageSize: 40 | 50 | 60;
+	imageAspect: 'square' | 'landscape' | 'portrait';
+	showSubtitle: boolean;
+	imagePadding: boolean;
+	shadowEnabled?: boolean;
+	borderEnabled?: boolean;
+}
+
+export interface ListLayoutConfig {
+	iconPosition: 'left' | 'top' | 'none';
+	textAlign: 'left' | 'center' | 'right';
+	shadowEnabled?: boolean;
+	borderEnabled?: boolean;
+}
+
+export interface LinkGroupConfigDefaults {
+	grid?: GridLayoutConfig;
+	cards?: CardLayoutConfig;
+	list?: ListLayoutConfig;
+}
+
 export interface ThemePage {
 	mode: 'light' | 'dark';
 	layout: {
@@ -188,7 +221,8 @@ export interface ThemePage {
 		headerPresetId?: string;
 		blockPresetId?: string;
 		linkStyle?: string; // 'solid' | 'outline' | 'soft'
-		linkGroupLayout?: string; // 'list' | 'cards' | 'grid'
+		linkGroupLayout?: string; // 'list' | 'cards' | 'grid' | 'carousel'
+		linkGroupConfig?: LinkGroupConfigDefaults; // v2.3: Layout config defaults
 		
 		// Legacy support (v2.0-2.1)
 		header?: any;

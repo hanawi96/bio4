@@ -6,7 +6,6 @@
 	export let blockPaddingX: number;
 	export let blockPaddingY: number;
 	export let blockBorderRadiusType: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
-	export let cardElevation: 'none' | 'xs' | 'sm' | 'md' | 'lg';
 </script>
 
 <section class="card-ios p-6">
@@ -104,21 +103,6 @@
 				</select>
 				<p class="text-xs text-gray-500 mt-1">
 					Border radius style for blocks/links
-				</p>
-			</div>
-			<div>
-				<label for="cardElevation" class="block text-sm font-medium text-gray-700 mb-2">
-					Card Shadow
-				</label>
-				<select id="cardElevation" bind:value={cardElevation} class="input-ios">
-					<option value="none">None - Flat</option>
-					<option value="xs">Extra Small - Subtle</option>
-					<option value="sm">Small - Light</option>
-					<option value="md">Medium - Normal</option>
-					<option value="lg">Large - Elevated</option>
-				</select>
-				<p class="text-xs text-gray-500 mt-1">
-					Shadow depth for cards/blocks
 				</p>
 			</div>
 		</div>

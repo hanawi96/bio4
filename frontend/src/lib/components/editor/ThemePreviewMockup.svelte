@@ -99,6 +99,40 @@
 	// Get linkGroupLayout from overrides or default
 	$: linkGroupLayout = $previewAppearanceState.overrides?.['page.linkGroupLayout'] || 'list';
 	
+	// Get link group configs from overrides or defaults
+	$: gridConfig = (() => {
+		const override = $previewAppearanceState.overrides?.['page.linkGroupConfig.grid'];
+		if (override) return override;
+		// Fallback to theme default or hardcoded
+		return {
+			columns: 2,
+			aspectRatio: 'square',
+			showLabels: true,
+			imagePadding: false
+		};
+	})();
+	
+	$: cardConfig = (() => {
+		const override = $previewAppearanceState.overrides?.['page.linkGroupConfig.cards'];
+		if (override) return override;
+		return {
+			imagePosition: 'left',
+			imageSize: 50,
+			imageAspect: 'square',
+			showSubtitle: true,
+			imagePadding: false
+		};
+	})();
+	
+	$: listConfig = (() => {
+		const override = $previewAppearanceState.overrides?.['page.linkGroupConfig.list'];
+		if (override) return override;
+		return {
+			iconPosition: 'left',
+			textAlign: 'center'
+		};
+	})();
+	
 	// Get socialIconPosition from overrides or default
 	$: socialIconPosition = $previewAppearanceState.overrides?.['page.socialIconPosition'] || 'header';
 	
@@ -253,12 +287,73 @@
 					<!-- Links -->
 					<div class="relative" style="margin-top: 24px;">
 						{#if linkGroupLayout === 'grid'}
-							<!-- Grid Layout (2 columns) -->
-							<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: {blockGap}px;">
+							<!-- Grid Layout -->
+							{@const isCompactGrid = gridConfig.columns >= 3}
+							{@const isVeryCompactGrid = gridConfig.columns >= 4}
+							{@const gridPadding = isVeryCompactGrid ? 2 : (isCompactGrid ? 3 : 4)}
+							{@const gridGap = isVeryCompactGrid ? 2 : (isCompactGrid ? 3 : blockGap)}
+							{@const fontSize = isVeryCompactGrid ? '6px' : (isCompactGrid ? '7px' : '10px')}
+							{@const borderRadius = isVeryCompactGrid ? '4px' : (isCompactGrid ? '6px' : blockBorderRadius)}
+							{@const blockRadiusNum = parseInt(borderRadius)}
+							{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - gridPadding)}px`}
+							{@const _ = console.log('🔍 Grid Config:', gridConfig, '| imagePadding:', gridConfig.imagePadding, 'type:', typeof gridConfig.imagePadding, '| blockRadius:', borderRadius, '| imageRadius:', imageBorderRadius)}
+							<div style="display: grid; grid-template-columns: repeat({gridConfig.columns}, 1fr); gap: {gridGap}px;">
 								{#each realLinks as link}
 									{@const parts = link.title.split(' - ')}
 									{@const headline = parts[0]}
 									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+									{@const hasImage = !!link.icon_url}
+									{@const showImageOnly = hasImage && !gridConfig.imagePadding && !gridConfig.showLabels}
+									{@const __ = console.log('🎨 Link:', headline, '| hasImage:', hasImage, '| imagePadding:', gridConfig.imagePadding, '| showLabels:', gridConfig.showLabels, '| showImageOnly:', showImageOnly)}
+									
+									<div
+										class="link-button font-medium transition-transform hover:scale-[1.02] {gridConfig.imagePadding || gridConfig.showLabels ? 'flex flex-col items-center justify-center' : 'overflow-hidden'}"
+										style="
+											background-color: {showImageOnly ? 'transparent' : ($previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6')};
+											color: {$previewAppearance?.blockStyle?.text || 'white'};
+											border: {$previewAppearance?.blockStyle?.border || 'none'};
+											box-shadow: {$previewAppearance?.blockStyle?.glow ? `0 0 20px ${$previewAppearance.blockStyle.glow}` : ($previewAppearance?.blockStyle?.shadow || 'none')};
+											backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
+											-webkit-backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
+											border-radius: {borderRadius};
+											padding: {gridConfig.imagePadding ? `${gridPadding}px` : '0'};
+											aspect-ratio: {gridConfig.aspectRatio === 'square' ? '1' : gridConfig.aspectRatio === 'portrait' ? '3/4' : '4/3'};
+											font-size: {fontSize};
+											line-height: 1.2;
+										"
+									>
+										{#if link.icon_url}
+											{@const imageRadius = gridConfig.imagePadding 
+												? imageBorderRadius 
+												: gridConfig.showLabels 
+													? `${borderRadius} ${borderRadius} 0 0` 
+													: borderRadius}
+											<img 
+												src={link.icon_url} 
+												alt="" 
+												class="object-cover {iconShapeClass} {showImageOnly ? 'w-full h-full' : 'w-full h-auto'}"
+												style="
+													{showImageOnly ? '' : 'flex: 1; min-height: 0;'}
+													border-radius: {imageRadius};
+												"
+											/>
+										{/if}
+										{#if gridConfig.showLabels}
+											<div class="font-semibold leading-tight truncate w-full text-center" style="margin-top: {isVeryCompactGrid ? '1px' : '2px'}; padding: {gridConfig.imagePadding ? '0' : '4px'};">{headline}</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{:else if linkGroupLayout === 'cards'}
+							<!-- Card Layout -->
+							<div style="display: flex; flex-direction: column; gap: {blockGap}px;">
+								{#each realLinks as link, index}
+									{@const parts = link.title.split(' - ')}
+									{@const headline = parts[0]}
+									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+									{@const position = cardConfig.imagePosition === 'alternate' 
+										? (index % 2 === 0 ? 'left' : 'right')
+										: cardConfig.imagePosition}
 									
 									<div
 										class="link-button block text-xs font-medium transition-transform hover:scale-[1.02]"
@@ -270,18 +365,31 @@
 											backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
 											-webkit-backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
 											border-radius: {blockBorderRadius};
-											text-align: center;
-											padding: {Math.round(blockPaddingY * 0.67)}px {Math.round(blockPaddingX * 0.5)}px;
+											padding: {Math.round(blockPaddingY * 0.67)}px {Math.round(blockPaddingX * 0.67)}px;
+											display: flex;
+											align-items: center;
+											gap: {Math.round(blockPaddingX * 0.5)}px;
+											flex-direction: {position === 'right' ? 'row-reverse' : 'row'};
 										"
 									>
 										{#if link.icon_url}
 											<img 
 												src={link.icon_url} 
 												alt="" 
-												class="w-full aspect-square object-cover mb-1 {iconShapeClass}"
+												class="object-cover flex-shrink-0 {iconShapeClass}"
+												style="
+													width: {cardConfig.imageSize}%;
+													aspect-ratio: {cardConfig.imageAspect === 'square' ? '1' : cardConfig.imageAspect === 'portrait' ? '3/4' : '4/3'};
+													padding: {cardConfig.imagePadding ? '4px' : '0'};
+												"
 											/>
 										{/if}
-										<div class="font-semibold text-[10px] leading-tight">{headline}</div>
+										<div class="flex-1 min-w-0">
+											<div class="font-semibold text-[10px] leading-tight truncate">{headline}</div>
+											{#if subtitle && cardConfig.showSubtitle}
+												<div class="text-[8px] mt-0.5 opacity-70 truncate">{subtitle}</div>
+											{/if}
+										</div>
 									</div>
 								{/each}
 							</div>

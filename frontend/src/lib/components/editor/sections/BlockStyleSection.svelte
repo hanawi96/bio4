@@ -21,7 +21,7 @@
 	// Current selected recipe (simplified logic)
 	$: currentRecipeId =
 		($appearanceState.overrides?.['block.stylePreset'] as BlockStylePresetId) ||
-		$appearance?.theme?.config?.defaults?.blockStylePreset ||
+		$appearance?.theme?.config?.page?.defaults?.blockStylePreset ||
 		'solid';
 
 	// Select recipe

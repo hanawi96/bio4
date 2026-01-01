@@ -62,6 +62,23 @@ export function getPresetValue(
         
         // Other block properties (borderRadius, etc.) have no preset
         return undefined;
+    } else if (path.startsWith('page.linkGroupConfig.')) {
+        // Link group config value (e.g., 'page.linkGroupConfig.grid.columns')
+        const configPath = path.replace('page.linkGroupConfig.', '');
+        const [layoutType, ...configKeys] = configPath.split('.');
+        
+        let value = preset.config.page?.defaults?.linkGroupConfig?.[layoutType as 'grid' | 'cards' | 'list'];
+        
+        // Navigate nested path
+        for (const key of configKeys) {
+            if (value && typeof value === 'object') {
+                value = value[key as keyof typeof value];
+            } else {
+                return undefined;
+            }
+        }
+        
+        return value;
     } else if (path === 'backgroundColor') {
         // Special case: Convert bg token to CSS string for comparison
         const bgToken = preset.config.tokens?.bg;

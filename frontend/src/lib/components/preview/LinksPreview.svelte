@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { groups } from '$lib/stores/page';
 	import { appearance } from '$lib/stores/appearance';
-	import { resolveShadow } from '$lib/appearance/tokenResolver';
+	// import { resolveShadow } from '$lib/appearance/tokenResolver';
 	
 	// Resolve shadow with shadowColor token (for hard shadows)
-	$: resolvedShadow = resolveShadow(
-		$appearance?.blockStyle?.shadow,
-		$appearance?.tokens?.shadowColor || '#000000'
-	);
+	// $: resolvedShadow = resolveShadow(
+	// 	$appearance?.blockStyle?.shadow,
+	// 	$appearance?.tokens?.shadowColor || '#000000'
+	// );
 </script>
 
 <div class="flex flex-col gap-6 px-8 max-w-2xl mx-auto">
