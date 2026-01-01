@@ -6,6 +6,15 @@
 	export let blockPaddingX: number;
 	export let blockPaddingY: number;
 	export let blockBorderRadiusType: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
+	export let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
+	
+	// Disable "full" option for grid and card layouts
+	$: isFullDisabled = selectedLinkGroupLayout === 'grid' || selectedLinkGroupLayout === 'cards';
+	
+	// Auto-adjust to 'xl' if currently 'full' and switching to grid/card
+	$: if (isFullDisabled && blockBorderRadiusType === 'full') {
+		blockBorderRadiusType = 'xl';
+	}
 </script>
 
 <section class="card-ios p-6">
@@ -99,10 +108,16 @@
 					<option value="md">Medium (8px)</option>
 					<option value="lg">Large (12px)</option>
 					<option value="xl">Extra Large (16px)</option>
-					<option value="full">Full (Pill/Rounded)</option>
+					<option value="full" disabled={isFullDisabled}>
+						Full (Pill/Rounded) {isFullDisabled ? '- Not available for Grid/Card' : ''}
+					</option>
 				</select>
 				<p class="text-xs text-gray-500 mt-1">
-					Border radius style for blocks/links
+					{#if isFullDisabled}
+						<span class="text-orange-600">Full radius disabled for Grid/Card layouts</span>
+					{:else}
+						Border radius style for blocks/links
+					{/if}
 				</p>
 			</div>
 		</div>

@@ -89,9 +89,19 @@
 		return 'rgba(0, 0, 0, 0.7)';
 	})();
 
-	$: blockBorderRadius = $previewAppearanceState.overrides?.['block.borderRadius'] 
-		? `${$previewAppearanceState.overrides['block.borderRadius']}px`
-		: '12px';
+	let blockBorderRadius: string;
+	
+	$: {
+		const radiusOverride = $previewAppearanceState.overrides?.['block.borderRadius'];
+		console.log('🔍 blockBorderRadius Debug:', {
+			radiusOverride,
+			type: typeof radiusOverride,
+			isDefined: radiusOverride !== undefined,
+			allOverrides: $previewAppearanceState.overrides
+		});
+		blockBorderRadius = radiusOverride !== undefined ? `${radiusOverride}px` : '12px';
+		console.log('✅ Final blockBorderRadius:', blockBorderRadius);
+	}
 
 	// Get linkIconShape from overrides or default
 	$: linkIconShape = $previewAppearanceState.overrides?.['page.linkIconShape'] || 'rounded';
@@ -296,15 +306,16 @@
 							{@const borderRadius = isVeryCompactGrid ? '4px' : (isCompactGrid ? '6px' : blockBorderRadius)}
 							{@const blockRadiusNum = parseInt(borderRadius)}
 							{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - gridPadding)}px`}
-							{@const _ = console.log('🔍 Grid Config:', gridConfig, '| imagePadding:', gridConfig.imagePadding, 'type:', typeof gridConfig.imagePadding, '| blockRadius:', borderRadius, '| imageRadius:', imageBorderRadius)}
 							<div style="display: grid; grid-template-columns: repeat({gridConfig.columns}, 1fr); gap: {gridGap}px;">
 								{#each realLinks as link}
-									{@const parts = link.title.split(' - ')}
-									{@const headline = parts[0]}
-									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+									{@const headline = link.title.split(' - ')[0]}
 									{@const hasImage = !!link.icon_url}
 									{@const showImageOnly = hasImage && !gridConfig.imagePadding && !gridConfig.showLabels}
-									{@const __ = console.log('🎨 Link:', headline, '| hasImage:', hasImage, '| imagePadding:', gridConfig.imagePadding, '| showLabels:', gridConfig.showLabels, '| showImageOnly:', showImageOnly)}
+									{@const imageRadius = gridConfig.imagePadding 
+										? imageBorderRadius 
+										: gridConfig.showLabels 
+											? `${borderRadius} ${borderRadius} 0 0` 
+											: borderRadius}
 									
 									<div
 										class="link-button font-medium transition-transform hover:scale-[1.02] {gridConfig.imagePadding || gridConfig.showLabels ? 'flex flex-col items-center justify-center' : 'overflow-hidden'}"
@@ -322,12 +333,7 @@
 											line-height: 1.2;
 										"
 									>
-										{#if link.icon_url}
-											{@const imageRadius = gridConfig.imagePadding 
-												? imageBorderRadius 
-												: gridConfig.showLabels 
-													? `${borderRadius} ${borderRadius} 0 0` 
-													: borderRadius}
+										{#if hasImage}
 											<img 
 												src={link.icon_url} 
 												alt="" 
@@ -346,6 +352,9 @@
 							</div>
 						{:else if linkGroupLayout === 'cards'}
 							<!-- Card Layout -->
+							{@const cardPadding = 4}
+							{@const blockRadiusNum = parseInt(blockBorderRadius)}
+							{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - cardPadding)}px`}
 							<div style="display: flex; flex-direction: column; gap: {blockGap}px;">
 								{#each realLinks as link, index}
 									{@const parts = link.title.split(' - ')}
@@ -354,9 +363,14 @@
 									{@const position = cardConfig.imagePosition === 'alternate' 
 										? (index % 2 === 0 ? 'left' : 'right')
 										: cardConfig.imagePosition}
+									{@const imageRadius = cardConfig.imagePadding 
+										? imageBorderRadius 
+										: position === 'right'
+											? `0 ${blockBorderRadius} ${blockBorderRadius} 0`
+											: `${blockBorderRadius} 0 0 ${blockBorderRadius}`}
 									
 									<div
-										class="link-button block text-xs font-medium transition-transform hover:scale-[1.02]"
+										class="link-button block text-xs font-medium transition-transform hover:scale-[1.02] {cardConfig.imagePadding ? '' : 'overflow-hidden'}"
 										style="
 											background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 											color: {$previewAppearance?.blockStyle?.text || 'white'};
@@ -365,10 +379,10 @@
 											backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
 											-webkit-backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
 											border-radius: {blockBorderRadius};
-											padding: {Math.round(blockPaddingY * 0.67)}px {Math.round(blockPaddingX * 0.67)}px;
+											padding: {cardConfig.imagePadding ? `${cardPadding}px` : '0'};
 											display: flex;
 											align-items: center;
-											gap: {Math.round(blockPaddingX * 0.5)}px;
+											gap: {cardConfig.imagePadding ? `${cardPadding}px` : '0'};
 											flex-direction: {position === 'right' ? 'row-reverse' : 'row'};
 										"
 									>
@@ -380,11 +394,11 @@
 												style="
 													width: {cardConfig.imageSize}%;
 													aspect-ratio: {cardConfig.imageAspect === 'square' ? '1' : cardConfig.imageAspect === 'portrait' ? '3/4' : '4/3'};
-													padding: {cardConfig.imagePadding ? '4px' : '0'};
+													border-radius: {imageRadius};
 												"
 											/>
 										{/if}
-										<div class="flex-1 min-w-0">
+										<div class="flex-1 min-w-0" style="padding: {cardConfig.imagePadding ? '0' : '8px'};">
 											<div class="font-semibold text-[10px] leading-tight truncate">{headline}</div>
 											{#if subtitle && cardConfig.showSubtitle}
 												<div class="text-[8px] mt-0.5 opacity-70 truncate">{subtitle}</div>

@@ -453,7 +453,12 @@
 			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity));
 			
 			// Resolve blockBorderRadius from centralized tokens
-			const radiusValue = RADIUS_TOKENS[blockBorderRadiusType] || 12;
+			const radiusValue = RADIUS_TOKENS[blockBorderRadiusType] ?? 12;
+			console.log('🎯 Setting block.borderRadius:', {
+				blockBorderRadiusType,
+				radiusValue,
+				RADIUS_TOKENS
+			});
 			
 			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? (
 				bgGradientType === 'linear' 
@@ -727,6 +732,7 @@
 					bind:blockPaddingX
 					bind:blockPaddingY
 					bind:blockBorderRadiusType
+					selectedLinkGroupLayout={selectedLinkGroupLayout}
 				/>
 
 				<!-- Theme Configuration -->
