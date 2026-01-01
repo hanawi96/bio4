@@ -29,7 +29,7 @@
 	let saving = false;
 	let error = '';
 
-	let baseThemeKey = 'minimal';
+	let baseThemeKey = ''; // Empty initially, will be set when themes load
 	let name = '';
 	let description = '';
 	let category = 'minimal';
@@ -86,12 +86,10 @@
 	let pageBgColor = '#fafafa';
 	
 	// Typography fields
-	let baseFontSize: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' = 'base';
 	let headingFontSize: 'lg' | 'xl' | '2xl' = '2xl';
-	let bodyFontWeight: 'normal' | 'medium' = 'normal';
-	let headingFontWeight: 'medium' | 'semibold' | 'bold' = 'bold';
-	let bodyLineHeight: 'tight' | 'normal' | 'relaxed' = 'normal';
-	let headingLineHeight: 'tight' | 'normal' | 'relaxed' = 'tight';
+	let linkFontSize: 'xs' | 'sm' | 'base' | 'lg' = 'sm';
+	let bioFontSize: 'xs' | 'sm' | 'base' = 'sm';
+	let subtitleFontSize: 'xs' | 'sm' = 'xs';
 	
 	// Background fields
 	let bgType: 'solid' | 'gradient' | 'image' = 'solid';
@@ -138,7 +136,9 @@
 				}
 			}
 			
+			// Set baseThemeKey to first theme and load it
 			if (themes.length > 0) {
+				baseThemeKey = themes[0].key;
 				loadBaseTheme(themes[0].key);
 			}
 		} catch (e) {
@@ -219,36 +219,26 @@
 		borderColor = resolveRef(theme.config.semantic?.color?.border?.default) || '#e4e4e7';
 		borderWidth = theme.config.page?.defaults?.borderWidth || 1;
 		
-		// Extract typography - font sizes
-		const sizeMap: Record<number, typeof baseFontSize> = {
-			12: 'xs', 14: 'sm', 16: 'base', 18: 'lg', 20: 'xl', 24: '2xl'
+		// Extract typography - font sizes (optimized with shared mapping)
+		const fontSizeToKey = (size: number, validKeys: string[]): string => {
+			const map: Record<number, string> = {
+				12: 'xs', 14: 'sm', 16: 'base', 18: 'lg', 20: 'xl', 24: '2xl'
+			};
+			const key = map[size];
+			return (key && validKeys.includes(key)) ? key : validKeys[0];
 		};
-		const headingSizeMap: Record<number, typeof headingFontSize> = {
-			18: 'lg', 20: 'xl', 24: '2xl'
-		};
-		
-		const bodySize = resolveRef(theme.config.semantic?.typography?.body?.fontSize);
-		baseFontSize = (typeof bodySize === 'number' && sizeMap[bodySize]) || 'base';
 		
 		const headingSize = resolveRef(theme.config.semantic?.typography?.heading?.fontSize);
-		headingFontSize = (typeof headingSize === 'number' && headingSizeMap[headingSize]) || '2xl';
+		headingFontSize = fontSizeToKey(headingSize, ['lg', 'xl', '2xl']) as typeof headingFontSize;
 		
-		// Extract typography - font weights
-		const bodyWeight = resolveRef(theme.config.semantic?.typography?.body?.fontWeight);
-		bodyFontWeight = bodyWeight === 500 ? 'medium' : 'normal';
+		const linkSize = resolveRef(theme.config.semantic?.typography?.link?.fontSize);
+		linkFontSize = fontSizeToKey(linkSize, ['xs', 'sm', 'base', 'lg']) as typeof linkFontSize;
 		
-		const headingWeight = resolveRef(theme.config.semantic?.typography?.heading?.fontWeight);
-		headingFontWeight = headingWeight === 600 ? 'semibold' : headingWeight === 500 ? 'medium' : 'bold';
+		const bioSize = resolveRef(theme.config.semantic?.typography?.bio?.fontSize);
+		bioFontSize = fontSizeToKey(bioSize, ['xs', 'sm', 'base']) as typeof bioFontSize;
 		
-		// Extract typography - line heights
-		const lineHeightMap: Record<number, typeof bodyLineHeight> = {
-			1.25: 'tight', 1.5: 'normal', 1.75: 'relaxed'
-		};
-		const bodyLH = resolveRef(theme.config.semantic?.typography?.body?.lineHeight);
-		bodyLineHeight = (typeof bodyLH === 'number' && lineHeightMap[bodyLH]) || 'normal';
-		
-		const headingLH = resolveRef(theme.config.semantic?.typography?.heading?.lineHeight);
-		headingLineHeight = (typeof headingLH === 'number' && lineHeightMap[headingLH]) || 'tight';
+		const subtitleSize = resolveRef(theme.config.semantic?.typography?.subtitle?.fontSize);
+		subtitleFontSize = fontSizeToKey(subtitleSize, ['xs', 'sm']) as typeof subtitleFontSize;
 		
 		// Extract more colors
 		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
@@ -352,6 +342,9 @@
 			config.page.layout.blockGap = blockGap;
 			config.page.layout.textAlign = textAlign;
 			
+			// Set baseFontSize to M (base/16px) for contract controls
+			config.page.layout.baseFontSize = 'M';
+			
 			// Update block padding
 			if (!config.page.layout.blockPadding) config.page.layout.blockPadding = {};
 			config.page.layout.blockPadding.x = blockPaddingX;
@@ -392,12 +385,27 @@
 			if (!config.semantic.typography.body) config.semantic.typography.body = {};
 			if (!config.semantic.typography.heading) config.semantic.typography.heading = {};
 			
-			config.semantic.typography.body.fontSize = `ref:tokens.typography.fontSize.${baseFontSize}`;
-			config.semantic.typography.body.fontWeight = `ref:tokens.typography.fontWeight.${bodyFontWeight}`;
-			config.semantic.typography.body.lineHeight = `ref:tokens.typography.lineHeight.${bodyLineHeight}`;
+			// Set default values for body (since we removed the controls)
+			config.semantic.typography.body.fontSize = `ref:tokens.typography.fontSize.base`;
+			config.semantic.typography.body.fontWeight = `ref:tokens.typography.fontWeight.normal`;
+			config.semantic.typography.body.lineHeight = `ref:tokens.typography.lineHeight.normal`;
+			
+			// Set heading values from controls
 			config.semantic.typography.heading.fontSize = `ref:tokens.typography.fontSize.${headingFontSize}`;
-			config.semantic.typography.heading.fontWeight = `ref:tokens.typography.fontWeight.${headingFontWeight}`;
-			config.semantic.typography.heading.lineHeight = `ref:tokens.typography.lineHeight.${headingLineHeight}`;
+			config.semantic.typography.heading.fontWeight = `ref:tokens.typography.fontWeight.bold`;
+			config.semantic.typography.heading.lineHeight = `ref:tokens.typography.lineHeight.tight`;
+			
+			// Update link typography
+			if (!config.semantic.typography.link) config.semantic.typography.link = {};
+			config.semantic.typography.link.fontSize = `ref:tokens.typography.fontSize.${linkFontSize}`;
+			
+			// Update bio typography
+			if (!config.semantic.typography.bio) config.semantic.typography.bio = {};
+			config.semantic.typography.bio.fontSize = `ref:tokens.typography.fontSize.${bioFontSize}`;
+			
+			// Update subtitle typography
+			if (!config.semantic.typography.subtitle) config.semantic.typography.subtitle = {};
+			config.semantic.typography.subtitle.fontSize = `ref:tokens.typography.fontSize.${subtitleFontSize}`;
 			
 			// Update more colors
 			config.semantic.color.text.muted = mutedTextColor;
@@ -442,7 +450,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
 		updateConfig();
 	}
 
@@ -455,6 +463,12 @@
 			// Resolve blockBorderRadius from centralized tokens
 			const radiusValue = RADIUS_TOKENS[blockBorderRadiusType] ?? 12;
 			
+			// Convert headingFontSize to pixel value for titleFontSize
+			const headingSizeMap: Record<typeof headingFontSize, number> = {
+				lg: 18, xl: 20, '2xl': 24
+			};
+			const titleFontSizePx = headingSizeMap[headingFontSize] || 20;
+			
 			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? (
 				bgGradientType === 'linear' 
 					? (bgGradientMiddleEnabled ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})`)
@@ -465,7 +479,10 @@
 				headerPresetId: selectedHeaderPreset,
 				overrides: {
 					'page.blockGap': blockGap,
-					'page.titleFontSize': 20,
+					'page.titleFontSize': titleFontSizePx,
+					'page.linkFontSize': linkFontSize,
+					'page.bioFontSize': bioFontSize,
+					'page.subtitleFontSize': subtitleFontSize,
 					'page.maxWidth': maxWidth,
 					'page.textAlign': textAlign,
 					'page.pagePadding': pagePadding,
@@ -517,7 +534,51 @@
 			name,
 			description,
 			category,
-			tier
+			tier,
+			contract: {
+				controls: [
+					{
+						keyPath: 'page.layout.baseFontSize',
+						type: 'select',
+						label: 'Font Size',
+						options: ['S', 'M', 'L', 'XL'],
+						default: config.page?.layout?.baseFontSize || 'M',
+						map: {
+							S: 'ref:tokens.typography.fontSize.sm',
+							M: 'ref:tokens.typography.fontSize.base',
+							L: 'ref:tokens.typography.fontSize.lg',
+							XL: 'ref:tokens.typography.fontSize.xl'
+						}
+					},
+					{
+						keyPath: 'page.layout.textAlign',
+						type: 'select',
+						label: 'Text Alignment',
+						options: ['left', 'center', 'right'],
+						default: config.page?.layout?.textAlign || 'center'
+					},
+					{
+						keyPath: 'page.layout.pagePadding',
+						type: 'slider',
+						label: 'Page Padding',
+						min: 8,
+						max: 32,
+						step: 4,
+						default: config.page?.layout?.pagePadding || 16,
+						unit: 'px'
+					},
+					{
+						keyPath: 'page.layout.blockGap',
+						type: 'slider',
+						label: 'Block Spacing',
+						min: 8,
+						max: 32,
+						step: 2,
+						default: config.page?.layout?.blockGap || 14,
+						unit: 'px'
+					}
+				]
+			}
 		};
 
 		saving = true;
@@ -702,12 +763,10 @@
 				<!-- Typography -->
 				<ThemeTypography
 					bind:fontFamily
-					bind:baseFontSize
 					bind:headingFontSize
-					bind:bodyFontWeight
-					bind:headingFontWeight
-					bind:bodyLineHeight
-					bind:headingLineHeight
+					bind:linkFontSize
+					bind:bioFontSize
+					bind:subtitleFontSize
 				/>
 
 				<!-- Link Group Layout -->
@@ -776,7 +835,6 @@
 					{blockPaddingX}
 					{blockPaddingY}
 					{fontFamily}
-					{baseFontSize}
 					{headingFontSize}
 					{primaryColor}
 					{textColor}

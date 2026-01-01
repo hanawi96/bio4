@@ -36,17 +36,85 @@
 <section class="card-ios p-6">
 	<h2 class="text-lg font-semibold text-gray-900 mb-4">Link Group Layout</h2>
 	<div class="space-y-6">
-		<!-- Layout Type Selector -->
+		<!-- Layout Type Selector - Card Style -->
 		<div>
-			<label for="linkGroupLayout" class="block text-sm font-medium text-gray-700 mb-2">
+			<label class="block text-sm font-medium text-gray-700 mb-2">
 				Default Layout
 			</label>
-			<select id="linkGroupLayout" bind:value={selectedLinkGroupLayout} class="input-ios">
-				<option value="list">List - Vertical stacked links</option>
-				<option value="grid">Grid - 2 column grid layout</option>
-				<option value="cards">Cards - Card style with images</option>
-			</select>
-			<p class="text-xs text-gray-500 mt-1">Default layout style for link groups</p>
+			<div class="grid grid-cols-3 gap-3">
+				<!-- List Layout -->
+				<button
+					type="button"
+					on:click={() => selectedLinkGroupLayout = 'list'}
+					class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLinkGroupLayout === 'list' 
+						? 'bg-blue-50 ring-2 ring-blue-500' 
+						: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
+				>
+					<!-- Preview -->
+					<div class="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 rounded-md p-2.5 flex flex-col gap-1.5 shadow-sm">
+						<div class="w-full h-3 bg-gray-300 rounded"></div>
+						<div class="w-full h-3 bg-gray-300 rounded"></div>
+						<div class="w-full h-3 bg-gray-300 rounded"></div>
+						<div class="w-full h-3 bg-gray-300 rounded"></div>
+						<div class="w-full h-3 bg-gray-300 rounded"></div>
+					</div>
+					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'list' ? 'text-blue-700' : 'text-gray-700'}">List</p>
+				</button>
+
+				<!-- Grid Layout -->
+				<button
+					type="button"
+					on:click={() => selectedLinkGroupLayout = 'grid'}
+					class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLinkGroupLayout === 'grid' 
+						? 'bg-blue-50 ring-2 ring-blue-500' 
+						: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
+				>
+					<!-- Preview -->
+					<div class="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 rounded-md p-2.5 grid grid-cols-2 gap-1.5 shadow-sm">
+						<div class="bg-gray-300 rounded"></div>
+						<div class="bg-gray-300 rounded"></div>
+						<div class="bg-gray-300 rounded"></div>
+						<div class="bg-gray-300 rounded"></div>
+					</div>
+					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'grid' ? 'text-blue-700' : 'text-gray-700'}">Grid</p>
+				</button>
+
+				<!-- Card Layout -->
+				<button
+					type="button"
+					on:click={() => selectedLinkGroupLayout = 'cards'}
+					class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLinkGroupLayout === 'cards' 
+						? 'bg-blue-50 ring-2 ring-blue-500' 
+						: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
+				>
+					<!-- Preview -->
+					<div class="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 rounded-md p-2.5 flex flex-col gap-1.5 shadow-sm">
+						<div class="flex gap-1.5 items-center">
+							<div class="w-8 h-8 bg-blue-300 rounded"></div>
+							<div class="flex-1 flex flex-col gap-1">
+								<div class="w-full h-1.5 bg-gray-300 rounded"></div>
+								<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
+							</div>
+						</div>
+						<div class="flex gap-1.5 items-center">
+							<div class="w-8 h-8 bg-blue-300 rounded"></div>
+							<div class="flex-1 flex flex-col gap-1">
+								<div class="w-full h-1.5 bg-gray-300 rounded"></div>
+								<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
+							</div>
+						</div>
+						<div class="flex gap-1.5 items-center">
+							<div class="w-8 h-8 bg-blue-300 rounded"></div>
+							<div class="flex-1 flex flex-col gap-1">
+								<div class="w-full h-1.5 bg-gray-300 rounded"></div>
+								<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
+							</div>
+						</div>
+					</div>
+					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'cards' ? 'text-blue-700' : 'text-gray-700'}">Cards</p>
+				</button>
+			</div>
+			<p class="text-xs text-gray-500 mt-2">Default layout style for link groups</p>
 		</div>
 
 		<!-- Grid Config -->

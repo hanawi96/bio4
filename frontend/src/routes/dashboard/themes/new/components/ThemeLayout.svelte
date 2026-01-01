@@ -98,28 +98,44 @@
 				/>
 				<p class="text-xs text-gray-500 mt-1">Vertical padding inside blocks</p>
 			</div>
-			<div>
-				<label for="blockBorderRadius" class="block text-sm font-medium text-gray-700 mb-2">
-					Block Border Radius
-				</label>
-				<select id="blockBorderRadius" bind:value={blockBorderRadiusType} class="input-ios">
-					<option value="none">None (0px - Square)</option>
-					<option value="sm">Small (4px)</option>
-					<option value="md">Medium (8px)</option>
-					<option value="lg">Large (12px)</option>
-					<option value="xl">Extra Large (16px)</option>
-					<option value="full" disabled={isFullDisabled}>
-						Full (Pill/Rounded) {isFullDisabled ? '- Not available for Grid/Card' : ''}
-					</option>
-				</select>
-				<p class="text-xs text-gray-500 mt-1">
-					{#if isFullDisabled}
-						<span class="text-orange-600">Full radius disabled for Grid/Card layouts</span>
-					{:else}
-						Border radius style for blocks/links
-					{/if}
-				</p>
+		</div>
+		
+		<!-- Block Border Radius - Button Preset (Full Width) -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Block Border Radius
+			</label>
+			<div class="grid grid-cols-6 gap-2">
+				{#each [
+					{ value: 'none', label: 'None', size: '0px' },
+					{ value: 'sm', label: 'Small', size: '4px' },
+					{ value: 'md', label: 'Medium', size: '8px' },
+					{ value: 'lg', label: 'Large', size: '12px' },
+					{ value: 'xl', label: 'XL', size: '16px' },
+					{ value: 'full', label: 'Full', size: 'Pill' }
+				] as option}
+					<button
+						type="button"
+						on:click={() => blockBorderRadiusType = option.value}
+						disabled={option.value === 'full' && isFullDisabled}
+						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadiusType === option.value
+							? 'border-gray-900 bg-gray-50 text-gray-900'
+							: option.value === 'full' && isFullDisabled
+								? 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">{option.label}</div>
+						<div class="text-[10px] opacity-60">{option.size}</div>
+					</button>
+				{/each}
 			</div>
+			<p class="text-xs text-gray-500 mt-1">
+				{#if isFullDisabled}
+					<span class="text-orange-600">Full radius disabled for Grid/Card layouts</span>
+				{:else}
+					Border radius style for blocks/links
+				{/if}
+			</p>
 		</div>
 	</div>
 </section>

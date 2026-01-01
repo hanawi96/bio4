@@ -76,6 +76,19 @@
 	$: textAlign = $previewAppearanceState.overrides?.['page.textAlign'] || 'center';
 	$: pagePadding = $previewAppearanceState.overrides?.['page.pagePadding'] || 16;
 	
+	// Shared font size converter (optimized)
+	const fontSizeKeyToPx = (key: string, defaultPx: number): number => {
+		const sizeMap: Record<string, number> = {
+			xs: 12, sm: 14, base: 16, lg: 18, xl: 20, '2xl': 24
+		};
+		return sizeMap[key] || defaultPx;
+	};
+	
+	// Convert font size keys to pixels
+	$: linkFontSizePx = fontSizeKeyToPx(($previewAppearanceState.overrides?.['page.linkFontSize'] as string) || 'sm', 14);
+	$: bioFontSizePx = fontSizeKeyToPx(($previewAppearanceState.overrides?.['page.bioFontSize'] as string) || 'sm', 14);
+	$: subtitleFontSizePx = fontSizeKeyToPx(($previewAppearanceState.overrides?.['page.subtitleFontSize'] as string) || 'xs', 12);
+	
 	$: overlayGradientColor = (() => {
 		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
 		const bgColor = $previewAppearanceState.overrides?.['backgroundColor'];
@@ -132,7 +145,8 @@
 		if (override) return override;
 		return {
 			iconPosition: 'left',
-			textAlign: textAlign  // Fallback to global textAlign
+			textAlign: textAlign,  // Fallback to global textAlign
+			iconShape: linkIconShape  // Fallback to global iconShape
 		};
 	})();
 	
@@ -142,7 +156,7 @@
 	// Get socialIconPosition from overrides or default
 	$: socialIconPosition = $previewAppearanceState.overrides?.['page.socialIconPosition'] || 'header';
 	
-	// Calculate icon shape CSS class
+	// Calculate icon shape CSS class (use list-specific or global)
 	$: iconShapeClass = linkIconShape === 'circle' ? 'rounded-full' : linkIconShape === 'rounded' ? 'rounded-lg' : '';
 
 	// Get real links from groups (only visible groups with active links)
@@ -195,7 +209,7 @@
 									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
 										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
 										{#if header.showBio && $previewPage?.bio}
-											<p class="bio-text text-sm text-white/90 mt-2 drop-shadow-md" style="display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+											<p class="bio-text text-white/90 mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 												{$previewPage.bio}
 											</p>
 										{/if}
@@ -228,7 +242,7 @@
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
 								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
 								{#if header.showBio && $previewPage?.bio}
-									<p class="bio-text text-sm mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+									<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 										{$previewPage.bio}
 									</p>
 								{/if}
@@ -254,7 +268,7 @@
 							{/if}
 							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $previewPage?.bio}
-								<p class="bio-text text-sm mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+								<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 									{$previewPage.bio}
 								</p>
 							{/if}
@@ -298,7 +312,7 @@
 							{@const isCompactGrid = gridConfig.columns >= 3}
 							{@const isVeryCompactGrid = gridConfig.columns >= 4}
 							{@const gridGap = isVeryCompactGrid ? 2 : (isCompactGrid ? 3 : blockGap)}
-							{@const fontSize = isVeryCompactGrid ? '6px' : (isCompactGrid ? '7px' : '10px')}
+							{@const fontSize = isVeryCompactGrid ? '6px' : (isCompactGrid ? '7px' : `${linkFontSizePx * 0.625}px`)}
 							{@const borderRadius = isVeryCompactGrid ? '4px' : (isCompactGrid ? '6px' : blockBorderRadius)}
 							{@const blockRadiusNum = parseInt(borderRadius)}
 							{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - gridPadding)}px`}
@@ -377,6 +391,7 @@
 											align-items: center;
 											gap: {cardConfig.imagePadding ? `${cardPadding}px` : '0'};
 											flex-direction: {position === 'right' ? 'row-reverse' : 'row'};
+											font-size: {linkFontSizePx * 0.625}px;
 										"
 									>
 										{#if link.icon_url}
@@ -392,9 +407,9 @@
 											/>
 										{/if}
 										<div class="flex-1 min-w-0" style="padding: {cardConfig.imagePadding ? '0' : `${blockPaddingY}px ${blockPaddingX}px`};">
-											<div class="font-semibold text-[10px] leading-tight truncate">{headline}</div>
+											<div class="font-semibold leading-tight truncate" style="font-size: {linkFontSizePx * 0.625}px;">{headline}</div>
 											{#if subtitle && cardConfig.showSubtitle}
-												<div class="text-[8px] mt-0.5 opacity-70 truncate">{subtitle}</div>
+												<div class="mt-0.5 opacity-70 truncate" style="font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 											{/if}
 										</div>
 									</div>
@@ -402,6 +417,10 @@
 							</div>
 						{:else}
 							<!-- List Layout (default) -->
+							{@const listIconShapeClass = (listConfig.iconShape || linkIconShape) === 'circle' ? 'rounded-full' : (listConfig.iconShape || linkIconShape) === 'rounded' ? 'rounded-lg' : ''}
+							{@const showIcon = listConfig.iconPosition !== 'none'}
+							{@const iconOnTop = listConfig.iconPosition === 'top'}
+							
 							<div style="display: flex; flex-direction: column; gap: {blockGap}px;">
 								{#each realLinks as link}
 									{@const parts = link.title.split(' - ')}
@@ -419,27 +438,46 @@
 											-webkit-backdrop-filter: {$previewAppearance?.blockStyle?.blur ? `blur(${$previewAppearance.blockStyle.blur}px)` : 'none'};
 											border-radius: {blockBorderRadius};
 											padding: {blockPaddingY}px {blockPaddingX}px;
+											text-align: {listTextAlign};
+											font-size: {linkFontSizePx}px;
 										"
 									>
-										{#if link.icon_url}
-											<div class="flex items-center gap-3" style="justify-content: {listTextAlign === 'right' ? 'flex-end' : listTextAlign === 'center' ? 'center' : 'flex-start'};">
+										{#if showIcon && link.icon_url && iconOnTop}
+											<!-- Icon on top -->
+											<div class="flex flex-col items-center gap-2">
 												<img 
 													src={link.icon_url} 
 													alt="" 
-													class="w-8 h-8 object-cover flex-shrink-0 {iconShapeClass}"
+													class="w-10 h-10 object-cover {listIconShapeClass}"
 												/>
-												<div class="flex-1" style="text-align: {listTextAlign};">
+												<div>
 													<div class="font-semibold">{headline}</div>
 													{#if subtitle}
 														<div class="text-xs mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'};">{subtitle}</div>
 													{/if}
 												</div>
 											</div>
+										{:else if showIcon && link.icon_url}
+											<!-- Icon on left -->
+											<div class="flex items-center gap-3" style="justify-content: {listTextAlign === 'right' ? 'flex-end' : listTextAlign === 'center' ? 'center' : 'flex-start'};">
+												<img 
+													src={link.icon_url} 
+													alt="" 
+													class="w-8 h-8 object-cover flex-shrink-0 {listIconShapeClass}"
+												/>
+												<div class="flex-1" style="text-align: {listTextAlign};">
+													<div class="font-semibold">{headline}</div>
+													{#if subtitle}
+														<div class="mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {subtitleFontSizePx}px;">{subtitle}</div>
+													{/if}
+												</div>
+											</div>
 										{:else}
+											<!-- No icon or icon hidden -->
 											<div style="text-align: {listTextAlign};">
 												<div class="font-semibold">{headline}</div>
 												{#if subtitle}
-													<div class="text-xs mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'};">{subtitle}</div>
+													<div class="mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 												{/if}
 											</div>
 										{/if}

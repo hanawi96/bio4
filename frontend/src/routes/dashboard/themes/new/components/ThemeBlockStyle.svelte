@@ -281,7 +281,7 @@
 
 		<!-- Link Icon Shape -->
 		<div>
-			<label class="block text-sm font-medium text-gray-700 mb-3">
+			<label class="block text-sm font-medium text-gray-700 mb-2">
 				Link Icon Shape
 			</label>
 			<div class="grid grid-cols-3 gap-3">
@@ -290,19 +290,19 @@
 					<button
 						type="button"
 						on:click={() => selectedLinkIconShape = shape.value}
-						class="group relative rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+						class="group relative rounded-lg overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
 					>
 						<!-- Preview Container -->
 						<div
-							class="aspect-square p-4 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white"
+							class="p-4 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white"
 						>
 							<div
-								class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 {shape.preview}"
+								class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 {shape.preview}"
 							></div>
 						</div>
 						
 						<!-- Name Label -->
-						<div class="py-2 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
+						<div class="py-1.5 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
 							<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
 								{shape.label}
 							</p>

@@ -163,11 +163,8 @@
         "fontWeight": "ref:tokens.typography.fontWeight.normal",
         "lineHeight": "ref:tokens.typography.lineHeight.normal"
       },
-      "caption": {
-        "fontFamily": "ref:tokens.typography.fontFamily.sans",
-        "fontSize": "ref:tokens.typography.fontSize.sm",
-        "fontWeight": "ref:tokens.typography.fontWeight.normal",
-        "lineHeight": "ref:tokens.typography.lineHeight.normal"
+      "link": {
+        "fontSize": "ref:tokens.typography.fontSize.sm"
       }
     }
   },
@@ -197,8 +194,7 @@
       "blockOpacity": 100,
       "linkGroupConfig": {
         "list": {
-          "iconPosition": "left",
-          "textAlign": "center"
+          "iconPosition": "left"
         },
         "grid": {
           "columns": 2,

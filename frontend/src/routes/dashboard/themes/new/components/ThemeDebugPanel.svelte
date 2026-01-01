@@ -10,7 +10,6 @@
 	export let blockPaddingX: number;
 	export let blockPaddingY: number;
 	export let fontFamily: string;
-	export let baseFontSize: string;
 	export let headingFontSize: string;
 	export let primaryColor: string;
 	export let textColor: string;
@@ -63,7 +62,6 @@
 			<div class="text-blue-400 font-bold mb-1">TYPOGRAPHY</div>
 			<div class="pl-2 space-y-0.5">
 				<div>Font: <span class="text-green-400">{fontFamily.split(',')[0]}</span></div>
-				<div>Base Size: <span class="text-green-400">{baseFontSize}</span></div>
 				<div>Heading Size: <span class="text-green-400">{headingFontSize}</span></div>
 			</div>
 		</div>
