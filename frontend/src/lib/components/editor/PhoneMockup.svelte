@@ -51,7 +51,7 @@
 	
 	$: defaultListConfig = (() => {
 		const themeConfig = $appearance?.theme?.config;
-		return themeConfig?.page?.defaults?.linkGroupConfig?.list || { iconPosition: 'left', textAlign: 'center' };
+		return themeConfig?.page?.defaults?.linkGroupConfig?.list || { iconPosition: 'left', textAlign: 'center', iconShape: globalIconShape };
 	})();
 	
 	// Get header from NEW format appearanceState
@@ -843,7 +843,7 @@
 											return defaultListConfig;
 										}
 									})()}
-									{@const iconShapeClass = config.iconShape === 'circle' ? 'rounded-full' : config.iconShape === 'rounded' ? 'rounded-lg' : ''}
+									{@const iconShapeClass = (config.iconShape || globalIconShape) === 'circle' ? 'rounded-full' : (config.iconShape || globalIconShape) === 'rounded' ? 'rounded-lg' : ''}
 									{@const showIcon = config.iconPosition !== 'none'}
 									{@const iconOnTop = config.iconPosition === 'top'}
 									{@const listShadow = resolveLayoutShadow(

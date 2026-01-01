@@ -243,16 +243,41 @@ function convertOldFormat(customTheme: any): any {
 // BLOCK STYLE RESOLVER
 // ============================================
 
+// Helper: Apply opacity to color
+function applyOpacity(color: string, opacity: number): string {
+	if (opacity >= 100) return color;
+	if (!color) return color;
+
+	if (color.startsWith('rgba(')) {
+		return color.replace(/[\d.]+\)$/, `${opacity / 100})`);
+	}
+	if (color.startsWith('rgb(')) {
+		return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity / 100})`);
+	}
+	if (color.startsWith('#')) {
+		const hex = color.replace('#', '');
+		const r = parseInt(hex.substring(0, 2), 16);
+		const g = parseInt(hex.substring(2, 4), 16);
+		const b = parseInt(hex.substring(4, 6), 16);
+		return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+	}
+	if (color.includes('linear-gradient')) {
+		return color.replace(/#[0-9a-fA-F]{6}/g, (hex) => applyOpacity(hex, opacity));
+	}
+	return color;
+}
+
 // Resolve block style recipe with theme tokens
 function resolveBlockStyle(
 	recipeId: BlockStylePresetId,
 	tokens: ThemeTokens,
-	overrides?: Record<string, any>
+	overrides?: Record<string, any>,
+	themeConfig?: any
 ): ResolvedBlockStyle {
 	const recipe = getBlockStyleRecipe(recipeId);
 
 	// Resolve fill color
-	const fill = resolveToken(recipe.fill, tokens);
+	let fill = resolveToken(recipe.fill, tokens);
 
 	// Resolve text color
 	let text: string;
@@ -271,6 +296,16 @@ function resolveBlockStyle(
 	// Resolve shadow - from override only (shadow is not part of recipe)
 	const shadow = overrides?.shadow || undefined;
 
+	// Get blockOpacity from theme config or overrides
+	const blockOpacity = (overrides?.opacity as number) 
+		?? (themeConfig?.page?.defaults?.blockOpacity as number)
+		?? 100;
+
+	// Apply opacity to fill (except for outline and glass which are transparent)
+	if (recipeId !== 'outline' && recipeId !== 'glass' && blockOpacity < 100) {
+		fill = applyOpacity(fill, blockOpacity);
+	}
+
 	return {
 		recipe,
 		fill,
@@ -278,7 +313,8 @@ function resolveBlockStyle(
 		border,
 		glow,
 		blur: recipe.blur,
-		shadow
+		shadow,
+		opacity: blockOpacity
 	};
 }
 
@@ -356,7 +392,7 @@ export function resolveAppearance(
 		|| themeConfig.defaults?.blockStylePreset
 		|| 'solid';
 	const blockStyleId = (blockOverrides.stylePreset || defaultBlockStyleId) as BlockStylePresetId;
-	const blockStyle = resolveBlockStyle(blockStyleId, tokens, blockOverrides);
+	const blockStyle = resolveBlockStyle(blockStyleId, tokens, blockOverrides, themeConfig);
 
 	// Resolve page layout
 	const pageLayout = {

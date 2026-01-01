@@ -204,4 +204,5 @@ export interface ResolvedBlockStyle {
 	glow?: string; // Resolved glow color
 	blur?: number; // Blur amount
 	shadow?: string; // Hard shadow
+	opacity?: number; // Block opacity (0-100)
 }
