@@ -16,6 +16,12 @@
 	const username = 'demo';
 	let loading = true;
 	let error = '';
+	
+	// Get default linkGroupLayout from theme
+	$: defaultLinkGroupLayout = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.page?.defaults?.linkGroupLayout || 'list';
+	})();
 
 	// Bio URL
 	$: bioUrl = `https://biolink.com/${username}`;
@@ -77,7 +83,7 @@
 			currentGroupId = groupId;
 			currentGroupName = group.title || 'Links';
 			currentLinks = group.links || [];
-			currentLayoutType = group.layout_type || 'list';
+			currentLayoutType = group.layout_type || defaultLinkGroupLayout;
 			currentLayoutConfig = group.layout_config || null;
 			viewMode = 'edit-links';
 		}

@@ -32,6 +32,28 @@
 		return overrideTextAlign || themeConfig?.page?.layout?.textAlign || 'center';
 	})();
 	
+	// Get default linkGroupLayout from theme config
+	$: defaultLinkGroupLayout = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.page?.defaults?.linkGroupLayout || 'list';
+	})();
+	
+	// Get default linkGroupConfig from theme config
+	$: defaultGridConfig = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.page?.defaults?.linkGroupConfig?.grid || { columns: 2, aspectRatio: 'square', showLabels: true, imagePadding: false };
+	})();
+	
+	$: defaultCardConfig = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.page?.defaults?.linkGroupConfig?.cards || { imagePosition: 'left', imageSize: 50, imageAspect: 'square', showSubtitle: true, imagePadding: false };
+	})();
+	
+	$: defaultListConfig = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.page?.defaults?.linkGroupConfig?.list || { iconPosition: 'left', textAlign: 'center' };
+	})();
+	
 	// Get header from NEW format appearanceState
 	$: headerPresetId = $appearanceState.headerPresetId || 'no-cover';
 	$: baseHeaderPreset = HEADER_PRESETS[headerPresetId];
@@ -620,8 +642,9 @@
 						
 						{#each $groups.filter(g => (g.is_visible ?? 1) === 1) as group}
 							{@const groupLinks = group.links.filter(l => l.is_active === 1)}
+							{@const effectiveLayoutType = group.layout_type || defaultLinkGroupLayout}
 							{#if groupLinks.length > 0}
-								{#if group.layout_type === 'carousel'}
+								{#if effectiveLayoutType === 'carousel'}
 									<!-- Carousel Layout -->
 									<div class="overflow-x-auto scrollbar-hide -mx-4 px-4">
 										<div class="flex gap-3" style="width: max-content;">
@@ -664,14 +687,14 @@
 											{/each}
 										</div>
 									</div>
-								{:else if group.layout_type === 'grid'}
+								{:else if effectiveLayoutType === 'grid'}
 									<!-- Grid Layout -->
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.grid || { columns: 2, aspectRatio: 'square', showLabels: true, imagePadding: false };
+											return parsed?.grid || defaultGridConfig;
 										} catch {
-											return { columns: 2, aspectRatio: 'square', showLabels: true, imagePadding: false };
+											return defaultGridConfig;
 										}
 									})()}
 									{@const aspectClass = config.aspectRatio === 'portrait' ? 'aspect-[3/4]' : config.aspectRatio === 'landscape' ? 'aspect-video' : 'aspect-square'}
@@ -685,36 +708,41 @@
 										$appearance?.blockStyle?.border,
 										$appearance?.tokens?.blockBase || '#3b82f6'
 									)}
-									{@const imageRadius = config.imagePadding 
-										? '0.5rem' 
-										: config.showLabels 
-											? `${blockBorderRadius} ${blockBorderRadius} 0 0` 
-											: blockBorderRadius}
+									{@const gridPadding = 4}
+									{@const blockRadiusNum = parseInt(blockBorderRadius)}
+									{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - gridPadding)}px`}
 									
 									<div class="grid gap-2" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr));">
 										{#each groupLinks as link}
-											{@const parts = link.title.split(' - ')}
-											{@const headline = parts[0]}
+											{@const headline = link.title.split(' - ')[0]}
+											{@const hasImage = !!link.icon_url}
+											{@const showImageOnly = hasImage && !config.imagePadding && !config.showLabels}
+											{@const imageRadius = config.imagePadding 
+												? imageBorderRadius 
+												: config.showLabels 
+													? `${blockBorderRadius} ${blockBorderRadius} 0 0` 
+													: blockBorderRadius}
 											
 											<a
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? 'p-2' : 'overflow-hidden'}"
+												class="link-button block text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding || config.showLabels ? '' : 'overflow-hidden'}"
 												style="
-													background: {getBlockBackground($appearance?.blockStyle?.fill)};
+													background: {showImageOnly ? 'transparent' : getBlockBackground($appearance?.blockStyle?.fill)};
 													color: {$appearance?.blockStyle?.text || 'white'};
 													border: {gridBorder};
 													box-shadow: {gridShadow};
 													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 													border-radius: {blockBorderRadius};
+													padding: {config.imagePadding ? `${gridPadding}px` : '0'};
 												"
 											>
-												{#if link.icon_url}
+												{#if hasImage}
 													<img 
 														src={link.icon_url} 
 														alt="" 
-														class="w-full object-cover {aspectClass}"
+														class="w-full object-cover {aspectClass} {showImageOnly ? 'h-full' : ''}"
 														style="border-radius: {imageRadius};"
 													/>
 												{/if}
@@ -726,14 +754,14 @@
 											</a>
 										{/each}
 									</div>
-								{:else if group.layout_type === 'cards'}
+								{:else if effectiveLayoutType === 'cards'}
 									<!-- Card Layout (Horizontal) -->
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.card || { imagePosition: 'left', imageSize: 50, imageAspect: 'square', showSubtitle: true, imagePadding: false };
+											return parsed?.card || defaultCardConfig;
 										} catch {
-											return { imagePosition: 'left', imageSize: 50, imageAspect: 'square', showSubtitle: true, imagePadding: false };
+											return defaultCardConfig;
 										}
 									})()}
 									{@const cardShadow = resolveLayoutShadow(
@@ -747,21 +775,29 @@
 										$appearance?.tokens?.blockBase || '#3b82f6'
 									)}
 									{@const aspectClass = config.imageAspect === 'portrait' ? 'aspect-[3/4]' : config.imageAspect === 'landscape' ? 'aspect-video' : 'aspect-square'}
+									{@const cardPadding = 4}
+									{@const blockRadiusNum = parseInt(blockBorderRadius)}
+									{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - cardPadding)}px`}
 									
 									<div class="flex flex-col" style="gap: {blockGap}px;">
 										{#each groupLinks as link, index}
 											{@const parts = link.title.split(' - ')}
 											{@const headline = parts[0]}
 											{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
-											{@const imageWidth = config.imageSize || 50}
-											{@const textWidth = 100 - imageWidth}
-											{@const isReversed = config.imagePosition === 'right' || (config.imagePosition === 'alternate' && index % 2 === 1)}
+											{@const position = config.imagePosition === 'alternate' 
+												? (index % 2 === 0 ? 'left' : 'right')
+												: config.imagePosition}
+											{@const imageRadius = config.imagePadding 
+												? imageBorderRadius 
+												: position === 'right'
+													? `0 ${blockBorderRadius} ${blockBorderRadius} 0`
+													: `${blockBorderRadius} 0 0 ${blockBorderRadius}`}
 											
 											<a
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block w-full transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'}"
+												class="link-button block w-full text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'}"
 												style="
 													background: {getBlockBackground($appearance?.blockStyle?.fill)};
 													color: {$appearance?.blockStyle?.text || 'white'};
@@ -769,27 +805,30 @@
 													box-shadow: {cardShadow} !important;
 													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 													border-radius: {blockBorderRadius};
+													padding: {config.imagePadding ? `${cardPadding}px` : '0'};
+													display: flex;
+													align-items: center;
+													gap: {config.imagePadding ? `${cardPadding}px` : '0'};
+													flex-direction: {position === 'right' ? 'row-reverse' : 'row'};
 												"
 											>
-												<div class="flex {isReversed ? 'flex-row-reverse' : ''} {config.imagePadding ? 'p-2 gap-2' : ''}">
-													{#if link.icon_url}
-														<div class="{aspectClass} {config.imagePadding ? 'rounded-lg overflow-hidden' : ''}" style="width: {imageWidth}%; flex-shrink: 0;">
-															<img 
-																src={link.icon_url} 
-																alt="" 
-																class="w-full h-full object-cover"
-															/>
-														</div>
+												{#if link.icon_url}
+													<img 
+														src={link.icon_url} 
+														alt="" 
+														class="object-cover flex-shrink-0"
+														style="
+															width: {config.imageSize}%;
+															aspect-ratio: {config.imageAspect === 'square' ? '1' : config.imageAspect === 'portrait' ? '3/4' : '4/3'};
+															border-radius: {imageRadius};
+														"
+													/>
+												{/if}
+												<div class="flex-1 min-w-0" style="padding: {config.imagePadding ? '0' : '12px'};">
+													<div class="font-semibold text-sm leading-tight truncate">{headline}</div>
+													{#if subtitle && config.showSubtitle}
+														<div class="text-xs mt-1 opacity-70 truncate">{subtitle}</div>
 													{/if}
-													<div 
-														class="flex flex-col justify-center {config.imagePadding ? 'pr-2' : 'p-4'}"
-														style="width: {link.icon_url ? textWidth : 100}%;"
-													>
-														<div class="font-semibold text-sm">{headline}</div>
-														{#if subtitle && config.showSubtitle}
-															<div class="text-xs opacity-70 mt-1">{subtitle}</div>
-														{/if}
-													</div>
 												</div>
 											</a>
 										{/each}
@@ -799,9 +838,9 @@
 									{@const config = (() => {
 										try {
 											const parsed = group.layout_config ? JSON.parse(group.layout_config) : null;
-											return parsed?.list || { iconShape: globalIconShape, iconPosition: 'left', textAlign: globalTextAlign };
+											return parsed?.list || defaultListConfig;
 										} catch {
-											return { iconShape: globalIconShape, iconPosition: 'left', textAlign: globalTextAlign };
+											return defaultListConfig;
 										}
 									})()}
 									{@const iconShapeClass = config.iconShape === 'circle' ? 'rounded-full' : config.iconShape === 'rounded' ? 'rounded-lg' : ''}

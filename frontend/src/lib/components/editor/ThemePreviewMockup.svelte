@@ -90,17 +90,10 @@
 	})();
 
 	let blockBorderRadius: string;
-	
+
 	$: {
 		const radiusOverride = $previewAppearanceState.overrides?.['block.borderRadius'];
-		console.log('🔍 blockBorderRadius Debug:', {
-			radiusOverride,
-			type: typeof radiusOverride,
-			isDefined: radiusOverride !== undefined,
-			allOverrides: $previewAppearanceState.overrides
-		});
 		blockBorderRadius = radiusOverride !== undefined ? `${radiusOverride}px` : '12px';
-		console.log('✅ Final blockBorderRadius:', blockBorderRadius);
 	}
 
 	// Get linkIconShape from overrides or default

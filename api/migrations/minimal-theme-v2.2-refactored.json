@@ -1,11 +1,11 @@
 {
   "meta": {
-    "id": "theme.minimal.soft.clean",
-    "name": "Minimal Soft Clean",
+    "id": "preset.ttttttttt",
+    "name": "ttttttttt",
     "schemaVersion": 2,
     "version": "2.2.0",
     "author": "system",
-    "description": "Clean white background with soft shadows and centered layout",
+    "description": "",
     "tier": "free",
     "category": "minimal",
     "contract": {
@@ -126,23 +126,23 @@
   },
   "semantic": {
     "color": {
-      "primary": "ref:tokens.color.blue.500",
+      "primary": "#3b82f6",
       "primaryHover": "ref:tokens.color.blue.600",
       "secondary": "ref:tokens.color.gray.500",
       "text": {
-        "default": "ref:tokens.color.gray.900",
-        "muted": "ref:tokens.color.gray.500",
+        "default": "#ffffff",
+        "muted": "#ffffff",
         "subtle": "ref:tokens.color.gray.400",
         "invert": "ref:tokens.color.white"
       },
       "surface": {
-        "page": "ref:tokens.color.gray.50",
+        "page": "radial-gradient(circle farthest-corner at center, #22543d 0%, #38a169 50%, #ecc94b 100%)",
         "card": "ref:tokens.color.white",
         "elevated": "ref:tokens.color.white",
         "overlay": "ref:tokens.color.overlay.50"
       },
       "border": {
-        "default": "ref:tokens.color.gray.200",
+        "default": "#e4e4e7",
         "subtle": "ref:tokens.color.gray.100",
         "strong": "ref:tokens.color.gray.300"
       },
@@ -176,7 +176,7 @@
       "maxWidth": 480,
       "pagePadding": 16,
       "blockGap": 14,
-      "textAlign": "center",
+      "textAlign": "left",
       "baseFontSize": "M",
       "blockPadding": {
         "x": 16,
@@ -185,10 +185,16 @@
     },
     "defaults": {
       "headerPresetId": "no-cover",
-      "blockStylePreset": "solid",
+      "blockStylePreset": "outline",
       "borderWidth": 1,
       "linkStyle": "soft",
-      "linkGroupLayout": "list",
+      "linkGroupLayout": "grid",
+      "linkIconShape": "rounded",
+      "socialIconPosition": "header",
+      "avatarBorderColor": "#ffffff",
+      "avatarBorderWidth": 4,
+      "shadowStyle": "none",
+      "blockOpacity": 100,
       "linkGroupConfig": {
         "list": {
           "iconPosition": "left",
@@ -207,9 +213,7 @@
           "showSubtitle": true,
           "imagePadding": false
         }
-      },
-      "linkIconShape": "rounded",
-      "socialIconPosition": "header"
+      }
     }
   },
   "background": {
@@ -221,7 +225,16 @@
     "effects": {
       "blur": 0,
       "dim": 0,
-      "overlayColor": "ref:tokens.color.overlay.10"
+      "overlayColor": "ref:tokens.color.overlay.10",
+      "brightness": 100,
+      "grayscale": 0
+    }
+  },
+  "recipes": {
+    "link": {
+      "base": {
+        "radius": "ref:tokens.radius.md"
+      }
     }
   }
 }
