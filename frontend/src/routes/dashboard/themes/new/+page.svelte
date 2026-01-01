@@ -72,7 +72,8 @@
 	};
 	let listConfig: import('$lib/types').ListLayoutConfig = {
 		iconPosition: 'left',
-		textAlign: 'center'
+		textAlign: 'center',
+		showSubtitle: true
 	};
 	
 	// Color fields

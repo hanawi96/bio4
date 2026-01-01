@@ -197,6 +197,7 @@ export interface CardLayoutConfig {
 export interface ListLayoutConfig {
 	iconPosition: 'left' | 'top' | 'none';
 	textAlign: 'left' | 'center' | 'right';
+	showSubtitle?: boolean;
 	shadowEnabled?: boolean;
 	borderEnabled?: boolean;
 }

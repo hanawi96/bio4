@@ -194,7 +194,9 @@
       "blockOpacity": 100,
       "linkGroupConfig": {
         "list": {
-          "iconPosition": "left"
+          "iconPosition": "left",
+          "textAlign": "center",
+          "showSubtitle": true
         },
         "grid": {
           "columns": 2,

@@ -146,7 +146,8 @@
 		return {
 			iconPosition: 'left',
 			textAlign: textAlign,  // Fallback to global textAlign
-			iconShape: linkIconShape  // Fallback to global iconShape
+			iconShape: linkIconShape,  // Fallback to global iconShape
+			showSubtitle: true  // Default to show subtitle
 		};
 	})();
 	
@@ -309,11 +310,16 @@
 						{#if linkGroupLayout === 'grid'}
 							<!-- Grid Layout -->
 							{@const gridPadding = 4}
-							{@const isCompactGrid = gridConfig.columns >= 3}
-							{@const isVeryCompactGrid = gridConfig.columns >= 4}
-							{@const gridGap = isVeryCompactGrid ? 2 : (isCompactGrid ? 3 : blockGap)}
-							{@const fontSize = isVeryCompactGrid ? '6px' : (isCompactGrid ? '7px' : `${linkFontSizePx * 0.625}px`)}
-							{@const borderRadius = isVeryCompactGrid ? '4px' : (isCompactGrid ? '6px' : blockBorderRadius)}
+							{@const gridGap = gridConfig.columns >= 3 ? 2 : blockGap}
+							
+							<!-- Responsive font size calculation -->
+							{@const fontSize = gridConfig.columns === 1 ? `${linkFontSizePx}px` 
+								: gridConfig.columns === 2 ? `${linkFontSizePx * 0.7}px`
+								: gridConfig.columns === 3 ? `${linkFontSizePx * 0.5}px`
+								: `${linkFontSizePx * 0.4}px`}
+							
+							<!-- Responsive border radius -->
+							{@const borderRadius = gridConfig.columns >= 3 ? '6px' : blockBorderRadius}
 							{@const blockRadiusNum = parseInt(borderRadius)}
 							{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - gridPadding)}px`}
 							<div style="display: grid; grid-template-columns: repeat({gridConfig.columns}, 1fr); gap: {gridGap}px;">
@@ -352,7 +358,7 @@
 											/>
 										{/if}
 										{#if gridConfig.showLabels}
-											<div class="font-semibold leading-tight truncate w-full text-center" style="margin-top: {isVeryCompactGrid ? '1px' : '4px'}; padding: {gridConfig.imagePadding ? '0' : '0 8px 4px 8px'};">{headline}</div>
+											<div class="font-semibold leading-tight truncate w-full text-center" style="margin-top: 4px; padding: {gridConfig.imagePadding ? '0' : '0 4px 4px 4px'};">{headline}</div>
 										{/if}
 									</div>
 								{/each}
@@ -377,7 +383,7 @@
 											: `${blockBorderRadius} 0 0 ${blockBorderRadius}`}
 									
 									<div
-										class="link-button block text-xs font-medium transition-transform hover:scale-[1.02] {cardConfig.imagePadding ? '' : 'overflow-hidden'}"
+										class="link-button block font-medium transition-transform hover:scale-[1.02] {cardConfig.imagePadding ? '' : 'overflow-hidden'}"
 										style="
 											background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 											color: {$previewAppearance?.blockStyle?.text || 'white'};
@@ -391,7 +397,7 @@
 											align-items: center;
 											gap: {cardConfig.imagePadding ? `${cardPadding}px` : '0'};
 											flex-direction: {position === 'right' ? 'row-reverse' : 'row'};
-											font-size: {linkFontSizePx * 0.625}px;
+											font-size: {linkFontSizePx}px;
 										"
 									>
 										{#if link.icon_url}
@@ -407,7 +413,7 @@
 											/>
 										{/if}
 										<div class="flex-1 min-w-0" style="padding: {cardConfig.imagePadding ? '0' : `${blockPaddingY}px ${blockPaddingX}px`};">
-											<div class="font-semibold leading-tight truncate" style="font-size: {linkFontSizePx * 0.625}px;">{headline}</div>
+											<div class="font-semibold leading-tight truncate" style="font-size: {linkFontSizePx}px;">{headline}</div>
 											{#if subtitle && cardConfig.showSubtitle}
 												<div class="mt-0.5 opacity-70 truncate" style="font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 											{/if}
@@ -452,7 +458,7 @@
 												/>
 												<div>
 													<div class="font-semibold">{headline}</div>
-													{#if subtitle}
+													{#if subtitle && listConfig.showSubtitle}
 														<div class="text-xs mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'};">{subtitle}</div>
 													{/if}
 												</div>
@@ -467,7 +473,7 @@
 												/>
 												<div class="flex-1" style="text-align: {listTextAlign};">
 													<div class="font-semibold">{headline}</div>
-													{#if subtitle}
+													{#if subtitle && listConfig.showSubtitle}
 														<div class="mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 													{/if}
 												</div>
@@ -476,7 +482,7 @@
 											<!-- No icon or icon hidden -->
 											<div style="text-align: {listTextAlign};">
 												<div class="font-semibold">{headline}</div>
-												{#if subtitle}
+												{#if subtitle && listConfig.showSubtitle}
 													<div class="mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 												{/if}
 											</div>

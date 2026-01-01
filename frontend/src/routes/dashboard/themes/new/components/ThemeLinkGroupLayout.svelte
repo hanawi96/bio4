@@ -17,7 +17,8 @@
 	};
 	export let listConfig: ListLayoutConfig = {
 		iconPosition: 'left',
-		textAlign: 'center'
+		textAlign: 'center',
+		showSubtitle: true
 	};
 
 	function updateGridConfig(key: keyof GridLayoutConfig, value: any) {
@@ -332,6 +333,24 @@
 							</button>
 						{/each}
 					</div>
+				</div>
+				
+				<!-- Show Subtitle -->
+				<div class="flex items-center justify-between">
+					<label class="text-xs font-medium text-gray-700">Show Subtitle</label>
+					<button
+						type="button"
+						on:click={() => updateListConfig('showSubtitle', !listConfig.showSubtitle)}
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {listConfig.showSubtitle
+							? 'bg-gray-900'
+							: 'bg-gray-200'}"
+					>
+						<span
+							class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {listConfig.showSubtitle
+								? 'translate-x-6'
+								: 'translate-x-1'}"
+						></span>
+					</button>
 				</div>
 			</div>
 		{/if}
