@@ -45,6 +45,7 @@
 	let blockOpacity: number = 100;
 	let selectedLinkIconShape: 'square' | 'rounded' | 'circle' = 'rounded';
 	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
+	let socialIconPosition: 'header' | 'footer' = 'header';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
 	let maxWidth = 480;
 	let pagePadding = 16;
@@ -88,7 +89,6 @@
 	let bgRadialPosition = 'center';
 	let bgImageUrl = '';
 	let bgBlur = 0;
-	let bgDim = 0;
 	let bgBrightness = 100;
 	let bgGrayscale = 0;
 	
@@ -164,6 +164,7 @@
 		blockOpacity = theme.config.page?.defaults?.blockOpacity || 100;
 		selectedLinkIconShape = theme.config.page?.defaults?.linkIconShape || 'rounded';
 		selectedLinkGroupLayout = theme.config.page?.defaults?.linkGroupLayout || 'list';
+		socialIconPosition = theme.config.page?.defaults?.socialIconPosition || 'header';
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
 		maxWidth = theme.config.page?.layout?.maxWidth || 480;
 		pagePadding = theme.config.page?.layout?.pagePadding || 16;
@@ -233,7 +234,6 @@
 		
 		// Extract background effects
 		bgBlur = theme.config.background?.effects?.blur || 0;
-		bgDim = theme.config.background?.effects?.dim || 0;
 		bgBrightness = theme.config.background?.effects?.brightness || 100;
 		bgGrayscale = theme.config.background?.effects?.grayscale || 0;
 		
@@ -310,6 +310,7 @@
 			config.page.defaults.blockOpacity = blockOpacity;
 			config.page.defaults.linkIconShape = selectedLinkIconShape;
 			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
+			config.page.defaults.socialIconPosition = socialIconPosition;
 			
 			// Update layout
 			if (!config.page.layout) config.page.layout = {};
@@ -381,7 +382,6 @@
 			if (!config.background) config.background = {};
 			if (!config.background.effects) config.background.effects = {};
 			config.background.effects.blur = bgBlur;
-			config.background.effects.dim = bgDim;
 			config.background.effects.brightness = bgBrightness;
 			config.background.effects.grayscale = bgGrayscale;
 			config.background.effects.overlayColor = 'ref:tokens.color.overlay.10';
@@ -418,7 +418,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || socialIconPosition || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
 		updateConfig();
 	}
 
@@ -459,7 +459,8 @@
 					'backgroundBrightness': bgBrightness,
 					'backgroundGrayscale': bgGrayscale,
 					'page.linkIconShape': selectedLinkIconShape,
-					'page.linkGroupLayout': selectedLinkGroupLayout
+					'page.linkGroupLayout': selectedLinkGroupLayout,
+					'page.socialIconPosition': socialIconPosition
 				}
 			});
 			// Don't override previewPage - keep real user data
@@ -635,7 +636,6 @@
 					bind:bgRadialPosition
 					bind:bgImageUrl
 					bind:bgBlur
-					bind:bgDim
 					bind:bgBrightness
 					bind:bgGrayscale
 					{uploading}
@@ -648,6 +648,7 @@
 					bind:coverImageUrl
 					bind:avatarBorderColor
 					bind:avatarBorderWidth
+					bind:socialIconPosition
 					bind:headerPresets
 					{uploading}
 					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}

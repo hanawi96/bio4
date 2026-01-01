@@ -7,6 +7,7 @@
 	export let uploading: boolean;
 	export let avatarBorderColor: string;
 	export let avatarBorderWidth: number;
+	export let socialIconPosition: 'header' | 'footer';
 
 	const dispatch = createEventDispatcher();
 
@@ -212,5 +213,37 @@
 				</div>
 			</div>
 		{/if}
+
+		<!-- Social Icons Position -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-3">Social Icons Position</label>
+			<div class="grid grid-cols-2 gap-3">
+				<button
+					type="button"
+					on:click={() => socialIconPosition = 'header'}
+					class="px-4 py-3 rounded-lg text-sm font-medium transition-all {socialIconPosition === 'header' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+				>
+					<div class="flex flex-col items-center gap-1">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+						</svg>
+						<span>Below Bio</span>
+					</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => socialIconPosition = 'footer'}
+					class="px-4 py-3 rounded-lg text-sm font-medium transition-all {socialIconPosition === 'footer' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+				>
+					<div class="flex flex-col items-center gap-1">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+						</svg>
+						<span>Below Footer</span>
+					</div>
+				</button>
+			</div>
+			<p class="text-xs text-gray-500 mt-2">Choose where to display social media icons</p>
+		</div>
 	</div>
 </section>

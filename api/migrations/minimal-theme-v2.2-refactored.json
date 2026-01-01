@@ -259,7 +259,8 @@
       "blockStylePreset": "solid",
       "linkStyle": "soft",
       "linkGroupLayout": "list",
-      "linkIconShape": "rounded"
+      "linkIconShape": "rounded",
+      "socialIconPosition": "header"
     }
   },
   "background": {
