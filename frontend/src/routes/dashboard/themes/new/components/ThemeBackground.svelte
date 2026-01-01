@@ -3,15 +3,17 @@
 
 	export let bgType: 'solid' | 'gradient' | 'image';
 	export let bgSolidColor: string;
+	export let bgGradientType: 'linear' | 'radial';
 	export let bgGradientFrom: string;
 	export let bgGradientTo: string;
 	export let bgGradientMiddle: string;
 	export let bgGradientMiddleEnabled: boolean;
 	export let bgGradientDirection: string;
+	export let bgRadialShape: 'circle';
+	export let bgRadialPosition: string;
 	export let bgImageUrl: string;
 	export let uploading: boolean;
 	export let bgBlur: number;
-	export let bgDim: number;
 	export let bgBrightness: number;
 	export let bgGrayscale: number;
 
@@ -21,15 +23,15 @@
 	let activeFilter: 'blur' | 'brightness' | 'grayscale' | null = null;
 
 	// Gradient presets
-	const GRADIENT_PRESETS = [
-		{ name: 'Sunset', from: '#ff6b6b', middle: '#ee5a6f', to: '#c44569', enabled: true },
-		{ name: 'Ocean', from: '#667eea', middle: '#48bb78', to: '#38b2ac', enabled: true },
-		{ name: 'Purple Dream', from: '#6b46c1', middle: '#9f7aea', to: '#ed64a6', enabled: true },
-		{ name: 'Forest', from: '#22543d', middle: '#38a169', to: '#ecc94b', enabled: true },
-		{ name: 'Fire', from: '#c53030', middle: '#dd6b20', to: '#ecc94b', enabled: true },
-		{ name: 'Sky', from: '#2c5282', middle: '#4299e1', to: '#90cdf4', enabled: true },
-		{ name: 'Rose', from: '#702459', middle: '#d53f8c', to: '#fc8181', enabled: true },
-		{ name: 'Mint', from: '#276749', middle: '#48bb78', to: '#9ae6b4', enabled: true }
+	let GRADIENT_PRESETS = [
+		{ name: 'Sunset', from: '#ff6b6b', middle: '#ee5a6f', to: '#c44569' },
+		{ name: 'Ocean', from: '#667eea', middle: '#48bb78', to: '#38b2ac' },
+		{ name: 'Purple Dream', from: '#6b46c1', middle: '#9f7aea', to: '#ed64a6' },
+		{ name: 'Forest', from: '#22543d', middle: '#38a169', to: '#ecc94b' },
+		{ name: 'Fire', from: '#c53030', middle: '#dd6b20', to: '#ecc94b' },
+		{ name: 'Sky', from: '#2c5282', middle: '#4299e1', to: '#90cdf4' },
+		{ name: 'Rose', from: '#702459', middle: '#d53f8c', to: '#fc8181' },
+		{ name: 'Mint', from: '#276749', middle: '#48bb78', to: '#9ae6b4' }
 	];
 
 	// Direction presets
@@ -41,20 +43,39 @@
 		{ label: '←', name: 'Right to Left', value: '270deg' }
 	];
 
+	// Radial position presets
+	const RADIAL_POSITIONS = [
+		{ label: '●', name: 'Center', value: 'center' },
+		{ label: '↑', name: 'Top', value: 'top' },
+		{ label: '↓', name: 'Bottom', value: 'bottom' },
+		{ label: '←', name: 'Left', value: 'left' },
+		{ label: '→', name: 'Right', value: 'right' },
+		{ label: '⬉', name: 'Top Left', value: 'top left' },
+		{ label: '⬈', name: 'Top Right', value: 'top right' },
+		{ label: '⬊', name: 'Bottom Right', value: 'bottom right' }
+	];
+
 	function applyPreset(preset: typeof GRADIENT_PRESETS[0]) {
 		bgGradientFrom = preset.from;
 		bgGradientMiddle = preset.middle;
 		bgGradientTo = preset.to;
-		bgGradientMiddleEnabled = preset.enabled;
 	}
 
 	function randomGradient() {
-		const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+		const randomColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+
 		bgGradientFrom = randomColor();
 		bgGradientTo = randomColor();
 		if (bgGradientMiddleEnabled) {
 			bgGradientMiddle = randomColor();
 		}
+
+		GRADIENT_PRESETS = GRADIENT_PRESETS.map(preset => ({
+			...preset,
+			from: randomColor(),
+			middle: randomColor(),
+			to: randomColor()
+		}));
 	}
 
 	function reverseColors() {
@@ -64,7 +85,6 @@
 	}
 
 	function handleImageUpload(event: Event) {
-		// Pass the original event directly to parent
 		dispatch('imageUpload', { originalEvent: event });
 	}
 </script>
@@ -186,22 +206,60 @@
 				</div>
 			</div>
 
-			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Direction</label>
-				<div class="grid grid-cols-5 gap-2">
-					{#each DIRECTION_PRESETS as preset}
-						<button
-							type="button"
-							on:click={() => bgGradientDirection = preset.value}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGradientDirection === preset.value ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-							title={preset.name}
-						>
-							<div class="text-2xl mb-1">{preset.label}</div>
-							<div class="text-[10px] {bgGradientDirection === preset.value ? 'text-blue-600 font-semibold' : 'text-gray-500'}">{preset.value}</div>
-						</button>
-					{/each}
-				</div>
+			<!-- Gradient Type Toggle -->
+			<div class="grid grid-cols-2 gap-2">
+				<button
+					type="button"
+					on:click={() => bgGradientType = 'linear'}
+					class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgGradientType === 'linear' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+				>
+					Linear
+				</button>
+				<button
+					type="button"
+					on:click={() => bgGradientType = 'radial'}
+					class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgGradientType === 'radial' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+				>
+					Radial
+				</button>
 			</div>
+
+			<!-- Linear Direction / Radial Options -->
+			{#if bgGradientType === 'linear'}
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">Direction</label>
+					<div class="grid grid-cols-5 gap-2">
+						{#each DIRECTION_PRESETS as preset}
+							<button
+								type="button"
+								on:click={() => bgGradientDirection = preset.value}
+								class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGradientDirection === preset.value ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+								title={preset.name}
+							>
+								<div class="text-2xl mb-1">{preset.label}</div>
+								<div class="text-[10px] {bgGradientDirection === preset.value ? 'text-blue-600 font-semibold' : 'text-gray-500'}">{preset.value}</div>
+							</button>
+						{/each}
+					</div>
+				</div>
+			{:else}
+				<!-- Radial Position -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+					<div class="grid grid-cols-4 gap-2">
+						{#each RADIAL_POSITIONS as preset}
+							<button
+								type="button"
+								on:click={() => bgRadialPosition = preset.value}
+								class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgRadialPosition === preset.value ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+								title={preset.name}
+							>
+								<div class="text-xl">{preset.label}</div>
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
 			<!-- Quick Actions -->
 			<div class="flex gap-2">
@@ -232,7 +290,7 @@
 							type="button"
 							on:click={() => applyPreset(preset)}
 							class="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all hover:scale-105"
-							style="background: linear-gradient(135deg, {preset.from} 0%, {preset.middle} 50%, {preset.to} 100%); height: 60px;"
+							style="background: linear-gradient(135deg, {preset.from} 0%, {bgGradientMiddleEnabled ? `${preset.middle} 50%, ` : ''}{preset.to} 100%); height: 60px;"
 						>
 							<div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
 								<span class="text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity">{preset.name}</span>
@@ -247,7 +305,10 @@
 				<p class="text-xs text-gray-500 mb-2">Preview:</p>
 				<div
 					class="h-20 rounded-lg border-2 border-gray-200"
-					style="background: linear-gradient({bgGradientDirection}, {bgGradientFrom} 0%, {bgGradientMiddleEnabled ? `${bgGradientMiddle} 50%, ` : ''}{bgGradientTo} 100%);"
+					style="background: {bgGradientType === 'linear' 
+						? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientMiddleEnabled ? `${bgGradientMiddle} 50%, ` : ''}${bgGradientTo} 100%)`
+						: `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom} 0%, ${bgGradientMiddleEnabled ? `${bgGradientMiddle} 50%, ` : ''}${bgGradientTo} 100%)`
+					};"
 				></div>
 			</div>
 		</div>

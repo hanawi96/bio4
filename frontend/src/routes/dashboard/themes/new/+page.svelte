@@ -78,11 +78,14 @@
 	// Background fields
 	let bgType: 'solid' | 'gradient' | 'image' = 'solid';
 	let bgSolidColor = '#ffffff';
+	let bgGradientType: 'linear' | 'radial' = 'linear';
 	let bgGradientFrom = '#667eea';
 	let bgGradientTo = '#764ba2';
 	let bgGradientMiddle = '#a855f7';
 	let bgGradientMiddleEnabled = false;
 	let bgGradientDirection = '135deg';
+	let bgRadialShape: 'circle' = 'circle';
+	let bgRadialPosition = 'center';
 	let bgImageUrl = '';
 	let bgBlur = 0;
 	let bgDim = 0;
@@ -243,6 +246,28 @@
 				pageBgColor = bgValue;
 			} else if (bgValue.includes('gradient')) {
 				bgType = 'gradient';
+				
+				// Detect gradient type
+				if (bgValue.startsWith('radial-gradient')) {
+					bgGradientType = 'radial';
+					
+					// Always use circle for radial gradients
+					bgRadialShape = 'circle';
+					
+					// Extract position
+					const posMatch = bgValue.match(/at\s+([^,]+)/);
+					if (posMatch) {
+						bgRadialPosition = posMatch[1].trim();
+					}
+				} else {
+					bgGradientType = 'linear';
+					
+					// Extract angle for linear
+					const angleMatch = bgValue.match(/(\d+)deg/);
+					if (angleMatch) bgGradientDirection = angleMatch[1] + 'deg';
+				}
+				
+				// Extract colors
 				const colorMatches = bgValue.match(/#[0-9a-fA-F]{6}/g);
 				if (colorMatches?.length >= 2) {
 					bgGradientFrom = colorMatches[0];
@@ -254,8 +279,6 @@
 						bgGradientMiddleEnabled = false;
 					}
 				}
-				const angleMatch = bgValue.match(/(\d+)deg/);
-				if (angleMatch) bgGradientDirection = angleMatch[1] + 'deg';
 			} else if (bgValue.startsWith('url(')) {
 				bgType = 'image';
 				const urlMatch = bgValue.match(/url\(['"]?([^'"]+)['"]?\)/);
@@ -368,10 +391,21 @@
 			if (bgType === 'solid') {
 				bgValue = bgSolidColor;
 			} else if (bgType === 'gradient') {
-				if (bgGradientMiddleEnabled) {
-					bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientMiddle} 50%, ${bgGradientTo} 100%)`;
+				if (bgGradientType === 'linear') {
+					if (bgGradientMiddleEnabled) {
+						bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientMiddle} 50%, ${bgGradientTo} 100%)`;
+					} else {
+						bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
+					}
 				} else {
-					bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
+					// Radial gradient - always use circle
+					const shape = 'circle';
+					const position = bgRadialPosition;
+					if (bgGradientMiddleEnabled) {
+						bgValue = `radial-gradient(${shape} farthest-corner at ${position}, ${bgGradientFrom} 0%, ${bgGradientMiddle} 50%, ${bgGradientTo} 100%)`;
+					} else {
+						bgValue = `radial-gradient(${shape} farthest-corner at ${position}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
+					}
 				}
 			} else if (bgType === 'image') {
 				bgValue = bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
@@ -384,12 +418,12 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || baseFontSize || headingFontSize || bodyFontWeight || headingFontWeight || bodyLineHeight || headingLineHeight || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
 		updateConfig();
 	}
 
 	// Update preview stores - optimized for fast opacity changes
-	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined) {
+	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined && bgType && bgGradientType && bgRadialShape && bgRadialPosition) {
 		try {
 			const config = JSON.parse(configJson);
 			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity));
@@ -399,7 +433,11 @@
 				none: 0, sm: 4, md: 8, lg: 12, xl: 16, full: 9999
 			};
 			
-			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? (bgGradientMiddleEnabled ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})`) : bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
+			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? (
+				bgGradientType === 'linear' 
+					? (bgGradientMiddleEnabled ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})`)
+					: (bgGradientMiddleEnabled ? `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom}, ${bgGradientTo})`)
+			) : bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
 			
 			previewAppearanceState.set({
 				headerPresetId: selectedHeaderPreset,
@@ -587,11 +625,14 @@
 				<ThemeBackground
 					bind:bgType
 					bind:bgSolidColor
+					bind:bgGradientType
 					bind:bgGradientFrom
 					bind:bgGradientTo
 					bind:bgGradientMiddle
 					bind:bgGradientMiddleEnabled
 					bind:bgGradientDirection
+					bind:bgRadialShape
+					bind:bgRadialPosition
 					bind:bgImageUrl
 					bind:bgBlur
 					bind:bgDim

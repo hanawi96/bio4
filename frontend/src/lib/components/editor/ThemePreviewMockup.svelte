@@ -9,7 +9,7 @@
 	$: baseHeaderPreset = HEADER_PRESETS[headerPresetId];
 	
 	// Parse background value to separate image URL from other types
-	$: backgroundValue = tokens?.backgroundColor || '#ffffff';
+	$: backgroundValue = $previewAppearance?.tokens?.backgroundColor || tokens?.backgroundColor || '#ffffff';
 	$: isBackgroundImage = backgroundValue.startsWith('url(');
 	$: backgroundImageUrl = isBackgroundImage ? backgroundValue.match(/url\(['"]?([^'"]+)['"]?\)/)?.[1] || '' : '';
 	
@@ -118,10 +118,15 @@
 			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
 
 			<!-- Background Layer (with filters) -->
-			<div 
-				class="absolute inset-0 z-0"
-				style="{backgroundStyle}"
-			></div>
+			{#key backgroundValue}
+				<div 
+					class="absolute inset-0 z-0"
+					style="{isBackgroundImage 
+						? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur(${bgBlur}px) brightness(${bgBrightness / 100}) grayscale(${bgGrayscale / 100});`
+						: `background: ${backgroundValue};`
+					}"
+				></div>
+			{/key}
 
 			<!-- Content -->
 			<div 
