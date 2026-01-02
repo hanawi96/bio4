@@ -1,7 +1,7 @@
 {
   "meta": {
-    "id": "preset.gggggggggggggsgasd",
-    "name": "gggggggggggggsgasd",
+    "id": "preset.qqqqqqqqqq",
+    "name": "qqqqqqqqqq",
     "schemaVersion": 2,
     "version": "2.2.0",
     "author": "system",
@@ -87,9 +87,7 @@
       },
       "fontSize": {
         "xs": 12,
-        "13": 13,
         "sm": 14,
-        "15": 15,
         "base": 16,
         "lg": 18,
         "xl": 20,
@@ -140,7 +138,7 @@
   },
   "semantic": {
     "color": {
-      "primary": "#f51800",
+      "primary": "#3b82f6",
       "primaryHover": "ref:tokens.color.blue.600",
       "secondary": "ref:tokens.color.gray.500",
       "text": {
@@ -150,7 +148,7 @@
         "invert": "ref:tokens.color.white"
       },
       "surface": {
-        "page": "linear-gradient(135deg, #22543d 0%, #38a169 50%, #ecc94b 100%)",
+        "page": "#000000",
         "card": "ref:tokens.color.white",
         "elevated": "ref:tokens.color.white",
         "overlay": "ref:tokens.color.overlay.50"
@@ -167,7 +165,7 @@
     "typography": {
       "heading": {
         "fontFamily": "ref:tokens.typography.fontFamily.sans",
-        "fontSize": "ref:tokens.typography.fontSize.lg",
+        "fontSize": "ref:tokens.typography.fontSize.2xl",
         "fontWeight": "ref:tokens.typography.fontWeight.bold",
         "lineHeight": "ref:tokens.typography.lineHeight.tight"
       },
@@ -184,13 +182,13 @@
         "lineHeight": "ref:tokens.typography.lineHeight.normal"
       },
       "link": {
-        "fontSize": "ref:tokens.typography.fontSize.13"
+        "fontSize": "ref:tokens.typography.fontSize.xs"
       },
       "bio": {
-        "fontSize": "ref:tokens.typography.fontSize.sm"
+        "fontSize": "ref:tokens.typography.fontSize.13"
       },
       "subtitle": {
-        "fontSize": "ref:tokens.typography.fontSize.15"
+        "fontSize": "ref:tokens.typography.fontSize.sm"
       }
     }
   },
@@ -226,7 +224,7 @@
     "layout": {
       "maxWidth": 480,
       "pagePadding": 16,
-      "blockGap": 14,
+      "blockGap": "default",
       "textAlign": "center",
       "blockPadding": {
         "x": 16,
@@ -235,7 +233,7 @@
     },
     "defaults": {
       "headerPresetId": "no-cover",
-      "blockStylePreset": "outline",
+      "blockStylePreset": "glass",
       "linkStyle": "soft",
       "linkGroupLayout": "list",
       "linkIconShape": "rounded",
@@ -249,7 +247,7 @@
       "borderWidth": 1,
       "linkGroupConfig": {
         "list": {
-          "iconPosition": "top",
+          "iconPosition": "left",
           "textAlign": "center",
           "showSubtitle": false
         },
@@ -281,6 +279,7 @@
       "overlayColor": "ref:tokens.color.overlay.10",
       "brightness": 100,
       "grayscale": 0
-    }
+    },
+    "videoUrl": "https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev/background-videos/demo-1767367433286.mp4"
   }
 }

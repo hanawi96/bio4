@@ -2,7 +2,7 @@ import type { ResolvedAppearance, Theme, ThemeTokens, ResolvedBlockStyle } from 
 import { HEADER_PRESETS } from './presets';
 import { getBlockStyleRecipe, type BlockStylePresetId } from './blockStyles';
 import { resolveToken, resolveAutoTextColor } from './tokenResolver';
-import { RADIUS_TOKENS } from './spacingTokens';
+import { RADIUS_TOKENS, BLOCK_GAP_PRESETS } from './spacingTokens';
 import { get } from 'svelte/store';
 import { headerPresets } from '$lib/stores/headerPresets';
 
@@ -432,6 +432,17 @@ export function resolveAppearance(
 	const blockStyle = resolveBlockStyle(blockStyleId, tokens, blockOverrides, themeConfig);
 
 	// Resolve page layout
+	// Helper to resolve blockGap (can be semantic key or number)
+	const resolveBlockGap = (value: any): number => {
+		if (typeof value === 'string' && value in BLOCK_GAP_PRESETS) {
+			return BLOCK_GAP_PRESETS[value as keyof typeof BLOCK_GAP_PRESETS];
+		}
+		if (typeof value === 'number') {
+			return value;
+		}
+		return 16; // default
+	};
+	
 	const pageLayout = {
 		maxWidth: (pageState.overrides?.['page.maxWidth'] as number)
 			?? themeConfig.page?.layout?.maxWidth
@@ -439,9 +450,10 @@ export function resolveAppearance(
 		pagePadding: (pageState.overrides?.['page.pagePadding'] as number)
 			?? themeConfig.page?.layout?.pagePadding
 			?? 16,
-		blockGap: (pageState.overrides?.['page.blockGap'] as number)
+		blockGap: resolveBlockGap(
+			pageState.overrides?.['page.blockGap']
 			?? themeConfig.page?.layout?.blockGap
-			?? 16,
+		),
 		textAlign: (pageState.overrides?.['page.textAlign'] as 'left' | 'center' | 'right')
 			?? themeConfig.page?.layout?.textAlign
 			?? 'center',

@@ -89,26 +89,27 @@
 	
 	// Check for video background
 	$: backgroundVideo = (() => {
-		if (!$page?.draft_appearance) return null;
-		try {
-			const appearance = JSON.parse($page.draft_appearance);
-			const videoUrl = appearance.customTheme?.backgroundVideo || appearance.overrides?.backgroundVideo;
-			return videoUrl && videoUrl.trim() ? videoUrl : null;
-		} catch {
-			return null;
+		// Priority 1: Check draft_appearance overrides (user customization)
+		if ($page?.draft_appearance) {
+			try {
+				const appearance = JSON.parse($page.draft_appearance);
+				const videoUrl = appearance.customTheme?.backgroundVideo || appearance.overrides?.backgroundVideo;
+				if (videoUrl && videoUrl.trim()) return videoUrl;
+			} catch {
+				// Continue to check theme config
+			}
 		}
+		
+		// Priority 2: Check theme config (background.videoUrl)
+		const themeConfig = $appearance?.theme?.config;
+		const themeVideoUrl = themeConfig?.background?.videoUrl;
+		if (themeVideoUrl && themeVideoUrl.trim()) return themeVideoUrl;
+		
+		return null;
 	})();
 	
-	// Check if draft_appearance has video (for immediate hide of background)
-	$: hasVideoInDraft = (() => {
-		if (!$page?.draft_appearance) return false;
-		try {
-			const appearance = JSON.parse($page.draft_appearance);
-			return !!(appearance.customTheme?.backgroundVideo || appearance.overrides?.backgroundVideo);
-		} catch {
-			return false;
-		}
-	})();
+	// Check if video exists (derived from backgroundVideo)
+	$: hasVideoInDraft = !!backgroundVideo;
 	
 	// Preload default video on mount
 	import { onMount } from 'svelte';
@@ -175,43 +176,43 @@
 	// Get page padding from appearance
 	$: pagePadding = $appearance?.page?.pagePadding ?? 16;
 	
-	// Get title font size from appearance
-	$: titleFontSize = (() => {
+	// Helper function to get font size from override or theme config
+	const getFontSize = (
+		overrideKey: string,
+		themeConfigPath: string,
+		defaultSize: number
+	): number => {
 		// Try override first
-		const override = $appearanceState.overrides?.['page.titleFontSize'] as number;
-		if (override) return override;
-		
-		// Fallback to theme config
-		const themeConfig = $appearance?.theme?.config;
-		const headingFontSizeRef = themeConfig?.semantic?.typography?.heading?.fontSize;
-		if (headingFontSizeRef && typeof headingFontSizeRef === 'string' && headingFontSizeRef.startsWith('ref:tokens.typography.fontSize.')) {
-			const key = headingFontSizeRef.replace('ref:tokens.typography.fontSize.', '');
-			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 20;
-		}
-		
-		// Final fallback
-		return 20;
-	})();
-	
-	// Get bio font size from appearance
-	$: bioFontSizePx = (() => {
-		// Try override first
-		const override = $appearanceState.overrides?.['page.bioFontSize'] as string;
+		const override = $appearanceState.overrides?.[overrideKey];
 		if (override) {
-			return FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 14;
+			if (typeof override === 'number') return override;
+			if (typeof override === 'string') {
+				return FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || defaultSize;
+			}
 		}
 		
 		// Fallback to theme config
 		const themeConfig = $appearance?.theme?.config;
-		const bioFontSizeRef = themeConfig?.semantic?.typography?.bio?.fontSize;
-		if (bioFontSizeRef && typeof bioFontSizeRef === 'string' && bioFontSizeRef.startsWith('ref:tokens.typography.fontSize.')) {
-			const key = bioFontSizeRef.replace('ref:tokens.typography.fontSize.', '');
-			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 14;
+		const parts = themeConfigPath.split('.');
+		let value: any = themeConfig;
+		for (const part of parts) {
+			value = value?.[part];
+			if (!value) break;
 		}
 		
-		// Final fallback
-		return 14;
-	})();
+		if (value && typeof value === 'string' && value.startsWith('ref:tokens.typography.fontSize.')) {
+			const key = value.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || defaultSize;
+		}
+		
+		return defaultSize;
+	};
+	
+	// Get font sizes using helper
+	$: titleFontSize = getFontSize('page.titleFontSize', 'semantic.typography.heading.fontSize', 20);
+	$: bioFontSizePx = getFontSize('page.bioFontSize', 'semantic.typography.bio.fontSize', 14);
+	$: linkFontSizePx = getFontSize('page.linkFontSize', 'semantic.typography.link.fontSize', 14);
+	$: subtitleFontSizePx = getFontSize('page.subtitleFontSize', 'semantic.typography.subtitle.fontSize', 12);
 	
 	// Get title font family (separate from body font)
 	$: titleFontFamily = (() => {
@@ -691,7 +692,7 @@
 													href={link.url}
 													target="_blank"
 													rel="noopener"
-													class="link-button block flex-shrink-0 text-sm font-medium transition-transform hover:scale-[1.02]"
+													class="link-button block flex-shrink-0 font-medium transition-transform hover:scale-[1.02]"
 													style="
 														width: 200px;
 														background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
@@ -703,6 +704,7 @@
 														{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 														border-radius: {blockBorderRadius};
 														padding: {blockPaddingY}px {blockPaddingX}px;
+														font-size: {linkFontSizePx}px;
 													"
 												>
 													{#if link.icon_url}
@@ -715,7 +717,7 @@
 													<div class="text-center">
 														<div class="font-semibold truncate">{headline}</div>
 														{#if subtitle}
-															<div class="text-xs opacity-70 mt-0.5 truncate">{subtitle}</div>
+															<div class="opacity-70 mt-0.5 truncate" style="font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 														{/if}
 													</div>
 												</a>
@@ -761,7 +763,7 @@
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding || config.showLabels ? '' : 'overflow-hidden'}"
+												class="link-button block font-medium transition-transform hover:scale-[1.02] {config.imagePadding || config.showLabels ? '' : 'overflow-hidden'}"
 												style="
 													background: {showImageOnly ? 'transparent' : ($appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6')};
 													color: {$appearance?.blockStyle?.text || 'white'};
@@ -770,6 +772,7 @@
 													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 													border-radius: {blockBorderRadius};
 													padding: {config.imagePadding ? `${gridPadding}px` : '0'};
+													font-size: {config.columns === 1 ? linkFontSizePx : config.columns === 2 ? linkFontSizePx * 0.7 : config.columns === 3 ? linkFontSizePx * 0.5 : linkFontSizePx * 0.4}px;
 												"
 											>
 												{#if hasImage}
@@ -831,7 +834,7 @@
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block w-full text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'}"
+												class="link-button block w-full font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'}"
 												style="
 													background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 													color: {$appearance?.blockStyle?.text || 'white'};
@@ -839,6 +842,7 @@
 													box-shadow: {cardShadow} !important;
 													{$appearance?.blockStyle?.blur ? `backdrop-filter: blur(${$appearance.blockStyle.blur}px); -webkit-backdrop-filter: blur(${$appearance.blockStyle.blur}px);` : ''}
 													border-radius: {blockBorderRadius};
+													font-size: {linkFontSizePx}px;
 													padding: {config.imagePadding ? `${cardPadding}px` : '0'};
 													display: flex;
 													align-items: center;
@@ -859,9 +863,9 @@
 													/>
 												{/if}
 												<div class="flex-1 min-w-0" style="padding: {config.imagePadding ? '0' : `${blockPaddingY}px ${blockPaddingX}px`}; text-align: {globalTextAlign};">
-													<div class="font-semibold text-sm leading-tight truncate">{headline}</div>
+													<div class="font-semibold leading-tight truncate">{headline}</div>
 													{#if subtitle && config.showSubtitle}
-														<div class="text-xs mt-1 opacity-70 truncate">{subtitle}</div>
+														<div class="mt-1 opacity-70 truncate" style="font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 													{/if}
 												</div>
 											</a>
@@ -900,7 +904,7 @@
 											href={link.url}
 											target="_blank"
 											rel="noopener"
-											class="link-button block w-full text-sm font-medium transition-transform hover:scale-[1.02]"
+											class="link-button block w-full font-medium transition-transform hover:scale-[1.02]"
 											style="
 												background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 												color: {$appearance?.blockStyle?.text || 'white'};
@@ -910,6 +914,7 @@
 												border-radius: {blockBorderRadius};
 												text-align: {config.textAlign};
 												padding: {blockPaddingY}px {blockPaddingX}px;
+												font-size: {linkFontSizePx}px;
 											"
 										>
 											{#if showIcon && link.icon_url && iconOnTop}
@@ -923,7 +928,7 @@
 													<div>
 														<div class="font-semibold">{headline}</div>
 														{#if subtitle && config.showSubtitle}
-															<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+															<div class="opacity-70 mt-0.5" style="font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 														{/if}
 													</div>
 												</div>
@@ -938,7 +943,7 @@
 													<div class="flex-1" style="text-align: {config.textAlign};">
 														<div class="font-semibold">{headline}</div>
 														{#if subtitle && config.showSubtitle}
-															<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+															<div class="opacity-70 mt-0.5" style="font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 														{/if}
 													</div>
 												</div>
@@ -947,7 +952,7 @@
 												<div>
 													<div class="font-semibold">{headline}</div>
 													{#if subtitle && config.showSubtitle}
-														<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
+														<div class="opacity-70 mt-0.5" style="font-size: {subtitleFontSizePx}px;">{subtitle}</div>
 													{/if}
 												</div>
 											{/if}

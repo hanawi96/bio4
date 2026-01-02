@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { BLOCK_GAP_PRESETS, type BlockGapPreset } from '$lib/appearance/spacingTokens';
+	
 	export let maxWidth: number;
 	export let textAlign: 'left' | 'center' | 'right';
 	export let pagePadding: number;
-	export let blockGap: number;
+	export let blockGapPreset: BlockGapPreset;
 	export let blockPaddingX: number;
 	export let blockPaddingY: number;
 	export let blockBorderRadiusType: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -15,92 +17,115 @@
 	$: if (isFullDisabled && blockBorderRadiusType === 'full') {
 		blockBorderRadiusType = 'xl';
 	}
+	
+	const blockGapOptions: Array<{ value: BlockGapPreset; label: string; description: string }> = [
+		{ value: 'compact', label: 'Compact', description: 'Tight spacing (8px)' },
+		{ value: 'default', label: 'Default', description: 'Balanced spacing (16px)' },
+		{ value: 'spacious', label: 'Spacious', description: 'Generous spacing (24px)' }
+	];
 </script>
 
 <section class="card-ios p-6">
 	<h2 class="text-lg font-semibold text-gray-900 mb-4">Layout</h2>
-	<div class="space-y-4">
-		<div class="grid grid-cols-2 gap-4">
-			<div>
-				<label for="maxWidth" class="block text-sm font-medium text-gray-700 mb-2">
-					Max Width (px)
-				</label>
-				<input
-					id="maxWidth"
-					type="number"
-					bind:value={maxWidth}
-					min="320"
-					max="1200"
-					class="input-ios"
-				/>
-			</div>
-			<div>
-				<label for="textAlign" class="block text-sm font-medium text-gray-700 mb-2">
-					Text Align
-				</label>
-				<select id="textAlign" bind:value={textAlign} class="input-ios">
-					<option value="left">Left</option>
-					<option value="center">Center</option>
-					<option value="right">Right</option>
-				</select>
-			</div>
-			<div>
-				<label for="pagePadding" class="block text-sm font-medium text-gray-700 mb-2">
-					Page Padding (px)
-				</label>
-				<input
-					id="pagePadding"
-					type="number"
-					bind:value={pagePadding}
-					min="8"
-					max="48"
-					class="input-ios"
-				/>
-			</div>
-			<div>
-				<label for="blockGap" class="block text-sm font-medium text-gray-700 mb-2">
-					Block Gap (px)
-				</label>
-				<input
-					id="blockGap"
-					type="number"
-					bind:value={blockGap}
-					min="8"
-					max="48"
-					class="input-ios"
-				/>
-			</div>
-			<div>
-				<label for="blockPaddingX" class="block text-sm font-medium text-gray-700 mb-2">
-					Block Padding X (px)
-				</label>
-				<input
-					id="blockPaddingX"
-					type="number"
-					bind:value={blockPaddingX}
-					min="4"
-					max="32"
-					class="input-ios"
-				/>
-				<p class="text-xs text-gray-500 mt-1">Horizontal padding inside blocks</p>
-			</div>
-			<div>
-				<label for="blockPaddingY" class="block text-sm font-medium text-gray-700 mb-2">
-					Block Padding Y (px)
-				</label>
-				<input
-					id="blockPaddingY"
-					type="number"
-					bind:value={blockPaddingY}
-					min="4"
-					max="32"
-					class="input-ios"
-				/>
-				<p class="text-xs text-gray-500 mt-1">Vertical padding inside blocks</p>
-			</div>
+	
+	<div class="space-y-5">
+		<!-- Max Width -->
+		<div>
+			<label for="maxWidth" class="block text-sm font-medium text-gray-700 mb-2">
+				Max Width (px)
+			</label>
+			<input
+				id="maxWidth"
+				type="number"
+				bind:value={maxWidth}
+				min="320"
+				max="1200"
+				class="input-ios"
+			/>
 		</div>
 		
-		<!-- Block Border Radius - Button Preset (Full Width) -->
+		<!-- Text Align -->
+		<div>
+			<label for="textAlign" class="block text-sm font-medium text-gray-700 mb-2">
+				Text Align
+			</label>
+			<select id="textAlign" bind:value={textAlign} class="input-ios">
+				<option value="left">Left</option>
+				<option value="center">Center</option>
+				<option value="right">Right</option>
+			</select>
+		</div>
+		
+		<!-- Page Padding -->
+		<div>
+			<label for="pagePadding" class="block text-sm font-medium text-gray-700 mb-2">
+				Page Padding (px)
+			</label>
+			<input
+				id="pagePadding"
+				type="number"
+				bind:value={pagePadding}
+				min="8"
+				max="48"
+				class="input-ios"
+			/>
+		</div>
+		
+		<!-- Block Gap -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Block Gap
+			</label>
+			<div class="grid grid-cols-3 gap-2">
+				{#each blockGapOptions as option}
+					<button
+						type="button"
+						on:click={() => blockGapPreset = option.value}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockGapPreset === option.value
+							? 'border-gray-900 bg-gray-50 text-gray-900'
+							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">{option.label}</div>
+						<div class="text-[10px] opacity-60 mt-0.5">{BLOCK_GAP_PRESETS[option.value]}px</div>
+					</button>
+				{/each}
+			</div>
+			<p class="text-xs text-gray-500 mt-1.5">{blockGapOptions.find(o => o.value === blockGapPreset)?.description || ''}</p>
+		</div>
+		
+		<!-- Block Padding X -->
+		<div>
+			<label for="blockPaddingX" class="block text-sm font-medium text-gray-700 mb-2">
+				Block Padding X (px)
+			</label>
+			<input
+				id="blockPaddingX"
+				type="number"
+				bind:value={blockPaddingX}
+				min="4"
+				max="32"
+				class="input-ios"
+			/>
+			<p class="text-xs text-gray-500 mt-1">Horizontal padding inside blocks</p>
+		</div>
+		
+		<!-- Block Padding Y -->
+		<div>
+			<label for="blockPaddingY" class="block text-sm font-medium text-gray-700 mb-2">
+				Block Padding Y (px)
+			</label>
+			<input
+				id="blockPaddingY"
+				type="number"
+				bind:value={blockPaddingY}
+				min="4"
+				max="32"
+				class="input-ios"
+			/>
+			<p class="text-xs text-gray-500 mt-1">Vertical padding inside blocks</p>
+		</div>
+		
+		<!-- Block Border Radius -->
 		<div>
 			<label class="block text-sm font-medium text-gray-700 mb-2">
 				Block Border Radius
@@ -129,7 +154,7 @@
 					</button>
 				{/each}
 			</div>
-			<p class="text-xs text-gray-500 mt-1">
+			<p class="text-xs text-gray-500 mt-1.5">
 				{#if isFullDisabled}
 					<span class="text-orange-600">Full radius disabled for Grid/Card layouts</span>
 				{:else}

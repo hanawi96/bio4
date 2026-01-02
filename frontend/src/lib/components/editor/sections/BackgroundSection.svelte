@@ -14,10 +14,27 @@
 	$: themesLoaded = Object.keys($themes).length > 0;
 	$: currentTheme = themesMap[$appearanceState.presetKey] || FALLBACK_THEME;
 	$: themeConfig = currentTheme.config;
-	$: themeBgToken = themeConfig?.tokens?.bg;
 	
-	// Convert bg token to CSS value
+	// Get background from semantic.color.surface.page (primary source) or fallback to tokens.bg
 	$: presetBgValue = (() => {
+		// Priority 1: semantic.color.surface.page (new format)
+		const semanticBg = themeConfig?.semantic?.color?.surface?.page;
+		if (semanticBg) {
+			// Resolve ref if needed
+			if (typeof semanticBg === 'string' && semanticBg.startsWith('ref:')) {
+				const path = semanticBg.replace('ref:', '').split('.');
+				let value: any = themeConfig;
+				for (const key of path) {
+					value = value?.[key];
+					if (!value) break;
+				}
+				return value || '#ffffff';
+			}
+			return semanticBg;
+		}
+		
+		// Priority 2: tokens.bg (legacy format)
+		const themeBgToken = themeConfig?.tokens?.bg;
 		if (!themeBgToken) return '#ffffff';
 		
 		if (themeBgToken.type === 'color') {
@@ -31,62 +48,61 @@
 	
 	// Get resolved values (override > preset)
 	$: resolvedBgColor = $appearanceState.overrides['backgroundColor'] ?? presetBgValue;
-	$: resolvedBgVideo = $appearanceState.overrides['backgroundVideo'];
+	$: resolvedBgVideo = $appearanceState.overrides['backgroundVideo'] ?? themeConfig?.background?.videoUrl;
 	
-	// Initial load: detect type from stored data (runs once, AFTER themes loaded)
-	let hasInitialized = false;
-	$: if (!hasInitialized && themesLoaded && (resolvedBgColor || themeBgToken)) {
-		hasInitialized = true;
+	// Detect background type from theme config or overrides (reactive - runs on theme change)
+	$: {
+		// Force re-detection when theme changes (even if color value is same)
+		const _themeKey = $appearanceState.presetKey;
 		
-		if (resolvedBgVideo) {
-			selectedType = 'video';
-			backgroundVideoUrl = resolvedBgVideo;
-			currentBgColor = resolvedBgColor;
-		} else if (resolvedBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-			selectedType = 'solid';
-			currentBgColor = resolvedBgColor;
-		} else if (resolvedBgColor.includes('gradient') && !resolvedBgColor.startsWith('background:')) {
-			selectedType = 'gradient';
-			currentBgColor = resolvedBgColor;
-			const parsed = parseGradient(resolvedBgColor);
-			if (parsed) {
-				gradientFromColor = parsed.from;
-				gradientToColor = parsed.to;
-				gradientDirection = parsed.direction;
-				gradientType = parsed.type;
-			}
-		} else if (resolvedBgColor.startsWith('background:')) {
-			selectedType = 'pattern';
-			currentBgColor = resolvedBgColor;
-			
-			// Extract pattern colors from pattern string
-			const colorMatches = resolvedBgColor.match(/#[0-9a-fA-F]{6}/g);
-			if (colorMatches && colorMatches.length >= 2) {
-				// First color is usually pattern ink color
-				patternColor = colorMatches[0];
-				// Last color is background color
-				patternBgColor = colorMatches[colorMatches.length - 1];
-				basePatternBgColor = patternBgColor;
-			}
-			
-			// Try to detect pattern ID from the string
-			// This is best-effort, may not always work
-			if (resolvedBgColor.includes('radial-gradient(circle')) {
-				selectedPattern = 'dots';
-			} else if (resolvedBgColor.includes('linear-gradient') && resolvedBgColor.includes('90deg')) {
-				selectedPattern = 'grid';
-			} else if (resolvedBgColor.includes('repeating-linear-gradient')) {
-				selectedPattern = 'diagonal';
-			} else if (resolvedBgColor.includes('url(')) {
-				// SVG pattern - harder to detect specific type
-				selectedPattern = 'cross'; // Default to first SVG pattern
-			}
-		} else if (resolvedBgColor.startsWith("url(")) {
-			selectedType = 'image';
-			currentBgColor = resolvedBgColor;
-			const urlMatch = resolvedBgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
-			if (urlMatch && urlMatch[1]) {
-				backgroundImageUrl = urlMatch[1];
+		// Always detect from resolved values (override + theme merged)
+		if (themesLoaded && (resolvedBgColor || resolvedBgVideo)) {
+			if (resolvedBgVideo) {
+				selectedType = 'video';
+				backgroundVideoUrl = resolvedBgVideo;
+				currentBgColor = resolvedBgColor;
+			} else if (resolvedBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+				selectedType = 'solid';
+				currentBgColor = resolvedBgColor;
+			} else if (resolvedBgColor.includes('gradient') && !resolvedBgColor.startsWith('background:')) {
+				selectedType = 'gradient';
+				currentBgColor = resolvedBgColor;
+				const parsed = parseGradient(resolvedBgColor);
+				if (parsed) {
+					gradientFromColor = parsed.from;
+					gradientToColor = parsed.to;
+					gradientDirection = parsed.direction;
+					gradientType = parsed.type;
+				}
+			} else if (resolvedBgColor.startsWith('background:')) {
+				selectedType = 'pattern';
+				currentBgColor = resolvedBgColor;
+				
+				// Extract pattern colors from pattern string
+				const colorMatches = resolvedBgColor.match(/#[0-9a-fA-F]{6}/g);
+				if (colorMatches && colorMatches.length >= 2) {
+					patternColor = colorMatches[0];
+					patternBgColor = colorMatches[colorMatches.length - 1];
+					basePatternBgColor = patternBgColor;
+				}
+				
+				// Try to detect pattern ID from the string
+				if (resolvedBgColor.includes('radial-gradient(circle')) {
+					selectedPattern = 'dots';
+				} else if (resolvedBgColor.includes('linear-gradient') && resolvedBgColor.includes('90deg')) {
+					selectedPattern = 'grid';
+				} else if (resolvedBgColor.includes('repeating-linear-gradient')) {
+					selectedPattern = 'diagonal';
+				} else if (resolvedBgColor.includes('url(')) {
+					selectedPattern = 'cross';
+				}
+			} else if (resolvedBgColor.startsWith("url(")) {
+				selectedType = 'image';
+				currentBgColor = resolvedBgColor;
+				const urlMatch = resolvedBgColor.match(/url\(['"]?([^'"]+)['"]?\)/);
+				if (urlMatch && urlMatch[1]) {
+					backgroundImageUrl = urlMatch[1];
+				}
 			}
 		}
 	}
@@ -374,7 +390,6 @@
 		if ((themeChanged || overridesCleared) && !isAvatarCoverMode) {
 			lastSyncedThemeKey = currentThemeKey;
 			lastHadOverrides = hasOverrides;
-			hasInitialized = true; // Set to true to prevent re-detection
 			
 			if (presetBgValue.match(/^#[0-9a-fA-F]{6}$/)) {
 				currentBgColor = presetBgValue;

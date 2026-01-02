@@ -22,6 +22,18 @@ export const SPACE_TOKENS = {
 export type SpaceKey = keyof typeof SPACE_TOKENS;
 
 /**
+ * Block Gap Presets
+ * Semantic spacing levels for block gaps
+ */
+export const BLOCK_GAP_PRESETS = {
+    compact: 8,
+    default: 16,
+    spacious: 24
+} as const;
+
+export type BlockGapPreset = keyof typeof BLOCK_GAP_PRESETS;
+
+/**
  * Border Radius Scale (in pixels)
  * Standard border radius values for UI elements
  */

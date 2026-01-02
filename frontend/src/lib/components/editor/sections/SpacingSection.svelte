@@ -1,22 +1,32 @@
 <script lang="ts">
 	import { appearanceState, updateAppearance } from '$lib/stores/appearanceManager';
 	import { appearance } from '$lib/stores/appearance';
+	import { BLOCK_GAP_PRESETS, type BlockGapPreset } from '$lib/appearance/spacingTokens';
 
 	const spacingLevels = [
-		{ id: 'compact', name: 'Compact', spacing: 8, description: 'Tight spacing' },
-		{ id: 'default', name: 'Default', spacing: 16, description: 'Balanced spacing' },
-		{ id: 'spacious', name: 'Spacious', spacing: 24, description: 'Generous spacing' }
+		{ id: 'compact' as BlockGapPreset, name: 'Compact', spacing: 8, description: 'Tight spacing' },
+		{ id: 'default' as BlockGapPreset, name: 'Default', spacing: 16, description: 'Balanced spacing' },
+		{ id: 'spacious' as BlockGapPreset, name: 'Spacious', spacing: 24, description: 'Generous spacing' }
 	];
 
-	$: currentBlockGap = ($appearanceState.overrides?.['page.blockGap'] as number) 
-		|| $appearance?.theme?.config?.page?.layout?.blockGap 
-		|| 16;
+	// Get current blockGap value (can be semantic key or number)
+	$: currentBlockGapValue = $appearanceState.overrides?.['page.blockGap'] 
+		?? $appearance?.theme?.config?.page?.layout?.blockGap;
 	
-	$: selectedSpacing = currentBlockGap <= 10 ? 'compact' 
-		: currentBlockGap >= 20 ? 'spacious' 
+	// Resolve to number for comparison
+	$: currentBlockGapPx = typeof currentBlockGapValue === 'string' && currentBlockGapValue in BLOCK_GAP_PRESETS
+		? BLOCK_GAP_PRESETS[currentBlockGapValue as BlockGapPreset]
+		: typeof currentBlockGapValue === 'number'
+			? currentBlockGapValue
+			: 16;
+	
+	// Determine selected preset based on px value
+	$: selectedSpacing = currentBlockGapPx <= 10 ? 'compact' 
+		: currentBlockGapPx >= 20 ? 'spacious' 
 		: 'default';
 
 	function selectSpacing(level: typeof spacingLevels[0]) {
+		// Save as px value (Appearance page saves px, Theme Editor saves semantic key)
 		updateAppearance('page.blockGap', level.spacing);
 	}
 </script>

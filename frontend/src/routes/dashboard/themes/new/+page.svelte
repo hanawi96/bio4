@@ -19,7 +19,7 @@
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
-	import { RADIUS_TOKENS } from '$lib/appearance/spacingTokens';
+	import { RADIUS_TOKENS, BLOCK_GAP_PRESETS, type BlockGapPreset } from '$lib/appearance/spacingTokens';
 
 	// Debug mode toggle
 	let showDebug = false;
@@ -61,7 +61,7 @@
 	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif'; // Font riêng cho heading
 	let maxWidth = 480;
 	let pagePadding = 16;
-	let blockGap = 14;
+	let blockGapPreset: BlockGapPreset = 'default';
 	let blockPaddingX = 16;
 	let blockPaddingY = 12;
 	let textAlign: 'left' | 'center' | 'right' = 'center';
@@ -104,7 +104,7 @@
 	let subtitleFontSize: 'xs' | 'sm' = 'xs';
 	
 	// Background fields
-	let bgType: 'solid' | 'gradient' | 'image' = 'solid';
+	let bgType: 'solid' | 'gradient' | 'image' | 'video' = 'solid';
 	let bgSolidColor = '#ffffff';
 	let bgGradientType: 'linear' | 'radial' = 'linear';
 	let bgGradientFrom = '#667eea';
@@ -115,6 +115,7 @@
 	let bgRadialShape: 'circle' = 'circle';
 	let bgRadialPosition = 'center';
 	let bgImageUrl = '';
+	let bgVideoUrl = '';
 	let bgBlur = 0;
 	let bgBrightness = 100;
 	let bgGrayscale = 0;
@@ -226,7 +227,21 @@
 		headingFontFamily = theme.config.page?.defaults?.headingFontFamily || fontFamily;
 		maxWidth = theme.config.page?.layout?.maxWidth || 480;
 		pagePadding = theme.config.page?.layout?.pagePadding || 16;
-		blockGap = theme.config.page?.layout?.blockGap || 14;
+		
+		// Load blockGap - convert px to preset or use preset directly
+		const blockGapValue = theme.config.page?.layout?.blockGap;
+		if (typeof blockGapValue === 'string') {
+			// Already a preset key
+			blockGapPreset = blockGapValue as BlockGapPreset;
+		} else if (typeof blockGapValue === 'number') {
+			// Convert px to nearest preset
+			if (blockGapValue <= 10) blockGapPreset = 'compact';
+			else if (blockGapValue >= 20) blockGapPreset = 'spacious';
+			else blockGapPreset = 'default';
+		} else {
+			blockGapPreset = 'default';
+		}
+		
 		blockPaddingX = theme.config.page?.layout?.blockPadding?.x || 16;
 		blockPaddingY = theme.config.page?.layout?.blockPadding?.y || 12;
 		textAlign = theme.config.page?.layout?.textAlign || 'center';
@@ -336,6 +351,12 @@
 				if (urlMatch) bgImageUrl = urlMatch[1];
 			}
 		}
+		
+		// Load video URL if exists
+		if (theme.config.background?.videoUrl) {
+			bgType = 'video';
+			bgVideoUrl = theme.config.background.videoUrl;
+		}
 	}
 
 	$: if (baseThemeKey && themes.length > 0) {
@@ -389,7 +410,7 @@
 			if (!config.page.layout) config.page.layout = {};
 			config.page.layout.maxWidth = maxWidth;
 			config.page.layout.pagePadding = pagePadding;
-			config.page.layout.blockGap = blockGap;
+			config.page.layout.blockGap = blockGapPreset; // Store semantic key
 			config.page.layout.textAlign = textAlign;
 			
 			// Update block padding
@@ -522,8 +543,19 @@
 				}
 			} else if (bgType === 'image') {
 				bgValue = bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
+			} else if (bgType === 'video') {
+				// For video, use black background (video will be rendered separately)
+				bgValue = '#000000';
 			}
 			config.semantic.color.surface.page = bgValue;
+			
+			// Store video URL separately if exists
+			if (bgType === 'video' && bgVideoUrl) {
+				if (!config.background) config.background = {};
+				config.background.videoUrl = bgVideoUrl;
+			} else if (config.background?.videoUrl) {
+				delete config.background.videoUrl;
+			}
 			
 			// Clean up deprecated fields
 			if (config.page?.layout?.baseFontSize) {
@@ -536,7 +568,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
 		updateConfig();
 	}
 
@@ -559,12 +591,12 @@
 				bgGradientType === 'linear' 
 					? (bgGradientMiddleEnabled ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})`)
 					: (bgGradientMiddleEnabled ? `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom}, ${bgGradientTo})`)
-			) : bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
+			) : bgType === 'video' ? '#000000' : bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
 			
 			previewAppearanceState.set({
 				headerPresetId: selectedHeaderPreset,
 				overrides: {
-					'page.blockGap': blockGap,
+					'page.blockGap': BLOCK_GAP_PRESETS[blockGapPreset],
 					'page.titleFontSize': titleFontSizePx,
 					'page.linkFontSize': linkFontSize,
 					'page.bioFontSize': bioFontSize,
@@ -580,6 +612,7 @@
 					'header.avatarBorderColor': avatarBorderColor,
 					'header.avatarBorderWidth': avatarBorderWidth,
 					'backgroundColor': backgroundValue,
+					'backgroundVideo': bgType === 'video' && bgVideoUrl ? bgVideoUrl : undefined,
 					'backgroundBlur': bgBlur,
 					'backgroundBrightness': bgBrightness,
 					'backgroundGrayscale': bgGrayscale,
@@ -731,6 +764,36 @@
 		URL.revokeObjectURL(tempImageUrl);
 		tempImageUrl = '';
 	}
+	
+	async function handleVideoUpload(event: CustomEvent<{ file: File }>) {
+		const file = event.detail.file;
+		uploading = true;
+
+		try {
+			const result = await api.uploadBackgroundVideo('demo', file);
+			bgVideoUrl = result.url;
+		} catch (e) {
+			console.error('Failed to upload video:', e);
+			alert('Failed to upload video. Please try again.');
+		} finally {
+			uploading = false;
+		}
+	}
+	
+	async function handleVideoRemove() {
+		if (!confirm('Remove background video?')) return;
+		
+		uploading = true;
+		try {
+			await api.removeBackgroundVideo('demo');
+			bgVideoUrl = '';
+		} catch (e) {
+			console.error('Failed to remove video:', e);
+			alert('Failed to remove video');
+		} finally {
+			uploading = false;
+		}
+	}
 </script>
 
 <div class="min-h-screen" style="background-color: #f6f1eb;">
@@ -818,11 +881,14 @@
 					bind:bgRadialShape
 					bind:bgRadialPosition
 					bind:bgImageUrl
+					bind:bgVideoUrl
 					bind:bgBlur
 					bind:bgBrightness
 					bind:bgGrayscale
 					{uploading}
 					on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)}
+					on:videoUpload={handleVideoUpload}
+					on:videoRemove={handleVideoRemove}
 				/>
 
 				<!-- Header Style -->
@@ -883,7 +949,7 @@
 					bind:maxWidth
 					bind:textAlign
 					bind:pagePadding
-					bind:blockGap
+					bind:blockGapPreset
 					bind:blockPaddingX
 					bind:blockPaddingY
 					bind:blockBorderRadiusType
@@ -938,7 +1004,7 @@
 					{textAlign}
 					{maxWidth}
 					{pagePadding}
-					{blockGap}
+					blockGap={BLOCK_GAP_PRESETS[blockGapPreset]}
 					{blockPaddingX}
 					{blockPaddingY}
 					{fontFamily}

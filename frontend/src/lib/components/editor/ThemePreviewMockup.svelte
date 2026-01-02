@@ -11,6 +11,15 @@
 	
 	// Parse background value to separate image URL from other types
 	$: backgroundValue = $previewAppearance?.tokens?.backgroundColor || tokens?.backgroundColor || '#ffffff';
+	$: backgroundVideoUrl = (() => {
+		// Priority 1: Check overrides (user customization in theme editor)
+		const override = $previewAppearanceState.overrides?.['backgroundVideo'] as string | undefined;
+		if (override) return override;
+		
+		// Priority 2: Check theme config (background.videoUrl)
+		const themeConfig = $previewAppearance?.theme?.config;
+		return themeConfig?.background?.videoUrl || undefined;
+	})();
 	$: isBackgroundImage = backgroundValue.startsWith('url(');
 	$: backgroundImageUrl = isBackgroundImage ? backgroundValue.match(/url\(['"]?([^'"]+)['"]?\)/)?.[1] || '' : '';
 	
@@ -100,32 +109,42 @@
 	$: textAlign = $previewAppearanceState.overrides?.['page.textAlign'] || 'center';
 	$: pagePadding = $previewAppearanceState.overrides?.['page.pagePadding'] || 16;
 	
-	// Shared font size converter (optimized) - using centralized tokens
-	const fontSizeKeyToPx = (key: string, defaultPx: number): number => {
-		return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || defaultPx;
-	};
-	
-	// Convert font size keys to pixels
-	$: linkFontSizePx = fontSizeKeyToPx(($previewAppearanceState.overrides?.['page.linkFontSize'] as string) || 'sm', 14);
-	$: bioFontSizePx = (() => {
+	// Helper function to get font size from override or theme config
+	const getFontSize = (
+		overrideKey: string,
+		themeConfigPath: string,
+		defaultSize: number
+	): number => {
 		// Try override first
-		const override = $previewAppearanceState.overrides?.['page.bioFontSize'] as string;
+		const override = $previewAppearanceState.overrides?.[overrideKey];
 		if (override) {
-			return fontSizeKeyToPx(override, 14);
+			if (typeof override === 'number') return override;
+			if (typeof override === 'string') {
+				return FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || defaultSize;
+			}
 		}
 		
 		// Fallback to theme config
 		const themeConfig = $previewAppearance?.theme?.config;
-		const bioFontSizeRef = themeConfig?.semantic?.typography?.bio?.fontSize;
-		if (bioFontSizeRef && typeof bioFontSizeRef === 'string' && bioFontSizeRef.startsWith('ref:tokens.typography.fontSize.')) {
-			const key = bioFontSizeRef.replace('ref:tokens.typography.fontSize.', '');
-			return fontSizeKeyToPx(key, 14);
+		const parts = themeConfigPath.split('.');
+		let value: any = themeConfig;
+		for (const part of parts) {
+			value = value?.[part];
+			if (!value) break;
 		}
 		
-		// Final fallback
-		return 14;
-	})();
-	$: subtitleFontSizePx = fontSizeKeyToPx(($previewAppearanceState.overrides?.['page.subtitleFontSize'] as string) || 'xs', 12);
+		if (value && typeof value === 'string' && value.startsWith('ref:tokens.typography.fontSize.')) {
+			const key = value.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || defaultSize;
+		}
+		
+		return defaultSize;
+	};
+	
+	// Get font sizes using helper
+	$: linkFontSizePx = getFontSize('page.linkFontSize', 'semantic.typography.link.fontSize', 14);
+	$: bioFontSizePx = getFontSize('page.bioFontSize', 'semantic.typography.bio.fontSize', 14);
+	$: subtitleFontSizePx = getFontSize('page.subtitleFontSize', 'semantic.typography.subtitle.fontSize', 12);
 	
 	$: overlayGradientColor = (() => {
 		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
@@ -219,13 +238,27 @@
 		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
 			<!-- Background Layer (with filters) -->
 			{#key backgroundValue}
-				<div 
-					class="absolute inset-0 z-0"
-					style="{isBackgroundImage 
-						? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur(${bgBlur}px) brightness(${bgBrightness / 100}) grayscale(${bgGrayscale / 100});`
-						: `background: ${backgroundValue};`
-					}"
-				></div>
+				{#if backgroundVideoUrl}
+					<!-- Video Background -->
+					<video 
+						src={backgroundVideoUrl}
+						class="absolute inset-0 z-0 w-full h-full object-cover"
+						autoplay
+						loop
+						muted
+						playsinline
+						style="filter: blur({bgBlur}px) brightness({bgBrightness / 100}) grayscale({bgGrayscale / 100});"
+					></video>
+				{:else}
+					<!-- Image or Color Background -->
+					<div 
+						class="absolute inset-0 z-0"
+						style="{isBackgroundImage 
+							? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur(${bgBlur}px) brightness(${bgBrightness / 100}) grayscale(${bgGrayscale / 100});`
+							: `background: ${backgroundValue};`
+						}"
+					></div>
+				{/if}
 			{/key}
 
 			<!-- Content -->
