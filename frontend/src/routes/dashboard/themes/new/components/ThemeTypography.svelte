@@ -30,17 +30,26 @@
 	let headingDropdownButton: HTMLElement;
 
 	$: selectedFontName = (() => {
-		const match = fonts.find(f => fontFamily?.includes(f.name));
-		return match ? match.name : fonts[0].name;
+		if (!fontFamily) return fonts[0].name;
+		// Try exact match first (for full font stack)
+		const exactMatch = fonts.find(f => f.value === fontFamily);
+		if (exactMatch) return exactMatch.name;
+		// Try partial match (check if font name is in the font family string)
+		const partialMatch = fonts.find(f => fontFamily.includes(f.name));
+		return partialMatch ? partialMatch.name : fonts[0].name;
 	})();
 
 	$: selectedFontObj = fonts.find(f => f.name === selectedFontName) || fonts[0];
 	
 	$: selectedHeadingFontName = (() => {
-		// Fallback to body font if heading font not set
 		const fontToCheck = headingFontFamily || fontFamily;
-		const match = fonts.find(f => fontToCheck?.includes(f.name));
-		return match ? match.name : fonts[0].name;
+		if (!fontToCheck) return fonts[0].name;
+		// Try exact match first
+		const exactMatch = fonts.find(f => f.value === fontToCheck);
+		if (exactMatch) return exactMatch.name;
+		// Try partial match
+		const partialMatch = fonts.find(f => fontToCheck.includes(f.name));
+		return partialMatch ? partialMatch.name : fonts[0].name;
 	})();
 
 	$: selectedHeadingFontObj = fonts.find(f => f.name === selectedHeadingFontName) || fonts[0];

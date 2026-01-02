@@ -403,6 +403,39 @@
 			if (!config.tokens.typography.fontFamily) config.tokens.typography.fontFamily = {};
 			config.tokens.typography.fontFamily.sans = fontFamily;
 			
+			// Ensure fontSize tokens exist (required for refs to work)
+			if (!config.tokens.typography.fontSize) {
+				config.tokens.typography.fontSize = {
+					xs: 12,
+					'13': 13,
+					sm: 14,
+					'15': 15,
+					base: 16,
+					lg: 18,
+					xl: 20,
+					'2xl': 24
+				};
+			}
+			
+			// Ensure fontWeight tokens exist
+			if (!config.tokens.typography.fontWeight) {
+				config.tokens.typography.fontWeight = {
+					normal: 400,
+					medium: 500,
+					semibold: 600,
+					bold: 700
+				};
+			}
+			
+			// Ensure lineHeight tokens exist
+			if (!config.tokens.typography.lineHeight) {
+				config.tokens.typography.lineHeight = {
+					tight: 1.25,
+					normal: 1.5,
+					relaxed: 1.75
+				};
+			}
+			
 			// Update border radius in recipes
 			if (!config.recipes) config.recipes = {};
 			if (!config.recipes.link) config.recipes.link = {};

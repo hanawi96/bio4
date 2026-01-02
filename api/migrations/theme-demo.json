@@ -1,7 +1,7 @@
 {
   "meta": {
-    "id": "preset.kkkkkkkkkk",
-    "name": "kkkkkkkkkk",
+    "id": "preset.gggggggggggggsgasd",
+    "name": "gggggggggggggsgasd",
     "schemaVersion": 2,
     "version": "2.2.0",
     "author": "system",
@@ -87,7 +87,9 @@
       },
       "fontSize": {
         "xs": 12,
+        "13": 13,
         "sm": 14,
+        "15": 15,
         "base": 16,
         "lg": 18,
         "xl": 20,
@@ -138,7 +140,7 @@
   },
   "semantic": {
     "color": {
-      "primary": "#3b82f6",
+      "primary": "#f51800",
       "primaryHover": "ref:tokens.color.blue.600",
       "secondary": "ref:tokens.color.gray.500",
       "text": {
@@ -148,7 +150,7 @@
         "invert": "ref:tokens.color.white"
       },
       "surface": {
-        "page": "linear-gradient(135deg, #6b46c1 0%, #ed64a6 100%)",
+        "page": "linear-gradient(135deg, #22543d 0%, #38a169 50%, #ecc94b 100%)",
         "card": "ref:tokens.color.white",
         "elevated": "ref:tokens.color.white",
         "overlay": "ref:tokens.color.overlay.50"
@@ -165,7 +167,7 @@
     "typography": {
       "heading": {
         "fontFamily": "ref:tokens.typography.fontFamily.sans",
-        "fontSize": "ref:tokens.typography.fontSize.2xl",
+        "fontSize": "ref:tokens.typography.fontSize.lg",
         "fontWeight": "ref:tokens.typography.fontWeight.bold",
         "lineHeight": "ref:tokens.typography.lineHeight.tight"
       },
@@ -182,13 +184,13 @@
         "lineHeight": "ref:tokens.typography.lineHeight.normal"
       },
       "link": {
-        "fontSize": "ref:tokens.typography.fontSize.xs"
+        "fontSize": "ref:tokens.typography.fontSize.13"
       },
       "bio": {
-        "fontSize": "ref:tokens.typography.fontSize.xs"
+        "fontSize": "ref:tokens.typography.fontSize.sm"
       },
       "subtitle": {
-        "fontSize": "ref:tokens.typography.fontSize.xs"
+        "fontSize": "ref:tokens.typography.fontSize.15"
       }
     }
   },
@@ -233,7 +235,7 @@
     },
     "defaults": {
       "headerPresetId": "no-cover",
-      "blockStylePreset": "glass",
+      "blockStylePreset": "outline",
       "linkStyle": "soft",
       "linkGroupLayout": "list",
       "linkIconShape": "rounded",
@@ -247,7 +249,7 @@
       "borderWidth": 1,
       "linkGroupConfig": {
         "list": {
-          "iconPosition": "left",
+          "iconPosition": "top",
           "textAlign": "center",
           "showSubtitle": false
         },
