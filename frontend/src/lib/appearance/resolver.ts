@@ -304,8 +304,14 @@ function resolveBlockStyle(
 		?? (themeConfig?.page?.defaults?.blockOpacity as number)
 		?? 100;
 
-	// Apply opacity to fill (except for outline and glass which are transparent)
-	if (recipeId !== 'outline' && recipeId !== 'glass' && blockOpacity < 100) {
+	// Apply opacity to fill
+	if (recipeId === 'glass') {
+		// Glass: Map blockOpacity (0-100) to glass range (10-35)
+		// Formula: glassOpacity = 10 + (blockOpacity / 100) * 25
+		const glassOpacity = Math.max(10, Math.min(35, 10 + (blockOpacity / 100) * 25));
+		fill = applyOpacity(fill, glassOpacity);
+	} else if (recipeId !== 'outline' && blockOpacity < 100) {
+		// Other styles: Apply blockOpacity normally (except outline which is transparent)
 		fill = applyOpacity(fill, blockOpacity);
 	}
 

@@ -31,7 +31,7 @@ const BLOCK_STYLE_PRESETS: Record<string, any> = {
 		blur: null
 	}),
 	glass: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
-		fill: 'rgba(255, 255, 255, 0.35)',
+		fill: 'rgba(255, 255, 255, 1)', // Will be adjusted by opacity logic
 		text: blockTextColor,
 		border: `${borderWidth}px solid ${borderColor}`,
 		glow: null,
@@ -110,30 +110,37 @@ export function buildPreviewAppearance(
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;
 	let blockStyle = styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor);
 
-	// Apply opacity to fill (except for outline and glass)
-	// Glass always uses 35% opacity, never affected by slider
-	if (blockStylePreset !== 'outline' && blockStylePreset !== 'glass') {
-		const applyOpacity = (color: string, opacity: number): string => {
-			if (color.startsWith('rgba(')) {
-				return color.replace(/[\d.]+\)$/, `${opacity / 100})`);
-			}
-			if (color.startsWith('rgb(')) {
-				return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity / 100})`);
-			}
-			if (color.startsWith('#')) {
-				const hex = color.replace('#', '');
-				const r = parseInt(hex.substring(0, 2), 16);
-				const g = parseInt(hex.substring(2, 4), 16);
-				const b = parseInt(hex.substring(4, 6), 16);
-				return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
-			}
-			if (color.includes('linear-gradient')) {
-				// Apply opacity to gradient colors
-				return color.replace(/#[0-9a-fA-F]{6}/g, (hex) => applyOpacity(hex, opacity));
-			}
-			return color;
-		};
+	// Apply opacity to fill
+	const applyOpacity = (color: string, opacity: number): string => {
+		if (color.startsWith('rgba(')) {
+			return color.replace(/[\d.]+\)$/, `${opacity / 100})`);
+		}
+		if (color.startsWith('rgb(')) {
+			return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity / 100})`);
+		}
+		if (color.startsWith('#')) {
+			const hex = color.replace('#', '');
+			const r = parseInt(hex.substring(0, 2), 16);
+			const g = parseInt(hex.substring(2, 4), 16);
+			const b = parseInt(hex.substring(4, 6), 16);
+			return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+		}
+		if (color.includes('linear-gradient')) {
+			// Apply opacity to gradient colors
+			return color.replace(/#[0-9a-fA-F]{6}/g, (hex) => applyOpacity(hex, opacity));
+		}
+		return color;
+	};
 
+	if (blockStylePreset === 'glass') {
+		// Glass: Map blockOpacity (0-100) to glass range (10-35)
+		const glassOpacity = Math.max(10, Math.min(35, 10 + (blockOpacity / 100) * 25));
+		blockStyle = {
+			...blockStyle,
+			fill: applyOpacity(blockStyle.fill, glassOpacity)
+		};
+	} else if (blockStylePreset !== 'outline') {
+		// Other styles: Apply blockOpacity normally (except outline which is transparent)
 		blockStyle = {
 			...blockStyle,
 			fill: applyOpacity(blockStyle.fill, blockOpacity)

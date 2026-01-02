@@ -43,7 +43,7 @@
 	const defaultOpacity: Record<BlockStylePresetId, number> = {
 		solid: 100,
 		outline: 100,
-		glass: 35, // surface@0.35
+		glass: 35, // Max glass opacity (will be mapped to 10-35% range)
 		neon: 100,
 		brutal: 100,
 		gradient: 100
@@ -129,9 +129,9 @@
 			effectiveOpacity = defaultOpacity[recipeId];
 		}
 		
-		// Glass always uses 35% opacity, never affected by slider
+		// Glass: Map blockOpacity (0-100) to glass range (10-35)
 		if (recipeId === 'glass') {
-			effectiveOpacity = 35;
+			effectiveOpacity = Math.max(10, Math.min(35, 10 + (effectiveOpacity / 100) * 25));
 		}
 		
 		// Handle gradient fill

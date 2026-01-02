@@ -64,7 +64,7 @@ export const BLOCK_STYLE_RECIPES: Record<BlockStylePresetId, BlockStyleRecipe> =
 
     // Glass: Frosted glass effect with blockText
     glass: {
-        fill: 'surface@0.35',
+        fill: 'surface',
         border: 'border@0.6',
         text: 'blockText',
         blur: 10
