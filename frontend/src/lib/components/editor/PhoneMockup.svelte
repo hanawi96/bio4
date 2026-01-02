@@ -121,32 +121,7 @@
 		video.src = DEFAULT_VIDEO;
 	});
 
-	// Helper: Darken color for gradient
-	function darkenColor(hex: string, percent: number): string {
-		const num = parseInt(hex.replace('#', ''), 16);
-		const r = Math.max(0, ((num >> 16) & 0xff) * (1 - percent / 100));
-		const g = Math.max(0, ((num >> 8) & 0xff) * (1 - percent / 100));
-		const b = Math.max(0, (num & 0xff) * (1 - percent / 100));
-		return '#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
-	}
-
-	// Helper: Get block background style (handles gradient)
-	function getBlockBackground(fill: string | undefined): string {
-		if (!fill) {
-			return tokens?.primaryColor || '#3b82f6';
-		}
-		
-		// Handle gradient pattern
-		if (fill.startsWith('gradient:')) {
-			const tokenName = fill.replace('gradient:', '');
-			// Resolve token to actual color
-			const baseColor = tokens?.[tokenName as keyof typeof tokens] || tokens?.blockBase || '#3b82f6';
-			const darkColor = darkenColor(baseColor as string, 20);
-			return `linear-gradient(135deg, ${baseColor} 0%, ${darkColor} 100%)`;
-		}
-		
-		return fill;
-	}
+	// Helper: Darken color for gradient (DEPRECATED - gradients now resolved in resolver.ts)
 
 	// Avatar size mapping
 	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };
@@ -719,7 +694,7 @@
 													class="link-button block flex-shrink-0 text-sm font-medium transition-transform hover:scale-[1.02]"
 													style="
 														width: 200px;
-														background: {getBlockBackground($appearance?.blockStyle?.fill)};
+														background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 														color: {$appearance?.blockStyle?.text || 'white'};
 														border: {$appearance?.blockStyle?.border ? `${borderWidth}px solid ${$appearance.blockStyle.border}` : 'none'};
 														box-shadow: {resolvedBlockShadow !== 'none' 
@@ -788,7 +763,7 @@
 												rel="noopener"
 												class="link-button block text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding || config.showLabels ? '' : 'overflow-hidden'}"
 												style="
-													background: {showImageOnly ? 'transparent' : getBlockBackground($appearance?.blockStyle?.fill)};
+													background: {showImageOnly ? 'transparent' : ($appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6')};
 													color: {$appearance?.blockStyle?.text || 'white'};
 													border: {gridBorder};
 													box-shadow: {gridShadow};
@@ -858,7 +833,7 @@
 												rel="noopener"
 												class="link-button block w-full text-xs font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'}"
 												style="
-													background: {getBlockBackground($appearance?.blockStyle?.fill)};
+													background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 													color: {$appearance?.blockStyle?.text || 'white'};
 													border: {cardBorder};
 													box-shadow: {cardShadow} !important;
@@ -927,7 +902,7 @@
 											rel="noopener"
 											class="link-button block w-full text-sm font-medium transition-transform hover:scale-[1.02]"
 											style="
-												background: {getBlockBackground($appearance?.blockStyle?.fill)};
+												background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 												color: {$appearance?.blockStyle?.text || 'white'};
 												border: {listBorder};
 												box-shadow: {listShadow};

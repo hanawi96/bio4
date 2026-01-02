@@ -56,6 +56,7 @@
 	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	let socialIconPosition: 'header' | 'footer' = 'header';
 	let socialIconColor = '#000000';
+	let selectedGradientPreset: 'diagonal-dark' | 'vertical-fade' | 'horizontal-flow' | 'sunset-glow' | 'ocean-deep' | 'forest-path' | 'royal-luxury' | 'fire-blaze' | 'spotlight' | 'cosmic-burst' | 'aurora' | 'nebula' | 'spin' | 'vortex' | 'prism' | 'kaleidoscope' = 'diagonal-dark';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
 	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif'; // Font riêng cho heading
 	let maxWidth = 480;
@@ -218,6 +219,7 @@
 		
 		socialIconPosition = theme.config.page?.defaults?.socialIconPosition || 'header';
 		socialIconColor = theme.config.page?.defaults?.socialIconColor || textColor;
+		selectedGradientPreset = theme.config.page?.defaults?.gradientPreset || 'diagonal-dark';
 		showShareButton = theme.config.page?.defaults?.showShareButton ?? true;
 		showSubscribeButton = theme.config.page?.defaults?.showSubscribeButton ?? true;
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
@@ -243,26 +245,37 @@
 		borderColor = resolveRef(theme.config.semantic?.color?.border?.default) || '#e4e4e7';
 		borderWidth = theme.config.page?.defaults?.borderWidth || 1;
 		
-		// Extract typography - font sizes (optimized with shared mapping)
-		const fontSizeToKey = (size: number, validKeys: string[]): string => {
-			const map: Record<number, string> = {
-				12: 'xs', 14: 'sm', 16: 'base', 18: 'lg', 20: 'xl', 24: '2xl'
-			};
-			const key = map[size];
-			return (key && validKeys.includes(key)) ? key : validKeys[0];
+		// Extract typography - font sizes
+		// Helper to extract key from ref string or convert pixel to key
+		const fontSizeToKey = (value: any, validKeys: string[]): string => {
+			// If it's a ref string like "ref:tokens.typography.fontSize.sm"
+			if (typeof value === 'string' && value.startsWith('ref:tokens.typography.fontSize.')) {
+				const key = value.replace('ref:tokens.typography.fontSize.', '');
+				return validKeys.includes(key) ? key : validKeys[0];
+			}
+			// If it's a number (pixel value), map to key
+			if (typeof value === 'number') {
+				const map: Record<number, string> = {
+					12: 'xs', 13: '13', 14: 'sm', 15: '15', 16: 'base', 18: 'lg', 20: 'xl', 24: '2xl'
+				};
+				const key = map[value];
+				return (key && validKeys.includes(key)) ? key : validKeys[0];
+			}
+			// Fallback to first valid key
+			return validKeys[0];
 		};
 		
 		const headingSize = resolveRef(theme.config.semantic?.typography?.heading?.fontSize);
 		headingFontSize = fontSizeToKey(headingSize, ['lg', 'xl', '2xl']) as typeof headingFontSize;
 		
 		const linkSize = resolveRef(theme.config.semantic?.typography?.link?.fontSize);
-		linkFontSize = fontSizeToKey(linkSize, ['xs', 'sm', 'base', 'lg']) as typeof linkFontSize;
+		linkFontSize = fontSizeToKey(linkSize, ['xs', '13', 'sm', '15', 'base', 'lg', 'xl']) as typeof linkFontSize;
 		
 		const bioSize = resolveRef(theme.config.semantic?.typography?.bio?.fontSize);
-		bioFontSize = fontSizeToKey(bioSize, ['xs', 'sm', 'base']) as typeof bioFontSize;
+		bioFontSize = fontSizeToKey(bioSize, ['xs', '13', 'sm', '15', 'base']) as typeof bioFontSize;
 		
 		const subtitleSize = resolveRef(theme.config.semantic?.typography?.subtitle?.fontSize);
-		subtitleFontSize = fontSizeToKey(subtitleSize, ['xs', 'sm']) as typeof subtitleFontSize;
+		subtitleFontSize = fontSizeToKey(subtitleSize, ['xs', '13', 'sm', '15', 'base']) as typeof subtitleFontSize;
 		
 		// Extract more colors
 		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
@@ -350,6 +363,7 @@
 			config.page.defaults.linkIconShape = selectedLinkIconShape;
 			config.page.defaults.socialIconPosition = socialIconPosition;
 			config.page.defaults.socialIconColor = socialIconColor;
+			config.page.defaults.gradientPreset = selectedGradientPreset;
 			config.page.defaults.avatarBorderColor = avatarBorderColor;
 			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
 			config.page.defaults.shadowStyle = selectedShadowStyle;
@@ -489,15 +503,15 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
 		updateConfig();
 	}
 
 	// Update preview stores - optimized for fast opacity changes
-	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined && bgType && bgGradientType && bgRadialShape && bgRadialPosition) {
+	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined && selectedGradientPreset && bgType && bgGradientType && bgRadialShape && bgRadialPosition) {
 		try {
 			const config = JSON.parse(configJson);
-			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity, shadowCustom));
+			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity, shadowCustom, selectedGradientPreset));
 			
 			// Resolve blockBorderRadius from centralized tokens
 			const radiusValue = RADIUS_TOKENS[blockBorderRadiusType] ?? 12;
@@ -543,6 +557,7 @@
 					'page.linkGroupConfig.list': listConfig,
 					'page.socialIconPosition': socialIconPosition,
 					'page.socialIconColor': socialIconColor,
+					'page.gradientPreset': selectedGradientPreset,
 					'page.showShareButton': showShareButton,
 					'page.showSubscribeButton': showSubscribeButton
 				}
@@ -797,6 +812,7 @@
 					bind:blockOpacity
 					bind:shadowCustom
 					bind:selectedLinkIconShape
+					bind:selectedGradientPreset
 					{primaryColor}
 					{textColor}
 					{borderColor}

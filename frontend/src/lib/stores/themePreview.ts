@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { getGradientColors, type GradientPreset } from '$lib/utils/colorUtils';
 
 // Isolated stores for theme preview (won't affect main appearance editor)
 export const previewAppearance = writable<any>(null);
@@ -51,16 +52,10 @@ const BLOCK_STYLE_PRESETS: Record<string, any> = {
 		glow: null,
 		blur: null
 	}),
-	gradient: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => {
-		const darken = (hex: string, percent: number) => {
-			const num = parseInt(hex.replace('#', ''), 16);
-			const r = Math.max(0, ((num >> 16) & 0xff) * (1 - percent / 100));
-			const g = Math.max(0, ((num >> 8) & 0xff) * (1 - percent / 100));
-			const b = Math.max(0, (num & 0xff) * (1 - percent / 100));
-			return '#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
-		};
+	gradient: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string, gradientPreset: GradientPreset = 'diagonal-dark') => {
+		const gradient = getGradientColors(primaryColor, gradientPreset);
 		return {
-			fill: `linear-gradient(135deg, ${primaryColor} 0%, ${darken(primaryColor, 20)} 100%)`,
+			fill: gradient.css,
 			text: blockTextColor,
 			border: 'none',
 			glow: null,
@@ -75,7 +70,8 @@ export function buildPreviewAppearance(
 	blockStylePreset: string = 'solid',
 	shadowStylePreset: string = 'none',
 	blockOpacity: number = 100,
-	shadowCustom?: { offsetX: number; offsetY: number; blur: number; spread: number; opacity: number }
+	shadowCustom?: { offsetX: number; offsetY: number; blur: number; spread: number; opacity: number },
+	gradientPreset: GradientPreset = 'diagonal-dark'
 ) {
 	if (!config) return null;
 
@@ -108,7 +104,9 @@ export function buildPreviewAppearance(
 
 	// Build block style from preset (without shadow)
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;
-	let blockStyle = styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor);
+	let blockStyle = blockStylePreset === 'gradient' 
+		? styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor, gradientPreset)
+		: styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor);
 
 	// Apply opacity to fill
 	const applyOpacity = (color: string, opacity: number): string => {
@@ -125,8 +123,8 @@ export function buildPreviewAppearance(
 			const b = parseInt(hex.substring(4, 6), 16);
 			return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
 		}
-		if (color.includes('linear-gradient')) {
-			// Apply opacity to gradient colors
+		if (color.includes('gradient')) {
+			// Apply opacity to all gradient types (linear, radial, conic)
 			return color.replace(/#[0-9a-fA-F]{6}/g, (hex) => applyOpacity(hex, opacity));
 		}
 		return color;

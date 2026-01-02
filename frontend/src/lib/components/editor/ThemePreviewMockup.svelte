@@ -432,7 +432,7 @@
 									<div
 										class="link-button font-medium transition-transform hover:scale-[1.02] {gridConfig.imagePadding || gridConfig.showLabels ? 'flex flex-col items-center justify-center' : 'overflow-hidden'}"
 										style="
-											background-color: {showImageOnly ? 'transparent' : ($previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6')};
+											background: {showImageOnly ? 'transparent' : ($previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6')};
 											color: {$previewAppearance?.blockStyle?.text || 'white'};
 											border: {$previewAppearance?.blockStyle?.border || 'none'};
 											box-shadow: {$previewAppearance?.blockStyle?.glow ? `0 0 20px ${$previewAppearance.blockStyle.glow}` : ($previewAppearance?.blockStyle?.shadow || 'none')};
@@ -480,7 +480,7 @@
 									<div
 										class="link-button block font-medium transition-transform hover:scale-[1.02] {cardConfig.imagePadding ? '' : 'overflow-hidden'}"
 										style="
-											background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+											background: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 											color: {$previewAppearance?.blockStyle?.text || 'white'};
 											border: {$previewAppearance?.blockStyle?.border || 'none'};
 											box-shadow: {$previewAppearance?.blockStyle?.glow ? `0 0 20px ${$previewAppearance.blockStyle.glow}` : ($previewAppearance?.blockStyle?.shadow || 'none')};
@@ -531,7 +531,7 @@
 									<div
 										class="link-button block text-sm font-medium transition-transform hover:scale-[1.02]"
 										style="
-											background-color: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
+											background: {$previewAppearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 											color: {$previewAppearance?.blockStyle?.text || 'white'};
 											border: {$previewAppearance?.blockStyle?.border || 'none'};
 											box-shadow: {$previewAppearance?.blockStyle?.glow ? `0 0 20px ${$previewAppearance.blockStyle.glow}` : ($previewAppearance?.blockStyle?.shadow || 'none')};

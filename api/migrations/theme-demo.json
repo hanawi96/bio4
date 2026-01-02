@@ -239,6 +239,7 @@
       "linkIconShape": "rounded",
       "socialIconPosition": "footer",
       "socialIconColor": "#ffffff",
+      "gradientPreset": "diagonal-dark",
       "avatarBorderColor": "#ffffff",
       "avatarBorderWidth": 4,
       "shadowStyle": "none",

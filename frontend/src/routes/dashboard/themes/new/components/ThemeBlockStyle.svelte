@@ -10,11 +10,13 @@
 		type ShadowStylePreset
 	} from '$lib/appearance/blockStyles';
 	import { resolveToken, resolveAutoTextColor } from '$lib/appearance/tokenResolver';
+	import { getGradientColors, getGradientPresetName, type GradientPreset } from '$lib/utils/colorUtils';
 
 	export let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient';
 	export let selectedLinkIconShape: 'square' | 'rounded' | 'circle';
 	export let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' | 'custom' = 'none';
 	export let blockOpacity: number = 100;
+	export let selectedGradientPreset: GradientPreset = 'darken';
 	export let shadowCustom = {
 		offsetX: 0,
 		offsetY: 4,
@@ -106,15 +108,6 @@
 		return gradient.replace(/#[0-9a-fA-F]{6}/g, (color) => applyOpacity(color, opacity));
 	}
 
-	// Helper: Darken color by percentage
-	function darkenColor(hex: string, percent: number): string {
-		const num = parseInt(hex.replace('#', ''), 16);
-		const r = Math.max(0, ((num >> 16) & 0xff) * (1 - percent / 100));
-		const g = Math.max(0, ((num >> 8) & 0xff) * (1 - percent / 100));
-		const b = Math.max(0, (num & 0xff) * (1 - percent / 100));
-		return '#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
-	}
-
 	// Get preview style for each recipe
 	function getPreviewStyle(recipeId: BlockStylePresetId, shadowId: ShadowStylePreset, opacity: number, useDefaultOpacity: boolean) {
 		const recipe = getBlockStyleRecipe(recipeId);
@@ -137,9 +130,9 @@
 		// Handle gradient fill
 		if (recipe.fill.startsWith('gradient:')) {
 			const baseColor = resolveToken(recipe.fill.replace('gradient:', ''), tokens);
-			const darkColor = darkenColor(baseColor, 20);
-			fill = `linear-gradient(135deg, ${baseColor} 0%, ${darkColor} 100%)`;
-			// Apply opacity to gradient
+			const gradient = getGradientColors(baseColor, selectedGradientPreset);
+			fill = gradient.css;
+			// Apply opacity to gradient (handle multiple backgrounds)
 			if (effectiveOpacity < 100) {
 				fill = applyOpacityToGradient(fill, effectiveOpacity);
 			}
@@ -247,7 +240,8 @@
 							<div
 								class="w-full h-8 transition-all flex items-center justify-center rounded-lg relative z-10"
 								style="
-									background: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : displayStyle.backgroundColor};
+									background-color: {displayStyle.backgroundImage !== 'none' ? 'transparent' : displayStyle.backgroundColor};
+									background-image: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : 'none'};
 									color: {displayStyle.color};
 									border: {displayStyle.border};
 									box-shadow: {displayStyle.boxShadow || 'none'};
@@ -290,6 +284,48 @@
 			</div>
 			<p class="text-xs text-gray-500 mt-2">Transparency level (not applied to Outline)</p>
 		</div>
+
+		<!-- Gradient Style (only show when Gradient is selected) -->
+		{#if selectedBlockStyle === 'gradient'}
+			<div>
+				<label class="block text-sm font-medium text-gray-700 mb-3">
+					Gradient Style
+				</label>
+				<div class="grid grid-cols-4 gap-2">
+					{#each ['diagonal-dark', 'vertical-fade', 'horizontal-flow', 'sunset-glow', 'ocean-deep', 'forest-path', 'royal-luxury', 'fire-blaze', 'spotlight', 'cosmic-burst', 'aurora', 'nebula', 'spin', 'vortex', 'prism', 'kaleidoscope'] as preset}
+						{@const isSelected = selectedGradientPreset === preset}
+						{@const gradient = getGradientColors(primaryColor, preset)}
+						<button
+							type="button"
+							on:click={() => selectedGradientPreset = preset}
+							class="group relative rounded-lg overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+						>
+							<!-- Gradient Preview -->
+							<div
+								class="h-12 relative border {isSelected ? 'border-blue-500' : 'border-gray-200'}"
+								style="background: {gradient.css};"
+							>
+								{#if isSelected}
+									<div class="absolute top-1 right-1 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+										<svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+											<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+										</svg>
+									</div>
+								{/if}
+							</div>
+							
+							<!-- Name Label -->
+							<div class="py-1.5 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
+								<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
+									{getGradientPresetName(preset)}
+								</p>
+							</div>
+						</button>
+					{/each}
+				</div>
+				<p class="text-xs text-gray-500 mt-2">16 unique gradient styles with mixed types</p>
+			</div>
+		{/if}
 
 		<!-- Shadow Style Selector -->
 		<div>
