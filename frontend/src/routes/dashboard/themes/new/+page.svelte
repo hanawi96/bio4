@@ -55,6 +55,7 @@
 	let selectedLinkIconShape: 'square' | 'rounded' | 'circle' = 'rounded';
 	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	let socialIconPosition: 'header' | 'footer' = 'header';
+	let socialIconColor = '#000000';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
 	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif'; // Font riêng cho heading
 	let maxWidth = 480;
@@ -216,6 +217,7 @@
 		}
 		
 		socialIconPosition = theme.config.page?.defaults?.socialIconPosition || 'header';
+		socialIconColor = theme.config.page?.defaults?.socialIconColor || textColor;
 		showShareButton = theme.config.page?.defaults?.showShareButton ?? true;
 		showSubscribeButton = theme.config.page?.defaults?.showSubscribeButton ?? true;
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
@@ -335,42 +337,39 @@
 			// Always start from full base config (deep clone)
 			const config = JSON.parse(JSON.stringify(baseConfig));
 			
-			// Update presets
+			// Rebuild defaults object in correct order
 			if (!config.page) config.page = {};
-			if (!config.page.defaults) config.page.defaults = {};
+			const oldDefaults = config.page.defaults || {};
+			config.page.defaults = {};
+			
+			// Set properties in desired order
 			config.page.defaults.headerPresetId = selectedHeaderPreset;
+			config.page.defaults.blockStylePreset = selectedBlockStyle;
+			if (oldDefaults.linkStyle !== undefined) config.page.defaults.linkStyle = oldDefaults.linkStyle;
+			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
+			config.page.defaults.linkIconShape = selectedLinkIconShape;
+			config.page.defaults.socialIconPosition = socialIconPosition;
+			config.page.defaults.socialIconColor = socialIconColor;
 			config.page.defaults.avatarBorderColor = avatarBorderColor;
 			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
-			config.page.defaults.blockStylePreset = selectedBlockStyle;
 			config.page.defaults.shadowStyle = selectedShadowStyle;
 			config.page.defaults.blockOpacity = blockOpacity;
-			
-			// Save shadow custom values if in custom mode
-			if (selectedShadowStyle === 'custom') {
-				config.page.defaults.shadowCustom = shadowCustom;
-			} else {
-				delete config.page.defaults.shadowCustom;
-			}
 			config.page.defaults.borderWidth = borderWidth;
 			
-			// Save heading font family if different from body
+			// Conditional fields
+			if (selectedShadowStyle === 'custom') {
+				config.page.defaults.shadowCustom = shadowCustom;
+			}
 			if (headingFontFamily && headingFontFamily !== fontFamily) {
 				config.page.defaults.headingFontFamily = headingFontFamily;
-			} else {
-				delete config.page.defaults.headingFontFamily;
 			}
 			
-			config.page.defaults.linkIconShape = selectedLinkIconShape;
-			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
-			
-			// Update link group config
+			// Link group config
 			config.page.defaults.linkGroupConfig = {
 				list: { ...listConfig },
 				grid: { ...gridConfig },
 				cards: { ...cardConfig }
 			};
-			
-			config.page.defaults.socialIconPosition = socialIconPosition;
 			
 			// Update layout
 			if (!config.page.layout) config.page.layout = {};
@@ -490,7 +489,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
 		updateConfig();
 	}
 
@@ -543,6 +542,7 @@
 					'page.linkGroupConfig.cards': cardConfig,
 					'page.linkGroupConfig.list': listConfig,
 					'page.socialIconPosition': socialIconPosition,
+					'page.socialIconColor': socialIconColor,
 					'page.showShareButton': showShareButton,
 					'page.showSubscribeButton': showSubscribeButton
 				}
@@ -687,10 +687,25 @@
 
 <div class="min-h-screen" style="background-color: #f6f1eb;">
 	<div class="flex h-[calc(100vh-64px)]">
+		<!-- Left: JSON Viewer (Sticky) -->
+		<div class="w-[400px] flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
+			<div class="sticky top-0 p-4">
+				<h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+					</svg>
+					Theme Configuration
+				</h3>
+				<div class="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
+					<pre class="text-xs p-4 overflow-x-auto max-h-[calc(100vh-120px)] font-mono leading-relaxed text-gray-800">{configJson}</pre>
+				</div>
+			</div>
+		</div>
+
 		<!-- Main Content + Preview -->
 		<div class="flex-1 overflow-y-auto">
 			<div class="flex gap-8 p-8 justify-center">
-				<!-- Left: Content Area -->
+				<!-- Center: Content Area -->
 				<div class="flex-1 max-w-2xl">
 					<!-- Header -->
 					<div class="mb-6">
@@ -769,6 +784,7 @@
 					bind:avatarBorderColor
 					bind:avatarBorderWidth
 					bind:socialIconPosition
+					bind:socialIconColor
 					bind:headerPresets
 					{uploading}
 					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}

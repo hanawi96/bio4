@@ -185,7 +185,7 @@
 	}
 
 	// Reactive: Recompute all styles when dependencies change
-	$: displayStyles = (mockTokens && borderWidth !== undefined && selectedShadowStyle && blockOpacity !== undefined) ? recipes.reduce((acc, recipeId) => {
+	$: displayStyles = (mockTokens && borderWidth !== undefined && selectedShadowStyle && blockOpacity !== undefined && shadowCustom) ? recipes.reduce((acc, recipeId) => {
 		acc[recipeId] = getPreviewStyle(recipeId, selectedShadowStyle, blockOpacity, !userHasAdjustedOpacity);
 		return acc;
 	}, {} as Record<BlockStylePresetId, any>) : {};

@@ -53,11 +53,18 @@
 
 		let fill = resolveToken(recipe.fill, tokens);
 		
-		// Handle gradient fill
+		// Handle gradient fill FIRST (before opacity)
 		if (recipe.fill.startsWith('gradient:')) {
 			const baseColor = resolveToken(recipe.fill.replace('gradient:', ''), tokens);
 			const darkColor = darkenColor(baseColor, 20);
 			fill = `linear-gradient(135deg, ${baseColor} 0%, ${darkColor} 100%)`;
+		}
+		
+		// Glass: Apply special opacity mapping (10-35% range) AFTER gradient
+		if (recipeId === 'glass') {
+			// For glass preview, use max opacity (35%) to show the effect clearly
+			const glassOpacity = 35;
+			fill = applyOpacity(fill, glassOpacity);
 		}
 		
 		const text =
@@ -82,6 +89,28 @@
 			boxShadow: shadow || (glow ? `0 0 20px ${glow}` : 'none'),
 			backdropFilter: recipe.blur ? `blur(${recipe.blur}px)` : 'none'
 		};
+	}
+
+	// Helper: Apply opacity to color
+	function applyOpacity(color: string, opacity: number): string {
+		if (color.startsWith('rgba(')) {
+			return color.replace(/[\d.]+\)$/, `${opacity / 100})`);
+		}
+		if (color.startsWith('rgb(')) {
+			return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity / 100})`);
+		}
+		if (color.startsWith('#')) {
+			const hex = color.replace('#', '');
+			const r = parseInt(hex.substring(0, 2), 16);
+			const g = parseInt(hex.substring(2, 4), 16);
+			const b = parseInt(hex.substring(4, 6), 16);
+			return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+		}
+		if (color.includes('linear-gradient')) {
+			// Apply opacity to gradient colors
+			return color.replace(/#[0-9a-fA-F]{6}/g, (hex) => applyOpacity(hex, opacity));
+		}
+		return color;
 	}
 
 	$: currentShadow = (() => {

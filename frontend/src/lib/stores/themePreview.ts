@@ -35,7 +35,7 @@ const BLOCK_STYLE_PRESETS: Record<string, any> = {
 		text: blockTextColor,
 		border: `${borderWidth}px solid ${borderColor}`,
 		glow: null,
-		blur: 12
+		blur: 10
 	}),
 	neon: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
 		fill: primaryColor,

@@ -8,6 +8,7 @@
 	export let avatarBorderColor: string;
 	export let avatarBorderWidth: number;
 	export let socialIconPosition: 'header' | 'footer';
+	export let socialIconColor: string;
 
 	const dispatch = createEventDispatcher();
 
@@ -244,6 +245,31 @@
 				</button>
 			</div>
 			<p class="text-xs text-gray-500 mt-2">Choose where to display social media icons</p>
+		</div>
+
+		<!-- Social Icons Color -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Social Icons Color</label>
+			<div class="flex items-center gap-3">
+				<div class="relative flex-shrink-0">
+					<input
+						type="color"
+						bind:value={socialIconColor}
+						class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+					/>
+					<div 
+						class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
+						style="background-color: {socialIconColor};"
+					></div>
+				</div>
+				<input
+					type="text"
+					bind:value={socialIconColor}
+					class="flex-1 input-ios font-mono text-sm"
+					placeholder="#000000"
+				/>
+			</div>
+			<p class="text-xs text-gray-500 mt-1">Color for social media icons</p>
 		</div>
 	</div>
 </section>

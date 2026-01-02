@@ -238,6 +238,7 @@
       "linkGroupLayout": "list",
       "linkIconShape": "rounded",
       "socialIconPosition": "footer",
+      "socialIconColor": "#ffffff",
       "avatarBorderColor": "#ffffff",
       "avatarBorderWidth": 4,
       "shadowStyle": "none",
