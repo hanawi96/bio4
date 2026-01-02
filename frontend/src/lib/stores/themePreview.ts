@@ -31,7 +31,7 @@ const BLOCK_STYLE_PRESETS: Record<string, any> = {
 		blur: null
 	}),
 	glass: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
-		fill: 'rgba(255, 255, 255, 0.1)',
+		fill: 'rgba(255, 255, 255, 0.35)',
 		text: blockTextColor,
 		border: `${borderWidth}px solid ${borderColor}`,
 		glow: null,
@@ -74,7 +74,8 @@ export function buildPreviewAppearance(
 	config: any,
 	blockStylePreset: string = 'solid',
 	shadowStylePreset: string = 'none',
-	blockOpacity: number = 100
+	blockOpacity: number = 100,
+	shadowCustom?: { offsetX: number; offsetY: number; blur: number; spread: number; opacity: number }
 ) {
 	if (!config) return null;
 
@@ -140,8 +141,27 @@ export function buildPreviewAppearance(
 	}
 
 	// Build shadow separately (but not for Neon - it has glow instead)
-	const shadowBuilder = SHADOW_PRESETS[shadowStylePreset] || SHADOW_PRESETS.none;
-	const shadow = blockStylePreset !== 'neon' ? shadowBuilder(shadowColor) : 'none';
+	let shadow: string;
+	if (blockStylePreset === 'neon') {
+		shadow = 'none';
+	} else if (shadowStylePreset === 'custom' && shadowCustom) {
+		// Use custom shadow values with theme shadowColor
+		const applyOpacity = (color: string, opacity: number): string => {
+			if (color.startsWith('#')) {
+				const hex = color.replace('#', '');
+				const r = parseInt(hex.substring(0, 2), 16);
+				const g = parseInt(hex.substring(2, 4), 16);
+				const b = parseInt(hex.substring(4, 6), 16);
+				return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+			}
+			return `rgba(0, 0, 0, ${opacity})`;
+		};
+		shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${applyOpacity(shadowColor, shadowCustom.opacity)}`;
+	} else {
+		// Use preset shadow
+		const shadowBuilder = SHADOW_PRESETS[shadowStylePreset] || SHADOW_PRESETS.none;
+		shadow = shadowBuilder(shadowColor);
+	}
 
 	return {
 		tokens: {

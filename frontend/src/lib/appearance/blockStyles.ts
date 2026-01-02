@@ -15,7 +15,7 @@ export interface BlockStyleRecipe {
 export type BlockStylePresetId = 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient';
 
 // Shadow style presets (independent from block styles)
-export type ShadowStylePreset = 'none' | 'soft' | 'medium' | 'hard' | 'brutal';
+export type ShadowStylePreset = 'none' | 'soft' | 'medium' | 'hard' | 'brutal' | 'custom';
 
 export interface ShadowRecipe {
     value: string; // CSS box-shadow value or token reference

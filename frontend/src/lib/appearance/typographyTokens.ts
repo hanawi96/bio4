@@ -6,11 +6,13 @@
 
 /**
  * Font Size Scale (in pixels)
- * Based on a modular scale with base 16px
+ * Fine-grained scale for precise typography control
  */
 export const FONT_SIZE_TOKENS = {
     xs: 12,
+    '13': 13,
     sm: 14,
+    '15': 15,
     base: 16,
     lg: 18,
     xl: 20,

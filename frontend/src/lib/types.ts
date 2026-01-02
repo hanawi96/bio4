@@ -215,7 +215,6 @@ export interface ThemePage {
 		pagePadding: number;
 		blockGap: number;
 		textAlign: 'left' | 'center' | 'right';
-		baseFontSize?: string;
 	};
 	defaults?: {
 		// v2.2: Reference preset IDs instead of full config

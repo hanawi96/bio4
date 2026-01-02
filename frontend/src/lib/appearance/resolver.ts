@@ -159,6 +159,9 @@ function expandThemeTokens(config: any): ThemeTokens {
 		fontFamily,
 		secondary: adjustColor(primary, -20),
 		textSecondary: adjustColor(text, isDark ? -30 : 30),
+		mutedTextColor: schemaVersion === 2 
+			? (resolveSemanticToken(semantic.color?.text?.muted, config) || text)
+			: (tokens.mutedTextColor || adjustColor(text, isDark ? -30 : 30)),
 		shadowLevel: (layout.pagePadding || 16) > 18 ? 'md' : 'sm',
 		backgroundColor,
 		textColor: text,
@@ -386,6 +389,34 @@ export function resolveAppearance(
 				.map(([key, value]) => [key.replace('block.', ''), value])
 		)
 		: (pageState.blockStyle?.overrides || {});
+
+	// Build custom shadow if shadowStyle is 'custom'
+	const shadowStyle = themeConfig.page?.defaults?.shadowStyle;
+	const shadowCustom = themeConfig.page?.defaults?.shadowCustom;
+	if (shadowStyle === 'custom' && shadowCustom) {
+		// Build shadow from custom values
+		const shadowColor = tokens.shadowColor || '#000000';
+		const applyOpacityToShadow = (color: string, opacity: number): string => {
+			if (color.startsWith('#')) {
+				const hex = color.replace('#', '');
+				const r = parseInt(hex.substring(0, 2), 16);
+				const g = parseInt(hex.substring(2, 4), 16);
+				const b = parseInt(hex.substring(4, 6), 16);
+				return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+			}
+			return `rgba(0, 0, 0, ${opacity})`;
+		};
+		blockOverrides.shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${applyOpacityToShadow(shadowColor, shadowCustom.opacity)}`;
+	} else if (shadowStyle && shadowStyle !== 'none' && shadowStyle !== 'custom') {
+		// Use preset shadow
+		const shadowPresets: Record<string, string> = {
+			soft: `0 2px 8px ${tokens.shadowColor}26`,
+			medium: `0 4px 12px ${tokens.shadowColor}33`,
+			hard: `0 6px 16px ${tokens.shadowColor}4D`,
+			brutal: `4px 4px 0px ${tokens.shadowColor}`
+		};
+		blockOverrides.shadow = shadowPresets[shadowStyle];
+	}
 
 	// Resolve block style recipe
 	const defaultBlockStyleId = themeConfig.page?.defaults?.blockStylePreset

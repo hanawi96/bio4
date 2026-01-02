@@ -13,8 +13,15 @@
 
 	export let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient';
 	export let selectedLinkIconShape: 'square' | 'rounded' | 'circle';
-	export let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' = 'none';
+	export let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' | 'custom' = 'none';
 	export let blockOpacity: number = 100;
+	export let shadowCustom = {
+		offsetX: 0,
+		offsetY: 4,
+		blur: 8,
+		spread: 0,
+		opacity: 0.1
+	};
 	export let primaryColor: string = '#3b82f6';
 	export let textColor: string = '#18181b';
 	export let borderColor: string = '#e4e4e7';
@@ -111,7 +118,6 @@
 	// Get preview style for each recipe
 	function getPreviewStyle(recipeId: BlockStylePresetId, shadowId: ShadowStylePreset, opacity: number, useDefaultOpacity: boolean) {
 		const recipe = getBlockStyleRecipe(recipeId);
-		const shadowRecipe = getShadowRecipe(shadowId);
 		const tokens = mockTokens;
 
 		let fill = resolveToken(recipe.fill, tokens);
@@ -152,8 +158,18 @@
 		// Resolve shadow from shadow recipe
 		// Special cases: Neon has its own glow effect
 		let shadow = undefined;
-		if (recipeId !== 'neon' && shadowRecipe.value !== 'none') {
-			shadow = resolveToken(shadowRecipe.value, tokens);
+		if (recipeId !== 'neon') {
+			if (shadowId === 'custom') {
+				// Build custom shadow from shadowCustom values
+				const { offsetX, offsetY, blur, spread, opacity: shadowOpacity } = shadowCustom;
+				const color = applyOpacity(tokens.shadowColor, shadowOpacity * 100);
+				shadow = `${offsetX}px ${offsetY}px ${blur}px ${spread}px ${color}`;
+			} else {
+				const shadowRecipe = getShadowRecipe(shadowId);
+				if (shadowRecipe.value !== 'none') {
+					shadow = resolveToken(shadowRecipe.value, tokens);
+				}
+			}
 		}
 
 		const borderStyle = border ? `${borderWidth}px solid ${border}` : 'none';
@@ -180,6 +196,30 @@
 		{ value: 'rounded', label: 'Rounded', preview: 'rounded-lg' },
 		{ value: 'circle', label: 'Circle', preview: 'rounded-full' }
 	];
+	
+	// Advanced shadow controls
+	let showAdvancedShadow = false;
+	
+	// When user adjusts custom shadow, switch to custom mode
+	function handleCustomShadowChange() {
+		if (selectedShadowStyle !== 'custom') {
+			selectedShadowStyle = 'custom';
+		}
+	}
+	
+	// Load preset values into custom when selecting preset
+	$: if (selectedShadowStyle !== 'custom') {
+		const presetValues = {
+			none: { offsetX: 0, offsetY: 0, blur: 0, spread: 0, opacity: 0 },
+			soft: { offsetX: 0, offsetY: 2, blur: 8, spread: 0, opacity: 0.08 },
+			medium: { offsetX: 0, offsetY: 4, blur: 12, spread: 0, opacity: 0.12 },
+			hard: { offsetX: 0, offsetY: 8, blur: 16, spread: 0, opacity: 0.16 },
+			brutal: { offsetX: 4, offsetY: 4, blur: 0, spread: 0, opacity: 1 }
+		};
+		if (presetValues[selectedShadowStyle]) {
+			shadowCustom = { ...presetValues[selectedShadowStyle] };
+		}
+	}
 </script>
 
 <section class="card-ios p-6">
@@ -256,7 +296,7 @@
 			<label class="block text-sm font-medium text-gray-700 mb-3">
 				Shadow Style {#if selectedBlockStyle === 'neon'}<span class="text-orange-600 text-xs">(disabled for Neon)</span>{/if}
 			</label>
-			<div class="grid grid-cols-5 gap-2">
+			<div class="grid grid-cols-6 gap-2">
 				{#each shadowStyles as shadowId}
 					{@const isSelected = selectedShadowStyle === shadowId}
 					{@const isDisabled = selectedBlockStyle === 'neon'}
@@ -269,6 +309,15 @@
 						{getShadowStyleName(shadowId)}
 					</button>
 				{/each}
+				<!-- Custom Button -->
+				<button
+					type="button"
+					on:click={() => { selectedShadowStyle = 'custom'; showAdvancedShadow = true; }}
+					disabled={selectedBlockStyle === 'neon'}
+					class="px-3 py-2 rounded-lg text-sm font-medium transition-all {selectedBlockStyle === 'neon' ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-500' : selectedShadowStyle === 'custom' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+				>
+					Custom
+				</button>
 			</div>
 			<p class="text-xs text-gray-500 mt-2">
 				{#if selectedBlockStyle === 'neon'}
@@ -277,6 +326,104 @@
 					Shadow depth applied to buttons
 				{/if}
 			</p>
+			
+			<!-- Advanced Shadow Controls -->
+			{#if selectedShadowStyle === 'custom' && selectedBlockStyle !== 'neon'}
+				<div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+					<div class="flex items-center justify-between mb-2">
+						<h3 class="text-sm font-semibold text-gray-900">Custom Shadow</h3>
+						<button
+							type="button"
+							on:click={() => showAdvancedShadow = !showAdvancedShadow}
+							class="text-xs text-blue-600 hover:text-blue-700"
+						>
+							{showAdvancedShadow ? 'Hide' : 'Show'}
+						</button>
+					</div>
+					
+					{#if showAdvancedShadow}
+						<!-- Offset X -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-1">
+								Offset X: {shadowCustom.offsetX}px
+							</label>
+							<input
+								type="range"
+								bind:value={shadowCustom.offsetX}
+								on:input={handleCustomShadowChange}
+								min="-20"
+								max="20"
+								step="1"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+							/>
+						</div>
+						
+						<!-- Offset Y -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-1">
+								Offset Y: {shadowCustom.offsetY}px
+							</label>
+							<input
+								type="range"
+								bind:value={shadowCustom.offsetY}
+								on:input={handleCustomShadowChange}
+								min="-20"
+								max="20"
+								step="1"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+							/>
+						</div>
+						
+						<!-- Blur -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-1">
+								Blur: {shadowCustom.blur}px
+							</label>
+							<input
+								type="range"
+								bind:value={shadowCustom.blur}
+								on:input={handleCustomShadowChange}
+								min="0"
+								max="50"
+								step="1"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+							/>
+						</div>
+						
+						<!-- Spread -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-1">
+								Spread: {shadowCustom.spread}px
+							</label>
+							<input
+								type="range"
+								bind:value={shadowCustom.spread}
+								on:input={handleCustomShadowChange}
+								min="-10"
+								max="10"
+								step="1"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+							/>
+						</div>
+						
+						<!-- Opacity -->
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-1">
+								Opacity: {Math.round(shadowCustom.opacity * 100)}%
+							</label>
+							<input
+								type="range"
+								bind:value={shadowCustom.opacity}
+								on:input={handleCustomShadowChange}
+								min="0"
+								max="1"
+								step="0.01"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+							/>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		<!-- Link Icon Shape -->

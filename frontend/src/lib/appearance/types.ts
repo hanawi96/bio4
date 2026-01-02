@@ -80,6 +80,7 @@ export interface ThemeTokens {
 	// Computed
 	secondary: string;
 	textSecondary: string;
+	mutedTextColor: string;
 	shadowLevel: 'none' | 'sm' | 'md' | 'lg';
 	
 	// For backward compatibility (computed from bg token)

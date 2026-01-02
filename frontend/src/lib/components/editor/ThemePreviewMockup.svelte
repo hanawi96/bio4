@@ -2,6 +2,7 @@
 	import { previewPage, previewAppearance, previewAppearanceState } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
+	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
 
 	// Use preview stores instead of main stores
 	$: tokens = $previewAppearance?.tokens;
@@ -70,23 +71,60 @@
 	$: blockGap = $previewAppearanceState.overrides?.['page.blockGap'] || 16;
 	$: blockPaddingX = $previewAppearanceState.overrides?.['page.blockPaddingX'] || 16;
 	$: blockPaddingY = $previewAppearanceState.overrides?.['page.blockPaddingY'] || 12;
-	$: titleFontSize = $previewAppearanceState.overrides?.['page.titleFontSize'] || 20;
-	$: titleFontFamily = $previewAppearanceState.overrides?.['header.titleFontFamily'] || tokens?.fontFamily || 'Inter, sans-serif';
+	$: titleFontSize = (() => {
+		// Try override first
+		const override = $previewAppearanceState.overrides?.['page.titleFontSize'] as number;
+		if (override) return override;
+		
+		// Fallback to theme config
+		const themeConfig = $previewAppearance?.theme?.config;
+		const headingFontSizeRef = themeConfig?.semantic?.typography?.heading?.fontSize;
+		if (headingFontSizeRef && typeof headingFontSizeRef === 'string' && headingFontSizeRef.startsWith('ref:tokens.typography.fontSize.')) {
+			const key = headingFontSizeRef.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 20;
+		}
+		
+		// Final fallback
+		return 20;
+	})();
+	$: titleFontFamily = (() => {
+		const override = $previewAppearanceState.overrides?.['header.titleFontFamily'] as string;
+		if (override) return override;
+		// Fallback to theme headingFontFamily or body font
+		const themeConfig = $previewAppearance?.theme?.config;
+		return themeConfig?.page?.defaults?.headingFontFamily 
+			|| themeConfig?.tokens?.typography?.fontFamily?.sans 
+			|| 'Inter, sans-serif';
+	})();
 	$: maxWidth = $previewAppearanceState.overrides?.['page.maxWidth'] || 480;
 	$: textAlign = $previewAppearanceState.overrides?.['page.textAlign'] || 'center';
 	$: pagePadding = $previewAppearanceState.overrides?.['page.pagePadding'] || 16;
 	
-	// Shared font size converter (optimized)
+	// Shared font size converter (optimized) - using centralized tokens
 	const fontSizeKeyToPx = (key: string, defaultPx: number): number => {
-		const sizeMap: Record<string, number> = {
-			xs: 12, sm: 14, base: 16, lg: 18, xl: 20, '2xl': 24
-		};
-		return sizeMap[key] || defaultPx;
+		return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || defaultPx;
 	};
 	
 	// Convert font size keys to pixels
 	$: linkFontSizePx = fontSizeKeyToPx(($previewAppearanceState.overrides?.['page.linkFontSize'] as string) || 'sm', 14);
-	$: bioFontSizePx = fontSizeKeyToPx(($previewAppearanceState.overrides?.['page.bioFontSize'] as string) || 'sm', 14);
+	$: bioFontSizePx = (() => {
+		// Try override first
+		const override = $previewAppearanceState.overrides?.['page.bioFontSize'] as string;
+		if (override) {
+			return fontSizeKeyToPx(override, 14);
+		}
+		
+		// Fallback to theme config
+		const themeConfig = $previewAppearance?.theme?.config;
+		const bioFontSizeRef = themeConfig?.semantic?.typography?.bio?.fontSize;
+		if (bioFontSizeRef && typeof bioFontSizeRef === 'string' && bioFontSizeRef.startsWith('ref:tokens.typography.fontSize.')) {
+			const key = bioFontSizeRef.replace('ref:tokens.typography.fontSize.', '');
+			return fontSizeKeyToPx(key, 14);
+		}
+		
+		// Final fallback
+		return 14;
+	})();
 	$: subtitleFontSizePx = fontSizeKeyToPx(($previewAppearanceState.overrides?.['page.subtitleFontSize'] as string) || 'xs', 12);
 	
 	$: overlayGradientColor = (() => {
@@ -157,6 +195,10 @@
 	// Get socialIconPosition from overrides or default
 	$: socialIconPosition = $previewAppearanceState.overrides?.['page.socialIconPosition'] || 'header';
 	
+	// Get page settings from overrides or default
+	$: showShareButton = ($previewAppearanceState.overrides?.['page.showShareButton'] as boolean) ?? true;
+	$: showSubscribeButton = ($previewAppearanceState.overrides?.['page.showSubscribeButton'] as boolean) ?? true;
+	
 	// Calculate icon shape CSS class (use list-specific or global)
 	$: iconShapeClass = linkIconShape === 'circle' ? 'rounded-full' : linkIconShape === 'rounded' ? 'rounded-lg' : '';
 
@@ -172,9 +214,6 @@
 <div class="relative scale-125">
 	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
 		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
-			<!-- Notch -->
-			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
-
 			<!-- Background Layer (with filters) -->
 			{#key backgroundValue}
 				<div 
@@ -196,6 +235,48 @@
 					margin: 0 auto;
 				"
 			>
+				<!-- Share & Subscribe Buttons -->
+				{#if showShareButton || showSubscribeButton}
+					<div class="absolute top-2 left-0 right-0 z-20 flex items-center justify-between px-2">
+						<!-- Subscribe Button (Left) -->
+						{#if showSubscribeButton}
+							<button
+								class="h-6 px-2 rounded-full flex items-center gap-1 transition-all hover:scale-105 active:scale-95"
+								style="
+									background: rgba(255, 255, 255, 0.9);
+									backdrop-filter: blur(12px);
+									-webkit-backdrop-filter: blur(12px);
+								"
+								title="Subscribe"
+							>
+								<svg class="w-3 h-3 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+								</svg>
+								<span class="text-[9px] font-medium text-gray-700">Subscribe</span>
+							</button>
+						{:else}
+							<div></div>
+						{/if}
+
+						<!-- Share Button (Right) -->
+						{#if showShareButton}
+							<button
+								class="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+								style="
+									background: rgba(255, 255, 255, 0.9);
+									backdrop-filter: blur(12px);
+									-webkit-backdrop-filter: blur(12px);
+								"
+								title="Share"
+							>
+								<svg class="w-3 h-3 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+								</svg>
+							</button>
+						{/if}
+					</div>
+				{/if}
+
 				<div class="pt-10 pb-8" style="padding-left: {pagePadding}px; padding-right: {pagePadding}px; text-align: {textAlign};">
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
@@ -208,9 +289,9 @@
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 30%, {overlayGradientColor} 100%);"></div>
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);"></div>
 									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
-										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
+										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$previewPage?.title || 'Your Name'}</h1>
 										{#if header.showBio && $previewPage?.bio}
-											<p class="bio-text text-white/90 mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+											<p class="bio-text text-white/90 mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 												{$previewPage.bio}
 											</p>
 										{/if}
@@ -241,9 +322,9 @@
 						
 						{#if !isAvatarCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
-								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
+								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$previewPage?.title || 'Your Name'}</h1>
 								{#if header.showBio && $previewPage?.bio}
-									<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+									<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 										{$previewPage.bio}
 									</p>
 								{/if}
@@ -251,7 +332,7 @@
 						{/if}
 					{:else}
 						<!-- No Cover -->
-						<div class="header-content mb-3" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
+						<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
 							{#if $previewPage?.avatar_url}
 								<img 
 									src={$previewPage.avatar_url} 
@@ -267,9 +348,9 @@
 									{($previewPage?.title || 'U').charAt(0).toUpperCase()}
 								</div>
 							{/if}
-							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$previewPage?.title || 'Your Name'}</h1>
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$previewPage?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $previewPage?.bio}
-								<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+								<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 									{$previewPage.bio}
 								</p>
 							{/if}
@@ -305,8 +386,19 @@
 						</div>
 					{/if}
 
-					<!-- Links -->
-					<div class="relative" style="margin-top: 24px;">
+					<!-- Links - với negative margin và gradient mask cho avatar-cover -->
+					<div 
+						class="relative"
+						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -60px; padding-top: 80px;` : 'margin-top: 24px;'}"
+					>
+						<!-- Gradient mask - nối liền với overlay trên avatar -->
+						{#if isAvatarCover}
+							<div 
+								class="absolute pointer-events-none z-10 -mx-4"
+								style="left: 0; right: 0; top: -24px; height: 60px; background: linear-gradient(to bottom, transparent 0%, {backgroundValue || '#ffffff'} 100%);"
+							></div>
+						{/if}
+						
 						{#if linkGroupLayout === 'grid'}
 							<!-- Grid Layout -->
 							{@const gridPadding = 4}
@@ -321,7 +413,7 @@
 							<!-- Responsive border radius -->
 							{@const borderRadius = gridConfig.columns >= 3 ? '6px' : blockBorderRadius}
 							{@const blockRadiusNum = parseInt(borderRadius)}
-							{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - gridPadding)}px`}
+							{@const imageBorderRadius = gridConfig.imagePadding ? borderRadius : `${Math.max(0, blockRadiusNum - 4)}px`}
 							<div style="display: grid; grid-template-columns: repeat({gridConfig.columns}, 1fr); gap: {gridGap}px;">
 								{#each realLinks as link}
 									{@const headline = link.title.split(' - ')[0]}
@@ -367,7 +459,7 @@
 							<!-- Card Layout -->
 							{@const cardPadding = 4}
 							{@const blockRadiusNum = parseInt(blockBorderRadius)}
-							{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - cardPadding)}px`}
+							{@const imageBorderRadius = cardConfig.imagePadding ? blockBorderRadius : `${Math.max(0, blockRadiusNum - cardPadding)}px`}
 							<div style="display: flex; flex-direction: column; gap: {blockGap}px;">
 								{#each realLinks as link, index}
 									{@const parts = link.title.split(' - ')}
@@ -521,6 +613,11 @@
 							{/if}
 						</div>
 					{/if}
+
+					<!-- Footer -->
+					<div class="mt-8 mb-6 text-center">
+						<p class="text-xs opacity-40">Made with Bio Link</p>
+					</div>
 				</div>
 			</div>
 		</div>

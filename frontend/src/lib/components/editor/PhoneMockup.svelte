@@ -3,6 +3,7 @@
 	import { appearance } from '$lib/stores/appearance';
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
+	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
 	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 
 	// Subscribe to derived store - auto updates on any change!
@@ -200,14 +201,52 @@
 	$: pagePadding = $appearance?.page?.pagePadding ?? 16;
 	
 	// Get title font size from appearance
-	$: titleFontSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
+	$: titleFontSize = (() => {
+		// Try override first
+		const override = $appearanceState.overrides?.['page.titleFontSize'] as number;
+		if (override) return override;
+		
+		// Fallback to theme config
+		const themeConfig = $appearance?.theme?.config;
+		const headingFontSizeRef = themeConfig?.semantic?.typography?.heading?.fontSize;
+		if (headingFontSizeRef && typeof headingFontSizeRef === 'string' && headingFontSizeRef.startsWith('ref:tokens.typography.fontSize.')) {
+			const key = headingFontSizeRef.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 20;
+		}
+		
+		// Final fallback
+		return 20;
+	})();
+	
+	// Get bio font size from appearance
+	$: bioFontSizePx = (() => {
+		// Try override first
+		const override = $appearanceState.overrides?.['page.bioFontSize'] as string;
+		if (override) {
+			return FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 14;
+		}
+		
+		// Fallback to theme config
+		const themeConfig = $appearance?.theme?.config;
+		const bioFontSizeRef = themeConfig?.semantic?.typography?.bio?.fontSize;
+		if (bioFontSizeRef && typeof bioFontSizeRef === 'string' && bioFontSizeRef.startsWith('ref:tokens.typography.fontSize.')) {
+			const key = bioFontSizeRef.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 14;
+		}
+		
+		// Final fallback
+		return 14;
+	})();
 	
 	// Get title font family (separate from body font)
 	$: titleFontFamily = (() => {
 		const override = $appearanceState.overrides?.['header.titleFontFamily'] as string;
 		if (override) return override;
-		// Fallback to theme default
-		return $appearance?.theme?.config?.tokens?.fontFamily || 'Inter, sans-serif';
+		// Fallback to theme headingFontFamily or body font
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.page?.defaults?.headingFontFamily 
+			|| themeConfig?.tokens?.typography?.fontFamily?.sans 
+			|| 'Inter, sans-serif';
 	})();
 	
 	// Get background color for gradient overlay (for avatar-cover)
@@ -341,9 +380,6 @@
 <div class="relative scale-125">
 	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
 		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
-			<!-- Notch -->
-			<div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-gray-900 rounded-b-2xl z-10"></div>
-
 			<!-- Background Video (always rendered when hasVideoInDraft) -->
 			{#if hasVideoInDraft}
 				<video 
@@ -438,10 +474,10 @@
 						</div>
 					</div>
 				{:else}
-				<div style="padding: {pagePadding}px; display: flex; flex-direction: column; height: 100%;">
+				<div class="pt-10 pb-8" style="padding-left: {pagePadding}px; padding-right: {pagePadding}px;">
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
-						<div class="relative -mx-4 -mt-10 mb-6 header-cover">
+						<div class="relative -mx-4 -mt-10 mb-3 header-cover">
 							<!-- Cover Image/Gradient with text overlay for avatar-cover -->
 							<div 
 								class="w-full relative"
@@ -463,11 +499,13 @@
 									
 									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
 									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
-										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$page?.title || 'Your Name'}</h1>
+										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$page?.title || 'Your Name'}</h1>
 										{#if header.showBio && $page?.bio}
 											<p 
-												class="bio-text text-sm text-white/90 mt-2 drop-shadow-md"
+												class="bio-text text-white/90 mt-2 drop-shadow-md"
 												style="
+													font-size: {bioFontSizePx}px;
+													line-height: 1.5;
 													display: -webkit-box;
 													-webkit-line-clamp: {header.bioMaxLines};
 													-webkit-box-orient: vertical;
@@ -518,11 +556,14 @@
 						<!-- Content below cover (only for non-avatar-cover) -->
 						{#if !isAvatarCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
-								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$page?.title || 'Your Name'}</h1>
+								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$page?.title || 'Your Name'}</h1>
 								{#if header.showBio && $page?.bio}
 									<p 
-										class="bio-text text-sm opacity-70 mt-1"
+										class="bio-text mt-1"
 										style="
+											color: {tokens?.mutedTextColor || '#71717a'};
+											font-size: {bioFontSizePx}px;
+											line-height: 1.5;
 											display: -webkit-box;
 											-webkit-line-clamp: {header.bioMaxLines};
 											-webkit-box-orient: vertical;
@@ -536,7 +577,7 @@
 						{/if}
 					{:else}
 						<!-- No Cover - Simple Header -->
-						<div class="header-content mb-6" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
+						<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
 							{#if $page?.avatar_url}
 								<img 
 									src={$page.avatar_url} 
@@ -564,11 +605,14 @@
 									{($page?.title || 'U').charAt(0).toUpperCase()}
 								</div>
 							{/if}
-							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily};">{$page?.title || 'Your Name'}</h1>
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$page?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $page?.bio}
 								<p 
-									class="bio-text text-sm opacity-70 mt-1"
+									class="bio-text mt-1"
 									style="
+										color: {tokens?.mutedTextColor || '#71717a'};
+										font-size: {bioFontSizePx}px;
+										line-height: 1.5;
 										display: -webkit-box;
 										-webkit-line-clamp: {header.bioMaxLines};
 										-webkit-box-orient: vertical;
@@ -720,7 +764,7 @@
 									)}
 									{@const gridPadding = 4}
 									{@const blockRadiusNum = parseInt(blockBorderRadius)}
-									{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - gridPadding)}px`}
+									{@const imageBorderRadius = config.imagePadding ? blockBorderRadius : `${Math.max(0, blockRadiusNum - 4)}px`}
 									
 									<div class="grid" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr)); gap: {blockGap}px;">										{#each groupLinks as link}
 											{@const headline = link.title.split(' - ')[0]}
@@ -786,7 +830,7 @@
 									{@const aspectClass = config.imageAspect === 'portrait' ? 'aspect-[3/4]' : config.imageAspect === 'landscape' ? 'aspect-video' : 'aspect-square'}
 									{@const cardPadding = 4}
 									{@const blockRadiusNum = parseInt(blockBorderRadius)}
-									{@const imageBorderRadius = `${Math.max(0, blockRadiusNum - cardPadding)}px`}
+									{@const imageBorderRadius = config.imagePadding ? blockBorderRadius : `${Math.max(0, blockRadiusNum - cardPadding)}px`}
 									
 									<div class="flex flex-col" style="gap: {blockGap}px;">
 										{#each groupLinks as link, index}
@@ -897,7 +941,7 @@
 													/>
 													<div>
 														<div class="font-semibold">{headline}</div>
-														{#if subtitle}
+														{#if subtitle && config.showSubtitle}
 															<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
 														{/if}
 													</div>
@@ -912,7 +956,7 @@
 													/>
 													<div class="flex-1" style="text-align: {config.textAlign};">
 														<div class="font-semibold">{headline}</div>
-														{#if subtitle}
+														{#if subtitle && config.showSubtitle}
 															<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
 														{/if}
 													</div>
@@ -921,7 +965,7 @@
 												<!-- No icon or icon hidden -->
 												<div>
 													<div class="font-semibold">{headline}</div>
-													{#if subtitle}
+													{#if subtitle && config.showSubtitle}
 														<div class="text-xs opacity-70 mt-0.5">{subtitle}</div>
 													{/if}
 												</div>
@@ -995,7 +1039,7 @@
 					{/if}
 
 					<!-- Footer -->
-					<div class="mt-8 text-center">
+					<div class="mt-8 mb-6 text-center">
 						<p class="text-xs opacity-40">Made with Bio Link</p>
 					</div>
 				</div>

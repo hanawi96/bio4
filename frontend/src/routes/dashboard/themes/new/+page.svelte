@@ -15,6 +15,7 @@
 	import HeaderStyleManager from './components/HeaderStyleManager.svelte';
 	import ThemeBlockStyle from './components/ThemeBlockStyle.svelte';
 	import ThemeLinkGroupLayout from './components/ThemeLinkGroupLayout.svelte';
+	import ThemePageSettings from './components/ThemePageSettings.svelte';
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
@@ -44,10 +45,18 @@
 	let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient' = 'solid';
 	let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' = 'none';
 	let blockOpacity: number = 100;
+	let shadowCustom = {
+		offsetX: 0,
+		offsetY: 4,
+		blur: 8,
+		spread: 0,
+		opacity: 0.1
+	};
 	let selectedLinkIconShape: 'square' | 'rounded' | 'circle' = 'rounded';
 	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	let socialIconPosition: 'header' | 'footer' = 'header';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
+	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif'; // Font riêng cho heading
 	let maxWidth = 480;
 	let pagePadding = 16;
 	let blockGap = 14;
@@ -110,6 +119,10 @@
 	
 	// Cover image field
 	let coverImageUrl = '';
+	
+	// Page settings
+	let showShareButton = true;
+	let showSubscribeButton = true;
 	
 	// Image upload state
 	let uploading = false;
@@ -180,6 +193,11 @@
 		selectedBlockStyle = theme.config.page?.defaults?.blockStylePreset || 'solid';
 		selectedShadowStyle = theme.config.page?.defaults?.shadowStyle || 'none';
 		blockOpacity = theme.config.page?.defaults?.blockOpacity || 100;
+		
+		// Load shadow custom values if exists
+		if (theme.config.page?.defaults?.shadowCustom) {
+			shadowCustom = { ...shadowCustom, ...theme.config.page.defaults.shadowCustom };
+		}
 		selectedLinkIconShape = theme.config.page?.defaults?.linkIconShape || 'rounded';
 		selectedLinkGroupLayout = theme.config.page?.defaults?.linkGroupLayout || 'list';
 		
@@ -198,7 +216,10 @@
 		}
 		
 		socialIconPosition = theme.config.page?.defaults?.socialIconPosition || 'header';
+		showShareButton = theme.config.page?.defaults?.showShareButton ?? true;
+		showSubscribeButton = theme.config.page?.defaults?.showSubscribeButton ?? true;
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
+		headingFontFamily = theme.config.page?.defaults?.headingFontFamily || fontFamily;
 		maxWidth = theme.config.page?.layout?.maxWidth || 480;
 		pagePadding = theme.config.page?.layout?.pagePadding || 16;
 		blockGap = theme.config.page?.layout?.blockGap || 14;
@@ -323,7 +344,22 @@
 			config.page.defaults.blockStylePreset = selectedBlockStyle;
 			config.page.defaults.shadowStyle = selectedShadowStyle;
 			config.page.defaults.blockOpacity = blockOpacity;
+			
+			// Save shadow custom values if in custom mode
+			if (selectedShadowStyle === 'custom') {
+				config.page.defaults.shadowCustom = shadowCustom;
+			} else {
+				delete config.page.defaults.shadowCustom;
+			}
 			config.page.defaults.borderWidth = borderWidth;
+			
+			// Save heading font family if different from body
+			if (headingFontFamily && headingFontFamily !== fontFamily) {
+				config.page.defaults.headingFontFamily = headingFontFamily;
+			} else {
+				delete config.page.defaults.headingFontFamily;
+			}
+			
 			config.page.defaults.linkIconShape = selectedLinkIconShape;
 			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
 			
@@ -342,9 +378,6 @@
 			config.page.layout.pagePadding = pagePadding;
 			config.page.layout.blockGap = blockGap;
 			config.page.layout.textAlign = textAlign;
-			
-			// Set baseFontSize to M (base/16px) for contract controls
-			config.page.layout.baseFontSize = 'M';
 			
 			// Update block padding
 			if (!config.page.layout.blockPadding) config.page.layout.blockPadding = {};
@@ -395,6 +428,7 @@
 			config.semantic.typography.heading.fontSize = `ref:tokens.typography.fontSize.${headingFontSize}`;
 			config.semantic.typography.heading.fontWeight = `ref:tokens.typography.fontWeight.bold`;
 			config.semantic.typography.heading.lineHeight = `ref:tokens.typography.lineHeight.tight`;
+			config.semantic.typography.heading.fontFamily = `ref:tokens.typography.fontFamily.sans`;
 			
 			// Update link typography
 			if (!config.semantic.typography.link) config.semantic.typography.link = {};
@@ -445,13 +479,18 @@
 			}
 			config.semantic.color.surface.page = bgValue;
 			
+			// Clean up deprecated fields
+			if (config.page?.layout?.baseFontSize) {
+				delete config.page.layout.baseFontSize;
+			}
+			
 			configJson = JSON.stringify(config, null, 2);
 		} catch (e) {
 			console.error('Failed to update config:', e);
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || fontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGap || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
 		updateConfig();
 	}
 
@@ -459,7 +498,7 @@
 	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined && bgType && bgGradientType && bgRadialShape && bgRadialPosition) {
 		try {
 			const config = JSON.parse(configJson);
-			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity));
+			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity, shadowCustom));
 			
 			// Resolve blockBorderRadius from centralized tokens
 			const radiusValue = RADIUS_TOKENS[blockBorderRadiusType] ?? 12;
@@ -490,7 +529,7 @@
 					'page.blockPaddingX': blockPaddingX,
 					'page.blockPaddingY': blockPaddingY,
 					'block.borderRadius': radiusValue,
-					'header.titleFontFamily': fontFamily,
+					'header.titleFontFamily': headingFontFamily || fontFamily,
 					'header.coverValue': coverImageUrl || undefined,
 					'header.avatarBorderColor': avatarBorderColor,
 					'header.avatarBorderWidth': avatarBorderWidth,
@@ -503,7 +542,9 @@
 					'page.linkGroupConfig.grid': gridConfig,
 					'page.linkGroupConfig.cards': cardConfig,
 					'page.linkGroupConfig.list': listConfig,
-					'page.socialIconPosition': socialIconPosition
+					'page.socialIconPosition': socialIconPosition,
+					'page.showShareButton': showShareButton,
+					'page.showSubscribeButton': showSubscribeButton
 				}
 			});
 			// Don't override previewPage - keep real user data
@@ -527,6 +568,11 @@
 			return;
 		}
 
+		// Clean up deprecated fields
+		if (config.page?.layout?.baseFontSize) {
+			delete config.page.layout.baseFontSize;
+		}
+
 		// Update meta fields
 		const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 		config.meta = {
@@ -538,19 +584,6 @@
 			tier,
 			contract: {
 				controls: [
-					{
-						keyPath: 'page.layout.baseFontSize',
-						type: 'select',
-						label: 'Font Size',
-						options: ['S', 'M', 'L', 'XL'],
-						default: config.page?.layout?.baseFontSize || 'M',
-						map: {
-							S: 'ref:tokens.typography.fontSize.sm',
-							M: 'ref:tokens.typography.fontSize.base',
-							L: 'ref:tokens.typography.fontSize.lg',
-							XL: 'ref:tokens.typography.fontSize.xl'
-						}
-					},
 					{
 						keyPath: 'page.layout.textAlign',
 						type: 'select',
@@ -746,6 +779,7 @@
 					bind:selectedBlockStyle
 					bind:selectedShadowStyle
 					bind:blockOpacity
+					bind:shadowCustom
 					bind:selectedLinkIconShape
 					{primaryColor}
 					{textColor}
@@ -764,6 +798,7 @@
 				<!-- Typography -->
 				<ThemeTypography
 					bind:fontFamily
+					bind:headingFontFamily
 					bind:headingFontSize
 					bind:linkFontSize
 					bind:bioFontSize
@@ -788,6 +823,12 @@
 					bind:blockPaddingY
 					bind:blockBorderRadiusType
 					selectedLinkGroupLayout={selectedLinkGroupLayout}
+				/>
+
+				<!-- Page Settings -->
+				<ThemePageSettings
+					bind:showShareButton
+					bind:showSubscribeButton
 				/>
 
 				<!-- Theme Configuration -->
