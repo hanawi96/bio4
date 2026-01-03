@@ -7,6 +7,9 @@
 	export let linkFontSize: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
 	export let bioFontSize: 'xs' | 'sm' | 'base' | 'lg';
 	export let subtitleFontSize: 'xs' | 'sm' | 'base' | 'lg';
+	export let titleGlowEnabled: boolean = false;
+	export let titleGlowColor: string = '#3b82f6';
+	export let primaryColor: string = '#3b82f6';
 
 	const fonts = [
 		{ name: 'Inter', category: 'Sans Serif', value: 'Inter, system-ui, -apple-system, sans-serif' },
@@ -271,6 +274,67 @@
 				{/each}
 			</div>
 			<p class="text-xs text-gray-500 mt-1">Name/title size</p>
+		</div>
+		
+		<!-- Title Glow Effect -->
+		<div class="border-t border-gray-200 pt-4">
+			<div class="flex items-center justify-between mb-3">
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Title Glow Effect</label>
+					<p class="text-xs text-gray-500 mt-0.5">Add glowing effect to your name</p>
+				</div>
+				<button
+					type="button"
+					on:click={() => {
+						titleGlowEnabled = !titleGlowEnabled;
+						if (titleGlowEnabled && !titleGlowColor) {
+							titleGlowColor = primaryColor;
+						}
+					}}
+					class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {titleGlowEnabled ? 'bg-green-600' : 'bg-gray-200'}"
+				>
+					<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {titleGlowEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+				</button>
+			</div>
+			
+			{#if titleGlowEnabled}
+				<div class="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+					<div>
+						<label class="block text-xs font-medium text-gray-600 mb-2">Glow Color</label>
+						<div class="flex gap-2">
+							<input
+								type="color"
+								bind:value={titleGlowColor}
+								class="w-12 h-10 rounded-lg border-2 border-gray-300 cursor-pointer"
+							/>
+							<input
+								type="text"
+								bind:value={titleGlowColor}
+								placeholder="#3b82f6"
+								class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+							/>
+							<button
+								type="button"
+								on:click={() => titleGlowColor = primaryColor}
+								class="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+								title="Use primary color"
+							>
+								Primary
+							</button>
+						</div>
+					</div>
+					
+					<!-- Preview -->
+					<div class="p-4 bg-gray-900 rounded-lg">
+						<div 
+							class="text-2xl font-bold text-white text-center"
+							style="font-family: '{selectedHeadingFontObj.name}', sans-serif; text-shadow: 0 0 20px {titleGlowColor}, 0 0 40px {titleGlowColor}, 0 0 60px {titleGlowColor};"
+						>
+							Your Name
+						</div>
+					</div>
+				</div>
+			{/if}
 		</div>
 		
 		<!-- Link Font Size - Button Preset (Full Width) -->

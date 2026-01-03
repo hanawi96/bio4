@@ -275,6 +275,28 @@
 			|| 'Inter, sans-serif';
 	})();
 	
+	// Title glow effect
+	$: titleGlow = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		const glowConfig = themeConfig?.page?.defaults?.titleGlow;
+		if (glowConfig?.enabled) {
+			const color = glowConfig.color || tokens?.primaryColor || '#3b82f6';
+			return `0 0 20px ${color}, 0 0 40px ${color}, 0 0 60px ${color}`;
+		}
+		return 'none';
+	})();
+	
+	// Avatar glow effect
+	$: avatarGlow = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		const glowConfig = themeConfig?.page?.defaults?.avatarGlow;
+		if (glowConfig?.enabled) {
+			const color = glowConfig.color || tokens?.primaryColor || '#3b82f6';
+			return `0 0 20px ${color}, 0 0 40px ${color}, 0 0 60px ${color}`;
+		}
+		return 'none';
+	})();
+	
 	// Get background color for gradient overlay (for avatar-cover)
 	$: overlayGradientColor = (() => {
 		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
@@ -543,7 +565,7 @@
 									
 									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
 									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
-										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$page?.title || 'Your Name'}</h1>
+										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
 										{#if header.showBio && $page?.bio}
 											<p 
 												class="bio-text text-white/90 mt-2 drop-shadow-md"
@@ -576,6 +598,7 @@
 												height: {avatarHeight}px;
 												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
 												border-radius: {getAvatarBorderRadius(header.avatarShape)};
+												box-shadow: {avatarGlow};
 											"
 										/>
 									{:else}
@@ -588,6 +611,7 @@
 												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
 												border-radius: {getAvatarBorderRadius(header.avatarShape)};
 												font-size: {avatarSize / 2.5}px;
+												box-shadow: {avatarGlow};
 											"
 										>
 											{($page?.title || 'U').charAt(0).toUpperCase()}
@@ -600,7 +624,7 @@
 						<!-- Content below cover (only for non-avatar-cover) -->
 						{#if !isAvatarCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
-								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$page?.title || 'Your Name'}</h1>
+								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
 								{#if header.showBio && $page?.bio}
 									<p 
 										class="bio-text mt-1"
@@ -649,7 +673,7 @@
 									{($page?.title || 'U').charAt(0).toUpperCase()}
 								</div>
 							{/if}
-							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$page?.title || 'Your Name'}</h1>
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $page?.bio}
 								<p 
 									class="bio-text mt-1"

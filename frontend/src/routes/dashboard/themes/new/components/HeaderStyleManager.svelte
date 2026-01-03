@@ -10,6 +10,9 @@
 	export let avatarBorderWidth: AvatarBorderWidthKey | number;
 	export let socialIconPosition: 'header' | 'footer';
 	export let socialIconColor: string;
+	export let avatarGlowEnabled: boolean = false;
+	export let avatarGlowColor: string = '#3b82f6';
+	export let primaryColor: string = '#3b82f6';
 	export let previewPage: any = null; // Preview page data with avatar_url
 
 	const dispatch = createEventDispatcher();
@@ -291,6 +294,76 @@
 				</div>
 			</div>
 		{/if}
+		
+		<!-- Avatar Glow Effect -->
+		<div class="border-t border-gray-200 pt-4">
+			<div class="flex items-center justify-between mb-3">
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Avatar Glow Effect</label>
+					<p class="text-xs text-gray-500 mt-0.5">Add glowing effect to avatar</p>
+				</div>
+				<button
+					type="button"
+					on:click={() => {
+						avatarGlowEnabled = !avatarGlowEnabled;
+						if (avatarGlowEnabled && !avatarGlowColor) {
+							avatarGlowColor = primaryColor;
+						}
+					}}
+					class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {avatarGlowEnabled ? 'bg-green-600' : 'bg-gray-200'}"
+				>
+					<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {avatarGlowEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+				</button>
+			</div>
+			
+			{#if avatarGlowEnabled}
+				<div class="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+					<div>
+						<label class="block text-xs font-medium text-gray-600 mb-2">Glow Color</label>
+						<div class="flex gap-2">
+							<input
+								type="color"
+								bind:value={avatarGlowColor}
+								class="w-12 h-10 rounded-lg border-2 border-gray-300 cursor-pointer"
+							/>
+							<input
+								type="text"
+								bind:value={avatarGlowColor}
+								placeholder="#3b82f6"
+								class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+							/>
+							<button
+								type="button"
+								on:click={() => avatarGlowColor = primaryColor}
+								class="px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+								title="Use primary color"
+							>
+								Primary
+							</button>
+						</div>
+					</div>
+					
+					<!-- Preview -->
+					<div class="p-4 bg-gray-900 rounded-lg flex justify-center">
+						{#if previewPage?.avatar_url}
+							<img 
+								src={previewPage.avatar_url} 
+								alt="Avatar Preview" 
+								class="w-20 h-20 rounded-full object-cover"
+								style="box-shadow: 0 0 20px {avatarGlowColor}, 0 0 40px {avatarGlowColor}, 0 0 60px {avatarGlowColor};"
+							/>
+						{:else}
+							<div 
+								class="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl"
+								style="background: {primaryColor}; box-shadow: 0 0 20px {avatarGlowColor}, 0 0 40px {avatarGlowColor}, 0 0 60px {avatarGlowColor};"
+							>
+								{(previewPage?.title || 'U').charAt(0).toUpperCase()}
+							</div>
+						{/if}
+					</div>
+				</div>
+			{/if}
+		</div>
 
 		<!-- Social Icons Position -->
 		<div>

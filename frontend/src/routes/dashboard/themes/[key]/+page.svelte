@@ -1,62 +1,54 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { api } from '$lib/api.client';
 	import { themeEditor } from '$lib/stores/themeEditor';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import ThemePreviewMockup from '$lib/components/editor/ThemePreviewMockup.svelte';
-	import ThemeBackground from './components/ThemeBackground.svelte';
-	import ThemeBasicInfo from './components/ThemeBasicInfo.svelte';
-	import ThemeColorPicker from './components/ThemeColorPicker.svelte';
-	import ThemeTypography from './components/ThemeTypography.svelte';
-	import ThemeLayout from './components/ThemeLayout.svelte';
-	import ThemeBaseSelector from './components/ThemeBaseSelector.svelte';
-	import ThemeJsonEditor from './components/ThemeJsonEditor.svelte';
-	import HeaderStyleManager from './components/HeaderStyleManager.svelte';
-	import ThemeBlockStyle from './components/ThemeBlockStyle.svelte';
-	import ThemeLinkGroupLayout from './components/ThemeLinkGroupLayout.svelte';
-	import ThemePageSettings from './components/ThemePageSettings.svelte';
+	import ThemeBackground from '../new/components/ThemeBackground.svelte';
+	import ThemeBasicInfo from '../new/components/ThemeBasicInfo.svelte';
+	import ThemeColorPicker from '../new/components/ThemeColorPicker.svelte';
+	import ThemeTypography from '../new/components/ThemeTypography.svelte';
+	import ThemeLayout from '../new/components/ThemeLayout.svelte';
+	import ThemeJsonEditor from '../new/components/ThemeJsonEditor.svelte';
+	import HeaderStyleManager from '../new/components/HeaderStyleManager.svelte';
+	import ThemeBlockStyle from '../new/components/ThemeBlockStyle.svelte';
+	import ThemeLinkGroupLayout from '../new/components/ThemeLinkGroupLayout.svelte';
+	import ThemePageSettings from '../new/components/ThemePageSettings.svelte';
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
 	import { RADIUS_TOKENS, BLOCK_GAP_PRESETS, type BlockGapPreset, type MaxWidthKey, type PagePaddingKey, type AvatarBorderWidthKey, type BorderWidthKey } from '$lib/appearance/spacingTokens';
 	import { type BlurKey, type BrightnessKey, type GrayscaleKey } from '$lib/appearance/effectsTokens';
 
-	let themes: ThemePreset[] = [];
+	let themeKey = '';
 	let headerPresets: any[] = [];
 	let loading = true;
 	let saving = false;
 	let error = '';
 
-	let baseThemeKey = ''; // Empty initially, will be set when themes load
 	let name = '';
 	let description = '';
 	let category = 'minimal';
 	let tier = 'free';
 	let configJson = '';
-	let baseConfig: any = null; // Store full base config
+	let baseConfig: any = null;
 	
-	// Quick edit fields
 	let selectedHeaderPreset = 'no-cover';
 	let avatarBorderColor = '#ffffff';
 	let avatarBorderWidth: AvatarBorderWidthKey | number = 'default';
 	let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient' = 'solid';
 	let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' = 'none';
 	let blockOpacity: number = 100;
-	let shadowCustom = {
-		offsetX: 0,
-		offsetY: 4,
-		blur: 8,
-		spread: 0,
-		opacity: 0.1
-	};
+	let shadowCustom = { offsetX: 0, offsetY: 4, blur: 8, spread: 0, opacity: 0.1 };
 	let selectedLinkIconShape: 'square' | 'rounded' | 'circle' = 'rounded';
 	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	let socialIconPosition: 'header' | 'footer' = 'header';
 	let socialIconColor = '#000000';
 	let selectedGradientPreset: 'diagonal-dark' | 'vertical-fade' | 'horizontal-flow' | 'sunset-glow' | 'ocean-deep' | 'forest-path' | 'royal-luxury' | 'fire-blaze' | 'spotlight' | 'cosmic-burst' | 'aurora' | 'nebula' | 'spin' | 'vortex' | 'prism' | 'kaleidoscope' = 'diagonal-dark';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
-	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif'; // Font riêng cho heading
+	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif';
 	let maxWidth: MaxWidthKey | number = 'sm';
 	let pagePadding: PagePaddingKey | number = 'default';
 	let blockGapPreset: BlockGapPreset = 'default';
@@ -65,27 +57,10 @@
 	let textAlign: 'left' | 'center' | 'right' = 'center';
 	let blockBorderRadiusType: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'lg';
 	
-	// Link Group Layout Config
-	let gridConfig: import('$lib/types').GridLayoutConfig = {
-		columns: 2,
-		aspectRatio: 'square',
-		showLabels: true,
-		imagePadding: false
-	};
-	let cardConfig: import('$lib/types').CardLayoutConfig = {
-		imagePosition: 'left',
-		imageSize: 50,
-		imageAspect: 'square',
-		showSubtitle: true,
-		imagePadding: false
-	};
-	let listConfig: import('$lib/types').ListLayoutConfig = {
-		iconPosition: 'left',
-		textAlign: 'center',
-		showSubtitle: true
-	};
+	let gridConfig: import('$lib/types').GridLayoutConfig = { columns: 2, aspectRatio: 'square', showLabels: true, imagePadding: false };
+	let cardConfig: import('$lib/types').CardLayoutConfig = { imagePosition: 'left', imageSize: 50, imageAspect: 'square', showSubtitle: true, imagePadding: false };
+	let listConfig: import('$lib/types').ListLayoutConfig = { iconPosition: 'left', textAlign: 'center', showSubtitle: true };
 	
-	// Color fields
 	let primaryColor = '#3b82f6';
 	let textColor = '#18181b';
 	let borderColor = '#e4e4e7';
@@ -95,7 +70,6 @@
 	let shadowColor = '#000000';
 	let pageBgColor = '#fafafa';
 	
-	// Typography fields
 	let headingFontSize: 'lg' | 'xl' | '2xl' = '2xl';
 	let linkFontSize: 'xs' | 'sm' | 'base' | 'lg' | 'xl' = 'sm';
 	let bioFontSize: 'xs' | 'sm' | 'base' | 'lg' = 'sm';
@@ -105,7 +79,6 @@
 	let avatarGlowEnabled = false;
 	let avatarGlowColor = '#3b82f6';
 	
-	// Background fields
 	let bgType: 'solid' | 'gradient' | 'image' | 'video' = 'solid';
 	let bgSolidColor = '#ffffff';
 	let bgGradientType: 'linear' | 'radial' = 'linear';
@@ -122,49 +95,38 @@
 	let bgBrightness: BrightnessKey | number = 'normal';
 	let bgGrayscale: GrayscaleKey | number = 'none';
 	
-	// Cover image field
 	let coverImageUrl = '';
-	
-	// Page settings
 	let showShareButton = true;
 	let showSubscribeButton = true;
 	
-	// Image upload state
 	let uploading = false;
 	let showCropModal = false;
 	let tempImageUrl = '';
 	let uploadTarget: 'background' | 'cover' = 'background';
 
 	onMount(async () => {
+		themeKey = $page.params.key;
 		try {
-			const [themesResult, headerResult, editorData] = await Promise.all([
-				api.getThemes(),
+			const [themeResult, headerResult, editorData] = await Promise.all([
+				api.getTheme(themeKey),
 				api.getHeaderPresets(),
-				api.getEditorData('demo') // Load user's real data
+				api.getEditorData('demo')
 			]);
-			themes = themesResult.themes;
+			
 			headerPresets = headerResult.presets;
 			
-			// Set real page data for preview
 			if (editorData?.page) {
 				previewPage.set(editorData.page);
-				
-				// Load groups/links
-				if (editorData.groups) {
-					groups.set(editorData.groups);
-				}
+				if (editorData.groups) groups.set(editorData.groups);
 			}
 			
-			// Set baseThemeKey to first theme and load it
-			if (themes.length > 0) {
-				baseThemeKey = themes[0].key;
-				loadBaseTheme(themes[0].key);
-			}
+			loadTheme(themeResult.theme);
 			
 			// Activate theme editor in header
-			themeEditor.activate('create', 'New Theme', handleSubmit, () => goto('/dashboard/themes'));
+			themeEditor.activate('edit', themeResult.theme.name, handleSubmit, () => goto('/dashboard/themes'));
 		} catch (e) {
-			console.error('Failed to load data:', e);
+			console.error('Failed to load theme:', e);
+			error = 'Failed to load theme';
 		} finally {
 			loading = false;
 		}
@@ -174,15 +136,13 @@
 		themeEditor.deactivate();
 	});
 
-	function loadBaseTheme(key: string) {
-		const theme = themes.find(t => t.key === key);
-		if (!theme) return;
-		
-		// Store full base config
-		baseConfig = JSON.parse(JSON.stringify(theme.config)); // Deep clone
+	function loadTheme(theme: any) {
+		baseConfig = JSON.parse(JSON.stringify(theme.config));
 		configJson = JSON.stringify(baseConfig, null, 2);
 		
-		// Helper to resolve ref
+		name = theme.name;
+		description = theme.config.meta?.description || '';
+		
 		const resolveRef = (value: any): any => {
 			if (typeof value === 'string' && value.startsWith('ref:')) {
 				const path = value.replace('ref:', '').split('.');
@@ -196,7 +156,6 @@
 			return value;
 		};
 		
-		// Extract basic fields
 		category = theme.config.meta?.category || 'minimal';
 		tier = theme.config.meta?.tier || 'free';
 		selectedHeaderPreset = theme.config.page?.defaults?.headerPresetId || 'no-cover';
@@ -206,25 +165,17 @@
 		selectedShadowStyle = theme.config.page?.defaults?.shadowStyle || 'none';
 		blockOpacity = theme.config.page?.defaults?.blockOpacity || 100;
 		
-		// Load shadow custom values if exists
 		if (theme.config.page?.defaults?.shadowCustom) {
 			shadowCustom = { ...shadowCustom, ...theme.config.page.defaults.shadowCustom };
 		}
 		selectedLinkIconShape = theme.config.page?.defaults?.linkIconShape || 'rounded';
 		selectedLinkGroupLayout = theme.config.page?.defaults?.linkGroupLayout || 'list';
 		
-		// Load link group config
 		const linkGroupConfig = theme.config.page?.defaults?.linkGroupConfig;
 		if (linkGroupConfig) {
-			if (linkGroupConfig.grid) {
-				gridConfig = { ...gridConfig, ...linkGroupConfig.grid };
-			}
-			if (linkGroupConfig.cards) {
-				cardConfig = { ...cardConfig, ...linkGroupConfig.cards };
-			}
-			if (linkGroupConfig.list) {
-				listConfig = { ...listConfig, ...linkGroupConfig.list };
-			}
+			if (linkGroupConfig.grid) gridConfig = { ...gridConfig, ...linkGroupConfig.grid };
+			if (linkGroupConfig.cards) cardConfig = { ...cardConfig, ...linkGroupConfig.cards };
+			if (linkGroupConfig.list) listConfig = { ...listConfig, ...linkGroupConfig.list };
 		}
 		
 		socialIconPosition = theme.config.page?.defaults?.socialIconPosition || 'header';
@@ -237,13 +188,10 @@
 		maxWidth = theme.config.page?.layout?.maxWidth || 'sm';
 		pagePadding = theme.config.page?.layout?.pagePadding || 'default';
 		
-		// Load blockGap - convert px to preset or use preset directly
 		const blockGapValue = theme.config.page?.layout?.blockGap;
 		if (typeof blockGapValue === 'string') {
-			// Already a preset key
 			blockGapPreset = blockGapValue as BlockGapPreset;
 		} else if (typeof blockGapValue === 'number') {
-			// Convert px to nearest preset
 			if (blockGapValue <= 10) blockGapPreset = 'compact';
 			else if (blockGapValue >= 20) blockGapPreset = 'spacious';
 			else blockGapPreset = 'default';
@@ -251,36 +199,29 @@
 			blockGapPreset = 'default';
 		}
 		
-		// Load blockPadding - support both preset key and object
 		const blockPaddingValue = theme.config.page?.layout?.blockPadding;
 		if (typeof blockPaddingValue === 'string') {
-			// Preset key: "tight" | "default" | "spacious"
 			const presets = { tight: {x: 12, y: 8}, default: {x: 16, y: 12}, spacious: {x: 24, y: 16} };
 			const preset = presets[blockPaddingValue as keyof typeof presets] || presets.default;
 			blockPaddingX = preset.x;
 			blockPaddingY = preset.y;
 		} else if (blockPaddingValue && typeof blockPaddingValue === 'object') {
-			// Legacy object format
 			blockPaddingX = blockPaddingValue.x || 16;
 			blockPaddingY = blockPaddingValue.y || 12;
 		} else {
-			// Fallback
 			blockPaddingX = 16;
 			blockPaddingY = 12;
 		}
 		
 		textAlign = theme.config.page?.layout?.textAlign || 'center';
 		
-		// Load borderRadius - support both preset key and number
 		const borderRadiusValue = theme.config.page?.defaults?.borderRadius;
 		if (typeof borderRadiusValue === 'string') {
 			blockBorderRadiusType = borderRadiusValue as typeof blockBorderRadiusType;
 		} else {
-			// Default or legacy number
 			blockBorderRadiusType = 'lg';
 		}
 		
-		// Load borderWidth - support both preset key and number
 		const borderWidthValue = theme.config.page?.defaults?.borderWidth;
 		if (typeof borderWidthValue === 'string') {
 			borderWidth = borderWidthValue as BorderWidthKey;
@@ -290,28 +231,20 @@
 			borderWidth = 'default';
 		}
 		
-		// Extract colors
 		primaryColor = resolveRef(theme.config.semantic?.color?.primary) || '#3b82f6';
 		textColor = resolveRef(theme.config.semantic?.color?.text?.default) || '#18181b';
 		borderColor = resolveRef(theme.config.semantic?.color?.border?.default) || '#e4e4e7';
 		
-		// Extract typography - font sizes
-		// Helper to extract key from ref string or convert pixel to key
 		const fontSizeToKey = (value: any, validKeys: string[]): string => {
-			// If it's a ref string like "ref:tokens.typography.fontSize.sm"
 			if (typeof value === 'string' && value.startsWith('ref:tokens.typography.fontSize.')) {
 				const key = value.replace('ref:tokens.typography.fontSize.', '');
 				return validKeys.includes(key) ? key : validKeys[0];
 			}
-			// If it's a number (pixel value), map to key
 			if (typeof value === 'number') {
-				const map: Record<number, string> = {
-					12: 'xs', 13: '13', 14: 'sm', 15: '15', 16: 'base', 18: 'lg', 20: 'xl', 24: '2xl'
-				};
+				const map: Record<number, string> = { 12: 'xs', 13: '13', 14: 'sm', 15: '15', 16: 'base', 18: 'lg', 20: 'xl', 24: '2xl' };
 				const key = map[value];
 				return (key && validKeys.includes(key)) ? key : validKeys[0];
 			}
-			// Fallback to first valid key
 			return validKeys[0];
 		};
 		
@@ -327,7 +260,6 @@
 		const subtitleSize = resolveRef(theme.config.semantic?.typography?.subtitle?.fontSize);
 		subtitleFontSize = fontSizeToKey(subtitleSize, ['xs', '13', 'sm', '15', 'base']) as typeof subtitleFontSize;
 		
-		// Extract more colors
 		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
 		blockTextColor = resolveRef(theme.config.semantic?.color?.block?.text) || '#ffffff';
 		shadowColor = resolveRef(theme.config.semantic?.color?.shadow?.default) || '#000000';
@@ -341,12 +273,10 @@
 		avatarGlowEnabled = theme.config.page?.defaults?.avatarGlow?.enabled || false;
 		avatarGlowColor = theme.config.page?.defaults?.avatarGlow?.color || primaryColor;
 		
-		// Extract background effects
 		bgBlur = theme.config.background?.effects?.blur || 0;
 		bgBrightness = theme.config.background?.effects?.brightness || 100;
 		bgGrayscale = theme.config.background?.effects?.grayscale || 0;
 		
-		// Extract background from NEW structure
 		const bgTypeFromConfig = theme.config.background?.type;
 		const bgValueFromConfig = theme.config.background?.value;
 		
@@ -357,28 +287,19 @@
 				bgSolidColor = bgValueFromConfig;
 				pageBgColor = bgValueFromConfig;
 			} else if (bgType === 'gradient') {
-				// Parse gradient string
 				const gradientValue = bgValueFromConfig;
 				
-				// Detect gradient type
 				if (gradientValue.startsWith('radial-gradient')) {
 					bgGradientType = 'radial';
 					bgRadialShape = 'circle';
-					
-					// Extract position
 					const posMatch = gradientValue.match(/at\s+([^,]+)/);
-					if (posMatch) {
-						bgRadialPosition = posMatch[1].trim();
-					}
+					if (posMatch) bgRadialPosition = posMatch[1].trim();
 				} else {
 					bgGradientType = 'linear';
-					
-					// Extract angle
 					const angleMatch = gradientValue.match(/(\d+)deg/);
 					if (angleMatch) bgGradientDirection = angleMatch[1] + 'deg';
 				}
 				
-				// Extract colors
 				const colorMatches = gradientValue.match(/#[0-9a-fA-F]{6}/g);
 				if (colorMatches?.length >= 2) {
 					bgGradientFrom = colorMatches[0];
@@ -396,31 +317,22 @@
 				bgVideoUrl = bgValueFromConfig;
 			}
 		} else {
-			// Fallback to solid black if no background defined
 			bgType = 'solid';
 			bgSolidColor = '#000000';
 			pageBgColor = '#000000';
 		}
 	}
 
-	$: if (baseThemeKey && themes.length > 0) {
-		loadBaseTheme(baseThemeKey);
-	}
-
-	// Update JSON when fields change
 	function updateConfig() {
-		if (!baseConfig) return; // Wait for base config to load
+		if (!baseConfig) return;
 		
 		try {
-			// Always start from full base config (deep clone)
 			const config = JSON.parse(JSON.stringify(baseConfig));
 			
-			// Rebuild defaults object in correct order
 			if (!config.page) config.page = {};
 			const oldDefaults = config.page.defaults || {};
 			config.page.defaults = {};
 			
-			// Set properties in desired order
 			config.page.defaults.headerPresetId = selectedHeaderPreset;
 			config.page.defaults.blockStylePreset = selectedBlockStyle;
 			if (oldDefaults.linkStyle !== undefined) config.page.defaults.linkStyle = oldDefaults.linkStyle;
@@ -433,11 +345,9 @@
 			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
 			config.page.defaults.shadowStyle = selectedShadowStyle;
 			config.page.defaults.blockOpacity = blockOpacity;
-			config.page.defaults.borderRadius = blockBorderRadiusType; // Store as preset key
-			// Store borderWidth: keep preset key or number
+			config.page.defaults.borderRadius = blockBorderRadiusType;
 			config.page.defaults.borderWidth = borderWidth;
 			
-			// Conditional fields
 			if (selectedShadowStyle === 'custom') {
 				config.page.defaults.shadowCustom = shadowCustom;
 			}
@@ -454,35 +364,29 @@
 				color: avatarGlowColor
 			};
 			
-			// Link group config
 			config.page.defaults.linkGroupConfig = {
 				list: { ...listConfig },
 				grid: { ...gridConfig },
 				cards: { ...cardConfig }
 			};
 			
-			// Update layout
 			if (!config.page.layout) config.page.layout = {};
 			config.page.layout.maxWidth = maxWidth;
 			config.page.layout.pagePadding = pagePadding;
-			config.page.layout.blockGap = blockGapPreset; // Store semantic key
+			config.page.layout.blockGap = blockGapPreset;
 			config.page.layout.textAlign = textAlign;
 			
-			// Update block padding - use preset key instead of object
-			// Map current values to preset keys
 			const paddingPreset = 
 				blockPaddingX <= 12 && blockPaddingY <= 8 ? 'tight' :
 				blockPaddingX <= 16 && blockPaddingY <= 12 ? 'default' :
 				'spacious';
 			config.page.layout.blockPadding = paddingPreset;
 			
-			// Update typography - only fontFamily (per-theme customization)
 			if (!config.tokens) config.tokens = {};
 			if (!config.tokens.typography) config.tokens.typography = {};
 			if (!config.tokens.typography.fontFamily) config.tokens.typography.fontFamily = {};
 			config.tokens.typography.fontFamily.sans = fontFamily;
 			
-			// Update colors
 			if (!config.semantic) config.semantic = {};
 			if (!config.semantic.color) config.semantic.color = {};
 			if (!config.semantic.color.text) config.semantic.color.text = {};
@@ -493,15 +397,12 @@
 			config.semantic.color.text.default = textColor;
 			config.semantic.color.border.default = borderColor;
 			
-			// Update block text color
 			if (!config.semantic.color.block) config.semantic.color.block = {};
 			config.semantic.color.block.text = blockTextColor;
 			
-			// Update shadow color
 			if (!config.semantic.color.shadow) config.semantic.color.shadow = {};
 			config.semantic.color.shadow.default = shadowColor;
 			
-			// Update typography - fontFamily and font sizes
 			if (!config.semantic.typography) config.semantic.typography = {};
 			if (!config.semantic.typography.heading) config.semantic.typography.heading = {};
 			config.semantic.typography.heading.fontFamily = headingFontFamily || fontFamily;
@@ -516,13 +417,10 @@
 			if (!config.semantic.typography.subtitle) config.semantic.typography.subtitle = {};
 			config.semantic.typography.subtitle.fontSize = `ref:tokens.typography.fontSize.${subtitleFontSize}`;
 			
-			// Update more colors
 			config.semantic.color.text.muted = mutedTextColor;
 			
-			// Update background - NEW STRUCTURE
 			if (!config.background) config.background = {};
 			
-			// Build background value based on type
 			let bgValue = '';
 			if (bgType === 'solid') {
 				bgValue = bgSolidColor;
@@ -534,7 +432,6 @@
 						bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
 					}
 				} else {
-					// Radial gradient
 					const shape = 'circle';
 					const position = bgRadialPosition;
 					if (bgGradientMiddleEnabled) {
@@ -549,41 +446,23 @@
 				bgValue = bgVideoUrl || '';
 			}
 			
-			// Set new background structure
 			config.background.type = bgType;
 			config.background.value = bgValue;
 			
-			// Set background effects
 			if (!config.background.effects) config.background.effects = {};
 			config.background.effects.blur = bgBlur;
 			config.background.effects.brightness = bgBrightness;
 			config.background.effects.grayscale = bgGrayscale;
 			config.background.effects.overlayColor = 'ref:tokens.color.overlay.10';
 			
-			// Update semantic.color.surface.page as fallback color
 			config.semantic.color.surface.page = bgType === 'solid' ? bgSolidColor : '#000000';
 			
-			// Clean up deprecated fields
-			if (config.page?.layout?.baseFontSize) {
-				delete config.page.layout.baseFontSize;
-			}
-			
-			// Clean up removed tokens (space, radius, elevation, recipes, meta)
-			if (config.tokens?.space) {
-				delete config.tokens.space;
-			}
-			if (config.tokens?.radius) {
-				delete config.tokens.radius;
-			}
-			if (config.tokens?.elevation) {
-				delete config.tokens.elevation;
-			}
-			if (config.tokens?.meta) {
-				delete config.tokens.meta;
-			}
-			if (config.recipes) {
-				delete config.recipes;
-			}
+			if (config.page?.layout?.baseFontSize) delete config.page.layout.baseFontSize;
+			if (config.tokens?.space) delete config.tokens.space;
+			if (config.tokens?.radius) delete config.tokens.radius;
+			if (config.tokens?.elevation) delete config.tokens.elevation;
+			if (config.tokens?.meta) delete config.tokens.meta;
+			if (config.recipes) delete config.recipes;
 			
 			configJson = JSON.stringify(config, null, 2);
 		} catch (e) {
@@ -591,23 +470,17 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor) {
 		updateConfig();
 	}
 
-	// Update preview stores - optimized for fast opacity changes
 	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined && selectedGradientPreset && bgType && bgGradientType && bgRadialShape && bgRadialPosition && linkFontSize && bioFontSize && subtitleFontSize) {
 		try {
 			const config = JSON.parse(configJson);
 			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity, shadowCustom, selectedGradientPreset));
 			
-			// Resolve blockBorderRadius from centralized tokens
 			const radiusValue = RADIUS_TOKENS[blockBorderRadiusType] ?? 12;
-			
-			// Convert headingFontSize to pixel value for titleFontSize
-			const headingSizeMap: Record<typeof headingFontSize, number> = {
-				lg: 18, xl: 20, '2xl': 24
-			};
+			const headingSizeMap: Record<typeof headingFontSize, number> = { lg: 18, xl: 20, '2xl': 24 };
 			const titleFontSizePx = headingSizeMap[headingFontSize] || 20;
 			
 			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? (
@@ -651,10 +524,7 @@
 					'page.showSubscribeButton': showSubscribeButton
 				}
 			});
-			// Don't override previewPage - keep real user data
-		} catch (e) {
-			// Invalid JSON, skip preview update
-		}
+		} catch (e) {}
 	}
 
 	async function handleSubmit() {
@@ -663,7 +533,6 @@
 			return;
 		}
 
-		// Validate JSON
 		let config;
 		try {
 			config = JSON.parse(configJson);
@@ -672,16 +541,11 @@
 			return;
 		}
 
-		// Clean up deprecated fields
-		if (config.page?.layout?.baseFontSize) {
-			delete config.page.layout.baseFontSize;
-		}
+		if (config.page?.layout?.baseFontSize) delete config.page.layout.baseFontSize;
 
-		// Update meta fields
-		const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 		config.meta = {
 			...config.meta,
-			id: `preset.${key}`,
+			id: `preset.${themeKey}`,
 			name,
 			description,
 			category,
@@ -693,17 +557,16 @@
 		error = '';
 
 		try {
-			await api.createTheme({ key, name, config, description, category, tier });
+			await api.updateTheme(themeKey, { name, config, description, category, tier });
 			goto('/dashboard/themes');
 		} catch (e: any) {
-			error = e.message || 'Failed to create theme';
+			error = e.message || 'Failed to update theme';
 		} finally {
 			saving = false;
 			themeEditor.setSaving(false);
 		}
 	}
 	
-	// Image upload handlers
 	function handleImageUpload(event: Event, target: 'background' | 'cover' = 'background') {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
@@ -730,10 +593,7 @@
 		uploading = true;
 
 		try {
-			const croppedFile = new File([croppedBlob], uploadTarget === 'cover' ? 'cover.jpg' : 'background.jpg', {
-				type: 'image/jpeg'
-			});
-
+			const croppedFile = new File([croppedBlob], uploadTarget === 'cover' ? 'cover.jpg' : 'background.jpg', { type: 'image/jpeg' });
 			const result = await api.uploadBackground('demo', croppedFile);
 			
 			if (uploadTarget === 'cover') {
@@ -792,7 +652,6 @@
 
 <div class="min-h-screen" style="background-color: #f6f1eb;">
 	<div class="flex h-[calc(100vh-64px)]">
-		<!-- Left: JSON Viewer (Sticky) -->
 		<div class="w-[400px] flex-shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
 			<div class="sticky top-0 p-4">
 				<h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -807,12 +666,9 @@
 			</div>
 		</div>
 
-		<!-- Main Content + Preview -->
 		<div class="flex-1 overflow-y-auto">
 			<div class="flex gap-8 p-8 justify-center">
-				<!-- Center: Content Area -->
 				<div class="flex-1 max-w-2xl">
-					<!-- Header -->
 					<div class="mb-6">
 						<a href="/dashboard/themes" class="text-sm text-gray-600 hover:text-gray-900 mb-3 inline-flex items-center gap-1">
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -820,8 +676,8 @@
 							</svg>
 							Back to Themes
 						</a>
-						<h1 class="text-3xl font-bold text-gray-900">Create New Theme</h1>
-						<p class="text-gray-600 mt-1">Duplicate an existing theme and customize it</p>
+						<h1 class="text-3xl font-bold text-gray-900">Edit Theme: {name}</h1>
+						<p class="text-gray-600 mt-1">Customize theme settings and configuration</p>
 					</div>
 
 					{#if error}
@@ -833,167 +689,40 @@
 					{#if loading}
 						<div class="card-ios p-8 text-center">
 							<div class="inline-block w-8 h-8 border-4 border-gray-300 border-t-green-600 rounded-full animate-spin"></div>
-							<p class="text-gray-600 mt-3">Loading themes...</p>
+							<p class="text-gray-600 mt-3">Loading theme...</p>
 						</div>
 					{:else}
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
-				<!-- Base Theme Selection -->
-				<ThemeBaseSelector
-					bind:baseThemeKey
-					{themes}
-				/>
+							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
+							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor />
+							<ThemeBackground bind:bgType bind:bgSolidColor bind:bgGradientType bind:bgGradientFrom bind:bgGradientTo bind:bgGradientMiddle bind:bgGradientMiddleEnabled bind:bgGradientDirection bind:bgRadialShape bind:bgRadialPosition bind:bgImageUrl bind:bgVideoUrl bind:bgBlur bind:bgBrightness bind:bgGrayscale {uploading} on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)} on:videoUpload={handleVideoUpload} on:videoRemove={handleVideoRemove} />
+							<HeaderStyleManager bind:selectedHeaderPreset bind:coverImageUrl bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
+							<ThemeBlockStyle bind:selectedBlockStyle bind:selectedShadowStyle bind:blockOpacity bind:shadowCustom bind:selectedLinkIconShape bind:selectedGradientPreset bind:borderWidth {primaryColor} {textColor} {borderColor} {blockTextColor} {shadowColor} {bgType} {bgSolidColor} {bgGradientFrom} {bgGradientTo} {bgGradientDirection} {bgImageUrl} />
+							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize bind:titleGlowEnabled bind:titleGlowColor {primaryColor} />
+							<ThemeLinkGroupLayout bind:selectedLinkGroupLayout bind:gridConfig bind:cardConfig bind:listConfig />
+							<ThemeLayout bind:maxWidth bind:textAlign bind:pagePadding bind:blockGapPreset bind:blockPaddingX bind:blockPaddingY bind:blockBorderRadiusType selectedLinkGroupLayout={selectedLinkGroupLayout} />
+							<ThemePageSettings bind:showShareButton bind:showSubscribeButton />
+							<ThemeJsonEditor bind:configJson />
+						</form>
 
-				<!-- Basic Info -->
-				<ThemeBasicInfo
-					bind:name
-					bind:description
-					bind:category
-					bind:tier
-				/>
+						<div class="h-20"></div>
+					{/if}
+				</div>
 
-				<!-- Theme Colors -->
-				<ThemeColorPicker
-					bind:primaryColor
-					bind:textColor
-					bind:borderColor
-					bind:mutedTextColor
-					bind:blockTextColor
-					bind:shadowColor
-				/>
-
-				<!-- Page Background -->
-				<ThemeBackground
-					bind:bgType
-					bind:bgSolidColor
-					bind:bgGradientType
-					bind:bgGradientFrom
-					bind:bgGradientTo
-					bind:bgGradientMiddle
-					bind:bgGradientMiddleEnabled
-					bind:bgGradientDirection
-					bind:bgRadialShape
-					bind:bgRadialPosition
-					bind:bgImageUrl
-					bind:bgVideoUrl
-					bind:bgBlur
-					bind:bgBrightness
-					bind:bgGrayscale
-					{uploading}
-					on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)}
-					on:videoUpload={handleVideoUpload}
-					on:videoRemove={handleVideoRemove}
-				/>
-
-				<!-- Header Style -->
-				<HeaderStyleManager
-					bind:selectedHeaderPreset
-					bind:coverImageUrl
-					bind:avatarBorderColor
-					bind:avatarBorderWidth
-					bind:socialIconPosition
-					bind:socialIconColor
-					bind:avatarGlowEnabled
-					bind:avatarGlowColor
-					bind:headerPresets
-					previewPage={$previewPage}
-					{uploading}
-					{primaryColor}
-					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}
-				/>
-
-				<!-- Block Style -->
-				<ThemeBlockStyle
-					bind:selectedBlockStyle
-					bind:selectedShadowStyle
-					bind:blockOpacity
-					bind:shadowCustom
-					bind:selectedLinkIconShape
-					bind:selectedGradientPreset
-					bind:borderWidth
-					{primaryColor}
-					{textColor}
-					{borderColor}
-					{blockTextColor}
-					{shadowColor}
-					{bgType}
-					{bgSolidColor}
-					{bgGradientFrom}
-					{bgGradientTo}
-					{bgGradientDirection}
-					{bgImageUrl}
-				/>
-
-				<!-- Typography -->
-				<ThemeTypography
-					bind:fontFamily
-					bind:headingFontFamily
-					bind:headingFontSize
-					bind:linkFontSize
-					bind:bioFontSize
-					bind:subtitleFontSize
-					bind:titleGlowEnabled
-					bind:titleGlowColor
-					{primaryColor}
-				/>
-
-				<!-- Link Group Layout -->
-				<ThemeLinkGroupLayout
-					bind:selectedLinkGroupLayout
-					bind:gridConfig
-					bind:cardConfig
-					bind:listConfig
-				/>
-
-				<!-- Layout -->
-				<ThemeLayout
-					bind:maxWidth
-					bind:textAlign
-					bind:pagePadding
-					bind:blockGapPreset
-					bind:blockPaddingX
-					bind:blockPaddingY
-					bind:blockBorderRadiusType
-					selectedLinkGroupLayout={selectedLinkGroupLayout}
-				/>
-
-				<!-- Page Settings -->
-				<ThemePageSettings
-					bind:showShareButton
-					bind:showSubscribeButton
-				/>
-
-				<!-- Theme Configuration -->
-				<ThemeJsonEditor bind:configJson />
-			</form>
-
-			<!-- Bottom Spacer -->
-			<div class="h-20"></div>
-		{/if}
-	</div>
-
-	<!-- Right: Preview -->
-	<div class="w-[520px] flex-shrink-0 -mr-8 pr-8">
-		<div class="sticky top-8">
-			<div class="pt-16 pb-8">
-				<div class="flex items-center justify-center">
-					<ThemePreviewMockup />
+				<div class="w-[520px] flex-shrink-0 -mr-8 pr-8">
+					<div class="sticky top-8">
+						<div class="pt-16 pb-8">
+							<div class="flex items-center justify-center">
+								<ThemePreviewMockup />
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 </div>
-		</div>
-	</div>
-</div>
 
-<!-- Image Crop Modal -->
 {#if showCropModal}
-	<ImageCropModal
-		imageUrl={tempImageUrl}
-		aspectRatio={uploadTarget === 'cover' ? 3 : 0.483}
-		outputWidth={uploadTarget === 'cover' ? 1200 : 1080}
-		outputHeight={uploadTarget === 'cover' ? 400 : 2236}
-		on:accept={handleCropAccept}
-		on:cancel={handleCropCancel}
-	/>
+	<ImageCropModal imageUrl={tempImageUrl} aspectRatio={uploadTarget === 'cover' ? 3 : 0.483} outputWidth={uploadTarget === 'cover' ? 1200 : 1080} outputHeight={uploadTarget === 'cover' ? 400 : 2236} on:accept={handleCropAccept} on:cancel={handleCropCancel} />
 {/if}

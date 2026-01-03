@@ -203,6 +203,19 @@ class ApiClient {
 		return res.json();
 	}
 
+	async updateTheme(key: string, data: { name: string; config: any; description?: string; category?: string; tier?: string }): Promise<{ success: boolean; key: string }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/themes/${key}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(data)
+		});
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Failed to update theme');
+		}
+		return res.json();
+	}
+
 	async deleteTheme(key: string): Promise<{ success: boolean }> {
 		const res = await this.fetchWithRetry(`${this.baseUrl}/themes/${key}`, {
 			method: 'DELETE'

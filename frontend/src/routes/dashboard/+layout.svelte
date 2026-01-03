@@ -4,6 +4,7 @@
 	import { themes } from '$lib/stores/themes';
 	import { loadHeaderPresets } from '$lib/stores/headerPresets';
 	import { publishChanges, saveStatus } from '$lib/stores/autosave';
+	import { themeEditor } from '$lib/stores/themeEditor';
 	
 	// Suppress params warning
 	export let params = {};
@@ -67,10 +68,28 @@
 			publishing = false;
 		}
 	}
+	
+	async function handleThemeSave() {
+		if ($themeEditor.handleSave) {
+			await $themeEditor.handleSave();
+		}
+	}
+	
+	function handleThemeCancel() {
+		if ($themeEditor.handleCancel) {
+			$themeEditor.handleCancel();
+		}
+	}
 
 	// Button text based on status
 	$: buttonText = publishing ? 'Publishing...' : $saveStatus === 'saving' ? 'Saving...' : 'Publish';
 	$: buttonDisabled = publishing || $saveStatus === 'saving';
+	
+	// Show header actions only for appearance and bio pages
+	$: showHeaderActions = currentPath === '/dashboard/appearance' || currentPath === '/dashboard/bio';
+	
+	// Theme editor button text
+	$: themeButtonText = $themeEditor.saving ? 'Saving...' : $themeEditor.mode === 'create' ? 'Create Theme' : 'Save Changes';
 </script>
 
 <div class="min-h-screen bg-gray-50 flex">
@@ -254,46 +273,69 @@
 				</h1>
 			</div>
 			<div class="flex items-center gap-3">
-				<!-- Save Status Indicator -->
-				{#if $saveStatus === 'saved'}
-					<div class="flex items-center gap-2 text-green-600 text-sm">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-						</svg>
-						<span class="font-medium">Saved</span>
-					</div>
-				{:else if $saveStatus === 'error'}
-					<div class="flex items-center gap-2 text-red-600 text-sm">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-						</svg>
-						<span class="font-medium">Error</span>
-					</div>
-				{/if}
-
-				<a 
-					href="/demo" 
-					target="_blank" 
-					class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-					</svg>
-					View Page
-				</a>
-				<button 
-					on:click={handlePublish}
-					disabled={buttonDisabled}
-					class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[100px] justify-center"
-				>
-					{#if publishing || $saveStatus === 'saving'}
-						<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-						</svg>
+				{#if $themeEditor.isActive}
+					<!-- Theme Editor Actions -->
+					<button 
+						on:click={handleThemeCancel}
+						class="btn-ios-secondary min-w-[120px]"
+					>
+						Cancel
+					</button>
+					<button 
+						on:click={handleThemeSave}
+						disabled={$themeEditor.saving}
+						class="btn-ios-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[120px] justify-center"
+					>
+						{#if $themeEditor.saving}
+							<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+						{/if}
+						{themeButtonText}
+					</button>
+				{:else if showHeaderActions}
+					<!-- Save Status Indicator -->
+					{#if $saveStatus === 'saved'}
+						<div class="flex items-center gap-2 text-green-600 text-sm">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+							</svg>
+							<span class="font-medium">Saved</span>
+						</div>
+					{:else if $saveStatus === 'error'}
+						<div class="flex items-center gap-2 text-red-600 text-sm">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+							</svg>
+							<span class="font-medium">Error</span>
+						</div>
 					{/if}
-					{buttonText}
-				</button>
+
+					<a 
+						href="/demo" 
+						target="_blank" 
+						class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+						</svg>
+						View Page
+					</a>
+					<button 
+						on:click={handlePublish}
+						disabled={buttonDisabled}
+						class="btn-ios-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[120px] justify-center"
+					>
+						{#if publishing || $saveStatus === 'saving'}
+							<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+						{/if}
+						{buttonText}
+					</button>
+				{/if}
 			</div>
 		</header>
 

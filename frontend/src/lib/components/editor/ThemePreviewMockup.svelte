@@ -147,6 +147,29 @@
 			|| themeConfig?.tokens?.typography?.fontFamily?.sans 
 			|| 'Inter, sans-serif';
 	})();
+	
+	// Title glow effect
+	$: titleGlow = (() => {
+		const themeConfig = $previewAppearance?.theme?.config;
+		const glowConfig = themeConfig?.page?.defaults?.titleGlow;
+		if (glowConfig?.enabled) {
+			const color = glowConfig.color || tokens?.primaryColor || '#3b82f6';
+			return `0 0 20px ${color}, 0 0 40px ${color}, 0 0 60px ${color}`;
+		}
+		return 'none';
+	})();
+	
+	// Avatar glow effect
+	$: avatarGlow = (() => {
+		const themeConfig = $previewAppearance?.theme?.config;
+		const glowConfig = themeConfig?.page?.defaults?.avatarGlow;
+		if (glowConfig?.enabled) {
+			const color = glowConfig.color || tokens?.primaryColor || '#3b82f6';
+			return `0 0 20px ${color}, 0 0 40px ${color}, 0 0 60px ${color}`;
+		}
+		return 'none';
+	})();
+	
 	$: maxWidth = resolveMaxWidth(
 		$previewAppearanceState.overrides?.['page.maxWidth'] 
 		?? $previewAppearance?.theme?.config?.page?.layout?.maxWidth
@@ -374,7 +397,7 @@
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 30%, {overlayGradientColor} 100%);"></div>
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);"></div>
 									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
-										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$previewPage?.title || 'Your Name'}</h1>
+										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
 										{#if header.showBio && $previewPage?.bio}
 											<p class="bio-text text-white/90 mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 												{$previewPage.bio}
@@ -391,12 +414,12 @@
 											src={$previewPage.avatar_url} 
 											alt="Avatar" 
 											class="header-avatar object-cover"
-											style="width: {avatarWidth}px; height: {avatarHeight}px; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)};"
+											style="width: {avatarWidth}px; height: {avatarHeight}px; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; box-shadow: {avatarGlow};"
 										/>
 									{:else}
 										<div 
 											class="header-avatar flex items-center justify-center text-white font-bold"
-											style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; font-size: {avatarSize / 2.5}px;"
+											style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; font-size: {avatarSize / 2.5}px; box-shadow: {avatarGlow};"
 										>
 											{($previewPage?.title || 'U').charAt(0).toUpperCase()}
 										</div>
@@ -407,7 +430,7 @@
 						
 						{#if !isAvatarCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
-								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$previewPage?.title || 'Your Name'}</h1>
+								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
 								{#if header.showBio && $previewPage?.bio}
 									<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 										{$previewPage.bio}
@@ -423,17 +446,17 @@
 									src={$previewPage.avatar_url} 
 									alt="Avatar" 
 									class="header-avatar object-cover mb-2"
-									style="width: {avatarWidth}px; height: {avatarHeight}px; {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)};"
+									style="width: {avatarWidth}px; height: {avatarHeight}px; {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; box-shadow: {avatarGlow};"
 								/>
 							{:else}
 								<div 
 									class="header-avatar mb-2 flex items-center justify-center text-white font-bold"
-									style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {avatarSize / 2.5}px;"
+									style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {avatarSize / 2.5}px; box-shadow: {avatarGlow};"
 								>
 									{($previewPage?.title || 'U').charAt(0).toUpperCase()}
 								</div>
 							{/if}
-							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2;">{$previewPage?.title || 'Your Name'}</h1>
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $previewPage?.bio}
 								<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
 									{$previewPage.bio}
