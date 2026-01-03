@@ -7,6 +7,7 @@
 	import { resolvePagePadding, resolveAvatarBorderWidth } from '$lib/appearance/spacingTokens';
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
+	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
@@ -38,6 +39,28 @@
 		
 		// Final fallback
 		return tokens?.backgroundColor || '#ffffff';
+	})();
+	
+	// Get animation settings and build class
+	$: bgAnimation = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.background?.animation;
+	})();
+	
+	$: bgType = $appearance?.theme?.config?.background?.type;
+	
+	$: animationClass = (() => {
+		// Only apply animation if bgType is gradient and animation is enabled
+		if (bgType !== 'gradient' || !bgAnimation?.enabled) return '';
+		const variant = bgAnimation.variant || 'rotating';
+		const speed = bgAnimation.speed || 'medium';
+		return `gradient-${variant} gradient-speed-${speed}`;
+	})();
+	
+	// Get particles settings
+	$: particles = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.background?.particles;
 	})();
 	
 	// Get global iconShape from appearance (resolved from theme config)
@@ -469,10 +492,21 @@
 					"
 				></div>
 			{/if}
+			
+			<!-- Particles Layer -->
+			{#if particles?.enabled}
+				<ParticlesLayer
+					count={particles.count || 20}
+					size={particles.size || 'medium'}
+					color={particles.color || '#ffffff'}
+					speed={particles.speed || 'medium'}
+					variant={particles.variant || 'floating'}
+				/>
+			{/if}
 
 			<!-- Content -->
 			<div 
-				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
+				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10 {animationClass}"
 				style="
 					{!hasVideoInDraft && resolvedBackground 
 						? (resolvedBackground.includes('background:') && resolvedBackground.includes('background-size:')
@@ -481,7 +515,7 @@
 								? resolvedBackground 
 								: resolvedBackground.includes('url(')
 									? 'background: transparent;'
-									: `background: ${resolvedBackground};`)
+									: `background: ${resolvedBackground}; ${bgType === 'gradient' && bgAnimation?.enabled ? 'background-size: 200% 200%;' : ''}`)
 						: !hasVideoInDraft ? 'background: #ffffff;' : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
@@ -1140,5 +1174,62 @@
 	.scrollbar-hide {
 		-ms-overflow-style: none;
 		scrollbar-width: none;
+	}
+
+	/* Animated Gradient Keyframes */
+	@keyframes gradient-rotating {
+		0% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0% 50%;
+		}
+	}
+
+	@keyframes gradient-flowing {
+		0% {
+			background-position: 0% 0%;
+		}
+		100% {
+			background-position: 200% 0%;
+		}
+	}
+
+	@keyframes gradient-pulsing {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.85;
+		}
+	}
+
+	/* Animation Classes */
+	.phone-content.gradient-rotating {
+		animation: gradient-rotating ease infinite;
+	}
+
+	.phone-content.gradient-flowing {
+		animation: gradient-flowing linear infinite;
+	}
+
+	.phone-content.gradient-pulsing {
+		animation: gradient-pulsing ease-in-out infinite;
+	}
+
+	/* Speed Classes */
+	.phone-content.gradient-speed-slow {
+		animation-duration: 8s;
+	}
+
+	.phone-content.gradient-speed-medium {
+		animation-duration: 4s;
+	}
+
+	.phone-content.gradient-speed-fast {
+		animation-duration: 2s;
 	}
 </style>

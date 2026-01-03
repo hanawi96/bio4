@@ -19,6 +19,19 @@
 	export let bgBlur: BlurKey | number;
 	export let bgBrightness: BrightnessKey | number;
 	export let bgGrayscale: GrayscaleKey | number;
+	
+	// Animated gradient props
+	export let bgAnimationEnabled: boolean = false;
+	export let bgAnimationVariant: 'flowing' | 'rotating' | 'pulsing' = 'rotating';
+	export let bgAnimationSpeed: 'slow' | 'medium' | 'fast' = 'medium';
+	
+	// Floating particles props
+	export let particlesEnabled: boolean = false;
+	export let particlesCount: number = 20;
+	export let particlesSize: 'small' | 'medium' | 'large' = 'medium';
+	export let particlesColor: string = '#ffffff';
+	export let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
+	export let particlesVariant: 'floating' | 'rain' | 'snow' = 'floating';
 
 	const dispatch = createEventDispatcher();
 	
@@ -445,15 +458,92 @@
 				</div>
 			</div>
 
+			<!-- Animated Gradient Section -->
+			<div class="border-t border-gray-200 pt-4">
+				<div class="flex items-center justify-between mb-3">
+					<div>
+						<label class="block text-sm font-medium text-gray-700">Animate Gradient</label>
+						<p class="text-xs text-gray-500 mt-0.5">Add smooth animation to your gradient</p>
+					</div>
+					<button
+						type="button"
+						on:click={() => bgAnimationEnabled = !bgAnimationEnabled}
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {bgAnimationEnabled ? 'bg-green-600' : 'bg-gray-200'}"
+					>
+						<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {bgAnimationEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+					</button>
+				</div>
+				
+				{#if bgAnimationEnabled}
+					<div class="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+						<!-- Animation Variant -->
+						<div>
+							<label class="block text-xs font-medium text-gray-600 mb-2">Animation Style</label>
+							<div class="grid grid-cols-3 gap-2">
+								<button
+									type="button"
+									on:click={() => bgAnimationVariant = 'rotating'}
+									class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationVariant === 'rotating' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+								>
+									🔄 Rotating
+								</button>
+								<button
+									type="button"
+									on:click={() => bgAnimationVariant = 'flowing'}
+									class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationVariant === 'flowing' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+								>
+									→ Flowing
+								</button>
+								<button
+									type="button"
+									on:click={() => bgAnimationVariant = 'pulsing'}
+									class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationVariant === 'pulsing' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+								>
+									💫 Pulsing
+								</button>
+							</div>
+						</div>
+
+						<!-- Animation Speed -->
+						<div>
+							<label class="block text-xs font-medium text-gray-600 mb-2">Animation Speed</label>
+							<div class="grid grid-cols-3 gap-2">
+								<button
+									type="button"
+									on:click={() => bgAnimationSpeed = 'slow'}
+									class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationSpeed === 'slow' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+								>
+									🐢 Slow
+								</button>
+								<button
+									type="button"
+									on:click={() => bgAnimationSpeed = 'medium'}
+									class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationSpeed === 'medium' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+								>
+									⚡ Medium
+								</button>
+								<button
+									type="button"
+									on:click={() => bgAnimationSpeed = 'fast'}
+									class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationSpeed === 'fast' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+								>
+									🚀 Fast
+								</button>
+							</div>
+						</div>
+					</div>
+				{/if}
+			</div>
+
 			<!-- Preview -->
 			<div class="mt-3">
 				<p class="text-xs text-gray-500 mb-2">Preview:</p>
 				<div
-					class="h-20 rounded-lg border-2 border-gray-200"
+					class="h-20 rounded-lg border-2 border-gray-200 gradient-preview {bgAnimationEnabled ? `gradient-${bgAnimationVariant} gradient-speed-${bgAnimationSpeed}` : ''}"
 					style="background: {bgGradientType === 'linear' 
 						? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientMiddleEnabled ? `${bgGradientMiddle} 50%, ` : ''}${bgGradientTo} 100%)`
 						: `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom} 0%, ${bgGradientMiddleEnabled ? `${bgGradientMiddle} 50%, ` : ''}${bgGradientTo} 100%)`
-					};"
+					}; {bgAnimationEnabled && bgGradientType === 'linear' ? 'background-size: 200% 200%;' : ''}"
 				></div>
 			</div>
 		</div>
@@ -800,6 +890,153 @@
 			{/if}
 		</div>
 	{/if}
+	
+	<!-- Floating Particles Section -->
+	<div class="border-t border-gray-200 pt-6 mt-6">
+		<div class="flex items-center justify-between mb-4">
+			<div>
+				<h3 class="text-sm font-semibold text-gray-900">Floating Particles</h3>
+				<p class="text-xs text-gray-500 mt-0.5">Add animated particles to your background</p>
+			</div>
+			<button
+				type="button"
+				on:click={() => particlesEnabled = !particlesEnabled}
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {particlesEnabled ? 'bg-green-600' : 'bg-gray-200'}"
+			>
+				<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {particlesEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+			</button>
+		</div>
+		
+		{#if particlesEnabled}
+			<div class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+				<!-- Particle Variant -->
+				<div>
+					<label class="block text-xs font-medium text-gray-600 mb-2">Effect Type</label>
+					<div class="grid grid-cols-3 gap-2">
+						<button
+							type="button"
+							on:click={() => particlesVariant = 'floating'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesVariant === 'floating' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							● Floating
+						</button>
+						<button
+							type="button"
+							on:click={() => particlesVariant = 'rain'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesVariant === 'rain' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							🌧️ Rain
+						</button>
+						<button
+							type="button"
+							on:click={() => particlesVariant = 'snow'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesVariant === 'snow' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							❄️ Snow
+						</button>
+					</div>
+				</div>
+				
+				<!-- Particle Count -->
+				<div>
+					<label class="block text-xs font-medium text-gray-600 mb-2">Particle Count: {particlesCount}</label>
+					<input
+						type="range"
+						bind:value={particlesCount}
+						min="10"
+						max="50"
+						step="5"
+						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+					/>
+					<div class="flex justify-between text-[10px] text-gray-500 mt-1">
+						<span>10</span>
+						<span>30</span>
+						<span>50</span>
+					</div>
+				</div>
+
+				<!-- Particle Size -->
+				<div>
+					<label class="block text-xs font-medium text-gray-600 mb-2">Particle Size</label>
+					<div class="grid grid-cols-3 gap-2">
+						<button
+							type="button"
+							on:click={() => particlesSize = 'small'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesSize === 'small' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							● Small
+						</button>
+						<button
+							type="button"
+							on:click={() => particlesSize = 'medium'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesSize === 'medium' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							● Medium
+						</button>
+						<button
+							type="button"
+							on:click={() => particlesSize = 'large'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesSize === 'large' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							● Large
+						</button>
+					</div>
+				</div>
+
+				<!-- Particle Color -->
+				<div>
+					<label class="block text-xs font-medium text-gray-600 mb-2">Particle Color</label>
+					<div class="flex items-center gap-2">
+						<div class="relative flex-shrink-0">
+							<input
+								type="color"
+								bind:value={particlesColor}
+								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+							/>
+							<div 
+								class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
+								style="background-color: {particlesColor};"
+							></div>
+						</div>
+						<input
+							type="text"
+							bind:value={particlesColor}
+							class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+							placeholder="#ffffff"
+						/>
+					</div>
+				</div>
+
+				<!-- Particle Speed -->
+				<div>
+					<label class="block text-xs font-medium text-gray-600 mb-2">Animation Speed</label>
+					<div class="grid grid-cols-3 gap-2">
+						<button
+							type="button"
+							on:click={() => particlesSpeed = 'slow'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesSpeed === 'slow' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							🐢 Slow
+						</button>
+						<button
+							type="button"
+							on:click={() => particlesSpeed = 'medium'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesSpeed === 'medium' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							⚡ Medium
+						</button>
+						<button
+							type="button"
+							on:click={() => particlesSpeed = 'fast'}
+							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesSpeed === 'fast' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+						>
+							🚀 Fast
+						</button>
+					</div>
+				</div>
+			</div>
+		{/if}
+	</div>
 </section>
 
 
@@ -816,3 +1053,62 @@
 		on:cancel={handleVideoCropCancel}
 	/>
 {/if}
+
+<style>
+	/* Animated Gradient Keyframes */
+	@keyframes gradient-rotating {
+		0% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0% 50%;
+		}
+	}
+
+	@keyframes gradient-flowing {
+		0% {
+			background-position: 0% 0%;
+		}
+		100% {
+			background-position: 200% 0%;
+		}
+	}
+
+	@keyframes gradient-pulsing {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.85;
+		}
+	}
+
+	/* Animation Classes */
+	.gradient-preview.gradient-rotating {
+		animation: gradient-rotating ease infinite;
+	}
+
+	.gradient-preview.gradient-flowing {
+		animation: gradient-flowing linear infinite;
+	}
+
+	.gradient-preview.gradient-pulsing {
+		animation: gradient-pulsing ease-in-out infinite;
+	}
+
+	/* Speed Classes */
+	.gradient-preview.gradient-speed-slow {
+		animation-duration: 8s;
+	}
+
+	.gradient-preview.gradient-speed-medium {
+		animation-duration: 4s;
+	}
+
+	.gradient-preview.gradient-speed-fast {
+		animation-duration: 2s;
+	}
+</style>

@@ -5,6 +5,7 @@
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
 	import { resolveMaxWidth, resolvePagePadding, resolveBlockGap, resolveAvatarBorderWidth } from '$lib/appearance/spacingTokens';
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
+	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 
 	// Use preview stores instead of main stores
 	$: tokens = $previewAppearance?.tokens;
@@ -50,6 +51,28 @@
 		}
 		
 		return undefined;
+	})();
+	
+	// Get animation settings and build class
+	$: bgAnimation = (() => {
+		const themeConfig = $previewAppearance?.theme?.config;
+		return themeConfig?.background?.animation;
+	})();
+	
+	$: bgType = $previewAppearance?.theme?.config?.background?.type;
+	
+	$: animationClass = (() => {
+		// Only apply animation if bgType is gradient and animation is enabled
+		if (bgType !== 'gradient' || !bgAnimation?.enabled) return '';
+		const variant = bgAnimation.variant || 'rotating';
+		const speed = bgAnimation.speed || 'medium';
+		return `gradient-${variant} gradient-speed-${speed}`;
+	})();
+	
+	// Get particles settings
+	$: particles = (() => {
+		const themeConfig = $previewAppearance?.theme?.config;
+		return themeConfig?.background?.particles;
 	})();
 	
 	$: isBackgroundImage = backgroundValue.startsWith('url(');
@@ -324,18 +347,29 @@
 				{:else}
 					<!-- Image or Color Background -->
 					<div 
-						class="absolute inset-0 z-0"
+						class="absolute inset-0 z-0 {animationClass}"
 						style="{isBackgroundImage 
 							? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur(${bgBlur}px) brightness(${bgBrightness / 100}) grayscale(${bgGrayscale / 100});`
-							: `background: ${backgroundValue};`
+							: `background: ${backgroundValue}; ${bgType === 'gradient' && bgAnimation?.enabled ? 'background-size: 200% 200%;' : ''}`
 						}"
 					></div>
 				{/if}
 			{/key}
+			
+			<!-- Particles Layer -->
+			{#if particles?.enabled}
+				<ParticlesLayer
+					count={particles.count || 20}
+					size={particles.size || 'medium'}
+					color={particles.color || '#ffffff'}
+					speed={particles.speed || 'medium'}
+					variant={particles.variant || 'floating'}
+				/>
+			{/if}
 
 			<!-- Content -->
 			<div 
-				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
+				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10 {animationClass}"
 				style="
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
@@ -739,5 +773,62 @@
 	.scrollbar-hide {
 		-ms-overflow-style: none;
 		scrollbar-width: none;
+	}
+
+	/* Animated Gradient Keyframes */
+	@keyframes gradient-rotating {
+		0% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0% 50%;
+		}
+	}
+
+	@keyframes gradient-flowing {
+		0% {
+			background-position: 0% 0%;
+		}
+		100% {
+			background-position: 200% 0%;
+		}
+	}
+
+	@keyframes gradient-pulsing {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.85;
+		}
+	}
+
+	/* Animation Classes */
+	.gradient-rotating {
+		animation: gradient-rotating ease infinite;
+	}
+
+	.gradient-flowing {
+		animation: gradient-flowing linear infinite;
+	}
+
+	.gradient-pulsing {
+		animation: gradient-pulsing ease-in-out infinite;
+	}
+
+	/* Speed Classes */
+	.gradient-speed-slow {
+		animation-duration: 8s;
+	}
+
+	.gradient-speed-medium {
+		animation-duration: 4s;
+	}
+
+	.gradient-speed-fast {
+		animation-duration: 2s;
 	}
 </style>

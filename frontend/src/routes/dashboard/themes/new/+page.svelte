@@ -122,6 +122,20 @@
 	let bgBrightness: BrightnessKey | number = 'normal';
 	let bgGrayscale: GrayscaleKey | number = 'none';
 	
+	// Animated gradient fields
+	let bgAnimationEnabled = false;
+	let bgAnimationVariant: 'flowing' | 'rotating' | 'pulsing' = 'rotating';
+	let bgAnimationSpeed: 'slow' | 'medium' | 'fast' = 'medium';
+	
+	// Floating particles fields
+	let particlesEnabled = false;
+	let particlesCount = 20;
+	let particlesSize: 'small' | 'medium' | 'large' = 'medium';
+	let particlesColor = '#ffffff';
+	let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
+	let particlesVariant: 'floating' | 'rain' | 'snow' = 'floating';
+	let particlesVariant: 'floating' | 'rain' | 'snow' = 'floating';
+	
 	// Cover image field
 	let coverImageUrl = '';
 	
@@ -346,6 +360,19 @@
 		bgBrightness = theme.config.background?.effects?.brightness || 100;
 		bgGrayscale = theme.config.background?.effects?.grayscale || 0;
 		
+		// Load animation settings
+		bgAnimationEnabled = theme.config.background?.animation?.enabled || false;
+		bgAnimationVariant = theme.config.background?.animation?.variant || 'rotating';
+		bgAnimationSpeed = theme.config.background?.animation?.speed || 'medium';
+		
+		// Load particles settings
+		particlesEnabled = theme.config.background?.particles?.enabled || false;
+		particlesCount = theme.config.background?.particles?.count || 20;
+		particlesSize = theme.config.background?.particles?.size || 'medium';
+		particlesColor = theme.config.background?.particles?.color || '#ffffff';
+		particlesSpeed = theme.config.background?.particles?.speed || 'medium';
+		particlesVariant = theme.config.background?.particles?.variant || 'floating';
+		
 		// Extract background from NEW structure
 		const bgTypeFromConfig = theme.config.background?.type;
 		const bgValueFromConfig = theme.config.background?.value;
@@ -560,6 +587,21 @@
 			config.background.effects.grayscale = bgGrayscale;
 			config.background.effects.overlayColor = 'ref:tokens.color.overlay.10';
 			
+			// Set animation settings
+			if (!config.background.animation) config.background.animation = {};
+			config.background.animation.enabled = bgAnimationEnabled;
+			config.background.animation.variant = bgAnimationVariant;
+			config.background.animation.speed = bgAnimationSpeed;
+			
+			// Set particles settings
+			if (!config.background.particles) config.background.particles = {};
+			config.background.particles.enabled = particlesEnabled;
+			config.background.particles.count = particlesCount;
+			config.background.particles.size = particlesSize;
+			config.background.particles.color = particlesColor;
+			config.background.particles.speed = particlesSpeed;
+			config.background.particles.variant = particlesVariant;
+			
 			// Update semantic.color.surface.page as fallback color
 			config.semantic.color.surface.page = bgType === 'solid' ? bgSolidColor : '#000000';
 			
@@ -591,7 +633,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant) {
 		updateConfig();
 	}
 
@@ -878,6 +920,15 @@
 					bind:bgBlur
 					bind:bgBrightness
 					bind:bgGrayscale
+					bind:bgAnimationEnabled
+					bind:bgAnimationVariant
+					bind:bgAnimationSpeed
+					bind:particlesEnabled
+					bind:particlesCount
+					bind:particlesSize
+					bind:particlesColor
+					bind:particlesSpeed
+					bind:particlesVariant
 					{uploading}
 					on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)}
 					on:videoUpload={handleVideoUpload}
