@@ -305,22 +305,36 @@
 		}
 		10% {
 			opacity: 0.6;
+			transform: translateY(-10vh) translateX(15px) scale(0.7);
 		}
 		20% {
-			transform: translateY(-20vh) translateX(10px) scale(0.8);
+			transform: translateY(-20vh) translateX(30px) scale(0.85);
+		}
+		30% {
+			transform: translateY(-30vh) translateX(20px) scale(0.95);
 		}
 		40% {
 			transform: translateY(-40vh) translateX(-10px) scale(1);
 		}
+		50% {
+			transform: translateY(-50vh) translateX(-35px) scale(1.05);
+		}
 		60% {
-			transform: translateY(-60vh) translateX(15px) scale(1.1);
+			transform: translateY(-60vh) translateX(-25px) scale(1.1);
+		}
+		70% {
+			transform: translateY(-70vh) translateX(5px) scale(1);
 		}
 		80% {
-			transform: translateY(-80vh) translateX(-5px) scale(0.9);
+			transform: translateY(-80vh) translateX(30px) scale(0.9);
 			opacity: 0.5;
 		}
+		90% {
+			transform: translateY(-90vh) translateX(10px) scale(0.6);
+			opacity: 0.3;
+		}
 		100% {
-			transform: translateY(-100vh) translateX(0) scale(0.3);
+			transform: translateY(-100vh) translateX(-5px) scale(0.3);
 			opacity: 0;
 		}
 	}
@@ -497,5 +511,29 @@
 
 	.particle-floating:nth-child(4n) {
 		--drift: -0.5;
+	}
+
+	/* Bubbles variations - create chaotic movement */
+	.particle-bubbles:nth-child(2n) {
+		animation-direction: reverse;
+	}
+
+	.particle-bubbles:nth-child(3n) {
+		animation-duration: 0.8em;
+		transform: rotate(15deg);
+	}
+
+	.particle-bubbles:nth-child(4n) {
+		animation-duration: 1.2em;
+		transform: rotate(-20deg);
+	}
+
+	.particle-bubbles:nth-child(5n) {
+		animation-timing-function: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+	}
+
+	.particle-bubbles:nth-child(7n) {
+		animation-delay: 0.5s;
+		transform: rotate(10deg);
 	}
 </style>

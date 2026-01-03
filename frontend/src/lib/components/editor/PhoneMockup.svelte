@@ -60,38 +60,20 @@
 	})();
 	
 	$: animationClass = (() => {
-		// Only apply animation if bgType is gradient and animation is enabled
-		if (bgType !== 'gradient' || !bgAnimation?.enabled) {
-			console.log('[PhoneMockup] Animation disabled:', { bgType, enabled: bgAnimation?.enabled });
-			return '';
-		}
+		if (bgType !== 'gradient' || !bgAnimation?.enabled) return '';
 		const variant = bgAnimation.variant || 'rotating';
 		const speed = bgAnimation.speed || 'medium';
-		
-		console.log('[PhoneMockup] Animation config:', { variant, speed, bgGradientDirection });
 		
 		// For flowing variant, choose animation based on direction
 		if (variant === 'flowing') {
 			const deg = parseInt(bgGradientDirection);
-			let flowingVariant = 'diagonal';
-			
-			// Horizontal: 90deg, 270deg
-			if (deg === 90 || deg === 270) {
-				flowingVariant = 'horizontal';
-			}
-			// Vertical: 0deg, 180deg
-			else if (deg === 0 || deg === 180) {
-				flowingVariant = 'vertical';
-			}
-			
-			const finalClass = `gradient-flowing-${flowingVariant} gradient-speed-${speed}`;
-			console.log('[PhoneMockup] Flowing animation class:', finalClass);
-			return finalClass;
+			const flowingVariant = 
+				(deg === 90 || deg === 270) ? 'horizontal' :
+				(deg === 0 || deg === 180) ? 'vertical' : 'diagonal';
+			return `gradient-flowing-${flowingVariant} gradient-speed-${speed}`;
 		}
 		
-		const finalClass = `gradient-${variant} gradient-speed-${speed}`;
-		console.log('[PhoneMockup] Animation class:', finalClass);
-		return finalClass;
+		return `gradient-${variant} gradient-speed-${speed}`;
 	})();
 	
 	// Get particles settings

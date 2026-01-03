@@ -81,19 +81,10 @@
 		}
 		
 		const deg = parseInt(bgGradientDirection);
-		
-		// Horizontal: 90deg (left to right), 270deg (right to left)
-		if (deg === 90 || deg === 270) {
-			return 'gradient-flowing-horizontal';
-		}
-		
-		// Vertical: 0deg (top to bottom), 180deg (bottom to top)
-		if (deg === 0 || deg === 180) {
-			return 'gradient-flowing-vertical';
-		}
-		
-		// Diagonal: 45deg, 135deg, 225deg, 315deg
-		return 'gradient-flowing-diagonal';
+		const flowingVariant = 
+			(deg === 90 || deg === 270) ? 'horizontal' :
+			(deg === 0 || deg === 180) ? 'vertical' : 'diagonal';
+		return `gradient-flowing-${flowingVariant}`;
 	})();
 </script>
 
