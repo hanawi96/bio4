@@ -166,12 +166,47 @@
 		box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
 	}
 
-	/* Snow flakes */
+	/* Snow flakes - with glow and depth */
 	.particle-snow {
 		top: -20px;
 		border-radius: 50%;
-		opacity: 0.8;
+		opacity: 0.7;
 		animation: snow-fall ease-in-out infinite;
+		box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 24px rgba(255, 255, 255, 0.6), 0 0 36px rgba(255, 255, 255, 0.3);
+		filter: blur(1.5px);
+	}
+	
+	/* Snow variations - different sizes for depth */
+	.particle-snow:nth-child(3n) {
+		transform: scale(0.6);
+		opacity: 0.4;
+		filter: blur(3px);
+		animation-duration: 1.3em;
+		box-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(255, 255, 255, 0.3);
+	}
+	
+	.particle-snow:nth-child(5n) {
+		transform: scale(1.4);
+		opacity: 0.9;
+		filter: blur(0.5px);
+		box-shadow: 0 0 16px rgba(255, 255, 255, 1), 0 0 32px rgba(255, 255, 255, 0.7), 0 0 48px rgba(255, 255, 255, 0.4);
+		animation-duration: 0.8em;
+	}
+	
+	.particle-snow:nth-child(7n) {
+		transform: scale(0.4);
+		opacity: 0.3;
+		filter: blur(4px);
+		animation-duration: 1.5em;
+		box-shadow: 0 0 6px rgba(255, 255, 255, 0.5), 0 0 12px rgba(255, 255, 255, 0.2);
+	}
+	
+	.particle-snow:nth-child(11n) {
+		transform: scale(1.8);
+		opacity: 1;
+		filter: blur(0px);
+		box-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 40px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 255, 255, 0.5);
+		animation-duration: 0.7em;
 	}
 
 	/* Bubbles */
