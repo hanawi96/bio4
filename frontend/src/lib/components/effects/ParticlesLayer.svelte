@@ -103,8 +103,6 @@
 
 	/* Stars */
 	.particle-stars {
-		top: 50%;
-		left: 50%;
 		border-radius: 50%;
 		opacity: 0;
 		animation: stars-twinkle ease-in-out infinite;
@@ -217,31 +215,31 @@
 	/* Stars animation (twinkle, scale, rotate) */
 	@keyframes stars-twinkle {
 		0% {
-			transform: translate(-50%, -50%) scale(0) rotate(0deg);
+			transform: scale(0) rotate(0deg);
 			opacity: 0;
 		}
 		10% {
-			transform: translate(-50%, -50%) scale(0.5) rotate(45deg);
+			transform: scale(0.5) rotate(45deg);
 			opacity: 0.3;
 		}
 		20% {
-			transform: translate(-50%, -50%) scale(1) rotate(90deg);
+			transform: scale(1) rotate(90deg);
 			opacity: 0.8;
 		}
 		40% {
-			transform: translate(-50%, -50%) scale(1.2) rotate(180deg);
+			transform: scale(1.2) rotate(180deg);
 			opacity: 1;
 		}
 		60% {
-			transform: translate(-50%, -50%) scale(1) rotate(270deg);
+			transform: scale(1) rotate(270deg);
 			opacity: 0.8;
 		}
 		80% {
-			transform: translate(-50%, -50%) scale(0.5) rotate(315deg);
+			transform: scale(0.5) rotate(315deg);
 			opacity: 0.3;
 		}
 		100% {
-			transform: translate(-50%, -50%) scale(0) rotate(360deg);
+			transform: scale(0) rotate(360deg);
 			opacity: 0;
 		}
 	}
