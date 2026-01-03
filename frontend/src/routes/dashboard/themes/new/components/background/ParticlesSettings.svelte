@@ -82,7 +82,7 @@
 						on:click={() => particlesVariant = 'sparkles'}
 						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesVariant === 'sparkles' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 					>
-						💫 Sparkles
+						🎵 Music
 					</button>
 					<button
 						type="button"
