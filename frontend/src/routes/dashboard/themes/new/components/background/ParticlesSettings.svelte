@@ -4,7 +4,7 @@
 	export let particlesSize: 'small' | 'medium' | 'large' = 'medium';
 	export let particlesColor: string = '#ffffff';
 	export let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' = 'floating';
+	export let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' = 'floating';
 </script>
 
 <div class="border-t border-gray-200 pt-6 mt-6">
@@ -27,7 +27,7 @@
 			<!-- Particle Variant -->
 			<div>
 				<label class="block text-xs font-medium text-gray-600 mb-2">Effect Type</label>
-				<div class="grid grid-cols-4 gap-2">
+				<div class="grid grid-cols-5 gap-2">
 					<button
 						type="button"
 						on:click={() => particlesVariant = 'floating'}
@@ -55,6 +55,13 @@
 						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesVariant === 'bubbles' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 					>
 						🫧 Bubbles
+					</button>
+					<button
+						type="button"
+						on:click={() => particlesVariant = 'stars'}
+						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesVariant === 'stars' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+					>
+						✨ Stars
 					</button>
 				</div>
 			</div>

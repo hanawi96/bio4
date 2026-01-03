@@ -3,7 +3,7 @@
 	export let size: 'small' | 'medium' | 'large' = 'medium';
 	export let color: string = '#ffffff';
 	export let speed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' = 'floating';
+	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' = 'floating';
 	
 	// Size mapping (px)
 	const sizeMap = {
@@ -23,9 +23,12 @@
 	$: particles = Array.from({ length: count }, (_, i) => ({
 		id: i,
 		left: Math.random() * 100,
+		top: Math.random() * 100, // Random vertical position for stars
 		delay: Math.random() * 5,
 		duration: variant === 'rain' 
 			? (speed === 'slow' ? 1.5 + Math.random() * 0.5 : speed === 'medium' ? 1 + Math.random() * 0.3 : 0.5 + Math.random() * 0.2)
+			: variant === 'stars'
+			? (speed === 'slow' ? 3 + Math.random() * 2 : speed === 'medium' ? 2 + Math.random() * 1 : 1 + Math.random() * 0.5)
 			: (speed === 'slow' ? 15 + Math.random() * 10 : speed === 'medium' ? 10 + Math.random() * 5 : 5 + Math.random() * 3)
 	}));
 	
@@ -39,6 +42,7 @@
 			class="particle particle-{variant}"
 			style="
 				left: {particle.left}%;
+				{variant === 'stars' ? `top: ${particle.top}%;` : ''}
 				width: {particleSize.width}px;
 				height: {particleSize.height}px;
 				background-color: {color};
@@ -95,6 +99,28 @@
 		animation: bubbles-rise ease-in-out infinite;
 		box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.5),
 			inset 2px 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	/* Stars */
+	.particle-stars {
+		top: 50%;
+		left: 50%;
+		border-radius: 50%;
+		opacity: 0;
+		animation: stars-twinkle ease-in-out infinite;
+		box-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
+		clip-path: polygon(
+			50% 0%,
+			61% 35%,
+			98% 35%,
+			68% 57%,
+			79% 91%,
+			50% 70%,
+			21% 91%,
+			32% 57%,
+			2% 35%,
+			39% 35%
+		);
 	}
 
 	/* Floating animation (bottom to top) */
@@ -184,6 +210,38 @@
 		}
 		100% {
 			transform: translateY(-100vh) translateX(0) scale(0.3);
+			opacity: 0;
+		}
+	}
+
+	/* Stars animation (twinkle, scale, rotate) */
+	@keyframes stars-twinkle {
+		0% {
+			transform: translate(-50%, -50%) scale(0) rotate(0deg);
+			opacity: 0;
+		}
+		10% {
+			transform: translate(-50%, -50%) scale(0.5) rotate(45deg);
+			opacity: 0.3;
+		}
+		20% {
+			transform: translate(-50%, -50%) scale(1) rotate(90deg);
+			opacity: 0.8;
+		}
+		40% {
+			transform: translate(-50%, -50%) scale(1.2) rotate(180deg);
+			opacity: 1;
+		}
+		60% {
+			transform: translate(-50%, -50%) scale(1) rotate(270deg);
+			opacity: 0.8;
+		}
+		80% {
+			transform: translate(-50%, -50%) scale(0.5) rotate(315deg);
+			opacity: 0.3;
+		}
+		100% {
+			transform: translate(-50%, -50%) scale(0) rotate(360deg);
 			opacity: 0;
 		}
 	}

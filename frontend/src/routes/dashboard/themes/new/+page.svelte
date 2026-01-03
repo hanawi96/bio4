@@ -133,7 +133,7 @@
 	let particlesSize: 'small' | 'medium' | 'large' = 'medium';
 	let particlesColor = '#ffffff';
 	let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
-	let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' = 'floating';
+	let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' = 'floating';
 	
 	// Cover image field
 	let coverImageUrl = '';
