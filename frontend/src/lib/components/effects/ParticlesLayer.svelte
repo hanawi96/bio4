@@ -3,7 +3,7 @@
 	export let size: 'small' | 'medium' | 'large' = 'medium';
 	export let color: string = '#ffffff';
 	export let speed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' = 'floating';
+	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' = 'floating';
 	
 	// Size mapping (px)
 	const sizeMap = {
@@ -30,7 +30,7 @@
 	$: particles = Array.from({ length: variant === 'aurora' ? Math.min(count, 5) : count }, (_, i) => ({
 		id: i,
 		left: variant === 'aurora' ? -20 + Math.random() * 40 : Math.random() * 100,
-		top: (variant === 'stars' || variant === 'fireflies') 
+		top: (variant === 'stars' || variant === 'fireflies' || variant === 'sparkles') 
 			? Math.random() * 100 
 			: variant === 'aurora'
 				? 20 + (i * 15) + Math.random() * 10
@@ -49,23 +49,29 @@
 						: speed === 'medium'
 							? 2 + Math.random() * 1
 							: 1 + Math.random() * 0.5
-					: variant === 'fireflies'
-						? speed === 'slow'
-							? 4 + Math.random() * 2
-							: speed === 'medium'
-								? 3 + Math.random() * 1
-								: 2 + Math.random() * 0.5
-					: variant === 'aurora'
-						? speed === 'slow'
-							? 12 + Math.random() * 4
-							: speed === 'medium'
-								? 8 + Math.random() * 2
-								: 5 + Math.random() * 1
-					: speed === 'slow'
-						? 15 + Math.random() * 10
+				: variant === 'fireflies'
+					? speed === 'slow'
+						? 4 + Math.random() * 2
 						: speed === 'medium'
-							? 10 + Math.random() * 5
-							: 5 + Math.random() * 3
+							? 3 + Math.random() * 1
+							: 2 + Math.random() * 0.5
+				: variant === 'aurora'
+					? speed === 'slow'
+						? 12 + Math.random() * 4
+						: speed === 'medium'
+							? 8 + Math.random() * 2
+							: 5 + Math.random() * 1
+				: variant === 'sparkles'
+					? speed === 'slow'
+						? 2.5 + Math.random() * 1
+						: speed === 'medium'
+							? 2 + Math.random() * 0.5
+							: 1.5 + Math.random() * 0.5
+				: speed === 'slow'
+					? 15 + Math.random() * 10
+					: speed === 'medium'
+						? 10 + Math.random() * 5
+						: 5 + Math.random() * 3
 	}));
 	
 	// Get size based on variant
@@ -82,7 +88,7 @@
 			class="particle particle-{variant}"
 			style="
 				left: {particle.left}%;
-				{(variant === 'stars' || variant === 'fireflies' || variant === 'aurora') ? `top: ${particle.top}%;` : ''}
+				{(variant === 'stars' || variant === 'fireflies' || variant === 'aurora' || variant === 'sparkles') ? `top: ${particle.top}%;` : ''}
 				width: {particleSize.width}px;
 				height: {particleSize.height}px;
 				{variant === 'aurora' 
@@ -178,6 +184,14 @@
 		animation: aurora-wave ease-in-out infinite;
 		filter: blur(20px);
 		transform-origin: center;
+	}
+
+	/* Sparkles */
+	.particle-sparkles {
+		border-radius: 50%;
+		opacity: 0;
+		animation: sparkles-shimmer ease-in-out infinite;
+		box-shadow: 0 0 4px currentColor, 0 0 8px currentColor, 0 0 12px currentColor;
 	}
 
 	/* Floating animation (bottom to top) */
@@ -369,6 +383,34 @@
 		}
 		100% {
 			transform: translateX(150%) skewX(15deg) scaleY(0.8);
+			opacity: 0;
+		}
+	}
+
+	/* Sparkles animation (gentle shimmer, no rotation) */
+	@keyframes sparkles-shimmer {
+		0% {
+			transform: scale(0);
+			opacity: 0;
+		}
+		20% {
+			transform: scale(0.6);
+			opacity: 0.4;
+		}
+		40% {
+			transform: scale(1);
+			opacity: 0.8;
+		}
+		60% {
+			transform: scale(1.1);
+			opacity: 1;
+		}
+		80% {
+			transform: scale(0.8);
+			opacity: 0.5;
+		}
+		100% {
+			transform: scale(0);
 			opacity: 0;
 		}
 	}
