@@ -61,11 +61,39 @@
 	
 	$: bgType = $previewAppearance?.theme?.config?.background?.type;
 	
+	$: bgGradientDirection = (() => {
+		const themeConfig = $previewAppearance?.theme?.config;
+		const bgValue = themeConfig?.background?.value;
+		if (bgType === 'gradient' && bgValue) {
+			const match = bgValue.match(/(\d+)deg/);
+			return match ? match[1] : '135';
+		}
+		return '135';
+	})();
+	
 	$: animationClass = (() => {
 		// Only apply animation if bgType is gradient and animation is enabled
 		if (bgType !== 'gradient' || !bgAnimation?.enabled) return '';
 		const variant = bgAnimation.variant || 'rotating';
 		const speed = bgAnimation.speed || 'medium';
+		
+		// For flowing variant, choose animation based on direction
+		if (variant === 'flowing') {
+			const deg = parseInt(bgGradientDirection);
+			let flowingVariant = 'diagonal';
+			
+			// Horizontal: 90deg, 270deg
+			if (deg === 90 || deg === 270) {
+				flowingVariant = 'horizontal';
+			}
+			// Vertical: 0deg, 180deg
+			else if (deg === 0 || deg === 180) {
+				flowingVariant = 'vertical';
+			}
+			
+			return `gradient-flowing-${flowingVariant} gradient-speed-${speed}`;
+		}
+		
 		return `gradient-${variant} gradient-speed-${speed}`;
 	})();
 	
@@ -777,13 +805,45 @@
 		scrollbar-width: none;
 	}
 
-	/* Animated Gradient Keyframes */
+	/* Animated Gradient Keyframes - Multiple directions */
+	
+	/* Horizontal animations (for 90deg, 270deg) */
+	@keyframes gradient-flowing-horizontal {
+		0% {
+			background-position: -200% 0%;
+		}
+		100% {
+			background-position: 200% 0%;
+		}
+	}
+	
+	/* Vertical animations (for 0deg, 180deg) */
+	@keyframes gradient-flowing-vertical {
+		0% {
+			background-position: 0% -200%;
+		}
+		100% {
+			background-position: 0% 200%;
+		}
+	}
+	
+	/* Diagonal animations (for 45deg, 135deg, 225deg, 315deg) */
+	@keyframes gradient-flowing-diagonal {
+		0% {
+			background-position: -200% -200%;
+		}
+		100% {
+			background-position: 200% 200%;
+		}
+	}
+	
+	/* Rotating animation - works for all directions */
 	@keyframes gradient-rotating {
 		0% {
-			background-position: 0% 50%;
+			background-position: 0% 0%;
 		}
 		25% {
-			background-position: 100% 50%;
+			background-position: 100% 0%;
 		}
 		50% {
 			background-position: 100% 100%;
@@ -792,28 +852,16 @@
 			background-position: 0% 100%;
 		}
 		100% {
-			background-position: 0% 50%;
-		}
-	}
-
-	@keyframes gradient-flowing {
-		0% {
 			background-position: 0% 0%;
-		}
-		50% {
-			background-position: 100% 100%;
-		}
-		100% {
-			background-position: 200% 200%;
 		}
 	}
 
 	@keyframes gradient-pulsing {
 		0%, 100% {
-			opacity: 1;
+			filter: brightness(1) saturate(1);
 		}
 		50% {
-			opacity: 0.85;
+			filter: brightness(1.3) saturate(1.5);
 		}
 	}
 
@@ -822,8 +870,16 @@
 		animation: gradient-rotating ease infinite;
 	}
 
-	.gradient-flowing {
-		animation: gradient-flowing linear infinite;
+	.gradient-flowing-horizontal {
+		animation: gradient-flowing-horizontal linear infinite;
+	}
+
+	.gradient-flowing-vertical {
+		animation: gradient-flowing-vertical linear infinite;
+	}
+
+	.gradient-flowing-diagonal {
+		animation: gradient-flowing-diagonal linear infinite;
 	}
 
 	.gradient-pulsing {

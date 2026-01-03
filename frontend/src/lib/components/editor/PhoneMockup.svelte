@@ -49,12 +49,49 @@
 	
 	$: bgType = $appearance?.theme?.config?.background?.type;
 	
+	$: bgGradientDirection = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		const bgValue = themeConfig?.background?.value;
+		if (bgType === 'gradient' && bgValue) {
+			const match = bgValue.match(/(\d+)deg/);
+			return match ? match[1] : '135';
+		}
+		return '135';
+	})();
+	
 	$: animationClass = (() => {
 		// Only apply animation if bgType is gradient and animation is enabled
-		if (bgType !== 'gradient' || !bgAnimation?.enabled) return '';
+		if (bgType !== 'gradient' || !bgAnimation?.enabled) {
+			console.log('[PhoneMockup] Animation disabled:', { bgType, enabled: bgAnimation?.enabled });
+			return '';
+		}
 		const variant = bgAnimation.variant || 'rotating';
 		const speed = bgAnimation.speed || 'medium';
-		return `gradient-${variant} gradient-speed-${speed}`;
+		
+		console.log('[PhoneMockup] Animation config:', { variant, speed, bgGradientDirection });
+		
+		// For flowing variant, choose animation based on direction
+		if (variant === 'flowing') {
+			const deg = parseInt(bgGradientDirection);
+			let flowingVariant = 'diagonal';
+			
+			// Horizontal: 90deg, 270deg
+			if (deg === 90 || deg === 270) {
+				flowingVariant = 'horizontal';
+			}
+			// Vertical: 0deg, 180deg
+			else if (deg === 0 || deg === 180) {
+				flowingVariant = 'vertical';
+			}
+			
+			const finalClass = `gradient-flowing-${flowingVariant} gradient-speed-${speed}`;
+			console.log('[PhoneMockup] Flowing animation class:', finalClass);
+			return finalClass;
+		}
+		
+		const finalClass = `gradient-${variant} gradient-speed-${speed}`;
+		console.log('[PhoneMockup] Animation class:', finalClass);
+		return finalClass;
 	})();
 	
 	// Get particles settings
@@ -503,10 +540,22 @@
 					variant={particles.variant || 'floating'}
 				/>
 			{/if}
+			
+			<!-- Animated Background Layer (for gradient animations) -->
+			{#if !hasVideoInDraft && bgType === 'gradient' && bgAnimation?.enabled && resolvedBackground && !resolvedBackground.includes('url(')}
+				<div 
+					class="absolute inset-0 z-0 {animationClass}"
+					style="
+						{bgAnimation.enabled
+							? `background-image: ${resolvedBackground}; background-size: 200% 200%;`
+							: `background: ${resolvedBackground};`}
+					"
+				></div>
+			{/if}
 
 			<!-- Content -->
 			<div 
-				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10 {animationClass}"
+				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
 					{!hasVideoInDraft && resolvedBackground 
 						? (resolvedBackground.includes('background:') && resolvedBackground.includes('background-size:')
@@ -516,7 +565,7 @@
 								: resolvedBackground.includes('url(')
 									? 'background: transparent;'
 									: bgType === 'gradient' && bgAnimation?.enabled
-										? `background-image: ${resolvedBackground}; background-size: 200% 200%;`
+										? 'background: transparent;'
 										: `background: ${resolvedBackground};`)
 						: !hasVideoInDraft ? 'background: #ffffff;' : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
@@ -1178,13 +1227,45 @@
 		scrollbar-width: none;
 	}
 
-	/* Animated Gradient Keyframes */
+	/* Animated Gradient Keyframes - Multiple directions */
+	
+	/* Horizontal animations (for 90deg, 270deg) */
+	@keyframes gradient-flowing-horizontal {
+		0% {
+			background-position: -200% 0%;
+		}
+		100% {
+			background-position: 200% 0%;
+		}
+	}
+	
+	/* Vertical animations (for 0deg, 180deg) */
+	@keyframes gradient-flowing-vertical {
+		0% {
+			background-position: 0% -200%;
+		}
+		100% {
+			background-position: 0% 200%;
+		}
+	}
+	
+	/* Diagonal animations (for 45deg, 135deg, 225deg, 315deg) */
+	@keyframes gradient-flowing-diagonal {
+		0% {
+			background-position: -200% -200%;
+		}
+		100% {
+			background-position: 200% 200%;
+		}
+	}
+	
+	/* Rotating animation - works for all directions */
 	@keyframes gradient-rotating {
 		0% {
-			background-position: 0% 50%;
+			background-position: 0% 0%;
 		}
 		25% {
-			background-position: 100% 50%;
+			background-position: 100% 0%;
 		}
 		50% {
 			background-position: 100% 100%;
@@ -1193,41 +1274,37 @@
 			background-position: 0% 100%;
 		}
 		100% {
-			background-position: 0% 50%;
-		}
-	}
-
-	@keyframes gradient-flowing {
-		0% {
 			background-position: 0% 0%;
-		}
-		50% {
-			background-position: 100% 100%;
-		}
-		100% {
-			background-position: 200% 200%;
 		}
 	}
 
 	@keyframes gradient-pulsing {
 		0%, 100% {
-			opacity: 1;
+			filter: brightness(1) saturate(1);
 		}
 		50% {
-			opacity: 0.85;
+			filter: brightness(1.3) saturate(1.5);
 		}
 	}
 
-	/* Animation Classes */
-	.phone-content.gradient-rotating {
+	/* Animation Classes - Apply to background layer */
+	.gradient-rotating {
 		animation: gradient-rotating ease infinite;
 	}
 
-	.phone-content.gradient-flowing {
-		animation: gradient-flowing linear infinite;
+	.gradient-flowing-horizontal {
+		animation: gradient-flowing-horizontal linear infinite;
 	}
 
-	.phone-content.gradient-pulsing {
+	.gradient-flowing-vertical {
+		animation: gradient-flowing-vertical linear infinite;
+	}
+
+	.gradient-flowing-diagonal {
+		animation: gradient-flowing-diagonal linear infinite;
+	}
+
+	.gradient-pulsing {
 		animation: gradient-pulsing ease-in-out infinite;
 	}
 

@@ -73,6 +73,28 @@
 		bgGradientFrom = bgGradientTo;
 		bgGradientTo = temp;
 	}
+	
+	// Get animation class based on direction (for flowing variant only)
+	$: flowingAnimationClass = (() => {
+		if (bgAnimationVariant !== 'flowing' || bgGradientType !== 'linear') {
+			return `gradient-${bgAnimationVariant}`;
+		}
+		
+		const deg = parseInt(bgGradientDirection);
+		
+		// Horizontal: 90deg (left to right), 270deg (right to left)
+		if (deg === 90 || deg === 270) {
+			return 'gradient-flowing-horizontal';
+		}
+		
+		// Vertical: 0deg (top to bottom), 180deg (bottom to top)
+		if (deg === 0 || deg === 180) {
+			return 'gradient-flowing-vertical';
+		}
+		
+		// Diagonal: 45deg, 135deg, 225deg, 315deg
+		return 'gradient-flowing-diagonal';
+	})();
 </script>
 
 <div class="space-y-4">
@@ -387,7 +409,7 @@
 		<p class="text-xs text-gray-500 mb-2">Preview:</p>
 		<div
 			class="h-20 rounded-lg border-2 border-gray-200 gradient-preview {bgAnimationEnabled
-				? `gradient-${bgAnimationVariant} gradient-speed-${bgAnimationSpeed}`
+				? `${flowingAnimationClass} gradient-speed-${bgAnimationSpeed}`
 				: ''}"
 			style="background: {bgGradientType === 'linear'
 				? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientMiddleEnabled ? `${bgGradientMiddle} 50%, ` : ''}${bgGradientTo} 100%)`
@@ -399,13 +421,45 @@
 </div>
 
 <style>
-	/* Animated Gradient Keyframes */
+	/* Animated Gradient Keyframes - Multiple directions */
+	
+	/* Horizontal animations (for 90deg, 270deg) */
+	@keyframes gradient-flowing-horizontal {
+		0% {
+			background-position: -200% 0%;
+		}
+		100% {
+			background-position: 200% 0%;
+		}
+	}
+	
+	/* Vertical animations (for 0deg, 180deg) */
+	@keyframes gradient-flowing-vertical {
+		0% {
+			background-position: 0% -200%;
+		}
+		100% {
+			background-position: 0% 200%;
+		}
+	}
+	
+	/* Diagonal animations (for 45deg, 135deg, 225deg, 315deg) */
+	@keyframes gradient-flowing-diagonal {
+		0% {
+			background-position: -200% -200%;
+		}
+		100% {
+			background-position: 200% 200%;
+		}
+	}
+	
+	/* Rotating animation - works for all directions */
 	@keyframes gradient-rotating {
 		0% {
-			background-position: 0% 50%;
+			background-position: 0% 0%;
 		}
 		25% {
-			background-position: 100% 50%;
+			background-position: 100% 0%;
 		}
 		50% {
 			background-position: 100% 100%;
@@ -414,29 +468,16 @@
 			background-position: 0% 100%;
 		}
 		100% {
-			background-position: 0% 50%;
-		}
-	}
-
-	@keyframes gradient-flowing {
-		0% {
 			background-position: 0% 0%;
-		}
-		50% {
-			background-position: 100% 100%;
-		}
-		100% {
-			background-position: 200% 200%;
 		}
 	}
 
 	@keyframes gradient-pulsing {
-		0%,
-		100% {
-			opacity: 1;
+		0%, 100% {
+			filter: brightness(1) saturate(1);
 		}
 		50% {
-			opacity: 0.85;
+			filter: brightness(1.3) saturate(1.5);
 		}
 	}
 
@@ -446,7 +487,7 @@
 	}
 
 	.gradient-preview.gradient-flowing {
-		animation: gradient-flowing linear infinite;
+		animation: gradient-flowing-diagonal linear infinite;
 	}
 
 	.gradient-preview.gradient-pulsing {
