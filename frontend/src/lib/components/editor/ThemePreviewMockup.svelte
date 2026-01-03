@@ -350,7 +350,9 @@
 						class="absolute inset-0 z-0 {animationClass}"
 						style="{isBackgroundImage 
 							? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur(${bgBlur}px) brightness(${bgBrightness / 100}) grayscale(${bgGrayscale / 100});`
-							: `background: ${backgroundValue}; ${bgType === 'gradient' && bgAnimation?.enabled ? 'background-size: 200% 200%;' : ''}`
+							: bgType === 'gradient' && bgAnimation?.enabled
+								? `background-image: ${backgroundValue}; background-size: 200% 200%;`
+								: `background: ${backgroundValue};`
 						}"
 					></div>
 				{/if}
@@ -780,8 +782,14 @@
 		0% {
 			background-position: 0% 50%;
 		}
-		50% {
+		25% {
 			background-position: 100% 50%;
+		}
+		50% {
+			background-position: 100% 100%;
+		}
+		75% {
+			background-position: 0% 100%;
 		}
 		100% {
 			background-position: 0% 50%;
@@ -792,8 +800,11 @@
 		0% {
 			background-position: 0% 0%;
 		}
+		50% {
+			background-position: 100% 100%;
+		}
 		100% {
-			background-position: 200% 0%;
+			background-position: 200% 200%;
 		}
 	}
 

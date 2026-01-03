@@ -404,8 +404,14 @@
 		0% {
 			background-position: 0% 50%;
 		}
-		50% {
+		25% {
 			background-position: 100% 50%;
+		}
+		50% {
+			background-position: 100% 100%;
+		}
+		75% {
+			background-position: 0% 100%;
 		}
 		100% {
 			background-position: 0% 50%;
@@ -416,8 +422,11 @@
 		0% {
 			background-position: 0% 0%;
 		}
+		50% {
+			background-position: 100% 100%;
+		}
 		100% {
-			background-position: 200% 0%;
+			background-position: 200% 200%;
 		}
 	}
 

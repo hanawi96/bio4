@@ -515,7 +515,9 @@
 								? resolvedBackground 
 								: resolvedBackground.includes('url(')
 									? 'background: transparent;'
-									: `background: ${resolvedBackground}; ${bgType === 'gradient' && bgAnimation?.enabled ? 'background-size: 200% 200%;' : ''}`)
+									: bgType === 'gradient' && bgAnimation?.enabled
+										? `background-image: ${resolvedBackground}; background-size: 200% 200%;`
+										: `background: ${resolvedBackground};`)
 						: !hasVideoInDraft ? 'background: #ffffff;' : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
@@ -1181,8 +1183,14 @@
 		0% {
 			background-position: 0% 50%;
 		}
-		50% {
+		25% {
 			background-position: 100% 50%;
+		}
+		50% {
+			background-position: 100% 100%;
+		}
+		75% {
+			background-position: 0% 100%;
 		}
 		100% {
 			background-position: 0% 50%;
@@ -1193,8 +1201,11 @@
 		0% {
 			background-position: 0% 0%;
 		}
+		50% {
+			background-position: 100% 100%;
+		}
 		100% {
-			background-position: 200% 0%;
+			background-position: 200% 200%;
 		}
 	}
 
