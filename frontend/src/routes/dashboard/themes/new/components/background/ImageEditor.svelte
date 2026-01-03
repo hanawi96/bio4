@@ -4,6 +4,9 @@
 		BLUR_PRESETS,
 		BRIGHTNESS_PRESETS,
 		GRAYSCALE_PRESETS,
+		resolveBlur,
+		resolveBrightness,
+		resolveGrayscale,
 		type BlurKey,
 		type BrightnessKey,
 		type GrayscaleKey
@@ -20,6 +23,11 @@
 	// Filter UI state
 	let activeFilter: 'blur' | 'brightness' | 'grayscale' | null = null;
 
+	// Resolve filter values to numbers
+	$: resolvedBlur = resolveBlur(bgBlur);
+	$: resolvedBrightness = resolveBrightness(bgBrightness);
+	$: resolvedGrayscale = resolveGrayscale(bgGrayscale);
+
 	function handleImageUpload(event: Event) {
 		dispatch('imageUpload', { originalEvent: event });
 	}
@@ -33,8 +41,8 @@
 				src={bgImageUrl}
 				alt="Background"
 				class="w-full h-48 object-cover"
-				style="filter: blur({bgBlur}px) brightness({bgBrightness / 100}) grayscale({bgGrayscale /
-					100});"
+				style="filter: blur({resolvedBlur}px) brightness({resolvedBrightness /
+					100}) grayscale({resolvedGrayscale / 100});"
 			/>
 			<div
 				class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center"
