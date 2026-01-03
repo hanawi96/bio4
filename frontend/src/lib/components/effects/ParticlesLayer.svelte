@@ -3,7 +3,7 @@
 	export let size: 'small' | 'medium' | 'large' = 'medium';
 	export let color: string = '#ffffff';
 	export let speed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let variant: 'floating' | 'rain' | 'snow' = 'floating';
+	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' = 'floating';
 	
 	// Size mapping (px)
 	const sizeMap = {
@@ -87,6 +87,16 @@
 		animation: snow-fall ease-in-out infinite;
 	}
 
+	/* Bubbles */
+	.particle-bubbles {
+		bottom: -20px;
+		border-radius: 50%;
+		opacity: 0.5;
+		animation: bubbles-rise ease-in-out infinite;
+		box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.5),
+			inset 2px 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
 	/* Floating animation (bottom to top) */
 	@keyframes float-up {
 		0% {
@@ -146,6 +156,34 @@
 		}
 		100% {
 			transform: translateY(100vh) translateX(5px);
+			opacity: 0;
+		}
+	}
+
+	/* Bubbles animation (bottom to top, wobble, scale) */
+	@keyframes bubbles-rise {
+		0% {
+			transform: translateY(0) translateX(0) scale(0.5);
+			opacity: 0;
+		}
+		10% {
+			opacity: 0.6;
+		}
+		20% {
+			transform: translateY(-20vh) translateX(10px) scale(0.8);
+		}
+		40% {
+			transform: translateY(-40vh) translateX(-10px) scale(1);
+		}
+		60% {
+			transform: translateY(-60vh) translateX(15px) scale(1.1);
+		}
+		80% {
+			transform: translateY(-80vh) translateX(-5px) scale(0.9);
+			opacity: 0.5;
+		}
+		100% {
+			transform: translateY(-100vh) translateX(0) scale(0.3);
 			opacity: 0;
 		}
 	}
