@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { BLOCK_GAP_PRESETS, BLOCK_PADDING_PRESETS, type BlockGapPreset, type BlockPaddingPreset } from '$lib/appearance/spacingTokens';
+	import { MAX_WIDTH_PRESETS, PAGE_PADDING_PRESETS, BLOCK_GAP_PRESETS, BLOCK_PADDING_PRESETS, type MaxWidthKey, type PagePaddingKey, type BlockGapPreset, type BlockPaddingPreset } from '$lib/appearance/spacingTokens';
 	
-	export let maxWidth: number;
+	export let maxWidth: MaxWidthKey | number;
 	export let textAlign: 'left' | 'center' | 'right';
-	export let pagePadding: number;
+	export let pagePadding: PagePaddingKey | number;
 	export let blockGapPreset: BlockGapPreset;
 	export let blockPaddingX: number;
 	export let blockPaddingY: number;
@@ -23,6 +23,58 @@
 		{ value: 'default', label: 'Default', description: 'Balanced spacing (16px)' },
 		{ value: 'spacious', label: 'Spacious', description: 'Generous spacing (24px)' }
 	];
+	
+	// Max Width preset mode
+	let maxWidthMode: MaxWidthKey | 'custom' = 'sm';
+	let isMaxWidthInitialized = false;
+	
+	// Auto-detect max width preset only on initial load
+	$: if (!isMaxWidthInitialized && maxWidth) {
+		// Check if it's a string key
+		if (typeof maxWidth === 'string' && maxWidth in MAX_WIDTH_PRESETS) {
+			maxWidthMode = maxWidth as MaxWidthKey;
+		} else if (typeof maxWidth === 'number') {
+			// Check if number matches a preset value
+			const matchedPreset = Object.entries(MAX_WIDTH_PRESETS).find(
+				([_, value]) => value === maxWidth
+			);
+			maxWidthMode = matchedPreset ? (matchedPreset[0] as MaxWidthKey) : 'custom';
+		}
+		isMaxWidthInitialized = true;
+	}
+	
+	function selectMaxWidthPreset(preset: MaxWidthKey | 'custom') {
+		maxWidthMode = preset;
+		if (preset !== 'custom') {
+			maxWidth = preset; // Set string key, not number value
+		}
+	}
+	
+	// Page Padding preset mode
+	let pagePaddingMode: PagePaddingKey | 'custom' = 'default';
+	let isPagePaddingInitialized = false;
+	
+	// Auto-detect page padding preset only on initial load
+	$: if (!isPagePaddingInitialized && pagePadding) {
+		// Check if it's a string key
+		if (typeof pagePadding === 'string' && pagePadding in PAGE_PADDING_PRESETS) {
+			pagePaddingMode = pagePadding as PagePaddingKey;
+		} else if (typeof pagePadding === 'number') {
+			// Check if number matches a preset value
+			const matchedPreset = Object.entries(PAGE_PADDING_PRESETS).find(
+				([_, value]) => value === pagePadding
+			);
+			pagePaddingMode = matchedPreset ? (matchedPreset[0] as PagePaddingKey) : 'custom';
+		}
+		isPagePaddingInitialized = true;
+	}
+	
+	function selectPagePaddingPreset(preset: PagePaddingKey | 'custom') {
+		pagePaddingMode = preset;
+		if (preset !== 'custom') {
+			pagePadding = preset; // Set string key, not number value
+		}
+	}
 	
 	// Block Padding preset mode
 	let blockPaddingMode: BlockPaddingPreset | 'custom' = 'default';
@@ -45,6 +97,16 @@
 			blockPaddingY = values.y;
 		}
 	}
+	
+	// Border radius options
+	const borderRadiusOptions: Array<{ value: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full'; label: string; size: string }> = [
+		{ value: 'none', label: 'None', size: '0px' },
+		{ value: 'sm', label: 'Small', size: '4px' },
+		{ value: 'md', label: 'Medium', size: '8px' },
+		{ value: 'lg', label: 'Large', size: '12px' },
+		{ value: 'xl', label: 'XL', size: '16px' },
+		{ value: 'full', label: 'Full', size: 'Pill' }
+	];
 </script>
 
 <section class="card-ios p-6">
@@ -53,17 +115,84 @@
 	<div class="space-y-5">
 		<!-- Max Width -->
 		<div>
-			<label for="maxWidth" class="block text-sm font-medium text-gray-700 mb-2">
-				Max Width (px)
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Max Width
 			</label>
-			<input
-				id="maxWidth"
-				type="number"
-				bind:value={maxWidth}
-				min="320"
-				max="1200"
-				class="input-ios"
-			/>
+			<div class="grid grid-cols-6 gap-2 mb-3">
+				<button
+					type="button"
+					on:click={() => selectMaxWidthPreset('xs')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'xs'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">XS</div>
+					<div class="text-[10px] opacity-60 mt-0.5">320px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectMaxWidthPreset('sm')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'sm'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">SM</div>
+					<div class="text-[10px] opacity-60 mt-0.5">480px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectMaxWidthPreset('md')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'md'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">MD</div>
+					<div class="text-[10px] opacity-60 mt-0.5">640px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectMaxWidthPreset('lg')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'lg'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">LG</div>
+					<div class="text-[10px] opacity-60 mt-0.5">768px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectMaxWidthPreset('xl')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'xl'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">XL</div>
+					<div class="text-[10px] opacity-60 mt-0.5">1024px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectMaxWidthPreset('custom')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'custom'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Custom</div>
+					<div class="text-[10px] opacity-60 mt-0.5">•••</div>
+				</button>
+			</div>
+			
+			{#if maxWidthMode === 'custom'}
+				<input
+					id="maxWidth"
+					type="number"
+					bind:value={maxWidth}
+					min="320"
+					max="1200"
+					class="input-ios"
+					placeholder="Enter custom width"
+				/>
+			{/if}
+			<p class="text-xs text-gray-500 mt-1.5">Maximum width of the page content</p>
 		</div>
 		
 		<!-- Text Align -->
@@ -113,17 +242,84 @@
 		
 		<!-- Page Padding -->
 		<div>
-			<label for="pagePadding" class="block text-sm font-medium text-gray-700 mb-2">
-				Page Padding (px)
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Page Padding
 			</label>
-			<input
-				id="pagePadding"
-				type="number"
-				bind:value={pagePadding}
-				min="8"
-				max="48"
-				class="input-ios"
-			/>
+			<div class="grid grid-cols-6 gap-2 mb-3">
+				<button
+					type="button"
+					on:click={() => selectPagePaddingPreset('none')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'none'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">None</div>
+					<div class="text-[10px] opacity-60 mt-0.5">0px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPagePaddingPreset('tight')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'tight'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Tight</div>
+					<div class="text-[10px] opacity-60 mt-0.5">8px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPagePaddingPreset('default')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'default'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Default</div>
+					<div class="text-[10px] opacity-60 mt-0.5">16px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPagePaddingPreset('comfortable')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'comfortable'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Comfort</div>
+					<div class="text-[10px] opacity-60 mt-0.5">24px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPagePaddingPreset('spacious')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'spacious'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Spacious</div>
+					<div class="text-[10px] opacity-60 mt-0.5">32px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPagePaddingPreset('custom')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'custom'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Custom</div>
+					<div class="text-[10px] opacity-60 mt-0.5">•••</div>
+				</button>
+			</div>
+			
+			{#if pagePaddingMode === 'custom'}
+				<input
+					id="pagePadding"
+					type="number"
+					bind:value={pagePadding}
+					min="0"
+					max="64"
+					class="input-ios"
+					placeholder="Enter custom padding"
+				/>
+			{/if}
+			<p class="text-xs text-gray-500 mt-1.5">Padding around the page content</p>
 		</div>
 		
 		<!-- Block Gap -->
@@ -235,14 +431,7 @@
 				Block Border Radius
 			</label>
 			<div class="grid grid-cols-6 gap-2">
-				{#each [
-					{ value: 'none', label: 'None', size: '0px' },
-					{ value: 'sm', label: 'Small', size: '4px' },
-					{ value: 'md', label: 'Medium', size: '8px' },
-					{ value: 'lg', label: 'Large', size: '12px' },
-					{ value: 'xl', label: 'XL', size: '16px' },
-					{ value: 'full', label: 'Full', size: 'Pill' }
-				] as option}
+				{#each borderRadiusOptions as option}
 					<button
 						type="button"
 						on:click={() => blockBorderRadiusType = option.value}

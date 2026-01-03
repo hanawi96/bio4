@@ -34,22 +34,10 @@ export const FALLBACK_THEME: Theme = {
 		page: {
 			mode: 'light',
 			layout: {
-				maxWidth: 480,
-				pagePadding: 16,
+				maxWidth: 'sm' as const,
+				pagePadding: 'default' as const,
 				blockGap: 16,
 				textAlign: 'center'
-			}
-		},
-		modes: {
-			dark: {
-				tokens: {
-					bg: { type: 'color', value: '#0a0a0a' },
-					text: '#ffffff',
-					surface: '#171717',
-					border: '#404040',
-					blockBase: '#60a5fa',
-					shadowColor: '#ffffff'
-				}
 			}
 		}
 	},

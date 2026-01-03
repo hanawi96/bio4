@@ -2,7 +2,6 @@
 	export let primaryColor: string;
 	export let textColor: string;
 	export let borderColor: string;
-	export let borderWidth: number;
 	export let mutedTextColor: string;
 	export let blockTextColor: string;
 	export let shadowColor: string;
@@ -102,11 +101,6 @@
 				/>
 			</div>
 			<p class="text-xs text-gray-500 mt-1">Border and divider color</p>
-		</div>
-		<div>
-			<label class="block text-sm font-medium text-gray-700 mb-2">Border Width</label>
-			<input type="number" bind:value={borderWidth} min="1" max="5" class="input-ios" />
-			<p class="text-xs text-gray-500 mt-1">Border thickness (1-5px)</p>
 		</div>
 		<div>
 			<label class="block text-sm font-medium text-gray-700 mb-2">Block Text Color</label>

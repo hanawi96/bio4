@@ -3,6 +3,8 @@
 	import { groups } from '$lib/stores/page';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
+	import { resolveMaxWidth, resolvePagePadding, resolveBlockGap, resolveAvatarBorderWidth } from '$lib/appearance/spacingTokens';
+	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 
 	// Use preview stores instead of main stores
 	$: tokens = $previewAppearance?.tokens;
@@ -54,9 +56,18 @@
 	$: backgroundImageUrl = isBackgroundImage ? backgroundValue.match(/url\(['"]?([^'"]+)['"]?\)/)?.[1] || '' : '';
 	
 	// Get background filters from overrides
-	$: bgBlur = $previewAppearanceState.overrides?.['backgroundBlur'] ?? 0;
-	$: bgBrightness = $previewAppearanceState.overrides?.['backgroundBrightness'] ?? 100;
-	$: bgGrayscale = $previewAppearanceState.overrides?.['backgroundGrayscale'] ?? 0;
+	$: bgBlur = resolveBlur(
+		$previewAppearanceState.overrides?.['backgroundBlur'] 
+		?? $previewAppearance?.theme?.config?.background?.effects?.blur
+	);
+	$: bgBrightness = resolveBrightness(
+		$previewAppearanceState.overrides?.['backgroundBrightness'] 
+		?? $previewAppearance?.theme?.config?.background?.effects?.brightness
+	);
+	$: bgGrayscale = resolveGrayscale(
+		$previewAppearanceState.overrides?.['backgroundGrayscale'] 
+		?? $previewAppearance?.theme?.config?.background?.effects?.grayscale
+	);
 	
 	// Build background style with filters
 	$: backgroundStyle = isBackgroundImage 
@@ -75,6 +86,9 @@
 		});
 		return merged;
 	})();
+	
+	// Resolve avatar border width from preset or number
+	$: avatarBorderWidth = resolveAvatarBorderWidth(header?.avatarBorderWidth);
 
 	// Avatar size mapping
 	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };
@@ -107,7 +121,10 @@
 	})();
 	
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
-	$: blockGap = $previewAppearanceState.overrides?.['page.blockGap'] || 16;
+	$: blockGap = resolveBlockGap(
+		$previewAppearanceState.overrides?.['page.blockGap'] 
+		?? $previewAppearance?.theme?.config?.page?.layout?.blockGap
+	);
 	$: blockPaddingX = $previewAppearanceState.overrides?.['page.blockPaddingX'] || 16;
 	$: blockPaddingY = $previewAppearanceState.overrides?.['page.blockPaddingY'] || 12;
 	$: titleFontSize = (() => {
@@ -135,9 +152,15 @@
 			|| themeConfig?.tokens?.typography?.fontFamily?.sans 
 			|| 'Inter, sans-serif';
 	})();
-	$: maxWidth = $previewAppearanceState.overrides?.['page.maxWidth'] || 480;
+	$: maxWidth = resolveMaxWidth(
+		$previewAppearanceState.overrides?.['page.maxWidth'] 
+		?? $previewAppearance?.theme?.config?.page?.layout?.maxWidth
+	);
 	$: textAlign = $previewAppearanceState.overrides?.['page.textAlign'] || 'center';
-	$: pagePadding = $previewAppearanceState.overrides?.['page.pagePadding'] || 16;
+	$: pagePadding = resolvePagePadding(
+		$previewAppearanceState.overrides?.['page.pagePadding'] 
+		?? $previewAppearance?.theme?.config?.page?.layout?.pagePadding
+	);
 	
 	// Helper function to get font size from override or theme config
 	const getFontSize = (
@@ -372,12 +395,12 @@
 											src={$previewPage.avatar_url} 
 											alt="Avatar" 
 											class="header-avatar object-cover"
-											style="width: {avatarWidth}px; height: {avatarHeight}px; {header.avatarBorder !== false ? `border: ${header.avatarBorderWidth || 4}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)};"
+											style="width: {avatarWidth}px; height: {avatarHeight}px; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)};"
 										/>
 									{:else}
 										<div 
 											class="header-avatar flex items-center justify-center text-white font-bold"
-											style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${header.avatarBorderWidth || 4}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; font-size: {avatarSize / 2.5}px;"
+											style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; font-size: {avatarSize / 2.5}px;"
 										>
 											{($previewPage?.title || 'U').charAt(0).toUpperCase()}
 										</div>
@@ -404,12 +427,12 @@
 									src={$previewPage.avatar_url} 
 									alt="Avatar" 
 									class="header-avatar object-cover mb-2"
-									style="width: {avatarWidth}px; height: {avatarHeight}px; {header?.avatarBorder !== false ? `border: ${header?.avatarBorderWidth || 4}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)};"
+									style="width: {avatarWidth}px; height: {avatarHeight}px; {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)};"
 								/>
 							{:else}
 								<div 
 									class="header-avatar mb-2 flex items-center justify-center text-white font-bold"
-									style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border: ${header?.avatarBorderWidth || 4}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {avatarSize / 2.5}px;"
+									style="width: {avatarWidth}px; height: {avatarHeight}px; background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {avatarSize / 2.5}px;"
 								>
 									{($previewPage?.title || 'U').charAt(0).toUpperCase()}
 								</div>

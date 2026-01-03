@@ -2,7 +2,7 @@ import type { ResolvedAppearance, Theme, ThemeTokens, ResolvedBlockStyle } from 
 import { HEADER_PRESETS } from './presets';
 import { getBlockStyleRecipe, resolveShadowValue, type BlockStylePresetId, type ShadowStylePreset } from './blockStyles';
 import { resolveToken, resolveAutoTextColor } from './tokenResolver';
-import { resolveRadius, resolveBlockGap, resolveBlockPadding, resolveBorderWidth } from './spacingTokens';
+import { resolveRadius, resolveBlockGap, resolveBlockPadding, resolveBorderWidth, resolveMaxWidth, resolvePagePadding } from './spacingTokens';
 import { get } from 'svelte/store';
 import { headerPresets } from '$lib/stores/headerPresets';
 
@@ -436,12 +436,14 @@ export function resolveAppearance(
 
 	// Resolve page layout
 	const pageLayout = {
-		maxWidth: (pageState.overrides?.['page.maxWidth'] as number)
+		maxWidth: resolveMaxWidth(
+			(pageState.overrides?.['page.maxWidth'] as any)
 			?? themeConfig.page?.layout?.maxWidth
-			?? 480,
-		pagePadding: (pageState.overrides?.['page.pagePadding'] as number)
+		),
+		pagePadding: resolvePagePadding(
+			(pageState.overrides?.['page.pagePadding'] as any)
 			?? themeConfig.page?.layout?.pagePadding
-			?? 16,
+		),
 		blockGap: resolveBlockGap(
 			pageState.overrides?.['page.blockGap']
 			?? themeConfig.page?.layout?.blockGap

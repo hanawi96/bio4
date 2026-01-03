@@ -19,7 +19,8 @@
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
 	import { groups } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
-	import { RADIUS_TOKENS, BLOCK_GAP_PRESETS, type BlockGapPreset } from '$lib/appearance/spacingTokens';
+	import { RADIUS_TOKENS, BLOCK_GAP_PRESETS, type BlockGapPreset, type MaxWidthKey, type PagePaddingKey, type AvatarBorderWidthKey, type BorderWidthKey } from '$lib/appearance/spacingTokens';
+	import { type BlurKey, type BrightnessKey, type GrayscaleKey } from '$lib/appearance/effectsTokens';
 
 	// Debug mode toggle
 	let showDebug = false;
@@ -41,7 +42,7 @@
 	// Quick edit fields
 	let selectedHeaderPreset = 'no-cover';
 	let avatarBorderColor = '#ffffff';
-	let avatarBorderWidth = 4;
+	let avatarBorderWidth: AvatarBorderWidthKey | number = 'default';
 	let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient' = 'solid';
 	let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' = 'none';
 	let blockOpacity: number = 100;
@@ -59,8 +60,8 @@
 	let selectedGradientPreset: 'diagonal-dark' | 'vertical-fade' | 'horizontal-flow' | 'sunset-glow' | 'ocean-deep' | 'forest-path' | 'royal-luxury' | 'fire-blaze' | 'spotlight' | 'cosmic-burst' | 'aurora' | 'nebula' | 'spin' | 'vortex' | 'prism' | 'kaleidoscope' = 'diagonal-dark';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
 	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif'; // Font riêng cho heading
-	let maxWidth = 480;
-	let pagePadding = 16;
+	let maxWidth: MaxWidthKey | number = 'sm';
+	let pagePadding: PagePaddingKey | number = 'default';
 	let blockGapPreset: BlockGapPreset = 'default';
 	let blockPaddingX = 16;
 	let blockPaddingY = 12;
@@ -91,7 +92,7 @@
 	let primaryColor = '#3b82f6';
 	let textColor = '#18181b';
 	let borderColor = '#e4e4e7';
-	let borderWidth = 1;
+	let borderWidth: BorderWidthKey | number = 'default';
 	let mutedTextColor = '#71717a';
 	let blockTextColor = '#ffffff';
 	let shadowColor = '#000000';
@@ -116,9 +117,9 @@
 	let bgRadialPosition = 'center';
 	let bgImageUrl = '';
 	let bgVideoUrl = '';
-	let bgBlur = 0;
-	let bgBrightness = 100;
-	let bgGrayscale = 0;
+	let bgBlur: BlurKey | number = 'none';
+	let bgBrightness: BrightnessKey | number = 'normal';
+	let bgGrayscale: GrayscaleKey | number = 'none';
 	
 	// Cover image field
 	let coverImageUrl = '';
@@ -225,8 +226,8 @@
 		showSubscribeButton = theme.config.page?.defaults?.showSubscribeButton ?? true;
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
 		headingFontFamily = theme.config.page?.defaults?.headingFontFamily || fontFamily;
-		maxWidth = theme.config.page?.layout?.maxWidth || 480;
-		pagePadding = theme.config.page?.layout?.pagePadding || 16;
+		maxWidth = theme.config.page?.layout?.maxWidth || 'sm';
+		pagePadding = theme.config.page?.layout?.pagePadding || 'default';
 		
 		// Load blockGap - convert px to preset or use preset directly
 		const blockGapValue = theme.config.page?.layout?.blockGap;
@@ -274,11 +275,11 @@
 		// Load borderWidth - support both preset key and number
 		const borderWidthValue = theme.config.page?.defaults?.borderWidth;
 		if (typeof borderWidthValue === 'string') {
-			borderWidth = 1; // "default" = 1
+			borderWidth = borderWidthValue as BorderWidthKey;
 		} else if (typeof borderWidthValue === 'number') {
 			borderWidth = borderWidthValue;
 		} else {
-			borderWidth = 1;
+			borderWidth = 'default';
 		}
 		
 		// Extract colors
@@ -417,8 +418,8 @@
 			config.page.defaults.shadowStyle = selectedShadowStyle;
 			config.page.defaults.blockOpacity = blockOpacity;
 			config.page.defaults.borderRadius = blockBorderRadiusType; // Store as preset key
-			// Store borderWidth: use preset key if = 1, otherwise store number for custom value
-			config.page.defaults.borderWidth = borderWidth === 1 ? 'default' : borderWidth;
+			// Store borderWidth: keep preset key or number
+			config.page.defaults.borderWidth = borderWidth;
 			
 			// Conditional fields
 			if (selectedShadowStyle === 'custom') {
@@ -862,7 +863,6 @@
 					bind:primaryColor
 					bind:textColor
 					bind:borderColor
-					bind:borderWidth
 					bind:mutedTextColor
 					bind:blockTextColor
 					bind:shadowColor
@@ -912,6 +912,7 @@
 					bind:shadowCustom
 					bind:selectedLinkIconShape
 					bind:selectedGradientPreset
+					bind:borderWidth
 					{primaryColor}
 					{textColor}
 					{borderColor}

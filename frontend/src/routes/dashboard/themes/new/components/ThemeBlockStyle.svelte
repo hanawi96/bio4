@@ -11,12 +11,14 @@
 	} from '$lib/appearance/blockStyles';
 	import { resolveToken, resolveAutoTextColor } from '$lib/appearance/tokenResolver';
 	import { getGradientColors, getGradientPresetName, type GradientPreset } from '$lib/utils/colorUtils';
+	import { BORDER_WIDTH_PRESETS, type BorderWidthKey } from '$lib/appearance/spacingTokens';
 
 	export let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient';
 	export let selectedLinkIconShape: 'square' | 'rounded' | 'circle';
 	export let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' | 'custom' = 'none';
 	export let blockOpacity: number = 100;
 	export let selectedGradientPreset: GradientPreset = 'darken';
+	export let borderWidth: BorderWidthKey | number = 'default';
 	export let shadowCustom = {
 		offsetX: 0,
 		offsetY: 4,
@@ -35,6 +37,9 @@
 	export let bgGradientTo: string = '#764ba2';
 	export let bgGradientDirection: string = '135deg';
 	export let bgImageUrl: string = '';
+	
+	// Check if current block style has border
+	$: hasBorder = selectedBlockStyle === 'outline' || selectedBlockStyle === 'glass' || selectedBlockStyle === 'brutal';
 
 	// Get all available recipes
 	const recipes = getBlockStyleRecipeIds();
@@ -164,7 +169,9 @@
 			}
 		}
 
-		const borderStyle = border ? `1px solid ${border}` : 'none';
+		// Resolve border width
+		const borderWidthPx = typeof borderWidth === 'number' ? borderWidth : BORDER_WIDTH_PRESETS[borderWidth];
+		const borderStyle = border ? `${borderWidthPx}px solid ${border}` : 'none';
 
 		return {
 			backgroundColor: fill,
@@ -177,7 +184,7 @@
 	}
 
 	// Reactive: Recompute all styles when dependencies change
-	$: displayStyles = (mockTokens && selectedShadowStyle && blockOpacity !== undefined && shadowCustom) ? recipes.reduce((acc, recipeId) => {
+	$: displayStyles = (mockTokens && selectedShadowStyle && blockOpacity !== undefined && shadowCustom && borderWidth !== undefined) ? recipes.reduce((acc, recipeId) => {
 		acc[recipeId] = getPreviewStyle(recipeId, selectedShadowStyle, blockOpacity, !userHasAdjustedOpacity);
 		return acc;
 	}, {} as Record<BlockStylePresetId, any>) : {};
@@ -284,6 +291,58 @@
 			<p class="text-xs text-gray-500 mt-2">Transparency level (not applied to Outline)</p>
 		</div>
 
+		<!-- Border Width (only show for styles with border) -->
+		{#if hasBorder}
+			<div>
+				<label class="block text-sm font-medium text-gray-700 mb-2">
+					Border Width
+				</label>
+				<div class="grid grid-cols-5 gap-2">
+					<button
+						type="button"
+						on:click={() => borderWidth = 'none'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'none' || borderWidth === 0 ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">None</div>
+						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.none}px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => borderWidth = 'thin'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'thin' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">Thin</div>
+						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.thin}px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => borderWidth = 'default'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'default' || borderWidth === 2 ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">Default</div>
+						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.default}px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => borderWidth = 'medium'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'medium' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">Medium</div>
+						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.medium}px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => borderWidth = 'thick'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'thick' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">Thick</div>
+						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.thick}px</div>
+					</button>
+				</div>
+				<p class="text-xs text-gray-500 mt-1.5">Border thickness for {selectedBlockStyle} style</p>
+			</div>
+		{/if}
+
 		<!-- Gradient Style (only show when Gradient is selected) -->
 		{#if selectedBlockStyle === 'gradient'}
 			<div>
@@ -337,22 +396,16 @@
 					{@const isDisabled = selectedBlockStyle === 'neon'}
 					<button
 						type="button"
-						on:click={() => selectedShadowStyle = shadowId}
+						on:click={() => { 
+							selectedShadowStyle = shadowId;
+							if (shadowId === 'custom') showAdvancedShadow = true;
+						}}
 						disabled={isDisabled}
 						class="px-3 py-2 rounded-lg text-sm font-medium transition-all {isDisabled ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-500' : isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
 					>
 						{getShadowStyleName(shadowId)}
 					</button>
 				{/each}
-				<!-- Custom Button -->
-				<button
-					type="button"
-					on:click={() => { selectedShadowStyle = 'custom'; showAdvancedShadow = true; }}
-					disabled={selectedBlockStyle === 'neon'}
-					class="px-3 py-2 rounded-lg text-sm font-medium transition-all {selectedBlockStyle === 'neon' ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-500' : selectedShadowStyle === 'custom' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
-				>
-					Custom
-				</button>
 			</div>
 			<p class="text-xs text-gray-500 mt-2">
 				{#if selectedBlockStyle === 'neon'}

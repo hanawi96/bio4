@@ -64,11 +64,57 @@ export type RadiusKey = keyof typeof RADIUS_TOKENS;
  * Border Width Tokens (in pixels)
  * Standard border width values
  */
-export const BORDER_WIDTH_TOKENS: Record<string, number> = {
-    default: 1
-};
+export const BORDER_WIDTH_PRESETS = {
+    none: 0,
+    thin: 1,
+    default: 2,
+    medium: 3,
+    thick: 4
+} as const;
 
-export type BorderWidthKey = keyof typeof BORDER_WIDTH_TOKENS;
+export type BorderWidthKey = keyof typeof BORDER_WIDTH_PRESETS;
+
+/**
+ * Layout Max Width Presets (in pixels)
+ * Standard max width values for page layout
+ */
+export const MAX_WIDTH_PRESETS = {
+    xs: 320,
+    sm: 480,
+    md: 640,
+    lg: 768,
+    xl: 1024
+} as const;
+
+export type MaxWidthKey = keyof typeof MAX_WIDTH_PRESETS;
+
+/**
+ * Page Padding Presets (in pixels)
+ * Standard padding values for page container
+ */
+export const PAGE_PADDING_PRESETS = {
+    none: 0,
+    tight: 8,
+    default: 16,
+    comfortable: 24,
+    spacious: 32
+} as const;
+
+export type PagePaddingKey = keyof typeof PAGE_PADDING_PRESETS;
+
+/**
+ * Avatar Border Width Presets (in pixels)
+ * Standard border width values for avatar
+ */
+export const AVATAR_BORDER_WIDTH_PRESETS = {
+    none: 0,
+    thin: 2,
+    default: 4,
+    thick: 6,
+    bold: 8
+} as const;
+
+export type AvatarBorderWidthKey = keyof typeof AVATAR_BORDER_WIDTH_PRESETS;
 
 /**
  * Get spacing value by key
@@ -90,61 +136,81 @@ export function getRadius(key: RadiusKey): number {
 
 /**
  * Get border width value by key
- * @param key - Border width key (default)
+ * @param key - Border width key (none, thin, default, medium, thick)
  * @returns Border width value in pixels
  */
 export function getBorderWidth(key: BorderWidthKey): number {
-    return BORDER_WIDTH_TOKENS[key];
+    return BORDER_WIDTH_PRESETS[key];
+}
+
+/**
+ * Generic resolver for preset tokens
+ * @param value - Preset key, number, or undefined
+ * @param presets - Preset object
+ * @param defaultKey - Default preset key
+ * @returns Resolved number value
+ */
+function resolvePreset<T extends Record<string, number>>(
+    value: keyof T | number | undefined,
+    presets: T,
+    defaultKey: keyof T
+): number {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string' && value in presets) {
+        return presets[value];
+    }
+    return presets[defaultKey];
 }
 
 /**
  * Resolve border radius - supports both string keys and numbers
- * @param value - Radius key or number
- * @returns Border radius value in pixels
  */
 export function resolveRadius(value: RadiusKey | number | undefined): number {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string' && value in RADIUS_TOKENS) {
-        return RADIUS_TOKENS[value as RadiusKey];
-    }
-    return RADIUS_TOKENS.lg; // default
+    return resolvePreset(value, RADIUS_TOKENS, 'lg');
 }
 
 /**
  * Resolve block gap - supports both string keys and numbers
- * @param value - Block gap preset key or number
- * @returns Block gap value in pixels
  */
 export function resolveBlockGap(value: BlockGapPreset | number | undefined): number {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string' && value in BLOCK_GAP_PRESETS) {
-        return BLOCK_GAP_PRESETS[value as BlockGapPreset];
-    }
-    return BLOCK_GAP_PRESETS.default; // default
+    return resolvePreset(value, BLOCK_GAP_PRESETS, 'default');
 }
 
 /**
  * Resolve block padding - supports both string keys and objects
- * @param value - Block padding preset key or {x, y} object
- * @returns Block padding object {x, y}
  */
 export function resolveBlockPadding(value: BlockPaddingPreset | {x: number, y: number} | undefined): {x: number, y: number} {
     if (typeof value === 'object' && 'x' in value && 'y' in value) return value;
     if (typeof value === 'string' && value in BLOCK_PADDING_PRESETS) {
-        return BLOCK_PADDING_PRESETS[value as BlockPaddingPreset];
+        return BLOCK_PADDING_PRESETS[value];
     }
-    return BLOCK_PADDING_PRESETS.default; // default
+    return BLOCK_PADDING_PRESETS.default;
 }
 
 /**
  * Resolve border width - supports both string keys and numbers
- * @param value - Border width key or number
- * @returns Border width value in pixels
  */
 export function resolveBorderWidth(value: BorderWidthKey | number | undefined): number {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string' && value in BORDER_WIDTH_TOKENS) {
-        return BORDER_WIDTH_TOKENS[value as BorderWidthKey];
-    }
-    return BORDER_WIDTH_TOKENS.default;
+    return resolvePreset(value, BORDER_WIDTH_PRESETS, 'default');
+}
+
+/**
+ * Resolve max width - supports both string keys and numbers
+ */
+export function resolveMaxWidth(value: MaxWidthKey | number | undefined): number {
+    return resolvePreset(value, MAX_WIDTH_PRESETS, 'sm');
+}
+
+/**
+ * Resolve page padding - supports both string keys and numbers
+ */
+export function resolvePagePadding(value: PagePaddingKey | number | undefined): number {
+    return resolvePreset(value, PAGE_PADDING_PRESETS, 'default');
+}
+
+/**
+ * Resolve avatar border width - supports both string keys and numbers
+ */
+export function resolveAvatarBorderWidth(value: AvatarBorderWidthKey | number | undefined): number {
+    return resolvePreset(value, AVATAR_BORDER_WIDTH_PRESETS, 'default');
 }

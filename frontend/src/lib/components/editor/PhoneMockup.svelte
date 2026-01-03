@@ -4,6 +4,8 @@
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
+	import { resolvePagePadding, resolveAvatarBorderWidth } from '$lib/appearance/spacingTokens';
+	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 
 	// Subscribe to derived store - auto updates on any change!
@@ -192,8 +194,22 @@
 	// Get block gap from appearance
 	$: blockGap = $appearance?.page?.blockGap ?? 16;
 	
-	// Get page padding from appearance
-	$: pagePadding = $appearance?.page?.pagePadding ?? 16;
+	// Get page padding from appearance with resolver
+	$: pagePadding = resolvePagePadding($appearance?.page?.pagePadding);
+	
+	// Get avatar border width from theme config with resolver
+	$: avatarBorderWidth = (() => {
+		// Priority 1: Check override from appearanceState (for live preview)
+		const override = $appearanceState.overrides?.['header.avatarBorderWidth'];
+		if (override !== undefined) {
+			return resolveAvatarBorderWidth(override);
+		}
+		
+		// Priority 2: Check theme config
+		const themeConfig = $appearance?.theme?.config;
+		const borderWidth = themeConfig?.page?.defaults?.avatarBorderWidth;
+		return resolveAvatarBorderWidth(borderWidth);
+	})();
 	
 	// Helper function to get font size from override or theme config
 	const getFontSize = (
@@ -349,8 +365,13 @@
 	$: showSubscribeButton = ($appearanceState.overrides?.['page.showSubscribeButton'] as boolean) ?? true;
 	$: bioUrl = `https://biolink.com/${$page?.username || 'demo'}`;
 
-	// Background filters - computed once
-	$: backgroundFilters = `blur(${$appearanceState.overrides['backgroundBlur'] ?? 0}px) brightness(${($appearanceState.overrides['backgroundBrightness'] ?? 100) / 100}) grayscale(${($appearanceState.overrides['backgroundGrayscale'] ?? 0) / 100})`;
+	// Background filters - computed once with resolvers
+	$: backgroundFilters = (() => {
+		const blur = resolveBlur($appearanceState.overrides['backgroundBlur'] ?? $appearance?.theme?.config?.background?.effects?.blur);
+		const brightness = resolveBrightness($appearanceState.overrides['backgroundBrightness'] ?? $appearance?.theme?.config?.background?.effects?.brightness);
+		const grayscale = resolveGrayscale($appearanceState.overrides['backgroundGrayscale'] ?? $appearance?.theme?.config?.background?.effects?.grayscale);
+		return `blur(${blur}px) brightness(${brightness / 100}) grayscale(${grayscale / 100})`;
+	})();
 
 	// Subscribe modal
 	let showSubscribeModal = false;
@@ -534,22 +555,22 @@
 										<img 
 											src={$page.avatar_url} 
 											alt="Avatar" 
-											class="header-avatar object-cover {header.avatarBorder !== false ? 'border-4' : ''}"
+											class="header-avatar object-cover"
 											style="
 												width: {avatarWidth}px;
 												height: {avatarHeight}px;
-												{header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''}
+												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
 												border-radius: {getAvatarBorderRadius(header.avatarShape)};
 											"
 										/>
 									{:else}
 										<div 
-											class="header-avatar flex items-center justify-center text-white font-bold {header.avatarBorder !== false ? 'border-4' : ''}"
+											class="header-avatar flex items-center justify-center text-white font-bold"
 											style="
 												width: {avatarWidth}px;
 												height: {avatarHeight}px;
 												background: {tokens?.primaryColor || '#3b82f6'};
-												{header.avatarBorder !== false ? `border-color: ${header.avatarBorderColor || '#ffffff'};` : ''}
+												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
 												border-radius: {getAvatarBorderRadius(header.avatarShape)};
 												font-size: {avatarSize / 2.5}px;
 											"
@@ -590,22 +611,22 @@
 								<img 
 									src={$page.avatar_url} 
 									alt="Avatar" 
-									class="header-avatar object-cover mb-2 {header?.avatarBorder !== false ? 'border-4' : ''}"
+									class="header-avatar object-cover mb-2"
 									style="
 										width: {avatarWidth}px;
 										height: {avatarHeight}px;
-										{header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''}
+										{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
 										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
 									"
 								/>
 							{:else}
 								<div 
-									class="header-avatar mb-2 flex items-center justify-center text-white font-bold {header?.avatarBorder !== false ? 'border-4' : ''}"
+									class="header-avatar mb-2 flex items-center justify-center text-white font-bold"
 									style="
 										width: {avatarWidth}px;
 										height: {avatarHeight}px;
 										background: {tokens?.primaryColor || '#3b82f6'};
-										{header?.avatarBorder !== false ? `border-color: ${header?.avatarBorderColor || '#ffffff'};` : ''}
+										{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
 										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
 										font-size: {avatarSize / 2.5}px;
 									"

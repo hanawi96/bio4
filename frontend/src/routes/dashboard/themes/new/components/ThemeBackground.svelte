@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
+	import { BLUR_PRESETS, BRIGHTNESS_PRESETS, GRAYSCALE_PRESETS, type BlurKey, type BrightnessKey, type GrayscaleKey } from '$lib/appearance/effectsTokens';
 
 	export let bgType: 'solid' | 'gradient' | 'image' | 'video';
 	export let bgSolidColor: string;
@@ -15,9 +16,9 @@
 	export let bgImageUrl: string;
 	export let bgVideoUrl: string;
 	export let uploading: boolean;
-	export let bgBlur: number;
-	export let bgBrightness: number;
-	export let bgGrayscale: number;
+	export let bgBlur: BlurKey | number;
+	export let bgBrightness: BrightnessKey | number;
+	export let bgGrayscale: GrayscaleKey | number;
 
 	const dispatch = createEventDispatcher();
 	
@@ -545,38 +546,46 @@
 					<!-- Filter Presets (Expandable) -->
 					{#if activeFilter === 'blur'}
 						<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-							<div class="grid grid-cols-4 gap-2">
+							<div class="grid grid-cols-5 gap-2">
 								<button
 									type="button"
-									on:click={() => bgBlur = 0}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 0 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBlur = 'none'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'none' || bgBlur === 0 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBlur === 0 ? 'text-blue-600' : 'text-gray-900'}">None</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">0px</div>
+									<div class="text-xs font-semibold {bgBlur === 'none' || bgBlur === 0 ? 'text-blue-600' : 'text-gray-900'}">None</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.none}px</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgBlur = 4}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 4 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBlur = 'subtle'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'subtle' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBlur === 4 ? 'text-blue-600' : 'text-gray-900'}">Light</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">4px</div>
+									<div class="text-xs font-semibold {bgBlur === 'subtle' ? 'text-blue-600' : 'text-gray-900'}">Subtle</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.subtle}px</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgBlur = 8}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 8 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBlur = 'medium'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'medium' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBlur === 8 ? 'text-blue-600' : 'text-gray-900'}">Medium</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">8px</div>
+									<div class="text-xs font-semibold {bgBlur === 'medium' ? 'text-blue-600' : 'text-gray-900'}">Medium</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.medium}px</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgBlur = 15}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 15 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBlur = 'strong'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'strong' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBlur === 15 ? 'text-blue-600' : 'text-gray-900'}">Strong</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">15px</div>
+									<div class="text-xs font-semibold {bgBlur === 'strong' ? 'text-blue-600' : 'text-gray-900'}">Strong</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.strong}px</div>
+								</button>
+								<button
+									type="button"
+									on:click={() => bgBlur = 'extreme'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'extreme' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+								>
+									<div class="text-xs font-semibold {bgBlur === 'extreme' ? 'text-blue-600' : 'text-gray-900'}">Extreme</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.extreme}px</div>
 								</button>
 							</div>
 						</div>
@@ -585,80 +594,88 @@
 							<div class="grid grid-cols-5 gap-2">
 								<button
 									type="button"
-									on:click={() => bgBrightness = 50}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 50 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBrightness = 'darkest'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 'darkest' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBrightness === 50 ? 'text-blue-600' : 'text-gray-900'}">Dark</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">50%</div>
+									<div class="text-xs font-semibold {bgBrightness === 'darkest' ? 'text-blue-600' : 'text-gray-900'}">Darkest</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BRIGHTNESS_PRESETS.darkest}%</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgBrightness = 75}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 75 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBrightness = 'dark'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 'dark' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBrightness === 75 ? 'text-blue-600' : 'text-gray-900'}">Dim</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">75%</div>
+									<div class="text-xs font-semibold {bgBrightness === 'dark' ? 'text-blue-600' : 'text-gray-900'}">Dark</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BRIGHTNESS_PRESETS.dark}%</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgBrightness = 100}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 100 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBrightness = 'normal'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 'normal' || bgBrightness === 100 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBrightness === 100 ? 'text-blue-600' : 'text-gray-900'}">Normal</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">100%</div>
+									<div class="text-xs font-semibold {bgBrightness === 'normal' || bgBrightness === 100 ? 'text-blue-600' : 'text-gray-900'}">Normal</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BRIGHTNESS_PRESETS.normal}%</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgBrightness = 125}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 125 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBrightness = 'bright'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 'bright' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBrightness === 125 ? 'text-blue-600' : 'text-gray-900'}">Bright</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">125%</div>
+									<div class="text-xs font-semibold {bgBrightness === 'bright' ? 'text-blue-600' : 'text-gray-900'}">Bright</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BRIGHTNESS_PRESETS.bright}%</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgBrightness = 150}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 150 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgBrightness = 'brightest'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness === 'brightest' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgBrightness === 150 ? 'text-blue-600' : 'text-gray-900'}">Very Bright</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">150%</div>
+									<div class="text-xs font-semibold {bgBrightness === 'brightest' ? 'text-blue-600' : 'text-gray-900'}">Brightest</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{BRIGHTNESS_PRESETS.brightest}%</div>
 								</button>
 							</div>
 						</div>
 					{:else if activeFilter === 'grayscale'}
 						<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-							<div class="grid grid-cols-4 gap-2">
+							<div class="grid grid-cols-5 gap-2">
 								<button
 									type="button"
-									on:click={() => bgGrayscale = 0}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 0 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgGrayscale = 'none'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 'none' || bgGrayscale === 0 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgGrayscale === 0 ? 'text-blue-600' : 'text-gray-900'}">Color</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">0%</div>
+									<div class="text-xs font-semibold {bgGrayscale === 'none' || bgGrayscale === 0 ? 'text-blue-600' : 'text-gray-900'}">None</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{GRAYSCALE_PRESETS.none}%</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgGrayscale = 50}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 50 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgGrayscale = 'subtle'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 'subtle' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgGrayscale === 50 ? 'text-blue-600' : 'text-gray-900'}">Half</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">50%</div>
+									<div class="text-xs font-semibold {bgGrayscale === 'subtle' ? 'text-blue-600' : 'text-gray-900'}">Subtle</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{GRAYSCALE_PRESETS.subtle}%</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgGrayscale = 75}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 75 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgGrayscale = 'medium'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 'medium' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgGrayscale === 75 ? 'text-blue-600' : 'text-gray-900'}">Mostly</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">75%</div>
+									<div class="text-xs font-semibold {bgGrayscale === 'medium' ? 'text-blue-600' : 'text-gray-900'}">Medium</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{GRAYSCALE_PRESETS.medium}%</div>
 								</button>
 								<button
 									type="button"
-									on:click={() => bgGrayscale = 100}
-									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 100 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+									on:click={() => bgGrayscale = 'strong'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 'strong' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
 								>
-									<div class="text-xs font-semibold {bgGrayscale === 100 ? 'text-blue-600' : 'text-gray-900'}">B&W</div>
-									<div class="text-[10px] text-gray-500 mt-0.5">100%</div>
+									<div class="text-xs font-semibold {bgGrayscale === 'strong' ? 'text-blue-600' : 'text-gray-900'}">Strong</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{GRAYSCALE_PRESETS.strong}%</div>
+								</button>
+								<button
+									type="button"
+									on:click={() => bgGrayscale = 'full'}
+									class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale === 'full' ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
+								>
+									<div class="text-xs font-semibold {bgGrayscale === 'full' ? 'text-blue-600' : 'text-gray-900'}">Full</div>
+									<div class="text-[10px] text-gray-500 mt-0.5">{GRAYSCALE_PRESETS.full}%</div>
 								</button>
 							</div>
 						</div>

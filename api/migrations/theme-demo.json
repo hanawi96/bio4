@@ -1,7 +1,7 @@
 {
   "meta": {
-    "id": "preset.theme-1",
-    "name": "Theme 1",
+    "id": "preset.jjjjjjjjj",
+    "name": "jjjjjjjjj",
     "schemaVersion": 2,
     "version": "2.2.0",
     "author": "system",
@@ -84,25 +84,11 @@
     "typography": {
       "fontFamily": {
         "sans": "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
-      },
-      "fontSize": {
-        "xs": 12,
-        "sm": 14,
-        "base": 16,
-        "lg": 18,
-        "xl": 20,
-        "2xl": 24
-      },
-      "fontWeight": {
-        "normal": 400,
-        "medium": 500,
-        "semibold": 600,
-        "bold": 700
-      },
-      "lineHeight": {
-        "tight": 1.25,
-        "normal": 1.5,
-        "relaxed": 1.75
+      }
+    },
+    "border": {
+      "width": {
+        "default": 1
       }
     }
   },
@@ -124,7 +110,7 @@
         "overlay": "ref:tokens.color.overlay.50"
       },
       "border": {
-        "default": "#e4e4e7",
+        "default": "#ffffff",
         "subtle": "ref:tokens.color.gray.100",
         "strong": "ref:tokens.color.gray.300"
       },
@@ -152,27 +138,34 @@
   },
   "page": {
     "layout": {
-      "maxWidth": 480,
-      "pagePadding": 16,
+      "maxWidth": "sm",
+      "pagePadding": "default",
       "blockGap": "default",
       "textAlign": "center",
-      "blockPadding": "spacious"
+      "blockPadding": "default"
     },
     "defaults": {
       "headerPresetId": "no-cover",
-      "blockStylePreset": "glass",
+      "blockStylePreset": "outline",
       "linkStyle": "soft",
       "linkGroupLayout": "list",
       "linkIconShape": "rounded",
       "socialIconPosition": "footer",
       "socialIconColor": "#ffffff",
-      "gradientPreset": "diagonal-dark",
+      "gradientPreset": "cosmic-burst",
       "avatarBorderColor": "#ffffff",
-      "avatarBorderWidth": 4,
-      "shadowStyle": "none",
+      "avatarBorderWidth": "default",
+      "shadowStyle": "custom",
       "blockOpacity": 100,
       "borderRadius": "lg",
       "borderWidth": "default",
+      "shadowCustom": {
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 0,
+        "spread": 0,
+        "opacity": 1
+      },
       "linkGroupConfig": {
         "list": {
           "iconPosition": "left",
@@ -197,12 +190,12 @@
   },
   "background": {
     "effects": {
-      "blur": 0,
+      "blur": "none",
       "overlayColor": "ref:tokens.color.overlay.10",
-      "brightness": 100,
-      "grayscale": 0
+      "brightness": "normal",
+      "grayscale": "none"
     },
     "type": "gradient",
-    "value": "linear-gradient(135deg, #6b46c1 0%, #ed64a6 100%)"
+    "value": "radial-gradient(circle farthest-corner at center, #ed64a6 0%, #6b46c1 100%)"
   }
 }

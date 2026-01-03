@@ -32,15 +32,16 @@ export interface ThemeConfigDefaults {
 }
 
 export interface ThemeConfigPageLayout {
-	maxWidth: number;
-	pagePadding: number;
-	blockGap: number;
+	maxWidth: number | string; // Support both preset keys (e.g., 'sm') and numbers
+	pagePadding: number | string; // Support both preset keys (e.g., 'default') and numbers
+	blockGap: number | string; // Support both preset keys (e.g., 'default') and numbers
 	textAlign: 'left' | 'center' | 'right';
 }
 
 export interface ThemeConfigPage {
 	mode: 'light' | 'dark';
 	layout: ThemeConfigPageLayout;
+	defaults?: Record<string, any>; // Theme-specific defaults (avatarBorderWidth, blockStylePreset, etc.)
 }
 
 export interface ThemeConfig {

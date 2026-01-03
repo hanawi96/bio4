@@ -5,3 +5,4 @@ export * from './resolver';
 export * from './typographyTokens';
 export * from './spacingTokens';
 export * from './blockStyles';
+export * from './effectsTokens';

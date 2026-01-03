@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { AVATAR_BORDER_WIDTH_PRESETS, type AvatarBorderWidthKey } from '$lib/appearance/spacingTokens';
 
 	export let headerPresets: any[];
 	export let selectedHeaderPreset: string;
 	export let coverImageUrl: string;
 	export let uploading: boolean;
 	export let avatarBorderColor: string;
-	export let avatarBorderWidth: number;
+	export let avatarBorderWidth: AvatarBorderWidthKey | number;
 	export let socialIconPosition: 'header' | 'footer';
 	export let socialIconColor: string;
 
@@ -198,19 +199,52 @@
 					<p class="text-xs text-gray-500 mt-1">Border color for avatar (default: white)</p>
 				</div>
 				<div>
-					<label for="avatarBorderWidth" class="block text-sm font-medium text-gray-700 mb-2">
-						Avatar Border Width: {avatarBorderWidth}px
+					<label class="block text-sm font-medium text-gray-700 mb-2">
+						Avatar Border Width
 					</label>
-					<input
-						id="avatarBorderWidth"
-						type="range"
-						bind:value={avatarBorderWidth}
-						min="1"
-						max="8"
-						step="1"
-						class="w-full"
-					/>
-					<p class="text-xs text-gray-500 mt-1">Border thickness (1-8px)</p>
+					<div class="grid grid-cols-5 gap-2">
+						<button
+							type="button"
+							on:click={() => avatarBorderWidth = 'none'}
+							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'none' || avatarBorderWidth === 0 ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						>
+							<div class="font-semibold">None</div>
+							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.none}px</div>
+						</button>
+						<button
+							type="button"
+							on:click={() => avatarBorderWidth = 'thin'}
+							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thin' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						>
+							<div class="font-semibold">Thin</div>
+							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.thin}px</div>
+						</button>
+						<button
+							type="button"
+							on:click={() => avatarBorderWidth = 'default'}
+							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'default' || avatarBorderWidth === 4 ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						>
+							<div class="font-semibold">Default</div>
+							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.default}px</div>
+						</button>
+						<button
+							type="button"
+							on:click={() => avatarBorderWidth = 'thick'}
+							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thick' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						>
+							<div class="font-semibold">Thick</div>
+							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.thick}px</div>
+						</button>
+						<button
+							type="button"
+							on:click={() => avatarBorderWidth = 'bold'}
+							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'bold' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						>
+							<div class="font-semibold">Bold</div>
+							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.bold}px</div>
+						</button>
+					</div>
+					<p class="text-xs text-gray-500 mt-1.5">Border thickness around avatar</p>
 				</div>
 			</div>
 		{/if}
