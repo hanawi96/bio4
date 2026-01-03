@@ -3,7 +3,7 @@
 	export let size: 'small' | 'medium' | 'large' = 'medium';
 	export let color: string = '#ffffff';
 	export let speed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' = 'floating';
+	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' = 'floating';
 	
 	// Size mapping (px)
 	const sizeMap = {
@@ -26,60 +26,92 @@
 		large: { width: 400, height: 160 }
 	};
 	
+	// Petals-specific: oval petal shapes
+	const confettiSizeMap = {
+		small: { width: 6, height: 10 },
+		medium: { width: 8, height: 14 },
+		large: { width: 10, height: 18 }
+	};
+	
 	// Generate particles with random positions and delays
-	$: particles = Array.from({ length: variant === 'aurora' ? Math.min(count, 5) : count }, (_, i) => ({
-		id: i,
-		left: variant === 'aurora' ? -20 + Math.random() * 40 : Math.random() * 100,
-		top: (variant === 'stars' || variant === 'fireflies' || variant === 'sparkles') 
-			? Math.random() * 100 
-			: variant === 'aurora'
-				? 20 + (i * 15) + Math.random() * 10
-				: 0,
-		delay: Math.random() * 5,
-		duration:
-			variant === 'rain'
-				? speed === 'slow'
-					? 1.5 + Math.random() * 0.5
-					: speed === 'medium'
-						? 1 + Math.random() * 0.3
-						: 0.5 + Math.random() * 0.2
-				: variant === 'stars'
-					? speed === 'slow'
-						? 3 + Math.random() * 2
-						: speed === 'medium'
-							? 2 + Math.random() * 1
-							: 1 + Math.random() * 0.5
-				: variant === 'fireflies'
-					? speed === 'slow'
-						? 4 + Math.random() * 2
-						: speed === 'medium'
-							? 3 + Math.random() * 1
-							: 2 + Math.random() * 0.5
+	$: particles = Array.from({ length: variant === 'aurora' ? Math.min(count, 5) : count }, (_, i) => {
+		// For fireflies, use grid-based distribution for even spacing
+		let left, top;
+		if (variant === 'fireflies') {
+			const cols = Math.ceil(Math.sqrt(count));
+			const rows = Math.ceil(count / cols);
+			const col = i % cols;
+			const row = Math.floor(i / cols);
+			// Center each particle in its grid cell with small random offset
+			left = ((col + 0.5) / cols) * 100 + (Math.random() * 10 - 5);
+			top = ((row + 0.5) / rows) * 100 + (Math.random() * 10 - 5);
+		} else {
+			left = variant === 'aurora' ? -20 + Math.random() * 40 : Math.random() * 100;
+			top = (variant === 'stars' || variant === 'sparkles') 
+				? Math.random() * 100 
 				: variant === 'aurora'
+					? 20 + (i * 15) + Math.random() * 10
+					: 0;
+		}
+		
+		return {
+			id: i,
+			left,
+			top,
+			delay: Math.random() * 5,
+			duration:
+				variant === 'rain'
 					? speed === 'slow'
-						? 12 + Math.random() * 4
+						? 1.5 + Math.random() * 0.5
 						: speed === 'medium'
-							? 8 + Math.random() * 2
-							: 5 + Math.random() * 1
-				: variant === 'sparkles'
-					? speed === 'slow'
-						? 2.5 + Math.random() * 1
+							? 1 + Math.random() * 0.3
+							: 0.5 + Math.random() * 0.2
+					: variant === 'stars'
+						? speed === 'slow'
+							? 3 + Math.random() * 2
+							: speed === 'medium'
+								? 2 + Math.random() * 1
+								: 1 + Math.random() * 0.5
+					: variant === 'fireflies'
+						? speed === 'slow'
+							? 4 + Math.random() * 2
+							: speed === 'medium'
+								? 3 + Math.random() * 1
+								: 2 + Math.random() * 0.5
+					: variant === 'aurora'
+						? speed === 'slow'
+							? 12 + Math.random() * 4
+							: speed === 'medium'
+								? 8 + Math.random() * 2
+								: 5 + Math.random() * 1
+					: variant === 'sparkles'
+						? speed === 'slow'
+							? 2.5 + Math.random() * 1
+							: speed === 'medium'
+								? 2 + Math.random() * 0.5
+								: 1.5 + Math.random() * 0.5
+					: variant === 'confetti'
+						? speed === 'slow'
+							? 10 + Math.random() * 4
+							: speed === 'medium'
+								? 8 + Math.random() * 3
+								: 6 + Math.random() * 2
+					: speed === 'slow'
+						? 15 + Math.random() * 10
 						: speed === 'medium'
-							? 2 + Math.random() * 0.5
-							: 1.5 + Math.random() * 0.5
-				: speed === 'slow'
-					? 15 + Math.random() * 10
-					: speed === 'medium'
-						? 10 + Math.random() * 5
-						: 5 + Math.random() * 3
-	}));
+							? 10 + Math.random() * 5
+							: 5 + Math.random() * 3
+		};
+	});
 	
 	// Get size based on variant
 	$: particleSize = variant === 'rain' 
 		? rainSizeMap[size] 
 		: variant === 'aurora'
 			? auroraSizeMap[size]
-			: { width: sizeMap[size], height: sizeMap[size] };
+			: variant === 'confetti'
+				? confettiSizeMap[size]
+				: { width: sizeMap[size], height: sizeMap[size] };
 </script>
 
 <div class="particles-container">
@@ -192,6 +224,14 @@
 		opacity: 0;
 		animation: sparkles-shimmer ease-in-out infinite;
 		box-shadow: 0 0 4px currentColor, 0 0 8px currentColor, 0 0 12px currentColor;
+	}
+
+	/* Petals */
+	.particle-confetti {
+		top: -30px;
+		border-radius: 20%;
+		opacity: 0.9;
+		animation: confetti-fall ease-in infinite;
 	}
 
 	/* Floating animation (bottom to top) */
@@ -411,6 +451,34 @@
 		}
 		100% {
 			transform: scale(0);
+			opacity: 0;
+		}
+	}
+
+	/* Petals animation (falling, rotating, swaying) */
+	@keyframes confetti-fall {
+		0% {
+			transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+			opacity: 0;
+		}
+		10% {
+			opacity: 0.9;
+		}
+		25% {
+			transform: translateY(25vh) translateX(-15px) rotate(120deg) scale(0.95);
+		}
+		50% {
+			transform: translateY(50vh) translateX(10px) rotate(240deg) scale(1.05);
+			opacity: 0.8;
+		}
+		75% {
+			transform: translateY(75vh) translateX(-10px) rotate(360deg) scale(0.9);
+		}
+		90% {
+			opacity: 0.6;
+		}
+		100% {
+			transform: translateY(100vh) translateX(8px) rotate(480deg) scale(0.8);
 			opacity: 0;
 		}
 	}
