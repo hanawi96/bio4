@@ -4,7 +4,7 @@
 	export let particlesSize: 'small' | 'medium' | 'large' = 'medium';
 	export let particlesColor: string = '#ffffff';
 	export let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' = 'floating';
+	export let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' = 'floating';
 </script>
 
 <div class="border-t border-gray-200 pt-6 mt-6">
@@ -69,6 +69,13 @@
 						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesVariant === 'fireflies' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 					>
 						🪲 Fireflies
+					</button>
+					<button
+						type="button"
+						on:click={() => particlesVariant = 'aurora'}
+						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesVariant === 'aurora' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+					>
+						🌌 Aurora
 					</button>
 				</div>
 			</div>

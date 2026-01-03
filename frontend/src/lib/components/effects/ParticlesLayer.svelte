@@ -3,7 +3,7 @@
 	export let size: 'small' | 'medium' | 'large' = 'medium';
 	export let color: string = '#ffffff';
 	export let speed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' = 'floating';
+	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' = 'floating';
 	
 	// Size mapping (px)
 	const sizeMap = {
@@ -19,11 +19,22 @@
 		large: { width: 2, height: 25 }
 	};
 	
+	// Aurora-specific: wide waves with gradient
+	const auroraSizeMap = {
+		small: { width: 200, height: 80 },
+		medium: { width: 300, height: 120 },
+		large: { width: 400, height: 160 }
+	};
+	
 	// Generate particles with random positions and delays
-	$: particles = Array.from({ length: count }, (_, i) => ({
+	$: particles = Array.from({ length: variant === 'aurora' ? Math.min(count, 5) : count }, (_, i) => ({
 		id: i,
-		left: Math.random() * 100,
-		top: (variant === 'stars' || variant === 'fireflies') ? Math.random() * 100 : 0, // Random position for stars and fireflies
+		left: variant === 'aurora' ? -20 + Math.random() * 40 : Math.random() * 100,
+		top: (variant === 'stars' || variant === 'fireflies') 
+			? Math.random() * 100 
+			: variant === 'aurora'
+				? 20 + (i * 15) + Math.random() * 10
+				: 0,
 		delay: Math.random() * 5,
 		duration:
 			variant === 'rain'
@@ -44,6 +55,12 @@
 							: speed === 'medium'
 								? 3 + Math.random() * 1
 								: 2 + Math.random() * 0.5
+					: variant === 'aurora'
+						? speed === 'slow'
+							? 12 + Math.random() * 4
+							: speed === 'medium'
+								? 8 + Math.random() * 2
+								: 5 + Math.random() * 1
 					: speed === 'slow'
 						? 15 + Math.random() * 10
 						: speed === 'medium'
@@ -52,7 +69,11 @@
 	}));
 	
 	// Get size based on variant
-	$: particleSize = variant === 'rain' ? rainSizeMap[size] : { width: sizeMap[size], height: sizeMap[size] };
+	$: particleSize = variant === 'rain' 
+		? rainSizeMap[size] 
+		: variant === 'aurora'
+			? auroraSizeMap[size]
+			: { width: sizeMap[size], height: sizeMap[size] };
 </script>
 
 <div class="particles-container">
@@ -61,10 +82,12 @@
 			class="particle particle-{variant}"
 			style="
 				left: {particle.left}%;
-				{(variant === 'stars' || variant === 'fireflies') ? `top: ${particle.top}%;` : ''}
+				{(variant === 'stars' || variant === 'fireflies' || variant === 'aurora') ? `top: ${particle.top}%;` : ''}
 				width: {particleSize.width}px;
 				height: {particleSize.height}px;
-				background-color: {color};
+				{variant === 'aurora' 
+					? `background: linear-gradient(90deg, transparent, ${color}, transparent);` 
+					: `background-color: ${color};`}
 				animation-delay: {particle.delay}s;
 				animation-duration: {particle.duration}s;
 			"
@@ -146,6 +169,15 @@
 		opacity: 0;
 		animation: fireflies-glow ease-in-out infinite;
 		box-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor;
+	}
+
+	/* Aurora */
+	.particle-aurora {
+		border-radius: 50%;
+		opacity: 0;
+		animation: aurora-wave ease-in-out infinite;
+		filter: blur(20px);
+		transform-origin: center;
 	}
 
 	/* Floating animation (bottom to top) */
@@ -306,6 +338,37 @@
 		}
 		100% {
 			transform: translate(0, 0) scale(0.8);
+			opacity: 0;
+		}
+	}
+
+	/* Aurora animation (wave, flow, fade) */
+	@keyframes aurora-wave {
+		0% {
+			transform: translateX(-100%) skewX(-10deg) scaleY(0.8);
+			opacity: 0;
+		}
+		10% {
+			opacity: 0.4;
+		}
+		20% {
+			transform: translateX(-50%) skewX(-5deg) scaleY(1);
+			opacity: 0.6;
+		}
+		40% {
+			transform: translateX(0%) skewX(0deg) scaleY(1.1);
+			opacity: 0.8;
+		}
+		60% {
+			transform: translateX(50%) skewX(5deg) scaleY(1);
+			opacity: 0.6;
+		}
+		80% {
+			transform: translateX(100%) skewX(10deg) scaleY(0.9);
+			opacity: 0.4;
+		}
+		100% {
+			transform: translateX(150%) skewX(15deg) scaleY(0.8);
 			opacity: 0;
 		}
 	}
