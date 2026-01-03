@@ -69,11 +69,6 @@
 		?? $previewAppearance?.theme?.config?.background?.effects?.grayscale
 	);
 	
-	// Build background style with filters
-	$: backgroundStyle = isBackgroundImage 
-		? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur(${bgBlur}px) brightness(${bgBrightness / 100}) grayscale(${bgGrayscale / 100});`
-		: `background: ${backgroundValue};`;
-	
 	// Merge preset with overrides
 	$: header = (() => {
 		const overrides = $previewAppearanceState.overrides || {};
@@ -146,9 +141,9 @@
 	$: titleFontFamily = (() => {
 		const override = $previewAppearanceState.overrides?.['header.titleFontFamily'] as string;
 		if (override) return override;
-		// Fallback to theme headingFontFamily or body font
+		// Fallback to theme semantic.typography.heading.fontFamily or body font
 		const themeConfig = $previewAppearance?.theme?.config;
-		return themeConfig?.page?.defaults?.headingFontFamily 
+		return themeConfig?.semantic?.typography?.heading?.fontFamily 
 			|| themeConfig?.tokens?.typography?.fontFamily?.sans 
 			|| 'Inter, sans-serif';
 	})();
@@ -162,42 +157,45 @@
 		?? $previewAppearance?.theme?.config?.page?.layout?.pagePadding
 	);
 	
-	// Helper function to get font size from override or theme config
-	const getFontSize = (
-		overrideKey: string,
-		themeConfigPath: string,
-		defaultSize: number
-	): number => {
-		// Try override first
-		const override = $previewAppearanceState.overrides?.[overrideKey];
+	// Get font sizes with reactive tracking - inline for proper Svelte reactivity
+	$: linkFontSizePx = (() => {
+		const override = $previewAppearanceState.overrides?.['page.linkFontSize'];
 		if (override) {
-			if (typeof override === 'number') return override;
-			if (typeof override === 'string') {
-				return FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || defaultSize;
-			}
+			return typeof override === 'number' ? override : FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 14;
 		}
-		
-		// Fallback to theme config
-		const themeConfig = $previewAppearance?.theme?.config;
-		const parts = themeConfigPath.split('.');
-		let value: any = themeConfig;
-		for (const part of parts) {
-			value = value?.[part];
-			if (!value) break;
-		}
-		
-		if (value && typeof value === 'string' && value.startsWith('ref:tokens.typography.fontSize.')) {
+		const value = $previewAppearance?.theme?.config?.semantic?.typography?.link?.fontSize;
+		if (value?.startsWith?.('ref:tokens.typography.fontSize.')) {
 			const key = value.replace('ref:tokens.typography.fontSize.', '');
-			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || defaultSize;
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 14;
 		}
-		
-		return defaultSize;
-	};
+		return 14;
+	})();
 	
-	// Get font sizes using helper
-	$: linkFontSizePx = getFontSize('page.linkFontSize', 'semantic.typography.link.fontSize', 14);
-	$: bioFontSizePx = getFontSize('page.bioFontSize', 'semantic.typography.bio.fontSize', 14);
-	$: subtitleFontSizePx = getFontSize('page.subtitleFontSize', 'semantic.typography.subtitle.fontSize', 12);
+	$: bioFontSizePx = (() => {
+		const override = $previewAppearanceState.overrides?.['page.bioFontSize'];
+		if (override) {
+			return typeof override === 'number' ? override : FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 14;
+		}
+		const value = $previewAppearance?.theme?.config?.semantic?.typography?.bio?.fontSize;
+		if (value?.startsWith?.('ref:tokens.typography.fontSize.')) {
+			const key = value.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 14;
+		}
+		return 14;
+	})();
+	
+	$: subtitleFontSizePx = (() => {
+		const override = $previewAppearanceState.overrides?.['page.subtitleFontSize'];
+		if (override) {
+			return typeof override === 'number' ? override : FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 12;
+		}
+		const value = $previewAppearance?.theme?.config?.semantic?.typography?.subtitle?.fontSize;
+		if (value?.startsWith?.('ref:tokens.typography.fontSize.')) {
+			const key = value.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 12;
+		}
+		return 12;
+	})();
 	
 	$: overlayGradientColor = (() => {
 		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
@@ -212,12 +210,10 @@
 		return 'rgba(0, 0, 0, 0.7)';
 	})();
 
-	let blockBorderRadius: string;
-
-	$: {
-		const radiusOverride = $previewAppearanceState.overrides?.['block.borderRadius'];
-		blockBorderRadius = radiusOverride !== undefined ? `${radiusOverride}px` : '12px';
-	}
+	// Get blockBorderRadius from overrides
+	$: blockBorderRadius = $previewAppearanceState.overrides?.['block.borderRadius'] 
+		? `${$previewAppearanceState.overrides['block.borderRadius']}px` 
+		: '12px';
 
 	// Get linkIconShape from overrides or default
 	$: linkIconShape = $previewAppearanceState.overrides?.['page.linkIconShape'] || 'rounded';

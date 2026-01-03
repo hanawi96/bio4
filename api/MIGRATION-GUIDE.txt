@@ -1,0 +1,62 @@
+═══════════════════════════════════════════════════════════════
+  THEME COLOR MIGRATION GUIDE
+═══════════════════════════════════════════════════════════════
+
+WHAT THIS MIGRATION DOES:
+-------------------------
+Moves blockText and shadowColor from tokens to semantic structure:
+
+BEFORE:
+  tokens.color.blockText → semantic.color.block.text
+  tokens.color.shadowColor → semantic.color.shadow.default
+
+AFTER:
+  ✓ Follows Design System standards (tokens = primitives, semantic = contextual)
+  ✓ Removes duplicate/redundant references
+  ✓ Updates all themes in remote database
+
+
+HOW TO RUN:
+-----------
+
+Windows (PowerShell):
+  cd api
+  .\migrate-theme-colors.ps1
+
+Linux/Mac:
+  cd api
+  node migrate-theme-colors.js
+
+
+WHAT HAPPENS:
+-------------
+1. Fetches all themes from remote D1 database
+2. Checks each theme for old structure
+3. Migrates colors to new structure
+4. Updates database with new configs
+5. Shows summary of changes
+
+
+SAFETY:
+-------
+✓ Only updates themes that need migration
+✓ Skips already migrated themes
+✓ Validates JSON before updating
+✓ Shows confirmation prompt before execution
+
+
+ROLLBACK:
+---------
+If needed, you can manually restore from database backup or
+re-run with old theme-demo.json structure.
+
+
+NOTES:
+------
+- This is a ONE-TIME migration
+- Existing themes will work with backward compatibility
+- New themes will use the new structure automatically
+- No frontend changes needed (already updated)
+
+
+═══════════════════════════════════════════════════════════════

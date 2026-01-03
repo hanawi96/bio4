@@ -3,6 +3,7 @@ import { HEADER_PRESETS } from './presets';
 import { getBlockStyleRecipe, resolveShadowValue, type BlockStylePresetId, type ShadowStylePreset } from './blockStyles';
 import { resolveToken, resolveAutoTextColor } from './tokenResolver';
 import { resolveRadius, resolveBlockGap, resolveBlockPadding, resolveBorderWidth, resolveMaxWidth, resolvePagePadding } from './spacingTokens';
+import { getGradientColors, type GradientPreset } from '$lib/utils/colorUtils';
 import { get } from 'svelte/store';
 import { headerPresets } from '$lib/stores/headerPresets';
 
@@ -146,6 +147,11 @@ function expandThemeTokens(config: any): ThemeTokens {
 
 	const isDark = isDarkBackground(backgroundColor);
 
+	// Get shadowColor from semantic (v2) or tokens (v1 fallback)
+	const shadowColor = schemaVersion === 2
+		? (resolveSemanticToken(semantic.color?.shadow?.default, config) || '#000000')
+		: (tokens.shadowColor || '#000000');
+
 	return {
 		bg: schemaVersion === 2
 			? { type: 'color', value: backgroundColor }
@@ -155,7 +161,7 @@ function expandThemeTokens(config: any): ThemeTokens {
 		surface,
 		border,
 		blockBase,
-		shadowColor: tokens.shadowColor || '#000000',
+		shadowColor,
 		fontFamily,
 		secondary: adjustColor(primary, -20),
 		textSecondary: adjustColor(text, isDark ? -30 : 30),
@@ -281,6 +287,15 @@ function resolveBlockStyle(
 
 	// Resolve fill color
 	let fill = resolveToken(recipe.fill, tokens);
+	
+	// Handle gradient pattern
+	if (fill.startsWith('gradient:')) {
+		const baseColor = fill.replace('gradient:', '');
+		const resolvedBaseColor = resolveToken(baseColor, tokens);
+		const gradientPreset = (themeConfig?.page?.defaults?.gradientPreset as GradientPreset) || 'diagonal-dark';
+		const gradient = getGradientColors(resolvedBaseColor, gradientPreset);
+		fill = gradient.css;
+	}
 
 	// Resolve text color
 	let text: string;

@@ -4,9 +4,9 @@
 	export let fontFamily: string;
 	export let headingFontFamily: string;
 	export let headingFontSize: 'lg' | 'xl' | '2xl';
-	export let linkFontSize: 'xs' | '13' | 'sm' | '15' | 'base' | 'lg' | 'xl';
-	export let bioFontSize: 'xs' | '13' | 'sm' | '15' | 'base';
-	export let subtitleFontSize: 'xs' | '13' | 'sm' | '15' | 'base';
+	export let linkFontSize: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
+	export let bioFontSize: 'xs' | 'sm' | 'base' | 'lg';
+	export let subtitleFontSize: 'xs' | 'sm' | 'base' | 'lg';
 
 	const fonts = [
 		{ name: 'Inter', category: 'Sans Serif', value: 'Inter, system-ui, -apple-system, sans-serif' },
@@ -73,21 +73,19 @@
 		}
 	}
 	
-	// Font size options - using tokens
-	// Common options for bio and subtitle (12-16px range)
+	// Font size options - 5 options for better UX
+	// Common options for bio and subtitle (12-18px range)
 	const commonFontSizeOptions = [
-		{ value: 'xs' as const, label: '12' },
-		{ value: '13' as const, label: '13' },
-		{ value: 'sm' as const, label: '14' },
-		{ value: '15' as const, label: '15' },
-		{ value: 'base' as const, label: '16' }
+		{ value: 'xs' as const, label: 'XS', size: FONT_SIZE_TOKENS.xs },
+		{ value: 'sm' as const, label: 'SM', size: FONT_SIZE_TOKENS.sm },
+		{ value: 'base' as const, label: 'MD', size: FONT_SIZE_TOKENS.base },
+		{ value: 'lg' as const, label: 'LG', size: FONT_SIZE_TOKENS.lg }
 	];
 	
 	// Link font size options (12-20px range)
 	const linkFontSizeOptions = [
 		...commonFontSizeOptions,
-		{ value: 'lg' as const, label: '18' },
-		{ value: 'xl' as const, label: '20' }
+		{ value: 'xl' as const, label: 'XL', size: FONT_SIZE_TOKENS.xl }
 	];
 	
 	// Heading font size options (18-24px range)
@@ -280,17 +278,17 @@
 			<label class="block text-sm font-medium text-gray-700 mb-2">
 				Link Font Size
 			</label>
-			<div class="grid grid-cols-7 gap-1.5">
+			<div class="grid grid-cols-5 gap-2">
 				{#each linkFontSizeOptions as option}
 					<button
 						type="button"
 						on:click={() => linkFontSize = option.value}
-						class="py-2 px-1 text-xs font-medium rounded-lg border-2 transition-all {linkFontSize === option.value
+						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {linkFontSize === option.value
 							? 'border-gray-900 bg-gray-50 text-gray-900'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">{option.label}</div>
-						<div class="text-[9px] opacity-60">px</div>
+						<div class="text-[10px] opacity-60">{option.size}px</div>
 					</button>
 				{/each}
 			</div>
@@ -302,17 +300,17 @@
 			<label class="block text-sm font-medium text-gray-700 mb-2">
 				Bio Font Size
 			</label>
-			<div class="grid grid-cols-5 gap-1.5">
+			<div class="grid grid-cols-4 gap-2">
 				{#each commonFontSizeOptions as option}
 					<button
 						type="button"
 						on:click={() => bioFontSize = option.value}
-						class="py-2 px-1 text-xs font-medium rounded-lg border-2 transition-all {bioFontSize === option.value
+						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {bioFontSize === option.value
 							? 'border-gray-900 bg-gray-50 text-gray-900'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">{option.label}</div>
-						<div class="text-[9px] opacity-60">px</div>
+						<div class="text-[10px] opacity-60">{option.size}px</div>
 					</button>
 				{/each}
 			</div>
@@ -324,17 +322,17 @@
 			<label class="block text-sm font-medium text-gray-700 mb-2">
 				Subtitle Font Size
 			</label>
-			<div class="grid grid-cols-5 gap-1.5">
+			<div class="grid grid-cols-4 gap-2">
 				{#each commonFontSizeOptions as option}
 					<button
 						type="button"
 						on:click={() => subtitleFontSize = option.value}
-						class="py-2 px-1 text-xs font-medium rounded-lg border-2 transition-all {subtitleFontSize === option.value
+						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {subtitleFontSize === option.value
 							? 'border-gray-900 bg-gray-50 text-gray-900'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">{option.label}</div>
-						<div class="text-[9px] opacity-60">px</div>
+						<div class="text-[10px] opacity-60">{option.size}px</div>
 					</button>
 				{/each}
 			</div>

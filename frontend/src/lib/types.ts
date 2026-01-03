@@ -83,22 +83,6 @@ export interface ThemeMeta {
 	description?: string;
 	tier?: 'free' | 'pro';
 	category?: string;
-	contract?: ThemeContract;
-}
-
-export interface ThemeContract {
-	controls: ThemeControl[];
-}
-
-export interface ThemeControl {
-	keyPath: string;
-	type: 'select' | 'slider' | 'color' | 'toggle' | 'number';
-	label: string;
-	default?: any;
-	options?: string[];
-	min?: number;
-	max?: number;
-	step?: number;
 }
 
 export interface ThemeTokens {

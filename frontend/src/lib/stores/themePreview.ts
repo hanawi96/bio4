@@ -93,7 +93,7 @@ export function buildPreviewAppearance(
 	const borderColor = resolveRef(semantic?.color?.border?.default, config) || '#e4e4e7';
 	const borderWidth = resolveBorderWidth(config.page?.defaults?.borderWidth);
 	const blockTextColor = resolveRef(semantic?.color?.block?.text, config) || '#ffffff';
-	const shadowColor = resolveRef(tokens?.color?.shadowColor, config) || '#000000';
+	const shadowColor = resolveRef(semantic?.color?.shadow?.default, config) || '#000000';
 
 	// Build block style from preset
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;

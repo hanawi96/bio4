@@ -10,6 +10,7 @@
 	export let avatarBorderWidth: AvatarBorderWidthKey | number;
 	export let socialIconPosition: 'header' | 'footer';
 	export let socialIconColor: string;
+	export let previewPage: any = null; // Preview page data with avatar_url
 
 	const dispatch = createEventDispatcher();
 
@@ -26,6 +27,7 @@
 	// Check if selected preset has cover
 	$: selectedPreset = headerPresets.find((p) => p.key === selectedHeaderPreset);
 	$: hasCover = selectedHeaderPreset === 'with-cover' || selectedHeaderPreset === 'avatar-cover';
+	$: isAvatarCover = selectedHeaderPreset === 'avatar-cover';
 	$: hasAvatarBorder = selectedPreset?.config?.avatarBorder === true || hasCover;
 
 	function handleCoverUpload(event: Event) {
@@ -91,90 +93,125 @@
 		<!-- Cover Image Upload (only show if preset has cover) -->
 		{#if hasCover}
 			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Cover Image</label>
-				{#if coverImageUrl}
-					<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
-						<img
-							src={coverImageUrl}
-							alt="Cover"
-							class="w-full h-32 object-cover"
-						/>
-						<div
-							class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center"
-						>
-							<label
-								class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+				<label class="block text-sm font-medium text-gray-700 mb-2">
+					{isAvatarCover ? 'Avatar Preview' : 'Cover Image'}
+				</label>
+				
+				{#if isAvatarCover}
+					<!-- Avatar Cover: Show current avatar -->
+					{#if previewPage?.avatar_url}
+						<div class="rounded-xl overflow-hidden border-2 border-gray-200">
+							<img
+								src={previewPage.avatar_url}
+								alt="Avatar"
+								class="w-full h-32 object-cover"
+							/>
+						</div>
+						<p class="text-xs text-gray-500 mt-2">
+							This avatar will be used as your cover background. 
+							<a href="/dashboard/profile" class="text-blue-600 hover:text-blue-700 font-medium">Change avatar</a>
+						</p>
+					{:else}
+						<div class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+							<div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+								<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+								</svg>
+							</div>
+							<div class="text-center">
+								<p class="text-sm font-medium text-gray-900">No Avatar Set</p>
+								<p class="text-xs text-gray-500 mt-1">
+									<a href="/dashboard/profile" class="text-blue-600 hover:text-blue-700 font-medium">Upload an avatar</a> to use as cover
+								</p>
+							</div>
+						</div>
+					{/if}
+				{:else}
+					<!-- Regular Cover: Show upload form -->
+					{#if coverImageUrl}
+						<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
+							<img
+								src={coverImageUrl}
+								alt="Cover"
+								class="w-full h-32 object-cover"
+							/>
+							<div
+								class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center"
 							>
-								<input
-									type="file"
-									accept="image/*"
-									on:change={handleCoverUpload}
-									disabled={uploading}
-									class="hidden"
-								/>
-								<div
-									class="px-4 py-2 bg-white text-gray-900 rounded-lg font-medium text-sm shadow-lg hover:bg-gray-100 transition flex items-center gap-2"
+								<label
+									class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
 								>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<input
+										type="file"
+										accept="image/*"
+										on:change={handleCoverUpload}
+										disabled={uploading}
+										class="hidden"
+									/>
+									<div
+										class="px-4 py-2 bg-white text-gray-900 rounded-lg font-medium text-sm shadow-lg hover:bg-gray-100 transition flex items-center gap-2"
+									>
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+											/>
+										</svg>
+										Change Cover
+									</div>
+								</label>
+							</div>
+							{#if uploading}
+								<div
+									class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+								>
+									<div class="flex items-center gap-3 text-white">
+										<div
+											class="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full"
+										></div>
+										<span class="font-medium">Uploading...</span>
+									</div>
+								</div>
+							{/if}
+						</div>
+					{:else}
+						<label class="block cursor-pointer">
+							<input
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								on:change={handleCoverUpload}
+								disabled={uploading}
+								class="hidden"
+							/>
+							<div
+								class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all"
+							>
+								<div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+									<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path
 											stroke-linecap="round"
 											stroke-linejoin="round"
 											stroke-width="2"
-											d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+											d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
 										/>
 									</svg>
-									Change Cover
 								</div>
-							</label>
-						</div>
-						{#if uploading}
-							<div
-								class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-							>
-								<div class="flex items-center gap-3 text-white">
-									<div
-										class="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full"
-									></div>
-									<span class="font-medium">Uploading...</span>
+								<div class="text-center">
+									<p class="text-sm font-medium text-gray-900">Upload Cover Image</p>
+									<p class="text-xs text-gray-500 mt-1">JPG, PNG or WebP (max 5MB)</p>
+								</div>
+								<div
+									class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+								>
+									Choose File
 								</div>
 							</div>
-						{/if}
-					</div>
-				{:else}
-					<label class="block cursor-pointer">
-						<input
-							type="file"
-							accept="image/jpeg,image/png,image/webp"
-							on:change={handleCoverUpload}
-							disabled={uploading}
-							class="hidden"
-						/>
-						<div
-							class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all"
-						>
-							<div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-								<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-									/>
-								</svg>
-							</div>
-							<div class="text-center">
-								<p class="text-sm font-medium text-gray-900">Upload Cover Image</p>
-								<p class="text-xs text-gray-500 mt-1">JPG, PNG or WebP (max 5MB)</p>
-							</div>
-							<div
-								class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-							>
-								Choose File
-							</div>
-						</div>
-					</label>
+						</label>
+					{/if}
+					<p class="text-xs text-gray-500 mt-1">Cover image for header background</p>
 				{/if}
-				<p class="text-xs text-gray-500 mt-1">Cover image for header background</p>
 			</div>
 		{/if}
 
@@ -184,11 +221,17 @@
 				<div>
 					<label class="block text-sm font-medium text-gray-700 mb-2">Avatar Border Color</label>
 					<div class="flex items-center gap-3">
-						<input
-							type="color"
-							bind:value={avatarBorderColor}
-							class="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer"
-						/>
+						<div class="relative flex-shrink-0">
+							<input
+								type="color"
+								bind:value={avatarBorderColor}
+								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+							/>
+							<div 
+								class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
+								style="background-color: {avatarBorderColor};"
+							></div>
+						</div>
 						<input
 							type="text"
 							bind:value={avatarBorderColor}
@@ -251,34 +294,24 @@
 
 		<!-- Social Icons Position -->
 		<div>
-			<label class="block text-sm font-medium text-gray-700 mb-3">Social Icons Position</label>
-			<div class="grid grid-cols-2 gap-3">
+			<label class="block text-sm font-medium text-gray-700 mb-2">Social Icons Position</label>
+			<div class="grid grid-cols-2 gap-2">
 				<button
 					type="button"
 					on:click={() => socialIconPosition = 'header'}
-					class="px-4 py-3 rounded-lg text-sm font-medium transition-all {socialIconPosition === 'header' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+					class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'header' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
-					<div class="flex flex-col items-center gap-1">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-						</svg>
-						<span>Below Bio</span>
-					</div>
+					Below Bio
 				</button>
 				<button
 					type="button"
 					on:click={() => socialIconPosition = 'footer'}
-					class="px-4 py-3 rounded-lg text-sm font-medium transition-all {socialIconPosition === 'footer' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+					class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'footer' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
-					<div class="flex flex-col items-center gap-1">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-						</svg>
-						<span>Below Footer</span>
-					</div>
+					Below Links
 				</button>
 			</div>
-			<p class="text-xs text-gray-500 mt-2">Choose where to display social media icons</p>
+			<p class="text-xs text-gray-500 mt-1.5">Where to display social media icons</p>
 		</div>
 
 		<!-- Social Icons Color -->

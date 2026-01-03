@@ -100,9 +100,9 @@
 	
 	// Typography fields
 	let headingFontSize: 'lg' | 'xl' | '2xl' = '2xl';
-	let linkFontSize: 'xs' | 'sm' | 'base' | 'lg' = 'sm';
-	let bioFontSize: 'xs' | 'sm' | 'base' = 'sm';
-	let subtitleFontSize: 'xs' | 'sm' = 'xs';
+	let linkFontSize: 'xs' | 'sm' | 'base' | 'lg' | 'xl' = 'sm';
+	let bioFontSize: 'xs' | 'sm' | 'base' | 'lg' = 'sm';
+	let subtitleFontSize: 'xs' | 'sm' | 'base' | 'lg' = 'xs';
 	
 	// Background fields
 	let bgType: 'solid' | 'gradient' | 'image' | 'video' = 'solid';
@@ -225,7 +225,7 @@
 		showShareButton = theme.config.page?.defaults?.showShareButton ?? true;
 		showSubscribeButton = theme.config.page?.defaults?.showSubscribeButton ?? true;
 		fontFamily = theme.config.tokens?.typography?.fontFamily?.sans || 'Inter, system-ui, -apple-system, sans-serif';
-		headingFontFamily = theme.config.page?.defaults?.headingFontFamily || fontFamily;
+		headingFontFamily = resolveRef(theme.config.semantic?.typography?.heading?.fontFamily) || fontFamily;
 		maxWidth = theme.config.page?.layout?.maxWidth || 'sm';
 		pagePadding = theme.config.page?.layout?.pagePadding || 'default';
 		
@@ -322,7 +322,7 @@
 		// Extract more colors
 		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
 		blockTextColor = resolveRef(theme.config.semantic?.color?.block?.text) || '#ffffff';
-		shadowColor = resolveRef(theme.config.tokens?.color?.shadowColor) || '#000000';
+		shadowColor = resolveRef(theme.config.semantic?.color?.shadow?.default) || '#000000';
 		pageBgColor = resolveRef(theme.config.semantic?.color?.surface?.page) || '#fafafa';
 		
 		// Extract background effects
@@ -425,9 +425,6 @@
 			if (selectedShadowStyle === 'custom') {
 				config.page.defaults.shadowCustom = shadowCustom;
 			}
-			if (headingFontFamily && headingFontFamily !== fontFamily) {
-				config.page.defaults.headingFontFamily = headingFontFamily;
-			}
 			
 			// Link group config
 			config.page.defaults.linkGroupConfig = {
@@ -470,30 +467,24 @@
 			
 			// Update block text color
 			if (!config.semantic.color.block) config.semantic.color.block = {};
-			config.semantic.color.block.text = `ref:tokens.color.blockText`;
-			if (!config.tokens.color) config.tokens.color = {};
-			config.tokens.color.blockText = blockTextColor;
-			config.tokens.color.shadowColor = shadowColor;
+			config.semantic.color.block.text = blockTextColor;
 			
-			// Update typography
+			// Update shadow color
+			if (!config.semantic.color.shadow) config.semantic.color.shadow = {};
+			config.semantic.color.shadow.default = shadowColor;
+			
+			// Update typography - fontFamily and font sizes
 			if (!config.semantic.typography) config.semantic.typography = {};
 			if (!config.semantic.typography.heading) config.semantic.typography.heading = {};
-			
-			// Set heading values from controls
+			config.semantic.typography.heading.fontFamily = headingFontFamily || fontFamily;
 			config.semantic.typography.heading.fontSize = `ref:tokens.typography.fontSize.${headingFontSize}`;
-			config.semantic.typography.heading.fontWeight = `ref:tokens.typography.fontWeight.bold`;
-			config.semantic.typography.heading.lineHeight = `ref:tokens.typography.lineHeight.tight`;
-			config.semantic.typography.heading.fontFamily = `ref:tokens.typography.fontFamily.sans`;
 			
-			// Update link typography
 			if (!config.semantic.typography.link) config.semantic.typography.link = {};
 			config.semantic.typography.link.fontSize = `ref:tokens.typography.fontSize.${linkFontSize}`;
 			
-			// Update bio typography
 			if (!config.semantic.typography.bio) config.semantic.typography.bio = {};
 			config.semantic.typography.bio.fontSize = `ref:tokens.typography.fontSize.${bioFontSize}`;
 			
-			// Update subtitle typography
 			if (!config.semantic.typography.subtitle) config.semantic.typography.subtitle = {};
 			config.semantic.typography.subtitle.fontSize = `ref:tokens.typography.fontSize.${subtitleFontSize}`;
 			
@@ -549,7 +540,7 @@
 				delete config.page.layout.baseFontSize;
 			}
 			
-			// Clean up removed tokens (space, radius, elevation, recipes)
+			// Clean up removed tokens (space, radius, elevation, recipes, meta)
 			if (config.tokens?.space) {
 				delete config.tokens.space;
 			}
@@ -558,6 +549,9 @@
 			}
 			if (config.tokens?.elevation) {
 				delete config.tokens.elevation;
+			}
+			if (config.tokens?.meta) {
+				delete config.tokens.meta;
 			}
 			if (config.recipes) {
 				delete config.recipes;
@@ -574,7 +568,7 @@
 	}
 
 	// Update preview stores - optimized for fast opacity changes
-	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined && selectedGradientPreset && bgType && bgGradientType && bgRadialShape && bgRadialPosition) {
+	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined && selectedGradientPreset && bgType && bgGradientType && bgRadialShape && bgRadialPosition && linkFontSize && bioFontSize && subtitleFontSize) {
 		try {
 			const config = JSON.parse(configJson);
 			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity, shadowCustom, selectedGradientPreset));
@@ -663,38 +657,7 @@
 			name,
 			description,
 			category,
-			tier,
-			contract: {
-				controls: [
-					{
-						keyPath: 'page.layout.textAlign',
-						type: 'select',
-						label: 'Text Alignment',
-						options: ['left', 'center', 'right'],
-						default: config.page?.layout?.textAlign || 'center'
-					},
-					{
-						keyPath: 'page.layout.pagePadding',
-						type: 'slider',
-						label: 'Page Padding',
-						min: 8,
-						max: 32,
-						step: 4,
-						default: config.page?.layout?.pagePadding || 16,
-						unit: 'px'
-					},
-					{
-						keyPath: 'page.layout.blockGap',
-						type: 'slider',
-						label: 'Block Spacing',
-						min: 8,
-						max: 32,
-						step: 2,
-						default: config.page?.layout?.blockGap || 14,
-						unit: 'px'
-					}
-				]
-			}
+			tier
 		};
 
 		saving = true;
@@ -900,6 +863,7 @@
 					bind:socialIconPosition
 					bind:socialIconColor
 					bind:headerPresets
+					previewPage={$previewPage}
 					{uploading}
 					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}
 				/>

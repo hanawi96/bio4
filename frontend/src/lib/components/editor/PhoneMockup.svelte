@@ -211,51 +211,66 @@
 		return resolveAvatarBorderWidth(borderWidth);
 	})();
 	
-	// Helper function to get font size from override or theme config
-	const getFontSize = (
-		overrideKey: string,
-		themeConfigPath: string,
-		defaultSize: number
-	): number => {
-		// Try override first
-		const override = $appearanceState.overrides?.[overrideKey];
+	// Get font sizes with reactive tracking - inline for proper Svelte reactivity
+	$: titleFontSize = (() => {
+		const override = $appearanceState.overrides?.['page.titleFontSize'];
 		if (override) {
-			if (typeof override === 'number') return override;
-			if (typeof override === 'string') {
-				return FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || defaultSize;
-			}
+			return typeof override === 'number' ? override : FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 20;
 		}
-		
-		// Fallback to theme config
-		const themeConfig = $appearance?.theme?.config;
-		const parts = themeConfigPath.split('.');
-		let value: any = themeConfig;
-		for (const part of parts) {
-			value = value?.[part];
-			if (!value) break;
-		}
-		
-		if (value && typeof value === 'string' && value.startsWith('ref:tokens.typography.fontSize.')) {
+		const value = $appearance?.theme?.config?.semantic?.typography?.heading?.fontSize;
+		if (value?.startsWith?.('ref:tokens.typography.fontSize.')) {
 			const key = value.replace('ref:tokens.typography.fontSize.', '');
-			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || defaultSize;
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 20;
 		}
-		
-		return defaultSize;
-	};
+		return 20;
+	})();
 	
-	// Get font sizes using helper
-	$: titleFontSize = getFontSize('page.titleFontSize', 'semantic.typography.heading.fontSize', 20);
-	$: bioFontSizePx = getFontSize('page.bioFontSize', 'semantic.typography.bio.fontSize', 14);
-	$: linkFontSizePx = getFontSize('page.linkFontSize', 'semantic.typography.link.fontSize', 14);
-	$: subtitleFontSizePx = getFontSize('page.subtitleFontSize', 'semantic.typography.subtitle.fontSize', 12);
+	$: bioFontSizePx = (() => {
+		const override = $appearanceState.overrides?.['page.bioFontSize'];
+		if (override) {
+			return typeof override === 'number' ? override : FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 14;
+		}
+		const value = $appearance?.theme?.config?.semantic?.typography?.bio?.fontSize;
+		if (value?.startsWith?.('ref:tokens.typography.fontSize.')) {
+			const key = value.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 14;
+		}
+		return 14;
+	})();
+	
+	$: linkFontSizePx = (() => {
+		const override = $appearanceState.overrides?.['page.linkFontSize'];
+		if (override) {
+			return typeof override === 'number' ? override : FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 14;
+		}
+		const value = $appearance?.theme?.config?.semantic?.typography?.link?.fontSize;
+		if (value?.startsWith?.('ref:tokens.typography.fontSize.')) {
+			const key = value.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 14;
+		}
+		return 14;
+	})();
+	
+	$: subtitleFontSizePx = (() => {
+		const override = $appearanceState.overrides?.['page.subtitleFontSize'];
+		if (override) {
+			return typeof override === 'number' ? override : FONT_SIZE_TOKENS[override as keyof typeof FONT_SIZE_TOKENS] || 12;
+		}
+		const value = $appearance?.theme?.config?.semantic?.typography?.subtitle?.fontSize;
+		if (value?.startsWith?.('ref:tokens.typography.fontSize.')) {
+			const key = value.replace('ref:tokens.typography.fontSize.', '');
+			return FONT_SIZE_TOKENS[key as keyof typeof FONT_SIZE_TOKENS] || 12;
+		}
+		return 12;
+	})();
 	
 	// Get title font family (separate from body font)
 	$: titleFontFamily = (() => {
 		const override = $appearanceState.overrides?.['header.titleFontFamily'] as string;
 		if (override) return override;
-		// Fallback to theme headingFontFamily or body font
+		// Fallback to theme semantic.typography.heading.fontFamily or body font
 		const themeConfig = $appearance?.theme?.config;
-		return themeConfig?.page?.defaults?.headingFontFamily 
+		return themeConfig?.semantic?.typography?.heading?.fontFamily 
 			|| themeConfig?.tokens?.typography?.fontFamily?.sans 
 			|| 'Inter, sans-serif';
 	})();
