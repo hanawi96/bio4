@@ -1,7 +1,7 @@
 {
   "meta": {
-    "id": "preset.qqqqqqqqqq",
-    "name": "qqqqqqqqqq",
+    "id": "preset.theme-1",
+    "name": "Theme 1",
     "schemaVersion": 2,
     "version": "2.2.0",
     "author": "system",
@@ -38,7 +38,7 @@
           "min": 8,
           "max": 32,
           "step": 2,
-          "default": 14,
+          "default": "default",
           "unit": "px"
         }
       ]
@@ -104,36 +104,6 @@
         "normal": 1.5,
         "relaxed": 1.75
       }
-    },
-    "space": {
-      "0": 0,
-      "1": 4,
-      "2": 8,
-      "3": 12,
-      "4": 16,
-      "5": 20,
-      "6": 24,
-      "8": 32
-    },
-    "radius": {
-      "none": 0,
-      "sm": 4,
-      "md": 8,
-      "lg": 12,
-      "xl": 16,
-      "full": 9999
-    },
-    "elevation": {
-      "none": "none",
-      "xs": "0 1px 2px rgba(0, 0, 0, 0.05)",
-      "sm": "0 1px 3px rgba(0, 0, 0, 0.1)",
-      "md": "0 4px 6px rgba(0, 0, 0, 0.1)",
-      "lg": "0 10px 15px rgba(0, 0, 0, 0.1)"
-    },
-    "border": {
-      "width": {
-        "default": 1
-      }
     }
   },
   "semantic": {
@@ -169,54 +139,14 @@
         "fontWeight": "ref:tokens.typography.fontWeight.bold",
         "lineHeight": "ref:tokens.typography.lineHeight.tight"
       },
-      "body": {
-        "fontFamily": "ref:tokens.typography.fontFamily.sans",
-        "fontSize": "ref:tokens.typography.fontSize.base",
-        "fontWeight": "ref:tokens.typography.fontWeight.normal",
-        "lineHeight": "ref:tokens.typography.lineHeight.normal"
-      },
-      "caption": {
-        "fontFamily": "ref:tokens.typography.fontFamily.sans",
-        "fontSize": "ref:tokens.typography.fontSize.sm",
-        "fontWeight": "ref:tokens.typography.fontWeight.normal",
-        "lineHeight": "ref:tokens.typography.lineHeight.normal"
-      },
       "link": {
         "fontSize": "ref:tokens.typography.fontSize.xs"
       },
       "bio": {
-        "fontSize": "ref:tokens.typography.fontSize.13"
+        "fontSize": "ref:tokens.typography.fontSize.xs"
       },
       "subtitle": {
-        "fontSize": "ref:tokens.typography.fontSize.sm"
-      }
-    }
-  },
-  "recipes": {
-    "linkGroup": {
-      "variants": {
-        "layout": {
-          "list": {
-            "display": "flex",
-            "flexDirection": "column"
-          },
-          "cards": {
-            "display": "grid",
-            "gridTemplateColumns": "repeat(1, 1fr)",
-            "gap": "ref:tokens.space.4"
-          },
-          "grid": {
-            "display": "grid",
-            "gridTemplateColumns": "repeat(2, 1fr)",
-            "gap": "ref:tokens.space.3"
-          }
-        }
-      }
-    },
-    "link": {
-      "base": {
-        "radius": "ref:tokens.radius.lg",
-        "elevation": "ref:tokens.elevation.sm"
+        "fontSize": "ref:tokens.typography.fontSize.xs"
       }
     }
   },
@@ -226,10 +156,7 @@
       "pagePadding": 16,
       "blockGap": "default",
       "textAlign": "center",
-      "blockPadding": {
-        "x": 16,
-        "y": 12
-      }
+      "blockPadding": "spacious"
     },
     "defaults": {
       "headerPresetId": "no-cover",
@@ -244,7 +171,8 @@
       "avatarBorderWidth": 4,
       "shadowStyle": "none",
       "blockOpacity": 100,
-      "borderWidth": 1,
+      "borderRadius": "lg",
+      "borderWidth": "default",
       "linkGroupConfig": {
         "list": {
           "iconPosition": "left",
@@ -268,18 +196,13 @@
     }
   },
   "background": {
-    "wallpaper": {
-      "kind": "preset",
-      "assetId": null,
-      "url": null
-    },
     "effects": {
       "blur": 0,
-      "dim": 0,
       "overlayColor": "ref:tokens.color.overlay.10",
       "brightness": 100,
       "grayscale": 0
     },
-    "videoUrl": "https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev/background-videos/demo-1767367433286.mp4"
+    "type": "gradient",
+    "value": "linear-gradient(135deg, #6b46c1 0%, #ed64a6 100%)"
   }
 }

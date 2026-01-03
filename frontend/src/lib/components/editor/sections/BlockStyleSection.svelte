@@ -179,8 +179,27 @@
 		}, {} as Record<BlockStylePresetId, any>);
 	})();
 
-	// Get background style from theme - check override first, then theme default
-	$: previewBackground = $appearanceState.overrides?.['backgroundColor'] || $appearance?.tokens?.backgroundColor || '#ffffff';
+	// Get background style from theme (NEW structure) - check override first, then theme default
+	$: previewBackground = (() => {
+		// Check override first
+		const override = $appearanceState.overrides?.['backgroundColor'];
+		if (override) return override;
+		
+		// Check theme config (NEW structure)
+		const themeConfig = $appearance?.theme?.config;
+		const bgType = themeConfig?.background?.type;
+		const bgValue = themeConfig?.background?.value;
+		
+		if (bgType && bgValue) {
+			if (bgType === 'solid') return bgValue;
+			if (bgType === 'gradient') return bgValue;
+			if (bgType === 'image') return `url('${bgValue}')`;
+			if (bgType === 'video') return '#000000';
+		}
+		
+		// Fallback
+		return $appearance?.tokens?.backgroundColor || '#ffffff';
+	})();
 
 	// Get block shape from current block preset
 	$: blockShape = $appearance?.block?.shape || 'rounded';

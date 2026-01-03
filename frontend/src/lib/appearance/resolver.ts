@@ -1,8 +1,8 @@
 import type { ResolvedAppearance, Theme, ThemeTokens, ResolvedBlockStyle } from './types';
 import { HEADER_PRESETS } from './presets';
-import { getBlockStyleRecipe, type BlockStylePresetId } from './blockStyles';
+import { getBlockStyleRecipe, resolveShadowValue, type BlockStylePresetId, type ShadowStylePreset } from './blockStyles';
 import { resolveToken, resolveAutoTextColor } from './tokenResolver';
-import { RADIUS_TOKENS, BLOCK_GAP_PRESETS } from './spacingTokens';
+import { resolveRadius, resolveBlockGap, resolveBlockPadding, resolveBorderWidth } from './spacingTokens';
 import { get } from 'svelte/store';
 import { headerPresets } from '$lib/stores/headerPresets';
 
@@ -290,8 +290,15 @@ function resolveBlockStyle(
 		text = resolveToken(recipe.text, tokens);
 	}
 
-	// Resolve border color (optional)
-	const border = recipe.border ? resolveToken(recipe.border, tokens) : undefined;
+	// Resolve border (optional) - format as CSS border string
+	let border: string | undefined;
+	if (recipe.border && recipe.border !== 'none') {
+		const borderColor = resolveToken(recipe.border, tokens);
+		if (borderColor && borderColor !== 'none') {
+			const borderWidth = resolveBorderWidth(themeConfig?.page?.defaults?.borderWidth);
+			border = `${borderWidth}px solid ${borderColor}`;
+		}
+	}
 
 	// Resolve glow color (optional)
 	const glow = recipe.glow ? resolveToken(recipe.glow, tokens) : undefined;
@@ -315,7 +322,7 @@ function resolveBlockStyle(
 		fill = applyOpacity(fill, blockOpacity);
 	}
 
-	return {
+	const result = {
 		recipe,
 		fill,
 		text,
@@ -325,6 +332,8 @@ function resolveBlockStyle(
 		shadow,
 		opacity: blockOpacity
 	};
+	
+	return result;
 }
 
 // ============================================
@@ -414,14 +423,8 @@ export function resolveAppearance(
 		};
 		blockOverrides.shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${applyOpacityToShadow(shadowColor, shadowCustom.opacity)}`;
 	} else if (shadowStyle && shadowStyle !== 'none' && shadowStyle !== 'custom') {
-		// Use preset shadow
-		const shadowPresets: Record<string, string> = {
-			soft: `0 2px 8px ${tokens.shadowColor}26`,
-			medium: `0 4px 12px ${tokens.shadowColor}33`,
-			hard: `0 6px 16px ${tokens.shadowColor}4D`,
-			brutal: `4px 4px 0px ${tokens.shadowColor}`
-		};
-		blockOverrides.shadow = shadowPresets[shadowStyle];
+		// Use centralized shadow recipes
+		blockOverrides.shadow = resolveShadowValue(shadowStyle as ShadowStylePreset, tokens.shadowColor || '#000000');
 	}
 
 	// Resolve block style recipe
@@ -432,17 +435,6 @@ export function resolveAppearance(
 	const blockStyle = resolveBlockStyle(blockStyleId, tokens, blockOverrides, themeConfig);
 
 	// Resolve page layout
-	// Helper to resolve blockGap (can be semantic key or number)
-	const resolveBlockGap = (value: any): number => {
-		if (typeof value === 'string' && value in BLOCK_GAP_PRESETS) {
-			return BLOCK_GAP_PRESETS[value as keyof typeof BLOCK_GAP_PRESETS];
-		}
-		if (typeof value === 'number') {
-			return value;
-		}
-		return 16; // default
-	};
-	
 	const pageLayout = {
 		maxWidth: (pageState.overrides?.['page.maxWidth'] as number)
 			?? themeConfig.page?.layout?.maxWidth
@@ -462,17 +454,19 @@ export function resolveAppearance(
 			?? 'rounded'
 	};
 
-	// Resolve block config
+	// Resolve block config using centralized tokens
 	const blockConfig = {
-		borderRadius: (blockOverrides.borderRadius as number)
-			?? RADIUS_TOKENS.lg
-			?? 12,
+		borderRadius: resolveRadius(
+			(blockOverrides.borderRadius as any)
+			?? themeConfig.page?.defaults?.borderRadius
+		),
 		shape: 'rounded' as const,
-		padding: {
-			x: themeConfig.page?.layout?.blockPadding?.x ?? 16,
-			y: themeConfig.page?.layout?.blockPadding?.y ?? 12
-		},
-		borderWidth: themeConfig.page?.defaults?.borderWidth ?? 1
+		padding: resolveBlockPadding(
+			themeConfig.page?.layout?.blockPadding
+		),
+		borderWidth: resolveBorderWidth(
+			themeConfig.page?.defaults?.borderWidth
+		)
 	};
 
 	return {

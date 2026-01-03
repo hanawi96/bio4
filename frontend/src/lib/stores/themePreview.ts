@@ -1,44 +1,37 @@
 import { writable } from 'svelte/store';
 import { getGradientColors, type GradientPreset } from '$lib/utils/colorUtils';
+import { resolveBorderWidth } from '$lib/appearance/spacingTokens';
+import { SHADOW_RECIPES, type ShadowStylePreset } from '$lib/appearance/blockStyles';
 
 // Isolated stores for theme preview (won't affect main appearance editor)
 export const previewAppearance = writable<any>(null);
 export const previewAppearanceState = writable<any>({});
 export const previewPage = writable<any>(null);
 
-// Shadow style presets mapping
-const SHADOW_PRESETS: Record<string, (shadowColor: string) => string> = {
-	none: () => 'none',
-	soft: (shadowColor: string) => `0 2px 8px ${shadowColor}26`, // 15% opacity
-	medium: (shadowColor: string) => `0 4px 12px ${shadowColor}33`, // 20% opacity
-	hard: (shadowColor: string) => `0 6px 16px ${shadowColor}4D`, // 30% opacity
-	brutal: (shadowColor: string) => `4px 4px 0px ${shadowColor}`
-};
-
-// Block style presets mapping (without shadow - shadow is now separate)
+// Block style presets mapping (simplified - recipes are in blockStyles.ts)
 const BLOCK_STYLE_PRESETS: Record<string, any> = {
-	solid: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
+	solid: (primaryColor: string, blockTextColor: string) => ({
 		fill: primaryColor,
 		text: blockTextColor,
 		border: 'none',
 		glow: null,
 		blur: null
 	}),
-	outline: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
+	outline: (borderColor: string, borderWidth: number, blockTextColor: string) => ({
 		fill: 'transparent',
 		text: blockTextColor,
 		border: `${borderWidth}px solid ${borderColor}`,
 		glow: null,
 		blur: null
 	}),
-	glass: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
+	glass: (borderColor: string, borderWidth: number, blockTextColor: string) => ({
 		fill: 'rgba(255, 255, 255, 1)', // Will be adjusted by opacity logic
 		text: blockTextColor,
 		border: `${borderWidth}px solid ${borderColor}`,
 		glow: null,
 		blur: 10
 	}),
-	neon: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string) => ({
+	neon: (primaryColor: string, blockTextColor: string) => ({
 		fill: primaryColor,
 		text: blockTextColor,
 		border: 'none',
@@ -52,7 +45,7 @@ const BLOCK_STYLE_PRESETS: Record<string, any> = {
 		glow: null,
 		blur: null
 	}),
-	gradient: (primaryColor: string, borderColor: string, borderWidth: number, blockTextColor: string, gradientPreset: GradientPreset = 'diagonal-dark') => {
+	gradient: (primaryColor: string, blockTextColor: string, gradientPreset: GradientPreset) => {
 		const gradient = getGradientColors(primaryColor, gradientPreset);
 		return {
 			fill: gradient.css,
@@ -98,15 +91,32 @@ export function buildPreviewAppearance(
 	const textColor = resolveRef(semantic?.color?.text?.default, config) || '#000000';
 	const mutedTextColor = resolveRef(semantic?.color?.text?.muted, config) || '#71717a';
 	const borderColor = resolveRef(semantic?.color?.border?.default, config) || '#e4e4e7';
-	const borderWidth = config.page?.defaults?.borderWidth || 1;
+	const borderWidth = resolveBorderWidth(config.page?.defaults?.borderWidth);
 	const blockTextColor = resolveRef(semantic?.color?.block?.text, config) || '#ffffff';
 	const shadowColor = resolveRef(tokens?.color?.shadowColor, config) || '#000000';
 
-	// Build block style from preset (without shadow)
+	// Build block style from preset
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;
-	let blockStyle = blockStylePreset === 'gradient' 
-		? styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor, gradientPreset)
-		: styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor);
+	let blockStyle: any;
+	
+	switch (blockStylePreset) {
+		case 'solid':
+		case 'neon':
+			blockStyle = styleBuilder(primaryColor, blockTextColor);
+			break;
+		case 'outline':
+		case 'glass':
+			blockStyle = styleBuilder(borderColor, borderWidth, blockTextColor);
+			break;
+		case 'brutal':
+			blockStyle = styleBuilder(primaryColor, borderColor, borderWidth, blockTextColor);
+			break;
+		case 'gradient':
+			blockStyle = styleBuilder(primaryColor, blockTextColor, gradientPreset);
+			break;
+		default:
+			blockStyle = styleBuilder(primaryColor, blockTextColor);
+	}
 
 	// Apply opacity to fill
 	const applyOpacity = (color: string, opacity: number): string => {
@@ -151,7 +161,7 @@ export function buildPreviewAppearance(
 		shadow = 'none';
 	} else if (shadowStylePreset === 'custom' && shadowCustom) {
 		// Use custom shadow values with theme shadowColor
-		const applyOpacity = (color: string, opacity: number): string => {
+		const hexToRgba = (color: string, opacity: number): string => {
 			if (color.startsWith('#')) {
 				const hex = color.replace('#', '');
 				const r = parseInt(hex.substring(0, 2), 16);
@@ -161,11 +171,22 @@ export function buildPreviewAppearance(
 			}
 			return `rgba(0, 0, 0, ${opacity})`;
 		};
-		shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${applyOpacity(shadowColor, shadowCustom.opacity)}`;
+		shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${hexToRgba(shadowColor, shadowCustom.opacity)}`;
 	} else {
-		// Use preset shadow
-		const shadowBuilder = SHADOW_PRESETS[shadowStylePreset] || SHADOW_PRESETS.none;
-		shadow = shadowBuilder(shadowColor);
+		// Use centralized shadow recipes
+		const recipe = SHADOW_RECIPES[shadowStylePreset as ShadowStylePreset] || SHADOW_RECIPES.none;
+		shadow = recipe.value.replace(/shadowColor(@[\d.]+)?/g, (_, opacity) => {
+			if (!opacity) return shadowColor;
+			const opacityValue = parseFloat(opacity.substring(1));
+			if (shadowColor.startsWith('#')) {
+				const hex = shadowColor.replace('#', '');
+				const r = parseInt(hex.substring(0, 2), 16);
+				const g = parseInt(hex.substring(2, 4), 16);
+				const b = parseInt(hex.substring(4, 6), 16);
+				return `rgba(${r}, ${g}, ${b}, ${opacityValue})`;
+			}
+			return shadowColor;
+		});
 	}
 
 	return {

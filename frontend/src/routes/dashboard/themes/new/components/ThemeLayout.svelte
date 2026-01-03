@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BLOCK_GAP_PRESETS, type BlockGapPreset } from '$lib/appearance/spacingTokens';
+	import { BLOCK_GAP_PRESETS, BLOCK_PADDING_PRESETS, type BlockGapPreset, type BlockPaddingPreset } from '$lib/appearance/spacingTokens';
 	
 	export let maxWidth: number;
 	export let textAlign: 'left' | 'center' | 'right';
@@ -23,6 +23,28 @@
 		{ value: 'default', label: 'Default', description: 'Balanced spacing (16px)' },
 		{ value: 'spacious', label: 'Spacious', description: 'Generous spacing (24px)' }
 	];
+	
+	// Block Padding preset mode
+	let blockPaddingMode: BlockPaddingPreset | 'custom' = 'default';
+	let isInitialized = false;
+	
+	// Auto-detect preset only on initial load
+	$: if (!isInitialized && blockPaddingX && blockPaddingY) {
+		const matchedPreset = Object.entries(BLOCK_PADDING_PRESETS).find(
+			([_, preset]) => preset.x === blockPaddingX && preset.y === blockPaddingY
+		);
+		blockPaddingMode = matchedPreset ? (matchedPreset[0] as BlockPaddingPreset) : 'custom';
+		isInitialized = true;
+	}
+	
+	function selectPaddingPreset(preset: BlockPaddingPreset | 'custom') {
+		blockPaddingMode = preset;
+		if (preset !== 'custom') {
+			const values = BLOCK_PADDING_PRESETS[preset];
+			blockPaddingX = values.x;
+			blockPaddingY = values.y;
+		}
+	}
 </script>
 
 <section class="card-ios p-6">
@@ -46,14 +68,47 @@
 		
 		<!-- Text Align -->
 		<div>
-			<label for="textAlign" class="block text-sm font-medium text-gray-700 mb-2">
+			<label class="block text-sm font-medium text-gray-700 mb-2">
 				Text Align
 			</label>
-			<select id="textAlign" bind:value={textAlign} class="input-ios">
-				<option value="left">Left</option>
-				<option value="center">Center</option>
-				<option value="right">Right</option>
-			</select>
+			<div class="grid grid-cols-3 gap-2">
+				<button
+					type="button"
+					on:click={() => textAlign = 'left'}
+					class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {textAlign === 'left'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" />
+					</svg>
+					<span class="font-semibold">Left</span>
+				</button>
+				<button
+					type="button"
+					on:click={() => textAlign = 'center'}
+					class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {textAlign === 'center'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14" />
+					</svg>
+					<span class="font-semibold">Center</span>
+				</button>
+				<button
+					type="button"
+					on:click={() => textAlign = 'right'}
+					class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {textAlign === 'right'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14" />
+					</svg>
+					<span class="font-semibold">Right</span>
+				</button>
+			</div>
 		</div>
 		
 		<!-- Page Padding -->
@@ -93,36 +148,85 @@
 			<p class="text-xs text-gray-500 mt-1.5">{blockGapOptions.find(o => o.value === blockGapPreset)?.description || ''}</p>
 		</div>
 		
-		<!-- Block Padding X -->
+		<!-- Block Padding -->
 		<div>
-			<label for="blockPaddingX" class="block text-sm font-medium text-gray-700 mb-2">
-				Block Padding X (px)
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Block Padding
 			</label>
-			<input
-				id="blockPaddingX"
-				type="number"
-				bind:value={blockPaddingX}
-				min="4"
-				max="32"
-				class="input-ios"
-			/>
-			<p class="text-xs text-gray-500 mt-1">Horizontal padding inside blocks</p>
-		</div>
-		
-		<!-- Block Padding Y -->
-		<div>
-			<label for="blockPaddingY" class="block text-sm font-medium text-gray-700 mb-2">
-				Block Padding Y (px)
-			</label>
-			<input
-				id="blockPaddingY"
-				type="number"
-				bind:value={blockPaddingY}
-				min="4"
-				max="32"
-				class="input-ios"
-			/>
-			<p class="text-xs text-gray-500 mt-1">Vertical padding inside blocks</p>
+			<div class="grid grid-cols-4 gap-2 mb-3">
+				<button
+					type="button"
+					on:click={() => selectPaddingPreset('tight')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'tight'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Tight</div>
+					<div class="text-[10px] opacity-60 mt-0.5">12×8</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPaddingPreset('default')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'default'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Default</div>
+					<div class="text-[10px] opacity-60 mt-0.5">16×12</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPaddingPreset('spacious')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'spacious'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Spacious</div>
+					<div class="text-[10px] opacity-60 mt-0.5">24×16</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPaddingPreset('custom')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'custom'
+						? 'border-gray-900 bg-gray-50 text-gray-900'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Custom</div>
+					<div class="text-[10px] opacity-60 mt-0.5">•••</div>
+				</button>
+			</div>
+			
+			{#if blockPaddingMode === 'custom'}
+				<div class="grid grid-cols-2 gap-3 mt-3">
+					<div>
+						<label for="blockPaddingX" class="block text-xs font-medium text-gray-600 mb-1.5">
+							Horizontal (px)
+						</label>
+						<input
+							id="blockPaddingX"
+							type="number"
+							bind:value={blockPaddingX}
+							min="4"
+							max="32"
+							class="input-ios text-sm"
+						/>
+					</div>
+					<div>
+						<label for="blockPaddingY" class="block text-xs font-medium text-gray-600 mb-1.5">
+							Vertical (px)
+						</label>
+						<input
+							id="blockPaddingY"
+							type="number"
+							bind:value={blockPaddingY}
+							min="4"
+							max="32"
+							class="input-ios text-sm"
+						/>
+					</div>
+				</div>
+			{/if}
+			<p class="text-xs text-gray-500 mt-1.5">Padding inside blocks (X × Y)</p>
 		</div>
 		
 		<!-- Block Border Radius -->

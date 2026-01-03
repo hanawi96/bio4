@@ -9,14 +9,32 @@
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
 	
-	// Get background with override priority
+	// Get background with override priority (NEW structure)
 	$: resolvedBackground = (() => {
 		// Check override first for immediate update
 		const override = $appearanceState.overrides?.['backgroundColor'];
 		if (override) {
 			return override;
 		}
-		// Fallback to theme default
+		
+		// Fallback to theme config (NEW structure)
+		const themeConfig = $appearance?.theme?.config;
+		const bgType = themeConfig?.background?.type;
+		const bgValue = themeConfig?.background?.value;
+		
+		if (bgType && bgValue) {
+			if (bgType === 'solid') {
+				return bgValue;
+			} else if (bgType === 'gradient') {
+				return bgValue;
+			} else if (bgType === 'image') {
+				return `url('${bgValue}')`;
+			} else if (bgType === 'video') {
+				return '#000000'; // fallback for video
+			}
+		}
+		
+		// Final fallback
 		return tokens?.backgroundColor || '#ffffff';
 	})();
 	
@@ -100,10 +118,11 @@
 			}
 		}
 		
-		// Priority 2: Check theme config (background.videoUrl)
+		// Priority 2: Check theme config (NEW structure: background.type + background.value)
 		const themeConfig = $appearance?.theme?.config;
-		const themeVideoUrl = themeConfig?.background?.videoUrl;
-		if (themeVideoUrl && themeVideoUrl.trim()) return themeVideoUrl;
+		if (themeConfig?.background?.type === 'video' && themeConfig?.background?.value) {
+			return themeConfig.background.value;
+		}
 		
 		return null;
 	})();
@@ -313,7 +332,14 @@
 		blockBase: string
 	): string {
 		if (borderEnabled === false) return 'none';
-		if (themeBorder && themeBorder !== 'none') return `${borderWidth}px solid ${themeBorder}`;
+		if (themeBorder && themeBorder !== 'none') {
+			// Check if themeBorder is already a full border string (e.g., "1px solid #e4e4e7")
+			if (themeBorder.includes('px') && themeBorder.includes('solid')) {
+				return themeBorder;
+			}
+			// Otherwise, it's just a color, format it
+			return `${borderWidth}px solid ${themeBorder}`;
+		}
 		if (borderEnabled === true) return `${borderWidth}px solid ${blockBase}`;
 		return 'none';
 	}
@@ -697,7 +723,7 @@
 														width: 200px;
 														background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 														color: {$appearance?.blockStyle?.text || 'white'};
-														border: {$appearance?.blockStyle?.border ? `${borderWidth}px solid ${$appearance.blockStyle.border}` : 'none'};
+														border: {$appearance?.blockStyle?.border || 'none'};
 														box-shadow: {resolvedBlockShadow !== 'none' 
 															? resolvedBlockShadow 
 															: ($appearance?.blockStyle?.glow ? `0 0 20px ${$appearance.blockStyle.glow}` : 'none')};

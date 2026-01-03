@@ -15,40 +15,31 @@
 	$: currentTheme = themesMap[$appearanceState.presetKey] || FALLBACK_THEME;
 	$: themeConfig = currentTheme.config;
 	
-	// Get background from semantic.color.surface.page (primary source) or fallback to tokens.bg
+	// Get background from NEW structure (background.type + background.value)
 	$: presetBgValue = (() => {
-		// Priority 1: semantic.color.surface.page (new format)
-		const semanticBg = themeConfig?.semantic?.color?.surface?.page;
-		if (semanticBg) {
-			// Resolve ref if needed
-			if (typeof semanticBg === 'string' && semanticBg.startsWith('ref:')) {
-				const path = semanticBg.replace('ref:', '').split('.');
-				let value: any = themeConfig;
-				for (const key of path) {
-					value = value?.[key];
-					if (!value) break;
-				}
-				return value || '#ffffff';
+		// NEW FORMAT: background.type + background.value
+		const bgType = themeConfig?.background?.type;
+		const bgValue = themeConfig?.background?.value;
+		
+		if (bgType && bgValue) {
+			if (bgType === 'solid') {
+				return bgValue; // hex color
+			} else if (bgType === 'gradient') {
+				return bgValue; // gradient CSS string
+			} else if (bgType === 'image') {
+				return `url('${bgValue}')`; // image URL wrapped
+			} else if (bgType === 'video') {
+				return '#000000'; // fallback color for video
 			}
-			return semanticBg;
 		}
 		
-		// Priority 2: tokens.bg (legacy format)
-		const themeBgToken = themeConfig?.tokens?.bg;
-		if (!themeBgToken) return '#ffffff';
-		
-		if (themeBgToken.type === 'color') {
-			return themeBgToken.value as string;
-		} else if (themeBgToken.type === 'gradient') {
-			const grad = themeBgToken.value as { from: string; to: string; angle: number };
-			return `linear-gradient(${grad.angle}deg, ${grad.from} 0%, ${grad.to} 100%)`;
-		}
+		// Fallback
 		return '#ffffff';
 	})();
 	
 	// Get resolved values (override > preset)
 	$: resolvedBgColor = $appearanceState.overrides['backgroundColor'] ?? presetBgValue;
-	$: resolvedBgVideo = $appearanceState.overrides['backgroundVideo'] ?? themeConfig?.background?.videoUrl;
+	$: resolvedBgVideo = $appearanceState.overrides['backgroundVideo'] ?? (themeConfig?.background?.type === 'video' ? themeConfig?.background?.value : undefined);
 	
 	// Detect background type from theme config or overrides (reactive - runs on theme change)
 	$: {

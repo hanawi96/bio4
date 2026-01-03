@@ -43,6 +43,10 @@ export const SHADOW_RECIPES: Record<ShadowStylePreset, ShadowRecipe> = {
     brutal: {
         value: '4px 4px 0px shadowColor',
         description: 'Hard brutalist shadow'
+    },
+    custom: {
+        value: 'none',
+        description: 'Custom shadow'
     }
 };
 
@@ -133,9 +137,32 @@ export function getShadowStyleName(id: ShadowStylePreset): string {
         soft: 'Soft',
         medium: 'Medium',
         hard: 'Hard',
-        brutal: 'Brutal'
+        brutal: 'Brutal',
+        custom: 'Custom'
     };
     return names[id];
+}
+
+// Helper: Resolve shadow value with token replacement
+export function resolveShadowValue(shadowId: ShadowStylePreset, shadowColor: string): string {
+    const recipe = SHADOW_RECIPES[shadowId];
+    if (!recipe || recipe.value === 'none') return 'none';
+    
+    // Replace shadowColor token with actual color
+    return recipe.value.replace(/shadowColor(@[\d.]+)?/g, (_, opacity) => {
+        if (!opacity) return shadowColor;
+        
+        // Apply opacity to shadow color
+        const opacityValue = parseFloat(opacity.substring(1));
+        if (shadowColor.startsWith('#')) {
+            const hex = shadowColor.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacityValue})`;
+        }
+        return shadowColor;
+    });
 }
 
 // Helper: Get recipe description

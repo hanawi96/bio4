@@ -5,7 +5,6 @@
 
 import type { ThemeTokens } from './types';
 import { resolveFontSizeRef, resolveFontWeightRef, resolveLineHeightRef } from './typographyTokens';
-import { resolveSpaceRef, resolveRadiusRef, resolveBorderWidthRef } from './spacingTokens';
 
 // Parse token reference string
 // Examples:
@@ -32,9 +31,6 @@ export function parseTokenReference(ref: string): { token: string; opacity: numb
 //   resolveToken("ref:tokens.typography.fontSize.base", tokens) → "16"
 //   resolveToken("ref:tokens.typography.fontWeight.bold", tokens) → "700"
 //   resolveToken("ref:tokens.typography.lineHeight.normal", tokens) → "1.5"
-//   resolveToken("ref:tokens.space.4", tokens) → "16"
-//   resolveToken("ref:tokens.radius.lg", tokens) → "12"
-//   resolveToken("ref:tokens.border.width.default", tokens) → "1"
 export function resolveToken(ref: string, tokens: ThemeTokens): string {
 	// Handle special cases
 	if (ref === 'transparent') return 'transparent';
@@ -56,24 +52,6 @@ export function resolveToken(ref: string, tokens: ThemeTokens): string {
 	if (ref.startsWith('ref:tokens.typography.lineHeight.')) {
 		const lineHeight = resolveLineHeightRef(ref);
 		return lineHeight !== undefined ? String(lineHeight) : ref;
-	}
-	
-	// Handle spacing refs
-	if (ref.startsWith('ref:tokens.space.')) {
-		const space = resolveSpaceRef(ref);
-		return space !== undefined ? String(space) : ref;
-	}
-	
-	// Handle radius refs
-	if (ref.startsWith('ref:tokens.radius.')) {
-		const radius = resolveRadiusRef(ref);
-		return radius !== undefined ? String(radius) : ref;
-	}
-	
-	// Handle border width refs
-	if (ref.startsWith('ref:tokens.border.width.')) {
-		const borderWidth = resolveBorderWidthRef(ref);
-		return borderWidth !== undefined ? String(borderWidth) : ref;
 	}
 	
 	// Handle gradient pattern (will be processed separately)

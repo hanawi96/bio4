@@ -113,7 +113,6 @@ export interface ThemeTokens {
 	};
 	space?: Record<string, number>;
 	radius?: Record<string, number>;
-	elevation?: Record<string, string>;
 	// Legacy support
 	bg?: { type: 'color' | 'gradient'; value: string | { from: string; to: string; angle: number } };
 	text?: any;
@@ -234,14 +233,12 @@ export interface ThemePage {
 }
 
 export interface ThemeBackground {
-	wallpaper?: {
-		kind: 'preset' | 'upload';
-		assetId?: number | null;
-		url?: string | null;
-	};
+	type?: 'solid' | 'gradient' | 'image' | 'video';
+	value?: string; // Color hex | Gradient CSS | Image URL | Video URL
 	effects?: {
 		blur?: number;
-		dim?: number;
+		brightness?: number;
+		grayscale?: number;
 		overlayColor?: string;
 	};
 }

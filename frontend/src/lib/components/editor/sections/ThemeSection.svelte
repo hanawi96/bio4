@@ -95,24 +95,24 @@
 		return value || fallback;
 	}
 
-	// Helper: Convert bg token to CSS value (supports both old and new config)
+	// Helper: Convert bg token to CSS value (NEW structure)
 	function getBgStyle(preset: ThemePreset): string {
-		// New config: use semantic.color.surface.page
-		const semanticBg = preset.config?.semantic?.color?.surface?.page;
-		if (semanticBg) {
-			return resolveTokenValue(preset, semanticBg, '#ffffff');
+		const bgType = preset.config?.background?.type;
+		const bgValue = preset.config?.background?.value;
+		
+		if (bgType && bgValue) {
+			if (bgType === 'solid') {
+				return bgValue; // hex color
+			} else if (bgType === 'gradient') {
+				return bgValue; // gradient CSS
+			} else if (bgType === 'image') {
+				return `url('${bgValue}')`; // image URL
+			} else if (bgType === 'video') {
+				return '#000000'; // fallback for video
+			}
 		}
 		
-		// Old config: use tokens.bg
-		const bgToken = preset.config?.tokens?.bg;
-		if (!bgToken) return '#ffffff';
-		
-		if (bgToken.type === 'color') {
-			return bgToken.value as string;
-		} else if (bgToken.type === 'gradient') {
-			const grad = bgToken.value as { from: string; to: string; angle: number };
-			return `linear-gradient(${grad.angle}deg, ${grad.from}, ${grad.to})`;
-		}
+		// Fallback
 		return '#ffffff';
 	}
 

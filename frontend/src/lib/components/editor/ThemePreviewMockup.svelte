@@ -9,17 +9,47 @@
 	$: headerPresetId = $previewAppearanceState.headerPresetId || 'no-cover';
 	$: baseHeaderPreset = HEADER_PRESETS[headerPresetId];
 	
-	// Parse background value to separate image URL from other types
-	$: backgroundValue = $previewAppearance?.tokens?.backgroundColor || tokens?.backgroundColor || '#ffffff';
+	// Parse background value from NEW structure
+	$: backgroundValue = (() => {
+		// Priority 1: Check overrides
+		const override = $previewAppearanceState.overrides?.['backgroundColor'];
+		if (override) return override;
+		
+		// Priority 2: Check theme config (NEW structure)
+		const themeConfig = $previewAppearance?.theme?.config;
+		const bgType = themeConfig?.background?.type;
+		const bgValue = themeConfig?.background?.value;
+		
+		if (bgType && bgValue) {
+			if (bgType === 'solid') {
+				return bgValue; // hex color
+			} else if (bgType === 'gradient') {
+				return bgValue; // gradient CSS
+			} else if (bgType === 'image') {
+				return `url('${bgValue}')`; // wrap image URL
+			} else if (bgType === 'video') {
+				return '#000000'; // fallback for video
+			}
+		}
+		
+		// Fallback
+		return tokens?.backgroundColor || '#ffffff';
+	})();
+	
 	$: backgroundVideoUrl = (() => {
 		// Priority 1: Check overrides (user customization in theme editor)
 		const override = $previewAppearanceState.overrides?.['backgroundVideo'] as string | undefined;
 		if (override) return override;
 		
-		// Priority 2: Check theme config (background.videoUrl)
+		// Priority 2: Check theme config (NEW structure: background.type + background.value)
 		const themeConfig = $previewAppearance?.theme?.config;
-		return themeConfig?.background?.videoUrl || undefined;
+		if (themeConfig?.background?.type === 'video' && themeConfig?.background?.value) {
+			return themeConfig.background.value;
+		}
+		
+		return undefined;
 	})();
+	
 	$: isBackgroundImage = backgroundValue.startsWith('url(');
 	$: backgroundImageUrl = isBackgroundImage ? backgroundValue.match(/url\(['"]?([^'"]+)['"]?\)/)?.[1] || '' : '';
 	

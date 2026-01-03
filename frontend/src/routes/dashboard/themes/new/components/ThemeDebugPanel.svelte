@@ -14,7 +14,6 @@
 	export let primaryColor: string;
 	export let textColor: string;
 	export let borderColor: string;
-	export let borderWidth: number;
 	export let bgType: 'solid' | 'gradient' | 'image';
 	export let bgSolidColor: string;
 	export let bgGradientFrom: string;
@@ -85,7 +84,7 @@
 					<div class="w-4 h-4 rounded border border-gray-600" style="background: {borderColor}"></div>
 					<span class="text-green-400">{borderColor}</span>
 				</div>
-				<div>Border Width: <span class="text-green-400">{borderWidth}px</span></div>
+				<div>Border Width: <span class="text-green-400">1px (default)</span></div>
 			</div>
 		</div>
 
@@ -129,7 +128,9 @@
 					<div>✓ page.defaults.shadowStyle: <span class="text-green-400">{config.page?.defaults?.shadowStyle}</span></div>
 					<div>✓ page.layout.textAlign: <span class="text-green-400">{config.page?.layout?.textAlign}</span></div>
 					<div>✓ page.layout.maxWidth: <span class="text-green-400">{config.page?.layout?.maxWidth}</span></div>
-					<div>✓ semantic.color.surface.page: <span class="text-green-400">{config.semantic?.color?.surface?.page?.substring(0, 30)}{config.semantic?.color?.surface?.page?.length > 30 ? '...' : ''}</span></div>
+					<div>✓ semantic.color.surface.page (fallback): <span class="text-green-400">{config.semantic?.color?.surface?.page?.substring(0, 30)}{config.semantic?.color?.surface?.page?.length > 30 ? '...' : ''}</span></div>
+					<div>✓ background.type: <span class="text-green-400">{config.background?.type}</span></div>
+					<div>✓ background.value: <span class="text-green-400">{config.background?.value?.substring(0, 40)}{config.background?.value?.length > 40 ? '...' : ''}</span></div>
 				{/if}
 			</div>
 		</div>

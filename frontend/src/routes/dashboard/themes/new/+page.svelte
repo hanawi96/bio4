@@ -242,23 +242,49 @@
 			blockGapPreset = 'default';
 		}
 		
-		blockPaddingX = theme.config.page?.layout?.blockPadding?.x || 16;
-		blockPaddingY = theme.config.page?.layout?.blockPadding?.y || 12;
+		// Load blockPadding - support both preset key and object
+		const blockPaddingValue = theme.config.page?.layout?.blockPadding;
+		if (typeof blockPaddingValue === 'string') {
+			// Preset key: "tight" | "default" | "spacious"
+			const presets = { tight: {x: 12, y: 8}, default: {x: 16, y: 12}, spacious: {x: 24, y: 16} };
+			const preset = presets[blockPaddingValue as keyof typeof presets] || presets.default;
+			blockPaddingX = preset.x;
+			blockPaddingY = preset.y;
+		} else if (blockPaddingValue && typeof blockPaddingValue === 'object') {
+			// Legacy object format
+			blockPaddingX = blockPaddingValue.x || 16;
+			blockPaddingY = blockPaddingValue.y || 12;
+		} else {
+			// Fallback
+			blockPaddingX = 16;
+			blockPaddingY = 12;
+		}
+		
 		textAlign = theme.config.page?.layout?.textAlign || 'center';
 		
-		// Extract radius
-		const radiusRef = theme.config.recipes?.link?.base?.radius;
-		if (radiusRef && typeof radiusRef === 'string' && radiusRef.startsWith('ref:tokens.radius.')) {
-			blockBorderRadiusType = radiusRef.replace('ref:tokens.radius.', '') as any;
+		// Load borderRadius - support both preset key and number
+		const borderRadiusValue = theme.config.page?.defaults?.borderRadius;
+		if (typeof borderRadiusValue === 'string') {
+			blockBorderRadiusType = borderRadiusValue as typeof blockBorderRadiusType;
 		} else {
+			// Default or legacy number
 			blockBorderRadiusType = 'lg';
+		}
+		
+		// Load borderWidth - support both preset key and number
+		const borderWidthValue = theme.config.page?.defaults?.borderWidth;
+		if (typeof borderWidthValue === 'string') {
+			borderWidth = 1; // "default" = 1
+		} else if (typeof borderWidthValue === 'number') {
+			borderWidth = borderWidthValue;
+		} else {
+			borderWidth = 1;
 		}
 		
 		// Extract colors
 		primaryColor = resolveRef(theme.config.semantic?.color?.primary) || '#3b82f6';
 		textColor = resolveRef(theme.config.semantic?.color?.text?.default) || '#18181b';
 		borderColor = resolveRef(theme.config.semantic?.color?.border?.default) || '#e4e4e7';
-		borderWidth = theme.config.page?.defaults?.borderWidth || 1;
 		
 		// Extract typography - font sizes
 		// Helper to extract key from ref string or convert pixel to key
@@ -303,38 +329,40 @@
 		bgBrightness = theme.config.background?.effects?.brightness || 100;
 		bgGrayscale = theme.config.background?.effects?.grayscale || 0;
 		
-		// Extract background
-		const bgValue = resolveRef(theme.config.semantic?.color?.surface?.page);
-		if (typeof bgValue === 'string') {
-			if (bgValue.match(/^#[0-9a-fA-F]{6}$/)) {
-				bgType = 'solid';
-				bgSolidColor = bgValue;
-				pageBgColor = bgValue;
-			} else if (bgValue.includes('gradient')) {
-				bgType = 'gradient';
+		// Extract background from NEW structure
+		const bgTypeFromConfig = theme.config.background?.type;
+		const bgValueFromConfig = theme.config.background?.value;
+		
+		if (bgTypeFromConfig && bgValueFromConfig) {
+			bgType = bgTypeFromConfig;
+			
+			if (bgType === 'solid') {
+				bgSolidColor = bgValueFromConfig;
+				pageBgColor = bgValueFromConfig;
+			} else if (bgType === 'gradient') {
+				// Parse gradient string
+				const gradientValue = bgValueFromConfig;
 				
 				// Detect gradient type
-				if (bgValue.startsWith('radial-gradient')) {
+				if (gradientValue.startsWith('radial-gradient')) {
 					bgGradientType = 'radial';
-					
-					// Always use circle for radial gradients
 					bgRadialShape = 'circle';
 					
 					// Extract position
-					const posMatch = bgValue.match(/at\s+([^,]+)/);
+					const posMatch = gradientValue.match(/at\s+([^,]+)/);
 					if (posMatch) {
 						bgRadialPosition = posMatch[1].trim();
 					}
 				} else {
 					bgGradientType = 'linear';
 					
-					// Extract angle for linear
-					const angleMatch = bgValue.match(/(\d+)deg/);
+					// Extract angle
+					const angleMatch = gradientValue.match(/(\d+)deg/);
 					if (angleMatch) bgGradientDirection = angleMatch[1] + 'deg';
 				}
 				
 				// Extract colors
-				const colorMatches = bgValue.match(/#[0-9a-fA-F]{6}/g);
+				const colorMatches = gradientValue.match(/#[0-9a-fA-F]{6}/g);
 				if (colorMatches?.length >= 2) {
 					bgGradientFrom = colorMatches[0];
 					bgGradientTo = colorMatches[colorMatches.length - 1];
@@ -345,17 +373,16 @@
 						bgGradientMiddleEnabled = false;
 					}
 				}
-			} else if (bgValue.startsWith('url(')) {
-				bgType = 'image';
-				const urlMatch = bgValue.match(/url\(['"]?([^'"]+)['"]?\)/);
-				if (urlMatch) bgImageUrl = urlMatch[1];
+			} else if (bgType === 'image') {
+				bgImageUrl = bgValueFromConfig;
+			} else if (bgType === 'video') {
+				bgVideoUrl = bgValueFromConfig;
 			}
-		}
-		
-		// Load video URL if exists
-		if (theme.config.background?.videoUrl) {
-			bgType = 'video';
-			bgVideoUrl = theme.config.background.videoUrl;
+		} else {
+			// Fallback to solid black if no background defined
+			bgType = 'solid';
+			bgSolidColor = '#000000';
+			pageBgColor = '#000000';
 		}
 	}
 
@@ -389,7 +416,9 @@
 			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
 			config.page.defaults.shadowStyle = selectedShadowStyle;
 			config.page.defaults.blockOpacity = blockOpacity;
-			config.page.defaults.borderWidth = borderWidth;
+			config.page.defaults.borderRadius = blockBorderRadiusType; // Store as preset key
+			// Store borderWidth: use preset key if = 1, otherwise store number for custom value
+			config.page.defaults.borderWidth = borderWidth === 1 ? 'default' : borderWidth;
 			
 			// Conditional fields
 			if (selectedShadowStyle === 'custom') {
@@ -413,55 +442,19 @@
 			config.page.layout.blockGap = blockGapPreset; // Store semantic key
 			config.page.layout.textAlign = textAlign;
 			
-			// Update block padding
-			if (!config.page.layout.blockPadding) config.page.layout.blockPadding = {};
-			config.page.layout.blockPadding.x = blockPaddingX;
-			config.page.layout.blockPadding.y = blockPaddingY;
+			// Update block padding - use preset key instead of object
+			// Map current values to preset keys
+			const paddingPreset = 
+				blockPaddingX <= 12 && blockPaddingY <= 8 ? 'tight' :
+				blockPaddingX <= 16 && blockPaddingY <= 12 ? 'default' :
+				'spacious';
+			config.page.layout.blockPadding = paddingPreset;
 			
-			// Update typography
+			// Update typography - only fontFamily (per-theme customization)
 			if (!config.tokens) config.tokens = {};
 			if (!config.tokens.typography) config.tokens.typography = {};
 			if (!config.tokens.typography.fontFamily) config.tokens.typography.fontFamily = {};
 			config.tokens.typography.fontFamily.sans = fontFamily;
-			
-			// Ensure fontSize tokens exist (required for refs to work)
-			if (!config.tokens.typography.fontSize) {
-				config.tokens.typography.fontSize = {
-					xs: 12,
-					'13': 13,
-					sm: 14,
-					'15': 15,
-					base: 16,
-					lg: 18,
-					xl: 20,
-					'2xl': 24
-				};
-			}
-			
-			// Ensure fontWeight tokens exist
-			if (!config.tokens.typography.fontWeight) {
-				config.tokens.typography.fontWeight = {
-					normal: 400,
-					medium: 500,
-					semibold: 600,
-					bold: 700
-				};
-			}
-			
-			// Ensure lineHeight tokens exist
-			if (!config.tokens.typography.lineHeight) {
-				config.tokens.typography.lineHeight = {
-					tight: 1.25,
-					normal: 1.5,
-					relaxed: 1.75
-				};
-			}
-			
-			// Update border radius in recipes
-			if (!config.recipes) config.recipes = {};
-			if (!config.recipes.link) config.recipes.link = {};
-			if (!config.recipes.link.base) config.recipes.link.base = {};
-			config.recipes.link.base.radius = `ref:tokens.radius.${blockBorderRadiusType}`;
 			
 			// Update colors
 			if (!config.semantic) config.semantic = {};
@@ -483,13 +476,7 @@
 			
 			// Update typography
 			if (!config.semantic.typography) config.semantic.typography = {};
-			if (!config.semantic.typography.body) config.semantic.typography.body = {};
 			if (!config.semantic.typography.heading) config.semantic.typography.heading = {};
-			
-			// Set default values for body (since we removed the controls)
-			config.semantic.typography.body.fontSize = `ref:tokens.typography.fontSize.base`;
-			config.semantic.typography.body.fontWeight = `ref:tokens.typography.fontWeight.normal`;
-			config.semantic.typography.body.lineHeight = `ref:tokens.typography.lineHeight.normal`;
 			
 			// Set heading values from controls
 			config.semantic.typography.heading.fontSize = `ref:tokens.typography.fontSize.${headingFontSize}`;
@@ -512,15 +499,10 @@
 			// Update more colors
 			config.semantic.color.text.muted = mutedTextColor;
 			
-			// Update background effects
+			// Update background - NEW STRUCTURE
 			if (!config.background) config.background = {};
-			if (!config.background.effects) config.background.effects = {};
-			config.background.effects.blur = bgBlur;
-			config.background.effects.brightness = bgBrightness;
-			config.background.effects.grayscale = bgGrayscale;
-			config.background.effects.overlayColor = 'ref:tokens.color.overlay.10';
 			
-			// Update background
+			// Build background value based on type
 			let bgValue = '';
 			if (bgType === 'solid') {
 				bgValue = bgSolidColor;
@@ -532,7 +514,7 @@
 						bgValue = `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
 					}
 				} else {
-					// Radial gradient - always use circle
+					// Radial gradient
 					const shape = 'circle';
 					const position = bgRadialPosition;
 					if (bgGradientMiddleEnabled) {
@@ -542,24 +524,42 @@
 					}
 				}
 			} else if (bgType === 'image') {
-				bgValue = bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
+				bgValue = bgImageUrl || '';
 			} else if (bgType === 'video') {
-				// For video, use black background (video will be rendered separately)
-				bgValue = '#000000';
+				bgValue = bgVideoUrl || '';
 			}
-			config.semantic.color.surface.page = bgValue;
 			
-			// Store video URL separately if exists
-			if (bgType === 'video' && bgVideoUrl) {
-				if (!config.background) config.background = {};
-				config.background.videoUrl = bgVideoUrl;
-			} else if (config.background?.videoUrl) {
-				delete config.background.videoUrl;
-			}
+			// Set new background structure
+			config.background.type = bgType;
+			config.background.value = bgValue;
+			
+			// Set background effects
+			if (!config.background.effects) config.background.effects = {};
+			config.background.effects.blur = bgBlur;
+			config.background.effects.brightness = bgBrightness;
+			config.background.effects.grayscale = bgGrayscale;
+			config.background.effects.overlayColor = 'ref:tokens.color.overlay.10';
+			
+			// Update semantic.color.surface.page as fallback color
+			config.semantic.color.surface.page = bgType === 'solid' ? bgSolidColor : '#000000';
 			
 			// Clean up deprecated fields
 			if (config.page?.layout?.baseFontSize) {
 				delete config.page.layout.baseFontSize;
+			}
+			
+			// Clean up removed tokens (space, radius, elevation, recipes)
+			if (config.tokens?.space) {
+				delete config.tokens.space;
+			}
+			if (config.tokens?.radius) {
+				delete config.tokens.radius;
+			}
+			if (config.tokens?.elevation) {
+				delete config.tokens.elevation;
+			}
+			if (config.recipes) {
+				delete config.recipes;
 			}
 			
 			configJson = JSON.stringify(config, null, 2);
@@ -568,7 +568,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || cardElevation || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton) {
 		updateConfig();
 	}
 
@@ -915,7 +915,6 @@
 					{primaryColor}
 					{textColor}
 					{borderColor}
-					{borderWidth}
 					{blockTextColor}
 					{shadowColor}
 					{bgType}
@@ -1012,7 +1011,6 @@
 					{primaryColor}
 					{textColor}
 					{borderColor}
-					{borderWidth}
 					{bgType}
 					{bgSolidColor}
 					{bgGradientFrom}

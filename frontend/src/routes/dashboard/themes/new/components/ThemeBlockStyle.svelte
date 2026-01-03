@@ -27,7 +27,6 @@
 	export let primaryColor: string = '#3b82f6';
 	export let textColor: string = '#18181b';
 	export let borderColor: string = '#e4e4e7';
-	export let borderWidth: number = 1;
 	export let blockTextColor: string = '#ffffff';
 	export let shadowColor: string = '#000000';
 	export let bgType: 'solid' | 'gradient' | 'image' = 'solid';
@@ -165,7 +164,7 @@
 			}
 		}
 
-		const borderStyle = border ? `${borderWidth}px solid ${border}` : 'none';
+		const borderStyle = border ? `1px solid ${border}` : 'none';
 
 		return {
 			backgroundColor: fill,
@@ -178,7 +177,7 @@
 	}
 
 	// Reactive: Recompute all styles when dependencies change
-	$: displayStyles = (mockTokens && borderWidth !== undefined && selectedShadowStyle && blockOpacity !== undefined && shadowCustom) ? recipes.reduce((acc, recipeId) => {
+	$: displayStyles = (mockTokens && selectedShadowStyle && blockOpacity !== undefined && shadowCustom) ? recipes.reduce((acc, recipeId) => {
 		acc[recipeId] = getPreviewStyle(recipeId, selectedShadowStyle, blockOpacity, !userHasAdjustedOpacity);
 		return acc;
 	}, {} as Record<BlockStylePresetId, any>) : {};
