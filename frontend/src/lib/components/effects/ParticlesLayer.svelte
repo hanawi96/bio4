@@ -3,7 +3,7 @@
 	export let size: 'small' | 'medium' | 'large' = 'medium';
 	export let color: string = '#ffffff';
 	export let speed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' = 'floating';
+	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' = 'floating';
 	
 	// Size mapping (px)
 	const sizeMap = {
@@ -23,13 +23,32 @@
 	$: particles = Array.from({ length: count }, (_, i) => ({
 		id: i,
 		left: Math.random() * 100,
-		top: Math.random() * 100, // Random vertical position for stars
+		top: (variant === 'stars' || variant === 'fireflies') ? Math.random() * 100 : 0, // Random position for stars and fireflies
 		delay: Math.random() * 5,
-		duration: variant === 'rain' 
-			? (speed === 'slow' ? 1.5 + Math.random() * 0.5 : speed === 'medium' ? 1 + Math.random() * 0.3 : 0.5 + Math.random() * 0.2)
-			: variant === 'stars'
-			? (speed === 'slow' ? 3 + Math.random() * 2 : speed === 'medium' ? 2 + Math.random() * 1 : 1 + Math.random() * 0.5)
-			: (speed === 'slow' ? 15 + Math.random() * 10 : speed === 'medium' ? 10 + Math.random() * 5 : 5 + Math.random() * 3)
+		duration:
+			variant === 'rain'
+				? speed === 'slow'
+					? 1.5 + Math.random() * 0.5
+					: speed === 'medium'
+						? 1 + Math.random() * 0.3
+						: 0.5 + Math.random() * 0.2
+				: variant === 'stars'
+					? speed === 'slow'
+						? 3 + Math.random() * 2
+						: speed === 'medium'
+							? 2 + Math.random() * 1
+							: 1 + Math.random() * 0.5
+					: variant === 'fireflies'
+						? speed === 'slow'
+							? 4 + Math.random() * 2
+							: speed === 'medium'
+								? 3 + Math.random() * 1
+								: 2 + Math.random() * 0.5
+					: speed === 'slow'
+						? 15 + Math.random() * 10
+						: speed === 'medium'
+							? 10 + Math.random() * 5
+							: 5 + Math.random() * 3
 	}));
 	
 	// Get size based on variant
@@ -42,7 +61,7 @@
 			class="particle particle-{variant}"
 			style="
 				left: {particle.left}%;
-				{variant === 'stars' ? `top: ${particle.top}%;` : ''}
+				{(variant === 'stars' || variant === 'fireflies') ? `top: ${particle.top}%;` : ''}
 				width: {particleSize.width}px;
 				height: {particleSize.height}px;
 				background-color: {color};
@@ -119,6 +138,14 @@
 			2% 35%,
 			39% 35%
 		);
+	}
+
+	/* Fireflies */
+	.particle-fireflies {
+		border-radius: 50%;
+		opacity: 0;
+		animation: fireflies-glow ease-in-out infinite;
+		box-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor;
 	}
 
 	/* Floating animation (bottom to top) */
@@ -240,6 +267,45 @@
 		}
 		100% {
 			transform: scale(0) rotate(360deg);
+			opacity: 0;
+		}
+	}
+
+	/* Fireflies animation (glow, float, fade) */
+	@keyframes fireflies-glow {
+		0% {
+			transform: translate(0, 0) scale(0.8);
+			opacity: 0;
+		}
+		5% {
+			opacity: 0.4;
+		}
+		15% {
+			transform: translate(10px, -15px) scale(1);
+			opacity: 0.9;
+		}
+		30% {
+			transform: translate(-5px, -25px) scale(1.1);
+			opacity: 1;
+		}
+		45% {
+			transform: translate(15px, -10px) scale(0.9);
+			opacity: 0.7;
+		}
+		60% {
+			transform: translate(-10px, 5px) scale(1);
+			opacity: 0.5;
+		}
+		75% {
+			transform: translate(8px, -20px) scale(1.05);
+			opacity: 0.8;
+		}
+		90% {
+			transform: translate(-3px, -8px) scale(0.85);
+			opacity: 0.3;
+		}
+		100% {
+			transform: translate(0, 0) scale(0.8);
 			opacity: 0;
 		}
 	}
