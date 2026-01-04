@@ -367,6 +367,11 @@
 		bgVideoUrl = 'https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev/background-vide-preset/14950008_1080_1920_60fps.mp4';
 	}
 
+	// Force solid background when avatar-cover is selected
+	$: if (selectedHeaderPreset === 'avatar-cover' && bgType !== 'solid') {
+		bgType = 'solid';
+	}
+
 	function updateConfig() {
 		if (!baseConfig) return;
 		
@@ -760,7 +765,39 @@
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
 							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor />
-							<ThemeBackground bind:bgType bind:bgSolidColor bind:bgGradientType bind:bgGradientFrom bind:bgGradientTo bind:bgGradientMiddle bind:bgGradientMiddleEnabled bind:bgGradientDirection bind:bgRadialShape bind:bgRadialPosition bind:bgImageUrl bind:bgVideoUrl bind:bgBlur bind:bgBrightness bind:bgGrayscale bind:bgAnimationEnabled bind:bgAnimationVariant bind:bgAnimationSpeed bind:particlesEnabled bind:particlesCount bind:particlesSize bind:particlesColor bind:particlesSpeed bind:particlesVariant bind:particlesBlur bind:particlesOpacity {uploading} on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)} on:videoUpload={handleVideoUpload} on:videoRemove={handleVideoRemove} />
+							<ThemeBackground 
+								bind:bgType 
+								bind:bgSolidColor 
+								bind:bgGradientType 
+								bind:bgGradientFrom 
+								bind:bgGradientTo 
+								bind:bgGradientMiddle 
+								bind:bgGradientMiddleEnabled 
+								bind:bgGradientDirection 
+								bind:bgRadialShape 
+								bind:bgRadialPosition 
+								bind:bgImageUrl 
+								bind:bgVideoUrl 
+								bind:bgBlur 
+								bind:bgBrightness 
+								bind:bgGrayscale 
+								bind:bgAnimationEnabled 
+								bind:bgAnimationVariant 
+								bind:bgAnimationSpeed 
+								bind:particlesEnabled 
+								bind:particlesCount 
+								bind:particlesSize 
+								bind:particlesColor 
+								bind:particlesSpeed 
+								bind:particlesVariant 
+								bind:particlesBlur 
+								bind:particlesOpacity 
+								{uploading} 
+								{selectedHeaderPreset}
+								on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)} 
+								on:videoUpload={handleVideoUpload} 
+								on:videoRemove={handleVideoRemove} 
+							/>
 							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
 							<ThemeBlockStyle bind:selectedBlockStyle bind:selectedShadowStyle bind:blockOpacity bind:shadowCustom bind:selectedLinkIconShape bind:selectedGradientPreset bind:borderWidth {primaryColor} {textColor} {borderColor} {blockTextColor} {shadowColor} {bgType} {bgSolidColor} {bgGradientFrom} {bgGradientTo} {bgGradientDirection} {bgImageUrl} />
 							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize bind:titleGlowEnabled bind:titleGlowColor {primaryColor} />

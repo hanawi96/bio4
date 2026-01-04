@@ -204,6 +204,54 @@
 	})();
 	
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
+	
+	// Extract solid color from backgroundValue for mask gradient
+	$: maskBaseColor = (() => {
+		if (!isAvatarCover) return 'rgba(0, 0, 0, 1)';
+		
+		// If backgroundValue is a hex color
+		if (backgroundValue.match(/^#[0-9a-fA-F]{6}$/)) {
+			return backgroundValue;
+		}
+		
+		// If it's rgb/rgba
+		if (backgroundValue.startsWith('rgb')) {
+			return backgroundValue;
+		}
+		
+		// Fallback to black
+		return '#000000';
+	})();
+	
+	// Convert hex to rgba for gradient
+	$: maskGradientColors = (() => {
+		if (!isAvatarCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
+		
+		let r = 0, g = 0, b = 0;
+		
+		// Parse hex color
+		if (maskBaseColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			r = parseInt(maskBaseColor.slice(1, 3), 16);
+			g = parseInt(maskBaseColor.slice(3, 5), 16);
+			b = parseInt(maskBaseColor.slice(5, 7), 16);
+		}
+		// Parse rgb/rgba
+		else if (maskBaseColor.startsWith('rgb')) {
+			const match = maskBaseColor.match(/\d+/g);
+			if (match && match.length >= 3) {
+				r = parseInt(match[0]);
+				g = parseInt(match[1]);
+				b = parseInt(match[2]);
+			}
+		}
+		
+		return {
+			solid: `rgba(${r}, ${g}, ${b}, 1)`,
+			dark: `rgba(${r}, ${g}, ${b}, 0.8)`,
+			medium: `rgba(${r}, ${g}, ${b}, 0.4)`
+		};
+	})();
+	
 	$: blockGap = resolveBlockGap(
 		$previewAppearanceState.overrides?.['page.blockGap'] 
 		?? $previewAppearance?.theme?.config?.page?.layout?.blockGap
@@ -392,6 +440,59 @@
 
 </script>
 
+<!-- DEBUG PANEL - Outside mockup -->
+{#if isAvatarCover}
+	<div class="fixed top-4 right-4 z-[9999] space-y-2 max-w-xs">
+		<!-- Cover Info -->
+		<div class="bg-blue-500 text-white p-3 rounded-lg shadow-xl text-xs font-mono">
+			<div class="font-bold mb-2 text-sm">📱 COVER INFO</div>
+			<div>Height: {coverHeight}px</div>
+			<div>Overlay: rgba(0,0,0,0.7) at 100%</div>
+			<div class="mt-2 pt-2 border-t border-blue-300">
+				<div class="text-blue-100">Gradient stops:</div>
+				<div>• 0%: transparent</div>
+				<div>• 20%: transparent</div>
+				<div>• 60%: rgba(0,0,0,0.4)</div>
+				<div>• 100%: rgba(0,0,0,0.7)</div>
+			</div>
+		</div>
+		
+		<!-- Mask Info -->
+		<div class="bg-green-500 text-white p-3 rounded-lg shadow-xl text-xs font-mono">
+			<div class="font-bold mb-2 text-sm">🎭 BOTTOM MASK INFO</div>
+			<div>Position: bottom of cover</div>
+			<div>Height: 100px</div>
+			<div>Direction: to top (↑)</div>
+			<div class="mt-2 pt-2 border-t border-green-300">
+				<div class="text-green-100">Base color:</div>
+				<div>• maskBaseColor: {maskBaseColor}</div>
+			</div>
+			<div class="mt-2 pt-2 border-t border-green-300">
+				<div class="text-green-100">Gradient stops:</div>
+				<div>• 0% (bottom): {maskGradientColors.solid}</div>
+				<div>• 30%: {maskGradientColors.dark}</div>
+				<div>• 60%: {maskGradientColors.medium}</div>
+				<div>• 100% (top): transparent</div>
+			</div>
+		</div>
+		
+		<!-- Container Info -->
+		<div class="bg-yellow-500 text-black p-3 rounded-lg shadow-xl text-xs font-mono">
+			<div class="font-bold mb-2 text-sm">📦 CONTAINER INFO</div>
+			<div>isAvatarCover: {isAvatarCover}</div>
+			<div>pagePadding: {pagePadding}px</div>
+			<div>margin-top: -100px</div>
+			<div>padding-top: 100px</div>
+			<div class="mt-2 pt-2 border-t border-yellow-600">
+				<div class="font-semibold">Calculation:</div>
+				<div>Cover ends at: {coverHeight}px</div>
+				<div>Mask starts at: {coverHeight - 20}px</div>
+				<div>Mask ends at: {coverHeight - 20 + 120}px</div>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <!-- Phone Frame -->
 <div class="relative scale-125">
 	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
@@ -498,8 +599,12 @@
 								style="{coverStyle} height: {coverHeight}px;"
 							>
 								{#if isAvatarCover}
-									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 30%, {overlayGradientColor} 100%);"></div>
-									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);"></div>
+									<!-- Layer 1: Main gradient overlay - fade from transparent to dark -->
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.7) 100%); border: 2px solid blue;"></div>
+									<!-- Layer 2: Subtle vignette for depth -->
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.15) 50%, transparent 100%);"></div>
+									<!-- Layer 3: Bottom fade mask - đậm ở dưới, nhạt lên trên (đồng bộ với background color) -->
+									<div class="absolute left-0 right-0 bottom-0 pointer-events-none" style="height: 100px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%); border: 2px solid green;"></div>
 									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
 										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
 										{#if header.showBio && $previewPage?.bio}
@@ -670,15 +775,8 @@
 					<!-- Links - với negative margin và gradient mask cho avatar-cover -->
 					<div 
 						class="relative"
-						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -60px; padding-top: 80px;` : 'margin-top: 24px;'}"
+						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -100px; padding-top: 100px;` : 'margin-top: 24px;'}"
 					>
-						<!-- Gradient mask - nối liền với overlay trên avatar -->
-						{#if isAvatarCover}
-							<div 
-								class="absolute pointer-events-none z-10 -mx-4"
-								style="left: 0; right: 0; top: -24px; height: 60px; background: linear-gradient(to bottom, transparent 0%, {backgroundValue || '#ffffff'} 100%);"
-							></div>
-						{/if}
 						
 						{#if linkGroupLayout === 'grid'}
 							<!-- Grid Layout -->

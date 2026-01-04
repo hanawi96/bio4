@@ -454,6 +454,11 @@
 		bgVideoUrl = 'https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev/background-vide-preset/14950008_1080_1920_60fps.mp4';
 	}
 
+	// Force solid background when avatar-cover is selected
+	$: if (selectedHeaderPreset === 'avatar-cover' && bgType !== 'solid') {
+		bgType = 'solid';
+	}
+
 	// Update JSON when fields change
 	function updateConfig() {
 		if (!baseConfig) return; // Wait for base config to load
@@ -958,6 +963,7 @@
 					bind:particlesBlur
 					bind:particlesOpacity
 					{uploading}
+					{selectedHeaderPreset}
 					on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)}
 					on:videoUpload={handleVideoUpload}
 					on:videoRemove={handleVideoRemove}
