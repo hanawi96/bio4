@@ -189,12 +189,48 @@
 	$: tokens = $appearance?.tokens;
 
 	// Avatar size mapping
-	const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 120 };
+	const avatarSizes = { xs: 48, sm: 64, md: 80, lg: 96, xl: 120, full: 0 };
 	$: avatarSize = header ? avatarSizes[header.avatarSize] : 80;
+	$: isFullSizeAvatar = header?.avatarSize === 'full';
 	
-	// Avatar dimensions for oval shape (xl size)
-	$: avatarWidth = header?.avatarShape === 'oval' && header?.avatarSize === 'xl' ? 128 : avatarSize;
-	$: avatarHeight = header?.avatarShape === 'oval' && header?.avatarSize === 'xl' ? 160 : avatarSize;
+	// Smart aspect ratio calculation for full size avatars
+	$: fullSizeAspectRatio = (() => {
+		if (!isFullSizeAvatar) return null;
+		const shape = header?.avatarShape;
+		if (shape === 'circle') return '1/1'; // Square for perfect circle
+		if (shape === 'oval') return '4/5'; // Slightly taller oval (more rounded)
+		if (shape === 'portrait') return '3/4'; // Portrait rectangle
+		if (shape === 'landscape') return '4/3'; // Landscape rectangle
+		if (shape === 'rounded') return '1/1'; // Square with rounded corners
+		if (shape === 'square') return '1/1'; // Perfect square
+		return '1/1'; // Default to square
+	})();
+	
+	// Avatar dimensions for oval shape
+	$: avatarWidth = (() => {
+		if (isFullSizeAvatar) return '100%';
+		if (header?.avatarShape === 'oval') return Math.round(avatarSize * 1.067);
+		return avatarSize;
+	})();
+	$: avatarHeight = (() => {
+		if (isFullSizeAvatar) return 'auto';
+		if (header?.avatarShape === 'oval') return Math.round(avatarSize * 1.333);
+		return avatarSize;
+	})();
+	
+	// Smart overlap position calculation for full size avatars
+	$: avatarOverlapOffset = (() => {
+		if (!isFullSizeAvatar || header?.avatarPosition !== 'overlap') return avatarHeight / 2;
+		
+		// For full size avatars, calculate offset based on aspect ratio
+		// We want about 35% of the avatar to overlap below the cover
+		const containerWidth = 280 - (pagePadding * 2); // Phone width minus padding
+		const aspectRatio = fullSizeAspectRatio?.split('/').map(Number) || [1, 1];
+		const avatarHeightPx = containerWidth * (aspectRatio[1] / aspectRatio[0]);
+		
+		// Return 35% of avatar height for nice overlap effect
+		return Math.round(avatarHeightPx * 0.35);
+	})();
 
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
@@ -205,6 +241,8 @@
 		if (shape === 'circle') return '50%';
 		if (shape === 'rounded') return '20%';
 		if (shape === 'oval') return '50%';
+		if (shape === 'portrait') return '8%';
+		if (shape === 'landscape') return '8%';
 		return '0';
 	}
 
@@ -657,15 +695,14 @@
 							
 							<!-- Avatar (Overlapping) - Hidden for avatar-cover -->
 							{#if header.avatarPosition === 'overlap' && !isAvatarCover}
-								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarHeight / 2}px;">
+								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarOverlapOffset}px;">
 									{#if $page?.avatar_url}
 										<img 
 											src={$page.avatar_url} 
 											alt="Avatar" 
-											class="header-avatar object-cover"
+											class="header-avatar object-cover {isFullSizeAvatar ? 'w-full' : ''}"
 											style="
-												width: {avatarWidth}px;
-												height: {avatarHeight}px;
+												{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
 												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
 												border-radius: {getAvatarBorderRadius(header.avatarShape)};
 												box-shadow: {avatarGlow};
@@ -673,14 +710,13 @@
 										/>
 									{:else}
 										<div 
-											class="header-avatar flex items-center justify-center text-white font-bold"
+											class="header-avatar flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
 											style="
-												width: {avatarWidth}px;
-												height: {avatarHeight}px;
+												{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
 												background: {tokens?.primaryColor || '#3b82f6'};
 												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
 												border-radius: {getAvatarBorderRadius(header.avatarShape)};
-												font-size: {avatarSize / 2.5}px;
+												font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`};
 												box-shadow: {avatarGlow};
 											"
 										>
@@ -693,7 +729,7 @@
 						
 						<!-- Content below cover (only for non-avatar-cover) -->
 						{#if !isAvatarCover}
-							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarHeight / 2 + 8 : 0}px; text-align: {header.contentAlign};">
+							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign};">
 								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
 								{#if header.showBio && $page?.bio}
 									<p 
@@ -715,52 +751,157 @@
 						{/if}
 					{:else}
 						<!-- No Cover - Simple Header -->
-						<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
-							{#if $page?.avatar_url}
-								<img 
-									src={$page.avatar_url} 
-									alt="Avatar" 
-									class="header-avatar object-cover mb-2"
-									style="
-										width: {avatarWidth}px;
-										height: {avatarHeight}px;
-										{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
-										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
-									"
-								/>
-							{:else}
-								<div 
-									class="header-avatar mb-2 flex items-center justify-center text-white font-bold"
-									style="
-										width: {avatarWidth}px;
-										height: {avatarHeight}px;
-										background: {tokens?.primaryColor || '#3b82f6'};
-										{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
-										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
-										font-size: {avatarSize / 2.5}px;
-									"
-								>
-									{($page?.title || 'U').charAt(0).toUpperCase()}
+						{#if header?.avatarPosition === 'split-left'}
+							<!-- Split Screen Layout -->
+							<div class="flex gap-4" style="text-align: left;">
+								<!-- Avatar Section (40% width) -->
+								<div class="flex-shrink-0" style="width: 40%;">
+									<div class="w-full aspect-square">
+										{#if $page?.avatar_url}
+											<img 
+												src={$page.avatar_url} 
+												alt="Avatar" 
+												class="w-full h-full object-cover"
+												style="{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: 20%; box-shadow: {avatarGlow};"
+											/>
+										{:else}
+											<div 
+												class="w-full h-full flex items-center justify-center text-white font-bold"
+												style="background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: 20%; font-size: {avatarSize / 2}px; box-shadow: {avatarGlow};"
+											>
+												{($page?.title || 'U').charAt(0).toUpperCase()}
+											</div>
+										{/if}
+									</div>
 								</div>
-							{/if}
-							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
-							{#if header?.showBio && $page?.bio}
-								<p 
-									class="bio-text mt-1"
-									style="
-										color: {tokens?.mutedTextColor || '#71717a'};
-										font-size: {bioFontSizePx}px;
-										line-height: 1.5;
-										display: -webkit-box;
-										-webkit-line-clamp: {header.bioMaxLines};
-										-webkit-box-orient: vertical;
-										overflow: hidden;
-									"
-								>
-									{$page.bio}
-								</p>
-							{/if}
-						</div>
+								
+								<!-- Content Section (60% width) -->
+								<div class="flex-1 flex flex-col justify-center min-w-0">
+									<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; text-align: left;">{$page?.title || 'Your Name'}</h1>
+									{#if header.showBio && $page?.bio}
+										<p 
+											class="bio-text mt-1"
+											style="
+												color: {tokens?.mutedTextColor || '#71717a'};
+												font-size: {bioFontSizePx}px;
+												line-height: 1.5;
+												display: -webkit-box;
+												-webkit-line-clamp: {header.bioMaxLines};
+												-webkit-box-orient: vertical;
+												overflow: hidden;
+												text-align: left;
+											"
+										>
+											{$page.bio}
+										</p>
+									{/if}
+								</div>
+							</div>
+						{:else if header?.avatarPosition === 'inline-left'}
+							<!-- Minimal Compact Layout -->
+							<div class="flex items-start gap-2" style="text-align: left; {isFullSizeAvatar ? 'flex-direction: column;' : ''}">
+								<!-- Avatar -->
+								<div class="{isFullSizeAvatar ? 'w-full' : 'flex-shrink-0'}">
+									{#if $page?.avatar_url}
+										<img 
+											src={$page.avatar_url} 
+											alt="Avatar" 
+											class="header-avatar object-cover {isFullSizeAvatar ? 'w-full' : ''}"
+											style="
+												{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
+												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
+												border-radius: {getAvatarBorderRadius(header.avatarShape)};
+												box-shadow: {avatarGlow};
+											"
+										/>
+									{:else}
+										<div 
+											class="header-avatar flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
+											style="
+												{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
+												background: {tokens?.primaryColor || '#3b82f6'};
+												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
+												border-radius: {getAvatarBorderRadius(header.avatarShape)};
+												font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`};
+												box-shadow: {avatarGlow};
+											"
+										>
+											{($page?.title || 'U').charAt(0).toUpperCase()}
+										</div>
+									{/if}
+								</div>
+								
+								<!-- Text Content -->
+								<div class="flex-1 min-w-0">
+									<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; text-align: left;">{$page?.title || 'Your Name'}</h1>
+									{#if header.showBio && $page?.bio}
+										<p 
+											class="bio-text mt-0.5"
+											style="
+												color: {tokens?.mutedTextColor || '#71717a'};
+												font-size: {bioFontSizePx}px;
+												line-height: 1.4;
+												display: -webkit-box;
+												-webkit-line-clamp: {header.bioMaxLines};
+												-webkit-box-orient: vertical;
+												overflow: hidden;
+												text-align: left;
+											"
+										>
+											{$page.bio}
+										</p>
+									{/if}
+								</div>
+							</div>
+						{:else}
+							<!-- Center Layout -->
+							<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
+								{#if $page?.avatar_url}
+									<img 
+										src={$page.avatar_url} 
+										alt="Avatar" 
+										class="header-avatar object-cover mb-2 {isFullSizeAvatar ? 'w-full' : ''}"
+										style="
+											{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
+											{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
+											border-radius: {getAvatarBorderRadius(header?.avatarShape)};
+											box-shadow: {avatarGlow};
+										"
+									/>
+								{:else}
+									<div 
+										class="header-avatar mb-2 flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
+										style="
+											{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
+											background: {tokens?.primaryColor || '#3b82f6'};
+											{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
+											border-radius: {getAvatarBorderRadius(header?.avatarShape)};
+											font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`};
+											box-shadow: {avatarGlow};
+										"
+									>
+										{($page?.title || 'U').charAt(0).toUpperCase()}
+									</div>
+								{/if}
+								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
+								{#if header?.showBio && $page?.bio}
+									<p 
+										class="bio-text mt-1"
+										style="
+											color: {tokens?.mutedTextColor || '#71717a'};
+											font-size: {bioFontSizePx}px;
+											line-height: 1.5;
+											display: -webkit-box;
+											-webkit-line-clamp: {header.bioMaxLines};
+											-webkit-box-orient: vertical;
+											overflow: hidden;
+										"
+									>
+										{$page.bio}
+									</p>
+								{/if}
+							</div>
+						{/if}
 					{/if}
 
 					<!-- Social Icons (Header Position) -->
@@ -769,7 +910,7 @@
 						{@const hasSocialLinks = Object.values(socialLinks).some(link => link && link.trim())}
 						
 						{#if hasSocialLinks}
-							<div class="flex items-center justify-center gap-3 mt-1.5">
+							<div class="flex items-center gap-3 mt-1.5" style="justify-content: {header?.avatarPosition === 'inline-left' || header?.avatarPosition === 'split-left' ? 'flex-start' : 'center'};">
 								{#if socialLinks.instagram}
 									<a href="https://{socialLinks.instagram}" target="_blank" rel="noopener" class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
 										<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

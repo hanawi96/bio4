@@ -1,6 +1,12 @@
 import type { Theme, HeaderPreset, BlockPreset } from './types';
 
 // ============================================
+// CONSTANTS
+// ============================================
+
+export const DEFAULT_COVER_IMAGE = '/presets/images/cover-demo.jpg';
+
+// ============================================
 // FALLBACK THEME (Used when themes store is not loaded yet)
 // ============================================
 
@@ -50,25 +56,6 @@ export const FALLBACK_THEME: Theme = {
 // ============================================
 
 export const HEADER_PRESETS: Record<string, HeaderPreset> = {
-	'with-cover': {
-		id: 'with-cover',
-		name: 'With Cover',
-		description: 'Header with cover image and overlapping avatar',
-		hasCover: true,
-		coverHeight: 'md',
-		coverType: 'image', // Default cover type
-		coverValue: '/presets/images/cover-demo.jpg', // Default demo image
-		avatarSize: 'lg',
-		avatarShape: 'circle',
-		avatarPosition: 'overlap',
-		avatarBorder: true, // Has border to stand out on cover
-		avatarBorderColor: '#ffffff',
-		contentAlign: 'center',
-		showBio: true,
-		bioMaxLines: 3,
-		spacing: 'comfortable'
-	},
-
 	'no-cover': {
 		id: 'no-cover',
 		name: 'No Cover',
@@ -77,43 +64,77 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		avatarSize: 'lg',
 		avatarShape: 'circle',
 		avatarPosition: 'center',
-		avatarBorder: false, // No border for clean look
+		avatarBorder: false,
 		contentAlign: 'center',
 		showBio: true,
 		bioMaxLines: 3,
 		spacing: 'comfortable'
 	},
 
-	'centered-large': {
-		id: 'centered-large',
-		name: 'Centered Large',
-		description: 'Large oval avatar with spacious layout',
-		hasCover: false,
-		avatarSize: 'xl',
-		avatarShape: 'oval',
-		avatarPosition: 'center',
-		avatarBorder: false,
+	'with-cover': {
+		id: 'with-cover',
+		name: 'With Cover',
+		description: 'Header with cover image and overlapping avatar',
+		hasCover: true,
+		coverHeight: 'md',
+		coverType: 'image',
+		coverValue: '/presets/images/cover-demo.jpg',
+		avatarSize: 'lg',
+		avatarShape: 'circle',
+		avatarPosition: 'overlap',
+		avatarBorder: true,
+		avatarBorderColor: '#ffffff',
 		contentAlign: 'center',
 		showBio: true,
 		bioMaxLines: 3,
-		spacing: 'spacious'
+		spacing: 'comfortable'
 	},
 
 	'avatar-cover': {
 		id: 'avatar-cover',
 		name: 'Avatar Cover',
 		description: 'Full-screen avatar with text overlay',
-		hasCover: true, // Use cover system but source from avatar
+		hasCover: true,
 		coverHeight: 'lg',
-		coverType: 'image', // Default cover type
-		coverValue: '/presets/images/cover-demo.jpg', // Default demo image
-		avatarSize: 'sm', // Hidden, not displayed
+		coverType: 'image',
+		coverValue: '/presets/images/cover-demo.jpg',
+		avatarSize: 'sm',
 		avatarShape: 'circle',
 		avatarPosition: 'center',
 		avatarBorder: false,
 		contentAlign: 'center',
 		showBio: true,
 		bioMaxLines: 2,
+		spacing: 'comfortable'
+	},
+
+	inline: {
+		id: 'inline',
+		name: 'Inline',
+		description: 'Avatar and text side by side',
+		hasCover: false,
+		avatarSize: 'sm',
+		avatarShape: 'circle',
+		avatarPosition: 'inline-left',
+		avatarBorder: false,
+		contentAlign: 'left',
+		showBio: true,
+		bioMaxLines: 2,
+		spacing: 'compact'
+	},
+
+	split: {
+		id: 'split',
+		name: 'Split',
+		description: 'Avatar on left, content on right',
+		hasCover: false,
+		avatarSize: 'md',
+		avatarShape: 'rounded',
+		avatarPosition: 'split-left',
+		avatarBorder: false,
+		contentAlign: 'left',
+		showBio: true,
+		bioMaxLines: 3,
 		spacing: 'comfortable'
 	}
 };

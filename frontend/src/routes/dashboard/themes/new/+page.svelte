@@ -38,6 +38,11 @@
 	
 	// Quick edit fields
 	let selectedHeaderPreset = 'no-cover';
+	let avatarSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
+	let avatarShape: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape' = 'circle';
+	let contentAlign: 'left' | 'center' | 'right' = 'center';
+	let bioMaxLines: number = 3;
+	let headerSpacing: 'compact' | 'comfortable' | 'spacious' = 'comfortable';
 	let avatarBorderColor = '#ffffff';
 	let avatarBorderWidth: AvatarBorderWidthKey | number = 'default';
 	let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient' = 'solid';
@@ -215,6 +220,8 @@
 		category = theme.config.meta?.category || 'minimal';
 		tier = theme.config.meta?.tier || 'free';
 		selectedHeaderPreset = theme.config.page?.defaults?.headerPresetId || 'no-cover';
+		avatarSize = theme.config.page?.defaults?.avatarSize || 'md';
+		avatarShape = theme.config.page?.defaults?.avatarShape || 'circle';
 		avatarBorderColor = theme.config.page?.defaults?.avatarBorderColor || '#ffffff';
 		avatarBorderWidth = theme.config.page?.defaults?.avatarBorderWidth || 4;
 		selectedBlockStyle = theme.config.page?.defaults?.blockStylePreset || 'solid';
@@ -462,6 +469,8 @@
 			
 			// Set properties in desired order
 			config.page.defaults.headerPresetId = selectedHeaderPreset;
+			config.page.defaults.avatarSize = avatarSize;
+			config.page.defaults.avatarShape = avatarShape;
 			config.page.defaults.blockStylePreset = selectedBlockStyle;
 			if (oldDefaults.linkStyle !== undefined) config.page.defaults.linkStyle = oldDefaults.linkStyle;
 			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
@@ -648,7 +657,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 
@@ -688,7 +697,9 @@
 					'page.blockPaddingY': blockPaddingY,
 					'block.borderRadius': radiusValue,
 					'header.titleFontFamily': headingFontFamily || fontFamily,
-					'header.coverValue': coverImageUrl || undefined,
+					...(coverImageUrl ? { 'header.coverValue': coverImageUrl } : {}),
+					'header.avatarSize': avatarSize,
+					'header.avatarShape': avatarShape,
 					'header.avatarBorderColor': avatarBorderColor,
 					'header.avatarBorderWidth': avatarBorderWidth,
 					'backgroundColor': backgroundValue,
@@ -955,6 +966,8 @@
 				<!-- Header Style -->
 				<HeaderStyleManager
 					bind:selectedHeaderPreset
+					bind:avatarSize
+					bind:avatarShape
 					bind:coverImageUrl
 					bind:avatarBorderColor
 					bind:avatarBorderWidth
@@ -1042,7 +1055,7 @@
 	<!-- Right: Preview -->
 	<div class="w-[520px] flex-shrink-0 -mr-8 pr-8">
 		<div class="sticky top-8">
-			<div class="pt-16 pb-8">
+			<div class="pt-24 pb-8">
 				<div class="flex items-center justify-center">
 					<ThemePreviewMockup />
 				</div>
