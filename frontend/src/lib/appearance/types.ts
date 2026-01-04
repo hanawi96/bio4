@@ -106,14 +106,13 @@ export interface HeaderPreset {
 	// Avatar settings
 	avatarSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'; // 48px, 64px, 80px, 96px, 120px, 100%
 	avatarShape: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape';
-	avatarPosition: 'center' | 'overlap' | 'inline-left' | 'split-left'; // split-left = avatar chiếm 40% bên trái
+	avatarPosition: 'center' | 'overlap';
 	avatarBorder?: boolean; // Has border or not
 	avatarBorderColor?: string; // Border color (default: white)
 	
 	// Content layout
 	contentAlign: 'center' | 'left';
 	showBio: boolean;
-	bioMaxLines: number;
 	
 	// Spacing
 	spacing: 'compact' | 'comfortable' | 'spacious';
@@ -140,7 +139,7 @@ export interface HeaderOverrides {
 	coverValue?: string; // Color hex, gradient CSS, or image URL
 	avatarSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 	avatarShape?: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape';
-	avatarPosition?: 'center' | 'overlap' | 'inline-left' | 'split-left';
+	avatarPosition?: 'center' | 'overlap';
 	avatarBorder?: boolean; // Override border visibility
 	avatarBorderColor?: string; // Override border color
 	contentAlign?: 'center' | 'left';

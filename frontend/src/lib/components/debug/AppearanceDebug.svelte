@@ -152,12 +152,6 @@
 			status: compareValue($appearance.header.showBio, !!document.querySelector('.bio-text'))
 		},
 		{
-			name: 'Bio Max Lines',
-			expected: $appearance.header.bioMaxLines.toString(),
-			actual: getComputedValue('.bio-text', '-webkit-line-clamp') || 'N/A',
-			status: compareValue($appearance.header.bioMaxLines, getComputedValue('.bio-text', '-webkit-line-clamp'))
-		},
-		{
 			name: 'Spacing',
 			expected: $appearance.header.spacing,
 			actual: $appearance.header.spacing,

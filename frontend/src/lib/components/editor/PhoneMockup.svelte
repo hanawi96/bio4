@@ -680,10 +680,6 @@
 												style="
 													font-size: {bioFontSizePx}px;
 													line-height: 1.5;
-													display: -webkit-box;
-													-webkit-line-clamp: {header.bioMaxLines};
-													-webkit-box-orient: vertical;
-													overflow: hidden;
 												"
 											>
 												{$page.bio}
@@ -738,9 +734,7 @@
 											color: {tokens?.mutedTextColor || '#71717a'};
 											font-size: {bioFontSizePx}px;
 											line-height: 1.5;
-											display: -webkit-box;
-											-webkit-line-clamp: {header.bioMaxLines};
-											-webkit-box-orient: vertical;
+											display: -webkit-box;											-webkit-box-orient: vertical;
 											overflow: hidden;
 										"
 									>
@@ -750,158 +744,51 @@
 							</div>
 						{/if}
 					{:else}
-						<!-- No Cover - Simple Header -->
-						{#if header?.avatarPosition === 'split-left'}
-							<!-- Split Screen Layout -->
-							<div class="flex gap-4" style="text-align: left;">
-								<!-- Avatar Section (40% width) -->
-								<div class="flex-shrink-0" style="width: 40%;">
-									<div class="w-full aspect-square">
-										{#if $page?.avatar_url}
-											<img 
-												src={$page.avatar_url} 
-												alt="Avatar" 
-												class="w-full h-full object-cover"
-												style="{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: 20%; box-shadow: {avatarGlow};"
-											/>
-										{:else}
-											<div 
-												class="w-full h-full flex items-center justify-center text-white font-bold"
-												style="background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: 20%; font-size: {avatarSize / 2}px; box-shadow: {avatarGlow};"
-											>
-												{($page?.title || 'U').charAt(0).toUpperCase()}
-											</div>
-										{/if}
-									</div>
+						<!-- No Cover - Center Layout -->
+						<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
+							{#if $page?.avatar_url}
+								<img 
+									src={$page.avatar_url} 
+									alt="Avatar" 
+									class="header-avatar object-cover mb-2 {isFullSizeAvatar ? 'w-full' : ''}"
+									style="
+										{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
+										{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
+										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
+										box-shadow: {avatarGlow};
+									"
+								/>
+							{:else}
+								<div 
+									class="header-avatar mb-2 flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
+									style="
+										{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
+										background: {tokens?.primaryColor || '#3b82f6'};
+										{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
+										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
+										font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`};
+										box-shadow: {avatarGlow};
+									"
+								>
+									{($page?.title || 'U').charAt(0).toUpperCase()}
 								</div>
-								
-								<!-- Content Section (60% width) -->
-								<div class="flex-1 flex flex-col justify-center min-w-0">
-									<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; text-align: left;">{$page?.title || 'Your Name'}</h1>
-									{#if header.showBio && $page?.bio}
-										<p 
-											class="bio-text mt-1"
-											style="
-												color: {tokens?.mutedTextColor || '#71717a'};
-												font-size: {bioFontSizePx}px;
-												line-height: 1.5;
-												display: -webkit-box;
-												-webkit-line-clamp: {header.bioMaxLines};
-												-webkit-box-orient: vertical;
-												overflow: hidden;
-												text-align: left;
-											"
-										>
-											{$page.bio}
-										</p>
-									{/if}
-								</div>
-							</div>
-						{:else if header?.avatarPosition === 'inline-left'}
-							<!-- Minimal Compact Layout -->
-							<div class="flex items-start gap-2" style="text-align: left; {isFullSizeAvatar ? 'flex-direction: column;' : ''}">
-								<!-- Avatar -->
-								<div class="{isFullSizeAvatar ? 'w-full' : 'flex-shrink-0'}">
-									{#if $page?.avatar_url}
-										<img 
-											src={$page.avatar_url} 
-											alt="Avatar" 
-											class="header-avatar object-cover {isFullSizeAvatar ? 'w-full' : ''}"
-											style="
-												{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
-												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
-												border-radius: {getAvatarBorderRadius(header.avatarShape)};
-												box-shadow: {avatarGlow};
-											"
-										/>
-									{:else}
-										<div 
-											class="header-avatar flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
-											style="
-												{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
-												background: {tokens?.primaryColor || '#3b82f6'};
-												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
-												border-radius: {getAvatarBorderRadius(header.avatarShape)};
-												font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`};
-												box-shadow: {avatarGlow};
-											"
-										>
-											{($page?.title || 'U').charAt(0).toUpperCase()}
-										</div>
-									{/if}
-								</div>
-								
-								<!-- Text Content -->
-								<div class="flex-1 min-w-0">
-									<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; text-align: left;">{$page?.title || 'Your Name'}</h1>
-									{#if header.showBio && $page?.bio}
-										<p 
-											class="bio-text mt-0.5"
-											style="
-												color: {tokens?.mutedTextColor || '#71717a'};
-												font-size: {bioFontSizePx}px;
-												line-height: 1.4;
-												display: -webkit-box;
-												-webkit-line-clamp: {header.bioMaxLines};
-												-webkit-box-orient: vertical;
-												overflow: hidden;
-												text-align: left;
-											"
-										>
-											{$page.bio}
-										</p>
-									{/if}
-								</div>
-							</div>
-						{:else}
-							<!-- Center Layout -->
-							<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
-								{#if $page?.avatar_url}
-									<img 
-										src={$page.avatar_url} 
-										alt="Avatar" 
-										class="header-avatar object-cover mb-2 {isFullSizeAvatar ? 'w-full' : ''}"
-										style="
-											{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
-											{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
-											border-radius: {getAvatarBorderRadius(header?.avatarShape)};
-											box-shadow: {avatarGlow};
-										"
-									/>
-								{:else}
-									<div 
-										class="header-avatar mb-2 flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
-										style="
-											{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
-											background: {tokens?.primaryColor || '#3b82f6'};
-											{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
-											border-radius: {getAvatarBorderRadius(header?.avatarShape)};
-											font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`};
-											box-shadow: {avatarGlow};
-										"
-									>
-										{($page?.title || 'U').charAt(0).toUpperCase()}
-									</div>
-								{/if}
-								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
-								{#if header?.showBio && $page?.bio}
-									<p 
-										class="bio-text mt-1"
-										style="
-											color: {tokens?.mutedTextColor || '#71717a'};
-											font-size: {bioFontSizePx}px;
-											line-height: 1.5;
-											display: -webkit-box;
-											-webkit-line-clamp: {header.bioMaxLines};
-											-webkit-box-orient: vertical;
-											overflow: hidden;
-										"
-									>
-										{$page.bio}
-									</p>
-								{/if}
-							</div>
-						{/if}
+							{/if}
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
+							{#if header?.showBio && $page?.bio}
+								<p 
+									class="bio-text mt-1"
+									style="
+										color: {tokens?.mutedTextColor || '#71717a'};
+										font-size: {bioFontSizePx}px;
+										line-height: 1.5;
+										display: -webkit-box;										-webkit-box-orient: vertical;
+										overflow: hidden;
+									"
+								>
+									{$page.bio}
+								</p>
+							{/if}
+						</div>
 					{/if}
 
 					<!-- Social Icons (Header Position) -->
@@ -910,7 +797,7 @@
 						{@const hasSocialLinks = Object.values(socialLinks).some(link => link && link.trim())}
 						
 						{#if hasSocialLinks}
-							<div class="flex items-center gap-3 mt-1.5" style="justify-content: {header?.avatarPosition === 'inline-left' || header?.avatarPosition === 'split-left' ? 'flex-start' : 'center'};">
+							<div class="flex items-center gap-3 mt-1.5" style="justify-content: center;">
 								{#if socialLinks.instagram}
 									<a href="https://{socialLinks.instagram}" target="_blank" rel="noopener" class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
 										<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

@@ -67,7 +67,6 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		avatarBorder: false,
 		contentAlign: 'center',
 		showBio: true,
-		bioMaxLines: 3,
 		spacing: 'comfortable'
 	},
 
@@ -86,7 +85,6 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		avatarBorderColor: '#ffffff',
 		contentAlign: 'center',
 		showBio: true,
-		bioMaxLines: 3,
 		spacing: 'comfortable'
 	},
 
@@ -104,37 +102,6 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		avatarBorder: false,
 		contentAlign: 'center',
 		showBio: true,
-		bioMaxLines: 2,
-		spacing: 'comfortable'
-	},
-
-	inline: {
-		id: 'inline',
-		name: 'Inline',
-		description: 'Avatar and text side by side',
-		hasCover: false,
-		avatarSize: 'sm',
-		avatarShape: 'circle',
-		avatarPosition: 'inline-left',
-		avatarBorder: false,
-		contentAlign: 'left',
-		showBio: true,
-		bioMaxLines: 2,
-		spacing: 'compact'
-	},
-
-	split: {
-		id: 'split',
-		name: 'Split',
-		description: 'Avatar on left, content on right',
-		hasCover: false,
-		avatarSize: 'md',
-		avatarShape: 'rounded',
-		avatarPosition: 'split-left',
-		avatarBorder: false,
-		contentAlign: 'left',
-		showBio: true,
-		bioMaxLines: 3,
 		spacing: 'comfortable'
 	}
 };

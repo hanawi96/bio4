@@ -10,7 +10,7 @@
 	export let avatarSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
 	export let avatarShape: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape' = 'circle';
 	export let contentAlign: 'left' | 'center' | 'right' = 'center';
-	export let bioMaxLines: number = 3;
+	export let showBio: boolean = true;
 	export let headerSpacing: 'compact' | 'comfortable' | 'spacious' = 'comfortable';
 	export let avatarBorderColor: string;
 	export let avatarBorderWidth: AvatarBorderWidthKey | number;
@@ -70,74 +70,91 @@
 	<h2 class="text-lg font-semibold text-gray-900 mb-4">Header Style</h2>
 
 	<div class="space-y-6">
-		<!-- Preset Selection Grid -->
+		<!-- Preset Selection - Grid Layout -->
 		<div>
 			<label class="block text-sm font-medium text-gray-700 mb-3">
-				Choose Header Preset
+				Choose Header Style
 			</label>
 			
-			{#each categories as category}
-				<div class="mb-4">
-					<h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-						{category}
-					</h3>
-					<div class="grid grid-cols-2 gap-3">
-						{#each groupedPresets[category] as preset}
-							<button
-								type="button"
-								on:click={() => selectedHeaderPreset = preset.key}
-								class="relative group text-left rounded-xl border-2 transition-all overflow-hidden {selectedHeaderPreset === preset.key ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-							>
-								<!-- Preview Thumbnail -->
-								<div class="aspect-[3/2] bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
-									{#if preset.config?.hasCover}
-										<div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-500"></div>
-										<div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white border-2 border-white shadow-lg"></div>
-									{:else if preset.config?.avatarPosition === 'split-left'}
-										<!-- Split Screen Preview -->
-										<div class="absolute inset-0 flex items-center gap-2 px-3">
-											<div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-md"></div>
-											<div class="flex-1 space-y-1">
-												<div class="w-full h-1.5 bg-gray-400 rounded"></div>
-												<div class="w-3/4 h-1 bg-gray-300 rounded"></div>
-												<div class="w-full h-1 bg-gray-300 rounded"></div>
-											</div>
-										</div>
-									{:else if preset.config?.avatarPosition === 'inline-left'}
-										<!-- Minimal Compact Preview -->
-										<div class="absolute top-1/2 left-3 -translate-y-1/2 flex items-center gap-1.5">
-											<div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
-											<div class="space-y-0.5">
-												<div class="w-12 h-1.5 bg-gray-400 rounded"></div>
-												<div class="w-16 h-1 bg-gray-300 rounded"></div>
-											</div>
-										</div>
-									{:else if preset.config?.avatarSize === 'xl'}
-										<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
-									{:else}
-										<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
-									{/if}
+			<div class="grid grid-cols-3 gap-4">
+				{#each allPresets as preset}
+					<button
+						type="button"
+						on:click={() => selectedHeaderPreset = preset.key}
+						class="relative group text-left rounded-xl border-2 transition-all overflow-hidden {selectedHeaderPreset === preset.key ? 'border-blue-500 bg-blue-50 shadow-lg ring-2 ring-blue-200' : 'border-gray-200 hover:border-blue-300 bg-white hover:shadow-md'}"
+					>
+						<!-- Simple Header Preview -->
+						<div class="aspect-[3/4] bg-white relative overflow-hidden">
+							{#if preset.key === 'with-cover'}
+								<!-- With Cover: Cover image + overlapping avatar -->
+								<div class="absolute inset-0 flex flex-col">
+									<!-- Cover Image -->
+									<div class="h-24 bg-gradient-to-br from-blue-400 via-purple-400 to-purple-500"></div>
 									
-									<!-- Selected Indicator -->
-									{#if selectedHeaderPreset === preset.key}
-										<div class="absolute top-2 right-2 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-											<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-												<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-											</svg>
+									<!-- Avatar overlapping cover -->
+									<div class="flex justify-center -mt-8">
+										<div class="w-16 h-16 rounded-full bg-white p-1 shadow-lg">
+											<div class="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-blue-600"></div>
 										</div>
-									{/if}
+									</div>
+									
+									<!-- Content -->
+									<div class="flex flex-col items-center px-4 mt-2">
+										<div class="w-24 h-2.5 bg-gray-900 rounded-full mb-1.5"></div>
+										<div class="w-32 h-1 bg-gray-400 rounded-full mb-0.5"></div>
+										<div class="w-28 h-1 bg-gray-400 rounded-full"></div>
+									</div>
 								</div>
-								
-								<!-- Info -->
-								<div class="p-3">
-									<div class="font-medium text-sm text-gray-900">{preset.name}</div>
-									<div class="text-xs text-gray-500 mt-0.5 line-clamp-2">{preset.description || ''}</div>
+							{:else if preset.key === 'avatar-cover'}
+								<!-- Avatar Cover: Full background with text overlay -->
+								<div class="absolute inset-0">
+									<!-- Full cover background -->
+									<div class="absolute inset-0 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500"></div>
+									<div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
+									
+									<!-- Content at bottom -->
+									<div class="absolute bottom-8 left-0 right-0 flex flex-col items-center px-4">
+										<div class="w-12 h-12 rounded-full bg-white/95 shadow-xl mb-2"></div>
+										<div class="w-24 h-2.5 bg-white rounded-full mb-1.5"></div>
+										<div class="w-32 h-1 bg-white/90 rounded-full mb-0.5"></div>
+										<div class="w-28 h-1 bg-white/80 rounded-full"></div>
+									</div>
 								</div>
-							</button>
-						{/each}
-					</div>
-				</div>
-			{/each}
+							{:else}
+								<!-- No Cover: Simple centered layout -->
+								<div class="absolute inset-0 flex flex-col items-center justify-center px-4 bg-white">
+									<!-- Avatar -->
+									<div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-md mb-3"></div>
+									
+									<!-- Content -->
+									<div class="w-28 h-3 bg-gray-900 rounded-full mb-2"></div>
+									<div class="w-36 h-1 bg-gray-400 rounded-full mb-0.5"></div>
+									<div class="w-32 h-1 bg-gray-400 rounded-full mb-0.5"></div>
+									<div class="w-28 h-1 bg-gray-400 rounded-full"></div>
+								</div>
+							{/if}
+							
+							<!-- Selected Indicator with animation -->
+							{#if selectedHeaderPreset === preset.key}
+								<div class="absolute top-2 right-2 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
+									<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+									</svg>
+								</div>
+							{/if}
+							
+							<!-- Hover overlay -->
+							<div class="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 transition-colors pointer-events-none"></div>
+						</div>
+						
+						<!-- Info with better typography -->
+						<div class="p-3 border-t border-gray-100">
+							<div class="font-semibold text-sm text-gray-900 mb-0.5">{preset.name}</div>
+							<div class="text-xs text-gray-500 leading-snug line-clamp-2">{preset.description || ''}</div>
+						</div>
+					</button>
+				{/each}
+			</div>
 		</div>
 
 		<!-- Cover Image Upload (show first when with-cover is selected) -->
@@ -424,56 +441,20 @@
 		<div class="border-t border-gray-200 pt-4">
 			<h3 class="text-sm font-medium text-gray-700 mb-3">Content Settings</h3>
 			
-			<!-- Text Align -->
+			<!-- Show Bio Toggle -->
 			<div class="mb-4">
-				<label class="block text-xs font-medium text-gray-600 mb-2">Text Alignment</label>
-				<div class="grid grid-cols-3 gap-2">
+				<div class="flex items-center justify-between">
+					<div>
+						<label class="block text-xs font-medium text-gray-600">Show Bio</label>
+						<p class="text-xs text-gray-500 mt-0.5">Display bio text in header</p>
+					</div>
 					<button
 						type="button"
-						on:click={() => contentAlign = 'left'}
-						class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {contentAlign === 'left' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						on:click={() => showBio = !showBio}
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {showBio ? 'bg-blue-600' : 'bg-gray-200'}"
 					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" />
-						</svg>
-						<span>Left</span>
+						<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {showBio ? 'translate-x-6' : 'translate-x-1'}"></span>
 					</button>
-					<button
-						type="button"
-						on:click={() => contentAlign = 'center'}
-						class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {contentAlign === 'center' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14" />
-						</svg>
-						<span>Center</span>
-					</button>
-					<button
-						type="button"
-						on:click={() => contentAlign = 'right'}
-						class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {contentAlign === 'right' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14" />
-						</svg>
-						<span>Right</span>
-					</button>
-				</div>
-			</div>
-
-			<!-- Bio Max Lines -->
-			<div class="mb-4">
-				<label class="block text-xs font-medium text-gray-600 mb-2">Bio Max Lines</label>
-				<div class="grid grid-cols-5 gap-2">
-					{#each [1, 2, 3, 4, 5] as lines}
-						<button
-							type="button"
-							on:click={() => bioMaxLines = lines}
-							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {bioMaxLines === lines ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-						>
-							<div class="font-semibold text-lg">{lines}</div>
-						</button>
-					{/each}
 				</div>
 			</div>
 

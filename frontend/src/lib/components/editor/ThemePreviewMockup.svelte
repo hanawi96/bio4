@@ -117,13 +117,32 @@
 	// Merge preset with overrides
 	$: header = (() => {
 		const overrides = $previewAppearanceState.overrides || {};
+		const themeConfig = $previewAppearance?.theme?.config;
 		const merged: any = { ...baseHeaderPreset };
+		
+		console.log('🔍 [ThemePreviewMockup] Merging header:', {
+			basePreset: baseHeaderPreset?.id,
+			baseShowBio: baseHeaderPreset?.showBio,
+			configShowBio: themeConfig?.page?.defaults?.showBio,
+			overrides: Object.keys(overrides).filter(k => k.startsWith('header.'))
+		});
+		
+		// Apply overrides
 		Object.entries(overrides).forEach(([key, value]) => {
 			if (key.startsWith('header.')) {
 				const field = key.replace('header.', '');
 				merged[field] = value;
 			}
 		});
+		
+		// Apply showBio from theme config if not in overrides
+		if (themeConfig?.page?.defaults?.showBio !== undefined) {
+			merged.showBio = themeConfig.page.defaults.showBio;
+			console.log('✅ [ThemePreviewMockup] Applied showBio from config:', merged.showBio);
+		} else {
+			console.log('⚠️ [ThemePreviewMockup] showBio not found in config, using preset default:', merged.showBio);
+		}
+		
 		return merged;
 	})();
 	
@@ -205,45 +224,28 @@
 	
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
 	
-	// Extract solid color from backgroundValue for mask gradient
-	$: maskBaseColor = (() => {
-		if (!isAvatarCover) return 'rgba(0, 0, 0, 1)';
-		
-		// If backgroundValue is a hex color
-		if (backgroundValue.match(/^#[0-9a-fA-F]{6}$/)) {
-			return backgroundValue;
-		}
-		
-		// If it's rgb/rgba
-		if (backgroundValue.startsWith('rgb')) {
-			return backgroundValue;
-		}
-		
-		// Fallback to black
-		return '#000000';
-	})();
-	
-	// Convert hex to rgba for gradient
+	// Convert background color to rgba gradient colors for mask (optimized - single parse)
 	$: maskGradientColors = (() => {
 		if (!isAvatarCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
 		
 		let r = 0, g = 0, b = 0;
 		
-		// Parse hex color
-		if (maskBaseColor.match(/^#[0-9a-fA-F]{6}$/)) {
-			r = parseInt(maskBaseColor.slice(1, 3), 16);
-			g = parseInt(maskBaseColor.slice(3, 5), 16);
-			b = parseInt(maskBaseColor.slice(5, 7), 16);
+		// Parse hex color (#RRGGBB)
+		if (backgroundValue.match(/^#[0-9a-fA-F]{6}$/)) {
+			r = parseInt(backgroundValue.slice(1, 3), 16);
+			g = parseInt(backgroundValue.slice(3, 5), 16);
+			b = parseInt(backgroundValue.slice(5, 7), 16);
 		}
 		// Parse rgb/rgba
-		else if (maskBaseColor.startsWith('rgb')) {
-			const match = maskBaseColor.match(/\d+/g);
+		else if (backgroundValue.startsWith('rgb')) {
+			const match = backgroundValue.match(/\d+/g);
 			if (match && match.length >= 3) {
 				r = parseInt(match[0]);
 				g = parseInt(match[1]);
 				b = parseInt(match[2]);
 			}
 		}
+		// Fallback to black if can't parse
 		
 		return {
 			solid: `rgba(${r}, ${g}, ${b}, 1)`,
@@ -464,15 +466,10 @@
 			<div>Height: 100px</div>
 			<div>Direction: to top (↑)</div>
 			<div class="mt-2 pt-2 border-t border-green-300">
-				<div class="text-green-100">Base color:</div>
-				<div>• maskBaseColor: {maskBaseColor}</div>
-			</div>
-			<div class="mt-2 pt-2 border-t border-green-300">
-				<div class="text-green-100">Gradient stops:</div>
-				<div>• 0% (bottom): {maskGradientColors.solid}</div>
-				<div>• 30%: {maskGradientColors.dark}</div>
-				<div>• 60%: {maskGradientColors.medium}</div>
-				<div>• 100% (top): transparent</div>
+				<div class="text-green-100">Gradient colors (from bg):</div>
+				<div>• Solid: {maskGradientColors.solid}</div>
+				<div>• Dark: {maskGradientColors.dark}</div>
+				<div>• Medium: {maskGradientColors.medium}</div>
 			</div>
 		</div>
 		
@@ -593,22 +590,22 @@
 				<div class="pt-10 pb-8" style="padding-left: {pagePadding}px; padding-right: {pagePadding}px; text-align: {textAlign};">
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
-						<div class="relative -mx-4 -mt-10 mb-3 header-cover">
+						<div class="relative -mx-4 -mt-10 {isAvatarCover ? 'mb-0' : 'mb-3'} header-cover">
 							<div 
 								class="w-full relative"
 								style="{coverStyle} height: {coverHeight}px;"
 							>
 								{#if isAvatarCover}
 									<!-- Layer 1: Main gradient overlay - fade from transparent to dark -->
-									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.7) 100%); border: 2px solid blue;"></div>
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.7) 100%);"></div>
 									<!-- Layer 2: Subtle vignette for depth -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.15) 50%, transparent 100%);"></div>
-									<!-- Layer 3: Bottom fade mask - đậm ở dưới, nhạt lên trên (đồng bộ với background color) -->
-									<div class="absolute left-0 right-0 bottom-0 pointer-events-none" style="height: 100px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%); border: 2px solid green;"></div>
-									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
+									<!-- Layer 3: Bottom fade mask - extend 2px below to prevent gap -->
+									<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
+									<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
 										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
 										{#if header.showBio && $previewPage?.bio}
-											<p class="bio-text text-white/90 mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+											<p class="bio-text text-white/90 mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; line-height: 1.5;">
 												{$previewPage.bio}
 											</p>
 										{/if}
@@ -641,111 +638,42 @@
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign};">
 								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
 								{#if header.showBio && $previewPage?.bio}
-									<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
+									<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5;">
 										{$previewPage.bio}
 									</p>
 								{/if}
 							</div>
 						{/if}
 					{:else}
-						<!-- No Cover -->
-						{#if header?.avatarPosition === 'split-left'}
-							<!-- Split Screen Layout -->
-							<div class="flex gap-4" style="text-align: left;">
-								<!-- Avatar Section (40% width) -->
-								<div class="flex-shrink-0" style="width: 40%;">
-									<div class="w-full aspect-square">
-										{#if $previewPage?.avatar_url}
-											<img 
-												src={$previewPage.avatar_url} 
-												alt="Avatar" 
-												class="w-full h-full object-cover"
-												style="{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: 20%; box-shadow: {avatarGlow};"
-											/>
-										{:else}
-											<div 
-												class="w-full h-full flex items-center justify-center text-white font-bold"
-												style="background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: 20%; font-size: {avatarSize / 2}px; box-shadow: {avatarGlow};"
-											>
-												{($previewPage?.title || 'U').charAt(0).toUpperCase()}
-											</div>
-										{/if}
-									</div>
+						<!-- No Cover - Center Layout -->
+						<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
+							{#if $previewPage?.avatar_url}
+								<img 
+									src={$previewPage.avatar_url} 
+									alt="Avatar" 
+									class="header-avatar object-cover mb-2 {isFullSizeAvatar ? 'w-full' : ''}"
+									style="{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`} {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; box-shadow: {avatarGlow};"
+								/>
+							{:else}
+								<div 
+									class="header-avatar mb-2 flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
+									style="{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`} background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`}; box-shadow: {avatarGlow};"
+								>
+									{($previewPage?.title || 'U').charAt(0).toUpperCase()}
 								</div>
-								
-								<!-- Content Section (60% width) -->
-								<div class="flex-1 flex flex-col justify-center min-w-0">
-									<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; text-align: left;">{$previewPage?.title || 'Your Name'}</h1>
-									{#if header.showBio && $previewPage?.bio}
-										<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden; text-align: left;">
-											{$previewPage.bio}
-										</p>
-									{/if}
-								</div>
-							</div>
-						{:else if header?.avatarPosition === 'inline-left'}
-							<!-- Minimal Compact Layout -->
-							<div class="flex items-start gap-2" style="text-align: left; {isFullSizeAvatar ? 'flex-direction: column;' : ''}">
-								<!-- Avatar -->
-								<div class="{isFullSizeAvatar ? 'w-full' : 'flex-shrink-0'}">
-									{#if $previewPage?.avatar_url}
-										<img 
-											src={$previewPage.avatar_url} 
-											alt="Avatar" 
-											class="header-avatar object-cover {isFullSizeAvatar ? 'w-full' : ''}"
-											style="{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`} {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; box-shadow: {avatarGlow};"
-										/>
-									{:else}
-										<div 
-											class="header-avatar flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
-											style="{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`} background: {tokens?.primaryColor || '#3b82f6'}; {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`}; box-shadow: {avatarGlow};"
-										>
-											{($previewPage?.title || 'U').charAt(0).toUpperCase()}
-										</div>
-									{/if}
-								</div>
-								
-								<!-- Text Content -->
-								<div class="flex-1 min-w-0">
-									<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; text-align: left;">{$previewPage?.title || 'Your Name'}</h1>
-									{#if header.showBio && $previewPage?.bio}
-										<p class="bio-text mt-0.5" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden; text-align: left;">
-											{$previewPage.bio}
-										</p>
-									{/if}
-								</div>
-							</div>
-						{:else}
-							<!-- Center Layout -->
-							<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
-								{#if $previewPage?.avatar_url}
-									<img 
-										src={$previewPage.avatar_url} 
-										alt="Avatar" 
-										class="header-avatar object-cover mb-2 {isFullSizeAvatar ? 'w-full' : ''}"
-										style="{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`} {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; box-shadow: {avatarGlow};"
-									/>
-								{:else}
-									<div 
-										class="header-avatar mb-2 flex items-center justify-center text-white font-bold {isFullSizeAvatar ? 'w-full' : ''}"
-										style="{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`} background: {tokens?.primaryColor || '#3b82f6'}; {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; font-size: {isFullSizeAvatar ? '48px' : `${avatarSize / 2.5}px`}; box-shadow: {avatarGlow};"
-									>
-										{($previewPage?.title || 'U').charAt(0).toUpperCase()}
-									</div>
-								{/if}
-								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
-								{#if header?.showBio && $previewPage?.bio}
-									<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: {header.bioMaxLines}; -webkit-box-orient: vertical; overflow: hidden;">
-										{$previewPage.bio}
-									</p>
-								{/if}
-							</div>
-						{/if}
+							{/if}
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
+							{#if header?.showBio && $previewPage?.bio}
+								<p class="bio-text mt-1" style="color: {tokens?.mutedTextColor || '#71717a'}; font-size: {bioFontSizePx}px; line-height: 1.5;">
+									{$previewPage.bio}
+								</p>
+							{/if}
+						</div>
 					{/if}
 
 					<!-- Social Icons (Header Position) -->
 					{#if $previewPage?.show_social_icons && $previewPage?.social_links && socialIconPosition === 'header'}
-						<div class="flex items-center gap-3 mt-1.5" style="justify-content: {header?.avatarPosition === 'inline-left' || header?.avatarPosition === 'split-left' ? 'flex-start' : 'center'};">
+						<div class="flex items-center gap-3 mt-1.5" style="justify-content: center;">
 							{#if $previewPage.social_links.instagram}
 								<div class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
 									<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -775,7 +703,7 @@
 					<!-- Links - với negative margin và gradient mask cho avatar-cover -->
 					<div 
 						class="relative"
-						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -100px; padding-top: 100px;` : 'margin-top: 24px;'}"
+						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -80px; padding-top: 100px;` : 'margin-top: 24px;'}"
 					>
 						
 						{#if linkGroupLayout === 'grid'}

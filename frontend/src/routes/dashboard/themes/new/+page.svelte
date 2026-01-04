@@ -41,7 +41,7 @@
 	let avatarSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
 	let avatarShape: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape' = 'circle';
 	let contentAlign: 'left' | 'center' | 'right' = 'center';
-	let bioMaxLines: number = 3;
+	let showBio: boolean = true;
 	let headerSpacing: 'compact' | 'comfortable' | 'spacious' = 'comfortable';
 	let avatarBorderColor = '#ffffff';
 	let avatarBorderWidth: AvatarBorderWidthKey | number = 'default';
@@ -222,6 +222,7 @@
 		selectedHeaderPreset = theme.config.page?.defaults?.headerPresetId || 'no-cover';
 		avatarSize = theme.config.page?.defaults?.avatarSize || 'md';
 		avatarShape = theme.config.page?.defaults?.avatarShape || 'circle';
+		showBio = theme.config.page?.defaults?.showBio ?? true;
 		avatarBorderColor = theme.config.page?.defaults?.avatarBorderColor || '#ffffff';
 		avatarBorderWidth = theme.config.page?.defaults?.avatarBorderWidth || 4;
 		selectedBlockStyle = theme.config.page?.defaults?.blockStylePreset || 'solid';
@@ -454,9 +455,15 @@
 		bgVideoUrl = 'https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev/background-vide-preset/14950008_1080_1920_60fps.mp4';
 	}
 
-	// Force solid background when avatar-cover is selected
-	$: if (selectedHeaderPreset === 'avatar-cover' && bgType !== 'solid') {
-		bgType = 'solid';
+	// Force solid black background when avatar-cover is selected
+	$: if (selectedHeaderPreset === 'avatar-cover') {
+		if (bgType !== 'solid') {
+			bgType = 'solid';
+		}
+		if (bgSolidColor !== '#000000') {
+			bgSolidColor = '#000000';
+			pageBgColor = '#000000';
+		}
 	}
 
 	// Update JSON when fields change
@@ -476,6 +483,8 @@
 			config.page.defaults.headerPresetId = selectedHeaderPreset;
 			config.page.defaults.avatarSize = avatarSize;
 			config.page.defaults.avatarShape = avatarShape;
+			config.page.defaults.showBio = showBio;
+			console.log('💾 [updateConfig] Saving showBio to config:', showBio);
 			config.page.defaults.blockStylePreset = selectedBlockStyle;
 			if (oldDefaults.linkStyle !== undefined) config.page.defaults.linkStyle = oldDefaults.linkStyle;
 			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
@@ -662,7 +671,8 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+		console.log('🔄 [+page] updateConfig triggered, showBio:', showBio);
 		updateConfig();
 	}
 
@@ -975,6 +985,7 @@
 					bind:avatarSize
 					bind:avatarShape
 					bind:coverImageUrl
+					bind:showBio
 					bind:avatarBorderColor
 					bind:avatarBorderWidth
 					bind:socialIconPosition
