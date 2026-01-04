@@ -31,13 +31,14 @@
 	let saving = false;
 	let error = '';
 
-	let baseThemeKey = ''; // Empty initially, will be set when themes load
+	let baseThemeKey = '';
 	let name = '';
+	let nameManuallyEdited = false; // Track if user manually edited name
 	let description = '';
 	let category = 'minimal';
 	let tier = 'free';
 	let configJson = '';
-	let baseConfig: any = null; // Store full base config
+	let baseConfig: any = null;
 	
 	// Quick edit fields
 	let selectedHeaderPreset = 'no-cover';
@@ -445,7 +446,14 @@
 	}
 
 	$: if (baseThemeKey && themes.length > 0) {
-		loadBaseTheme(baseThemeKey);
+		const selectedTheme = themes.find(t => t.key === baseThemeKey);
+		if (selectedTheme) {
+			// Auto-fill name when base theme changes, unless user manually edited it
+			if (!nameManuallyEdited) {
+				name = `${selectedTheme.name} 2`;
+			}
+			loadBaseTheme(baseThemeKey);
+		}
 	}
 
 	// Auto-set default background image when switching to image type
@@ -931,6 +939,7 @@
 					bind:description
 					bind:category
 					bind:tier
+					on:nameEdit={() => nameManuallyEdited = true}
 				/>
 
 				<!-- Theme Colors -->

@@ -1,8 +1,16 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
+
 	export let name: string;
 	export let description: string;
 	export let category: string;
 	export let tier: string;
+
+	const dispatch = createEventDispatcher();
+
+	function handleNameInput() {
+		dispatch('nameEdit');
+	}
 </script>
 
 <section class="card-ios p-6">
@@ -16,6 +24,7 @@
 				id="name"
 				type="text"
 				bind:value={name}
+				on:input={handleNameInput}
 				required
 				class="input-ios"
 				placeholder="My Custom Theme"

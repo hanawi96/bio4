@@ -7,7 +7,7 @@
 	export let selectedHeaderPreset: string;
 	export let coverImageUrl: string;
 	export let uploading: boolean;
-	export let avatarSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
+	export let avatarSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' = 'md';
 	export let avatarShape: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape' = 'circle';
 	export let showBio: boolean = true;
 	export let avatarBorderColor: string;
@@ -17,9 +17,21 @@
 	export let avatarGlowEnabled: boolean = false;
 	export let avatarGlowColor: string = '#3b82f6';
 	export let primaryColor: string = '#3b82f6';
-	export let previewPage: any = null; // Preview page data with avatar_url
+	export let previewPage: any = null;
 
 	const dispatch = createEventDispatcher();
+	
+	// Avatar border enabled state (derived from width)
+	$: avatarBorderEnabled = avatarBorderWidth !== 'none' && avatarBorderWidth !== 0;
+	
+	// Toggle avatar border
+	function toggleAvatarBorder() {
+		if (avatarBorderEnabled) {
+			avatarBorderWidth = 'none';
+		} else {
+			avatarBorderWidth = 'default'; // 4px
+		}
+	}
 	
 	// Auto-reset avatar size when switching to/from with-cover preset
 	$: if (selectedHeaderPreset === 'with-cover' && avatarSize === 'full') {
@@ -44,9 +56,9 @@
 
 	// Check if selected preset has cover
 	$: selectedPreset = allPresets.find((p) => p.key === selectedHeaderPreset);
-	$: hasCover = selectedHeaderPreset === 'with-cover' || selectedHeaderPreset === 'avatar-cover';
 	$: isAvatarCover = selectedHeaderPreset === 'avatar-cover';
-	$: hasAvatarBorder = selectedPreset?.config?.avatarBorder === true || hasCover;
+	$: hasCover = selectedHeaderPreset === 'with-cover' || isAvatarCover;
+	$: hasAvatarBorder = !isAvatarCover;
 
 	function handleCoverUpload(event: Event) {
 		dispatch('coverUpload', { originalEvent: event });
@@ -281,14 +293,15 @@
 			</div>
 		{/if}
 
-		<!-- Avatar Settings -->
-		<div class="border-t border-gray-200 pt-4">
-			<h3 class="text-sm font-medium text-gray-700 mb-3">Avatar Customization</h3>
+		<!-- Avatar Settings (hide for avatar-cover preset) -->
+		{#if !isAvatarCover}
+			<div class="border-t border-gray-200 pt-4">
+				<h3 class="text-sm font-medium text-gray-700 mb-3">Avatar Customization</h3>
 			
 			<!-- Avatar Size -->
 			<div class="mb-4">
 				<label class="block text-xs font-medium text-gray-600 mb-2">Size</label>
-				<div class="grid grid-cols-6 gap-2">
+				<div class="grid grid-cols-4 gap-2">
 					<button
 						type="button"
 						on:click={() => (avatarSize = 'xs')}
@@ -297,7 +310,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">XS</div>
-						<div class="text-[10px] opacity-60 mt-0.5">48px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">80px</div>
 					</button>
 					<button
 						type="button"
@@ -307,7 +320,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">SM</div>
-						<div class="text-[10px] opacity-60 mt-0.5">64px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">96px</div>
 					</button>
 					<button
 						type="button"
@@ -317,7 +330,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">MD</div>
-						<div class="text-[10px] opacity-60 mt-0.5">80px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">112px</div>
 					</button>
 					<button
 						type="button"
@@ -327,7 +340,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">LG</div>
-						<div class="text-[10px] opacity-60 mt-0.5">96px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">128px</div>
 					</button>
 					<button
 						type="button"
@@ -337,7 +350,27 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">XL</div>
-						<div class="text-[10px] opacity-60 mt-0.5">120px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">144px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => (avatarSize = '2xl')}
+						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === '2xl'
+							? 'border-blue-600 bg-blue-50 text-blue-900'
+							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">2XL</div>
+						<div class="text-[10px] opacity-60 mt-0.5">160px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => (avatarSize = '3xl')}
+						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === '3xl'
+							? 'border-blue-600 bg-blue-50 text-blue-900'
+							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">3XL</div>
+						<div class="text-[10px] opacity-60 mt-0.5">176px</div>
 					</button>
 					<button
 						type="button"
@@ -423,6 +456,7 @@
 				</div>
 			</div>
 		</div>
+		{/if}
 
 		<!-- Content Settings -->
 		<div class="border-t border-gray-200 pt-4">
@@ -446,85 +480,92 @@
 			</div>
 		</div>
 
-		<!-- Avatar Border Settings (only show if preset has avatar border) -->
+		<!-- Avatar Border Settings -->
 		{#if hasAvatarBorder}
-			<div class="space-y-4">
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Avatar Border Color</label>
-					<div class="flex items-center gap-3">
-						<div class="relative flex-shrink-0">
-							<input
-								type="color"
-								bind:value={avatarBorderColor}
-								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-							/>
-							<div 
-								class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
-								style="background-color: {avatarBorderColor};"
-							></div>
+			<div class="border-t border-gray-200 pt-4">
+				<div class="flex items-center justify-between mb-3">
+					<div>
+						<label class="block text-sm font-medium text-gray-700">Avatar Border</label>
+						<p class="text-xs text-gray-500 mt-0.5">Add border around avatar</p>
+					</div>
+					<button
+						type="button"
+						on:click={toggleAvatarBorder}
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {avatarBorderEnabled ? 'bg-blue-600' : 'bg-gray-200'}"
+					>
+						<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {avatarBorderEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+					</button>
+				</div>
+				
+				{#if avatarBorderEnabled}
+					<div class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+						<div>
+							<label class="block text-xs font-medium text-gray-600 mb-2">Border Color</label>
+							<div class="flex items-center gap-3">
+								<div class="relative flex-shrink-0">
+									<input
+										type="color"
+										bind:value={avatarBorderColor}
+										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+									/>
+									<div 
+										class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
+										style="background-color: {avatarBorderColor};"
+									></div>
+								</div>
+								<input
+									type="text"
+									bind:value={avatarBorderColor}
+									class="flex-1 input-ios font-mono text-sm"
+									placeholder="#ffffff"
+								/>
+							</div>
 						</div>
-						<input
-							type="text"
-							bind:value={avatarBorderColor}
-							class="flex-1 input-ios font-mono text-sm"
-							placeholder="#ffffff"
-						/>
+						<div>
+							<label class="block text-xs font-medium text-gray-600 mb-2">Border Width</label>
+							<div class="grid grid-cols-4 gap-2">
+								<button
+									type="button"
+									on:click={() => avatarBorderWidth = 'thin'}
+									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thin' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+								>
+									<div class="font-semibold">Thin</div>
+									<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.thin}px</div>
+								</button>
+								<button
+									type="button"
+									on:click={() => avatarBorderWidth = 'default'}
+									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'default' || avatarBorderWidth === 4 ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+								>
+									<div class="font-semibold">Default</div>
+									<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.default}px</div>
+								</button>
+								<button
+									type="button"
+									on:click={() => avatarBorderWidth = 'thick'}
+									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thick' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+								>
+									<div class="font-semibold">Thick</div>
+									<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.thick}px</div>
+								</button>
+								<button
+									type="button"
+									on:click={() => avatarBorderWidth = 'bold'}
+									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'bold' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+								>
+									<div class="font-semibold">Bold</div>
+									<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.bold}px</div>
+								</button>
+							</div>
+						</div>
 					</div>
-					<p class="text-xs text-gray-500 mt-1">Border color for avatar (default: white)</p>
-				</div>
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">
-						Avatar Border Width
-					</label>
-					<div class="grid grid-cols-5 gap-2">
-						<button
-							type="button"
-							on:click={() => avatarBorderWidth = 'none'}
-							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'none' || avatarBorderWidth === 0 ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-						>
-							<div class="font-semibold">None</div>
-							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.none}px</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => avatarBorderWidth = 'thin'}
-							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thin' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-						>
-							<div class="font-semibold">Thin</div>
-							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.thin}px</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => avatarBorderWidth = 'default'}
-							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'default' || avatarBorderWidth === 4 ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-						>
-							<div class="font-semibold">Default</div>
-							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.default}px</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => avatarBorderWidth = 'thick'}
-							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thick' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-						>
-							<div class="font-semibold">Thick</div>
-							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.thick}px</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => avatarBorderWidth = 'bold'}
-							class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'bold' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-						>
-							<div class="font-semibold">Bold</div>
-							<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.bold}px</div>
-						</button>
-					</div>
-					<p class="text-xs text-gray-500 mt-1.5">Border thickness around avatar</p>
-				</div>
+				{/if}
 			</div>
 		{/if}
 		
-		<!-- Avatar Glow Effect -->
-		<div class="border-t border-gray-200 pt-4">
+		<!-- Avatar Glow Effect (hide for avatar-cover) -->
+		{#if !isAvatarCover}
+			<div class="border-t border-gray-200 pt-4">
 			<div class="flex items-center justify-between mb-3">
 				<div>
 					<label class="block text-sm font-medium text-gray-700">Avatar Glow Effect</label>
@@ -592,6 +633,7 @@
 				</div>
 			{/if}
 		</div>
+		{/if}
 
 		<!-- Social Icons Position -->
 		<div>

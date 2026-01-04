@@ -64,7 +64,6 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		avatarSize: 'lg',
 		avatarShape: 'circle',
 		avatarPosition: 'center',
-		avatarBorder: false,
 		contentAlign: 'center',
 		showBio: true,
 		spacing: 'comfortable'

@@ -140,8 +140,8 @@
 	$: avatarBorderWidth = resolveAvatarBorderWidth(header?.avatarBorderWidth);
 
 	// Avatar size mapping
-	const avatarSizes = { xs: 48, sm: 64, md: 80, lg: 96, xl: 120, full: 0 };
-	$: avatarSize = header ? avatarSizes[header.avatarSize] : 80;
+	const avatarSizes = { xs: 80, sm: 96, md: 112, lg: 128, xl: 144, '2xl': 160, '3xl': 176, full: 0 };
+	$: avatarSize = header ? avatarSizes[header.avatarSize] : 112;
 	$: isFullSizeAvatar = header?.avatarSize === 'full';
 	
 	// Smart aspect ratio calculation for full size avatars
@@ -150,7 +150,7 @@
 		const shape = header?.avatarShape;
 		if (shape === 'circle') return '1/1'; // Square for perfect circle
 		if (shape === 'oval') return '4/5'; // Slightly taller oval (more rounded)
-		if (shape === 'portrait') return '3/4'; // Portrait rectangle
+		if (shape === 'portrait') return '4/5'; // Portrait rectangle (less tall)
 		if (shape === 'landscape') return '4/3'; // Landscape rectangle
 		if (shape === 'rounded') return '1/1'; // Square with rounded corners
 		if (shape === 'square') return '1/1'; // Perfect square
@@ -160,14 +160,14 @@
 	$: avatarWidth = (() => {
 		if (isFullSizeAvatar) return '100%';
 		if (header?.avatarShape === 'oval') return Math.round(avatarSize * 1.067);
-		if (header?.avatarShape === 'portrait') return Math.round(avatarSize * 0.75);
+		if (header?.avatarShape === 'portrait') return Math.round(avatarSize * 0.8);
 		if (header?.avatarShape === 'landscape') return Math.round(avatarSize * 1.333);
 		return avatarSize;
 	})();
 	$: avatarHeight = (() => {
 		if (isFullSizeAvatar) return 'auto';
 		if (header?.avatarShape === 'oval') return Math.round(avatarSize * 1.333);
-		if (header?.avatarShape === 'portrait') return Math.round(avatarSize * 1.333);
+		if (header?.avatarShape === 'portrait') return Math.round(avatarSize * 1.0);
 		if (header?.avatarShape === 'landscape') return Math.round(avatarSize * 0.75);
 		return avatarSize;
 	})();
@@ -192,7 +192,7 @@
 	
 	function getAvatarBorderRadius(shape: string | undefined): string {
 		if (shape === 'circle') return '50%';
-		if (shape === 'rounded') return '20%';
+		if (shape === 'rounded') return '12%';
 		if (shape === 'oval') return '50%';
 		if (shape === 'portrait') return '8%';
 		if (shape === 'landscape') return '8%';
