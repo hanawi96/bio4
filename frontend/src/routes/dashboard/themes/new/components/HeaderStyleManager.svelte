@@ -9,9 +9,7 @@
 	export let uploading: boolean;
 	export let avatarSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
 	export let avatarShape: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape' = 'circle';
-	export let contentAlign: 'left' | 'center' | 'right' = 'center';
 	export let showBio: boolean = true;
-	export let headerSpacing: 'compact' | 'comfortable' | 'spacious' = 'comfortable';
 	export let avatarBorderColor: string;
 	export let avatarBorderWidth: AvatarBorderWidthKey | number;
 	export let socialIconPosition: 'header' | 'footer';
@@ -25,7 +23,7 @@
 	
 	// Auto-reset avatar size when switching to/from with-cover preset
 	$: if (selectedHeaderPreset === 'with-cover' && avatarSize === 'full') {
-		avatarSize = 'lg'; // Reset to large size
+		avatarSize = 'lg';
 	}
 
 	// Merge frontend presets with API presets
@@ -38,22 +36,11 @@
 			config: preset
 		}));
 		
-		// Remove duplicates (prefer API presets)
 		const apiKeys = new Set(headerPresets.map(p => p.key));
 		const uniqueFrontendPresets = frontendPresets.filter(p => !apiKeys.has(p.key));
 		
 		return [...headerPresets, ...uniqueFrontendPresets];
 	})();
-
-	// Group presets by category
-	$: groupedPresets = allPresets.reduce((acc, preset) => {
-		const category = preset.category || 'basic';
-		if (!acc[category]) acc[category] = [];
-		acc[category].push(preset);
-		return acc;
-	}, {} as Record<string, any[]>);
-
-	$: categories = Object.keys(groupedPresets).sort();
 
 	// Check if selected preset has cover
 	$: selectedPreset = allPresets.find((p) => p.key === selectedHeaderPreset);
@@ -454,37 +441,6 @@
 						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {showBio ? 'bg-blue-600' : 'bg-gray-200'}"
 					>
 						<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {showBio ? 'translate-x-6' : 'translate-x-1'}"></span>
-					</button>
-				</div>
-			</div>
-
-			<!-- Spacing -->
-			<div>
-				<label class="block text-xs font-medium text-gray-600 mb-2">Spacing</label>
-				<div class="grid grid-cols-3 gap-2">
-					<button
-						type="button"
-						on:click={() => headerSpacing = 'compact'}
-						class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all {headerSpacing === 'compact' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						<div class="font-semibold">Compact</div>
-						<div class="text-[10px] opacity-60 mt-0.5">Tight</div>
-					</button>
-					<button
-						type="button"
-						on:click={() => headerSpacing = 'comfortable'}
-						class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all {headerSpacing === 'comfortable' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						<div class="font-semibold">Comfortable</div>
-						<div class="text-[10px] opacity-60 mt-0.5">Default</div>
-					</button>
-					<button
-						type="button"
-						on:click={() => headerSpacing = 'spacious'}
-						class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all {headerSpacing === 'spacious' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-					>
-						<div class="font-semibold">Spacious</div>
-						<div class="text-[10px] opacity-60 mt-0.5">Loose</div>
 					</button>
 				</div>
 			</div>

@@ -22,6 +22,9 @@
 	import { RADIUS_TOKENS, BLOCK_GAP_PRESETS, type BlockGapPreset, type MaxWidthKey, type PagePaddingKey, type AvatarBorderWidthKey, type BorderWidthKey } from '$lib/appearance/spacingTokens';
 	import { type BlurKey, type BrightnessKey, type GrayscaleKey } from '$lib/appearance/effectsTokens';
 
+	// SvelteKit props
+	export let params: Record<string, string> = {};
+
 	let themeKey = '';
 	let headerPresets: any[] = [];
 	let loading = true;
@@ -370,13 +373,9 @@
 
 	// Force solid black background when avatar-cover is selected
 	$: if (selectedHeaderPreset === 'avatar-cover') {
-		if (bgType !== 'solid') {
-			bgType = 'solid';
-		}
-		if (bgSolidColor !== '#000000') {
-			bgSolidColor = '#000000';
-			pageBgColor = '#000000';
-		}
+		bgType = 'solid';
+		bgSolidColor = '#000000';
+		pageBgColor = '#000000';
 	}
 
 	function updateConfig() {

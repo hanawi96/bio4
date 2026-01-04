@@ -120,13 +120,6 @@
 		const themeConfig = $previewAppearance?.theme?.config;
 		const merged: any = { ...baseHeaderPreset };
 		
-		console.log('🔍 [ThemePreviewMockup] Merging header:', {
-			basePreset: baseHeaderPreset?.id,
-			baseShowBio: baseHeaderPreset?.showBio,
-			configShowBio: themeConfig?.page?.defaults?.showBio,
-			overrides: Object.keys(overrides).filter(k => k.startsWith('header.'))
-		});
-		
 		// Apply overrides
 		Object.entries(overrides).forEach(([key, value]) => {
 			if (key.startsWith('header.')) {
@@ -138,9 +131,6 @@
 		// Apply showBio from theme config if not in overrides
 		if (themeConfig?.page?.defaults?.showBio !== undefined) {
 			merged.showBio = themeConfig.page.defaults.showBio;
-			console.log('✅ [ThemePreviewMockup] Applied showBio from config:', merged.showBio);
-		} else {
-			console.log('⚠️ [ThemePreviewMockup] showBio not found in config, using preset default:', merged.showBio);
 		}
 		
 		return merged;
