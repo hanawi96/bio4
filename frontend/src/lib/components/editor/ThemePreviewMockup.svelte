@@ -385,6 +385,8 @@
 					color={particles.color || '#ffffff'}
 					speed={particles.speed || 'medium'}
 					variant={particles.variant || 'floating'}
+					blur={particles.blur || 'medium'}
+					opacity={particles.opacity ?? 60}
 				/>
 			{/if}
 

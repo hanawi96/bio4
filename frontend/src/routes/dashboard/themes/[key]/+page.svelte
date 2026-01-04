@@ -106,7 +106,9 @@
 	let particlesSize: 'small' | 'medium' | 'large' = 'medium';
 	let particlesColor = '#ffffff';
 	let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
-	let particlesVariant: 'floating' | 'rain' | 'snow' = 'floating';
+	let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' | 'lightning' = 'floating';
+	let particlesBlur: 'none' | 'light' | 'medium' | 'heavy' = 'medium';
+	let particlesOpacity = 60;
 	
 	let coverImageUrl = '';
 	let showShareButton = true;
@@ -302,6 +304,8 @@
 		particlesColor = theme.config.background?.particles?.color || '#ffffff';
 		particlesSpeed = theme.config.background?.particles?.speed || 'medium';
 		particlesVariant = theme.config.background?.particles?.variant || 'floating';
+		particlesBlur = theme.config.background?.particles?.blur || 'medium';
+		particlesOpacity = theme.config.background?.particles?.opacity || 60;
 		
 		const bgTypeFromConfig = theme.config.background?.type;
 		const bgValueFromConfig = theme.config.background?.value;
@@ -495,6 +499,8 @@
 			config.background.particles.color = particlesColor;
 			config.background.particles.speed = particlesSpeed;
 			config.background.particles.variant = particlesVariant;
+			config.background.particles.blur = particlesBlur;
+			config.background.particles.opacity = particlesOpacity;
 			
 			config.semantic.color.surface.page = bgType === 'solid' ? bgSolidColor : '#000000';
 			
@@ -511,7 +517,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 
@@ -736,7 +742,7 @@
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
 							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor />
-							<ThemeBackground bind:bgType bind:bgSolidColor bind:bgGradientType bind:bgGradientFrom bind:bgGradientTo bind:bgGradientMiddle bind:bgGradientMiddleEnabled bind:bgGradientDirection bind:bgRadialShape bind:bgRadialPosition bind:bgImageUrl bind:bgVideoUrl bind:bgBlur bind:bgBrightness bind:bgGrayscale bind:bgAnimationEnabled bind:bgAnimationVariant bind:bgAnimationSpeed bind:particlesEnabled bind:particlesCount bind:particlesSize bind:particlesColor bind:particlesSpeed bind:particlesVariant {uploading} on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)} on:videoUpload={handleVideoUpload} on:videoRemove={handleVideoRemove} />
+							<ThemeBackground bind:bgType bind:bgSolidColor bind:bgGradientType bind:bgGradientFrom bind:bgGradientTo bind:bgGradientMiddle bind:bgGradientMiddleEnabled bind:bgGradientDirection bind:bgRadialShape bind:bgRadialPosition bind:bgImageUrl bind:bgVideoUrl bind:bgBlur bind:bgBrightness bind:bgGrayscale bind:bgAnimationEnabled bind:bgAnimationVariant bind:bgAnimationSpeed bind:particlesEnabled bind:particlesCount bind:particlesSize bind:particlesColor bind:particlesSpeed bind:particlesVariant bind:particlesBlur bind:particlesOpacity {uploading} on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)} on:videoUpload={handleVideoUpload} on:videoRemove={handleVideoRemove} />
 							<HeaderStyleManager bind:selectedHeaderPreset bind:coverImageUrl bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
 							<ThemeBlockStyle bind:selectedBlockStyle bind:selectedShadowStyle bind:blockOpacity bind:shadowCustom bind:selectedLinkIconShape bind:selectedGradientPreset bind:borderWidth {primaryColor} {textColor} {borderColor} {blockTextColor} {shadowColor} {bgType} {bgSolidColor} {bgGradientFrom} {bgGradientTo} {bgGradientDirection} {bgImageUrl} />
 							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize bind:titleGlowEnabled bind:titleGlowColor {primaryColor} />

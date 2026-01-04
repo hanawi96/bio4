@@ -9,10 +9,10 @@
  */
 export const BLUR_PRESETS = {
 	none: 0,
-	subtle: 5,
-	medium: 10,
-	strong: 20,
-	extreme: 40
+	subtle: 10,
+	medium: 20,
+	strong: 35,
+	extreme: 60
 } as const;
 
 export type BlurKey = keyof typeof BLUR_PRESETS;

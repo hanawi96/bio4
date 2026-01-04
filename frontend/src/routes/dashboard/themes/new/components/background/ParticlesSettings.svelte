@@ -4,7 +4,9 @@
 	export let particlesSize: 'small' | 'medium' | 'large' = 'medium';
 	export let particlesColor: string = '#ffffff';
 	export let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' = 'floating';
+	export let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' | 'lightning' = 'floating';
+	export let particlesBlur: 'none' | 'light' | 'medium' | 'heavy' = 'medium';
+	export let particlesOpacity: number = 60;
 </script>
 
 <div class="border-t border-gray-200 pt-6 mt-6">
@@ -189,6 +191,59 @@
 					>
 						🚀 Fast
 					</button>
+				</div>
+			</div>
+
+			<!-- Particle Blur -->
+			<div>
+				<label class="block text-xs font-medium text-gray-600 mb-2">Blur Intensity</label>
+				<div class="grid grid-cols-4 gap-2">
+					<button
+						type="button"
+						on:click={() => particlesBlur = 'none'}
+						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesBlur === 'none' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+					>
+						Sharp
+					</button>
+					<button
+						type="button"
+						on:click={() => particlesBlur = 'light'}
+						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesBlur === 'light' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+					>
+						Light
+					</button>
+					<button
+						type="button"
+						on:click={() => particlesBlur = 'medium'}
+						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesBlur === 'medium' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+					>
+						Medium
+					</button>
+					<button
+						type="button"
+						on:click={() => particlesBlur = 'heavy'}
+						class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {particlesBlur === 'heavy' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+					>
+						Heavy
+					</button>
+				</div>
+			</div>
+
+			<!-- Particle Opacity -->
+			<div>
+				<label class="block text-xs font-medium text-gray-600 mb-2">Opacity: {particlesOpacity}%</label>
+				<input
+					type="range"
+					bind:value={particlesOpacity}
+					min="10"
+					max="100"
+					step="5"
+					class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+				/>
+				<div class="flex justify-between text-[10px] text-gray-500 mt-1">
+					<span>10%</span>
+					<span>50%</span>
+					<span>100%</span>
 				</div>
 			</div>
 		</div>

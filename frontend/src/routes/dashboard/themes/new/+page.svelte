@@ -133,7 +133,9 @@
 	let particlesSize: 'small' | 'medium' | 'large' = 'medium';
 	let particlesColor = '#ffffff';
 	let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
-	let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' = 'floating';
+	let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' | 'lightning' = 'floating';
+	let particlesBlur: 'none' | 'light' | 'medium' | 'heavy' = 'medium';
+	let particlesOpacity = 60;
 	
 	// Cover image field
 	let coverImageUrl = '';
@@ -371,6 +373,8 @@
 		particlesColor = theme.config.background?.particles?.color || '#ffffff';
 		particlesSpeed = theme.config.background?.particles?.speed || 'medium';
 		particlesVariant = theme.config.background?.particles?.variant || 'floating';
+		particlesBlur = theme.config.background?.particles?.blur || 'medium';
+		particlesOpacity = theme.config.background?.particles?.opacity || 60;
 		
 		// Extract background from NEW structure
 		const bgTypeFromConfig = theme.config.background?.type;
@@ -600,6 +604,8 @@
 			config.background.particles.color = particlesColor;
 			config.background.particles.speed = particlesSpeed;
 			config.background.particles.variant = particlesVariant;
+			config.background.particles.blur = particlesBlur;
+			config.background.particles.opacity = particlesOpacity;
 			
 			// Update semantic.color.surface.page as fallback color
 			config.semantic.color.surface.page = bgType === 'solid' ? bgSolidColor : '#000000';
@@ -632,12 +638,12 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant) {
+	$: if (selectedHeaderPreset || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgDim || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 
-	// Update preview stores - optimized for fast opacity changes
-	$: if (configJson && selectedBlockStyle && selectedShadowStyle !== undefined && blockOpacity !== undefined && selectedGradientPreset && bgType && bgGradientType && bgRadialShape && bgRadialPosition && linkFontSize && bioFontSize && subtitleFontSize) {
+	// Update preview stores - auto update when config changes
+	$: if (configJson) {
 		try {
 			const config = JSON.parse(configJson);
 			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity, shadowCustom, selectedGradientPreset));
@@ -928,6 +934,8 @@
 					bind:particlesColor
 					bind:particlesSpeed
 					bind:particlesVariant
+					bind:particlesBlur
+					bind:particlesOpacity
 					{uploading}
 					on:imageUpload={(e) => handleImageUpload(e.detail.originalEvent)}
 					on:videoUpload={handleVideoUpload}

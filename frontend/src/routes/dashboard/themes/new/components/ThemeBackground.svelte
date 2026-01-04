@@ -38,7 +38,9 @@
 	export let particlesSize: 'small' | 'medium' | 'large' = 'medium';
 	export let particlesColor: string = '#ffffff';
 	export let particlesSpeed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' = 'floating';
+	export let particlesVariant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' | 'lightning' = 'floating';
+	export let particlesBlur: 'none' | 'light' | 'medium' | 'heavy' = 'medium';
+	export let particlesOpacity: number = 60;
 </script>
 
 <section class="card-ios p-6">
@@ -123,5 +125,7 @@
 		bind:particlesColor
 		bind:particlesSpeed
 		bind:particlesVariant
+		bind:particlesBlur
+		bind:particlesOpacity
 	/>
 </section>

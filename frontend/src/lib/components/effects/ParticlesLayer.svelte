@@ -3,7 +3,20 @@
 	export let size: 'small' | 'medium' | 'large' = 'medium';
 	export let color: string = '#ffffff';
 	export let speed: 'slow' | 'medium' | 'fast' = 'medium';
-	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' = 'floating';
+	export let variant: 'floating' | 'rain' | 'snow' | 'bubbles' | 'stars' | 'fireflies' | 'aurora' | 'sparkles' | 'confetti' | 'lightning' = 'floating';
+	export let blur: 'none' | 'light' | 'medium' | 'heavy' = 'medium';
+	export let opacity: number = 60;
+	
+	// Blur intensity mapping
+	const blurMap = {
+		none: 0,
+		light: 1,
+		medium: 2,
+		heavy: 4
+	};
+	
+	$: blurMultiplier = blurMap[blur];
+	$: opacityValue = opacity / 100;
 	
 	// Size mapping (px)
 	const sizeMap = {
@@ -120,9 +133,11 @@
 			class="particle particle-{variant}"
 			style="
 				left: {particle.left}%;
-				{(variant === 'stars' || variant === 'fireflies' || variant === 'aurora' || variant === 'sparkles') ? `top: ${particle.top}%;` : ''}
+				{(variant === 'stars' || variant === 'fireflies' || variant === 'aurora' || variant === 'sparkles' || variant === 'lightning') ? `top: ${particle.top}%;` : ''}
 				width: {particleSize.width}px;
 				height: {particleSize.height}px;
+				--blur-multiplier: {blurMultiplier};
+				--particle-opacity: {opacityValue};
 				{variant === 'sparkles' ? `--particle-size: ${particleSize.width * 3}px;` : ''}
 				{variant === 'aurora' 
 					? `background: linear-gradient(90deg, transparent, ${color}, transparent);` 
@@ -147,7 +162,7 @@
 
 	.particle {
 		position: absolute;
-		opacity: 0.6;
+		filter: opacity(var(--particle-opacity, 0.6)) blur(calc(0.5px * var(--blur-multiplier, 1)));
 		animation: float-up ease-in infinite;
 	}
 
@@ -161,7 +176,6 @@
 	.particle-rain {
 		top: -30px;
 		border-radius: 50% / 80% 80% 20% 20%;
-		opacity: 0.8;
 		animation: rain-fall linear infinite;
 		box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
 	}
@@ -170,41 +184,31 @@
 	.particle-snow {
 		top: -20px;
 		border-radius: 50%;
-		opacity: 0.7;
 		animation: snow-fall ease-in-out infinite;
 		box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 24px rgba(255, 255, 255, 0.6), 0 0 36px rgba(255, 255, 255, 0.3);
-		filter: blur(1.5px);
 	}
 	
 	/* Snow variations - different sizes for depth */
 	.particle-snow:nth-child(3n) {
 		transform: scale(0.6);
-		opacity: 0.4;
-		filter: blur(3px);
 		animation-duration: 1.3em;
 		box-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(255, 255, 255, 0.3);
 	}
 	
 	.particle-snow:nth-child(5n) {
 		transform: scale(1.4);
-		opacity: 0.9;
-		filter: blur(0.5px);
 		box-shadow: 0 0 16px rgba(255, 255, 255, 1), 0 0 32px rgba(255, 255, 255, 0.7), 0 0 48px rgba(255, 255, 255, 0.4);
 		animation-duration: 0.8em;
 	}
 	
 	.particle-snow:nth-child(7n) {
 		transform: scale(0.4);
-		opacity: 0.3;
-		filter: blur(4px);
 		animation-duration: 1.5em;
 		box-shadow: 0 0 6px rgba(255, 255, 255, 0.5), 0 0 12px rgba(255, 255, 255, 0.2);
 	}
 	
 	.particle-snow:nth-child(11n) {
 		transform: scale(1.8);
-		opacity: 1;
-		filter: blur(0px);
 		box-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 40px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 255, 255, 0.5);
 		animation-duration: 0.7em;
 	}
@@ -213,7 +217,6 @@
 	.particle-bubbles {
 		bottom: -20px;
 		border-radius: 50%;
-		opacity: 0.5;
 		animation: bubbles-rise ease-in-out infinite;
 		box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.5),
 			inset 2px 2px 4px rgba(0, 0, 0, 0.1);
@@ -222,7 +225,6 @@
 	/* Stars */
 	.particle-stars {
 		border-radius: 50%;
-		opacity: 0;
 		animation: stars-twinkle ease-in-out infinite;
 		box-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
 		clip-path: polygon(
@@ -242,7 +244,6 @@
 	/* Fireflies */
 	.particle-fireflies {
 		border-radius: 50%;
-		opacity: 0;
 		animation: fireflies-glow ease-in-out infinite;
 		box-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor;
 	}
@@ -250,16 +251,14 @@
 	/* Aurora */
 	.particle-aurora {
 		border-radius: 50%;
-		opacity: 0;
 		animation: aurora-wave ease-in-out infinite;
-		filter: blur(20px);
+		filter: opacity(var(--particle-opacity, 0.6)) blur(calc(20px * var(--blur-multiplier, 1)));
 		transform-origin: center;
 	}
 
 	/* Music Notes (replaces Bouncing Balls) */
 	.particle-sparkles {
 		border-radius: 0;
-		opacity: 0;
 		animation: music-notes-float ease-in-out infinite;
 		text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 		display: flex;
@@ -329,7 +328,6 @@
 	.particle-confetti {
 		top: -30px;
 		border-radius: 20%;
-		opacity: 0.9;
 		animation: confetti-fall ease-in infinite;
 	}
 
@@ -337,17 +335,9 @@
 	@keyframes float-up {
 		0% {
 			transform: translateY(0) translateX(0) rotate(0deg);
-			opacity: 0;
-		}
-		10% {
-			opacity: 0.6;
-		}
-		90% {
-			opacity: 0.6;
 		}
 		100% {
 			transform: translateY(-100vh) translateX(calc(var(--drift) * 50px)) rotate(360deg);
-			opacity: 0;
 		}
 	}
 
@@ -355,17 +345,9 @@
 	@keyframes rain-fall {
 		0% {
 			transform: translateY(0) translateX(0);
-			opacity: 0;
-		}
-		10% {
-			opacity: 0.7;
-		}
-		90% {
-			opacity: 0.7;
 		}
 		100% {
 			transform: translateY(100vh) translateX(20px);
-			opacity: 0;
 		}
 	}
 
@@ -373,10 +355,6 @@
 	@keyframes snow-fall {
 		0% {
 			transform: translateY(0) translateX(0);
-			opacity: 0;
-		}
-		10% {
-			opacity: 0.8;
 		}
 		25% {
 			transform: translateY(25vh) translateX(-10px);
@@ -387,12 +365,8 @@
 		75% {
 			transform: translateY(75vh) translateX(-5px);
 		}
-		90% {
-			opacity: 0.8;
-		}
 		100% {
 			transform: translateY(100vh) translateX(5px);
-			opacity: 0;
 		}
 	}
 
@@ -400,10 +374,8 @@
 	@keyframes bubbles-rise {
 		0% {
 			transform: translateY(0) translateX(0) scale(0.5);
-			opacity: 0;
 		}
 		10% {
-			opacity: 0.6;
 			transform: translateY(-10vh) translateX(15px) scale(0.7);
 		}
 		20% {
@@ -426,15 +398,12 @@
 		}
 		80% {
 			transform: translateY(-80vh) translateX(30px) scale(0.9);
-			opacity: 0.5;
 		}
 		90% {
 			transform: translateY(-90vh) translateX(10px) scale(0.6);
-			opacity: 0.3;
 		}
 		100% {
 			transform: translateY(-100vh) translateX(-5px) scale(0.3);
-			opacity: 0;
 		}
 	}
 
