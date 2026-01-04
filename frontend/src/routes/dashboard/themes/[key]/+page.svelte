@@ -124,6 +124,8 @@
 	let showCropModal = false;
 	let tempImageUrl = '';
 	let uploadTarget: 'background' | 'cover' = 'background';
+	
+	let originalTheme: any = null;
 
 	onMount(async () => {
 		themeKey = $page.params.key;
@@ -141,10 +143,10 @@
 				if (editorData.groups) groups.set(editorData.groups);
 			}
 			
+			originalTheme = themeResult.theme;
 			loadTheme(themeResult.theme);
 			
-			// Activate theme editor in header
-			themeEditor.activate('edit', themeResult.theme.name, handleSubmit, () => goto('/dashboard/themes'));
+			themeEditor.activate('edit', themeResult.theme.name, handleSubmit, () => goto('/dashboard/themes'), handleReset);
 		} catch (e) {
 			console.error('Failed to load theme:', e);
 			error = 'Failed to load theme';
@@ -156,6 +158,11 @@
 	onDestroy(() => {
 		themeEditor.deactivate();
 	});
+
+	function handleReset() {
+		if (!originalTheme) return;
+		loadTheme(originalTheme);
+	}
 
 	function loadTheme(theme: any) {
 		baseConfig = JSON.parse(JSON.stringify(theme.config));

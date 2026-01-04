@@ -7,6 +7,7 @@ interface ThemeEditorState {
 	saving: boolean;
 	handleSave: (() => Promise<void>) | null;
 	handleCancel: (() => void) | null;
+	handleReset: (() => void) | null;
 }
 
 function createThemeEditorStore() {
@@ -16,19 +17,27 @@ function createThemeEditorStore() {
 		themeName: '',
 		saving: false,
 		handleSave: null,
-		handleCancel: null
+		handleCancel: null,
+		handleReset: null
 	});
 
 	return {
 		subscribe,
-		activate: (mode: 'create' | 'edit', themeName: string, handleSave: () => Promise<void>, handleCancel: () => void) => {
+		activate: (
+			mode: 'create' | 'edit', 
+			themeName: string, 
+			handleSave: () => Promise<void>, 
+			handleCancel: () => void,
+			handleReset?: () => void
+		) => {
 			update(state => ({
 				...state,
 				isActive: true,
 				mode,
 				themeName,
 				handleSave,
-				handleCancel
+				handleCancel,
+				handleReset: handleReset ?? null
 			}));
 		},
 		setSaving: (saving: boolean) => {
@@ -41,7 +50,8 @@ function createThemeEditorStore() {
 				themeName: '',
 				saving: false,
 				handleSave: null,
-				handleCancel: null
+				handleCancel: null,
+				handleReset: null
 			});
 		}
 	};
