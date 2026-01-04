@@ -12,10 +12,54 @@
 	let tempVideoFile: File | null = null;
 	let tempVideoPreviewUrl = '';
 	let isDragging = false;
+	let videoElement: HTMLVideoElement;
+	let isFadingOut = false;
+	let isFadingIn = false;
 
 	// Default video background (local)
 	const DEFAULT_VIDEO_BG = '/presets/videos/14950008_1080_1920_60fps.mp4';
 
+	// Seamless loop handler with smooth fade transitions
+	function handleVideoTimeUpdate(event: Event) {
+		const video = event.target as HTMLVideoElement;
+		if (!video.duration || isNaN(video.duration)) return;
+		
+		const remaining = video.duration - video.currentTime;
+		const FADE_DURATION = 2.0; // 2 seconds fade
+		const FADE_START = FADE_DURATION + 0.3; // Start fade 2.3s before end
+		const LOOP_POINT = 0.15; // Loop when 0.15s remaining
+		
+		// Start fade out
+		if (remaining <= FADE_START && remaining > LOOP_POINT && !isFadingOut && !isFadingIn) {
+			isFadingOut = true;
+			video.style.transition = `opacity ${FADE_DURATION}s ease-in-out`;
+			video.style.opacity = '0';
+		}
+		
+		// Loop and start fade in
+		if (remaining <= LOOP_POINT && isFadingOut) {
+			isFadingOut = false;
+			isFadingIn = true;
+			video.currentTime = 0;
+			
+			// CRITICAL: Reset transition and opacity immediately
+			video.style.transition = 'none';
+			video.style.opacity = '0';
+			
+			// Then fade in with CSS transition
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					video.style.transition = `opacity ${FADE_DURATION}s ease-in-out`;
+					video.style.opacity = '1';
+					
+					// Reset fade in flag after transition completes
+					setTimeout(() => {
+						isFadingIn = false;
+					}, FADE_DURATION * 1000 + 100);
+				});
+			});
+		}
+	}
 	async function handleVideoUpload(event: Event) {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
@@ -126,7 +170,15 @@
 <div class="space-y-3">
 	{#if bgVideoUrl}
 		<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
-			<video src={bgVideoUrl} class="w-full h-48 object-cover" autoplay loop muted playsinline
+			<video 
+				bind:this={videoElement}
+				src={bgVideoUrl} 
+				class="w-full h-48 object-cover" 
+				autoplay 
+				loop 
+				muted 
+				playsinline
+				on:timeupdate={handleVideoTimeUpdate}
 			></video>
 			<div
 				class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2"
