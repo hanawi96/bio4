@@ -353,6 +353,16 @@
 		}
 	}
 
+	// Auto-set default background image when switching to image type
+	$: if (bgType === 'image' && bgImageUrl === '') {
+		bgImageUrl = '/presets/images/preset-img.jpg';
+	}
+
+	// Auto-set default background video when switching to video type
+	$: if (bgType === 'video' && bgVideoUrl === '') {
+		bgVideoUrl = 'https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev/background-vide-preset/14950008_1080_1920_60fps.mp4';
+	}
+
 	function updateConfig() {
 		if (!baseConfig) return;
 		
