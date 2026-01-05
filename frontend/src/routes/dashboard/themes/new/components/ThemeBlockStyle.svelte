@@ -298,7 +298,7 @@
 							style="background: {previewBackground}; background-size: cover; background-position: center;"
 						>
 							<div
-								class="w-full h-8 transition-all flex items-center justify-center relative z-10"
+								class="w-full transition-all flex items-center justify-center relative z-10"
 								style="
 									background-color: {displayStyle.backgroundImage !== 'none' ? 'transparent' : displayStyle.backgroundColor};
 									background-image: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : 'none'};
@@ -308,6 +308,7 @@
 									backdrop-filter: {displayStyle.backdropFilter || 'none'};
 									-webkit-backdrop-filter: {displayStyle.backdropFilter || 'none'};
 									border-radius: {previewBorderRadius};
+									padding: {blockPaddingY}px {blockPaddingX}px;
 								"
 							>
 								<span class="text-xs font-semibold">Button</span>
