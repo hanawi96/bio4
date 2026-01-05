@@ -123,7 +123,7 @@
 					type="button"
 					on:click={() => selectMaxWidthPreset('xs')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'xs'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">XS</div>
@@ -133,7 +133,7 @@
 					type="button"
 					on:click={() => selectMaxWidthPreset('sm')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'sm'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">SM</div>
@@ -143,7 +143,7 @@
 					type="button"
 					on:click={() => selectMaxWidthPreset('md')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'md'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">MD</div>
@@ -153,7 +153,7 @@
 					type="button"
 					on:click={() => selectMaxWidthPreset('lg')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'lg'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">LG</div>
@@ -163,7 +163,7 @@
 					type="button"
 					on:click={() => selectMaxWidthPreset('xl')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'xl'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">XL</div>
@@ -173,7 +173,7 @@
 					type="button"
 					on:click={() => selectMaxWidthPreset('custom')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {maxWidthMode === 'custom'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Custom</div>
@@ -205,7 +205,7 @@
 					type="button"
 					on:click={() => textAlign = 'left'}
 					class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {textAlign === 'left'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,7 +217,7 @@
 					type="button"
 					on:click={() => textAlign = 'center'}
 					class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {textAlign === 'center'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,7 +229,7 @@
 					type="button"
 					on:click={() => textAlign = 'right'}
 					class="py-2.5 px-3 text-xs font-medium rounded-lg border-2 transition-all flex items-center justify-center gap-1.5 {textAlign === 'right'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +250,7 @@
 					type="button"
 					on:click={() => selectPagePaddingPreset('none')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'none'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">None</div>
@@ -260,7 +260,7 @@
 					type="button"
 					on:click={() => selectPagePaddingPreset('tight')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'tight'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Tight</div>
@@ -270,7 +270,7 @@
 					type="button"
 					on:click={() => selectPagePaddingPreset('default')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'default'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Default</div>
@@ -280,7 +280,7 @@
 					type="button"
 					on:click={() => selectPagePaddingPreset('comfortable')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'comfortable'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Comfort</div>
@@ -290,7 +290,7 @@
 					type="button"
 					on:click={() => selectPagePaddingPreset('spacious')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'spacious'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Spacious</div>
@@ -300,7 +300,7 @@
 					type="button"
 					on:click={() => selectPagePaddingPreset('custom')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {pagePaddingMode === 'custom'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Custom</div>
@@ -333,7 +333,7 @@
 						type="button"
 						on:click={() => blockGapPreset = option.value}
 						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockGapPreset === option.value
-							? 'border-gray-900 bg-gray-50 text-gray-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">{option.label}</div>
@@ -354,7 +354,7 @@
 					type="button"
 					on:click={() => selectPaddingPreset('tight')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'tight'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Tight</div>
@@ -364,7 +364,7 @@
 					type="button"
 					on:click={() => selectPaddingPreset('default')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'default'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Default</div>
@@ -374,7 +374,7 @@
 					type="button"
 					on:click={() => selectPaddingPreset('spacious')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'spacious'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Spacious</div>
@@ -384,7 +384,7 @@
 					type="button"
 					on:click={() => selectPaddingPreset('custom')}
 					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'custom'
-						? 'border-gray-900 bg-gray-50 text-gray-900'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Custom</div>
@@ -437,7 +437,7 @@
 						on:click={() => blockBorderRadiusType = option.value}
 						disabled={option.value === 'full' && isFullDisabled}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadiusType === option.value
-							? 'border-gray-900 bg-gray-50 text-gray-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: option.value === 'full' && isFullDisabled
 								? 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
 								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"

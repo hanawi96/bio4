@@ -15,12 +15,13 @@
 			<button
 				type="button"
 				on:click={() => showShareButton = !showShareButton}
-				class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {showShareButton ? 'bg-blue-600' : 'bg-gray-200'}"
+				class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 {showShareButton ? 'bg-[#00aa4f] focus:ring-[#00aa4f]' : 'bg-gray-200 focus:ring-gray-300'}"
+				style={showShareButton ? 'box-shadow: 0 2px 8px rgba(0, 170, 79, 0.2);' : ''}
 				role="switch"
 				aria-checked={showShareButton}
 			>
 				<span
-					class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {showShareButton ? 'translate-x-5' : 'translate-x-0'}"
+					class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {showShareButton ? 'translate-x-5' : 'translate-x-0'}"
 				></span>
 			</button>
 		</div>
@@ -34,12 +35,13 @@
 			<button
 				type="button"
 				on:click={() => showSubscribeButton = !showSubscribeButton}
-				class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {showSubscribeButton ? 'bg-blue-600' : 'bg-gray-200'}"
+				class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 {showSubscribeButton ? 'bg-[#00aa4f] focus:ring-[#00aa4f]' : 'bg-gray-200 focus:ring-gray-300'}"
+				style={showSubscribeButton ? 'box-shadow: 0 2px 8px rgba(0, 170, 79, 0.2);' : ''}
 				role="switch"
 				aria-checked={showSubscribeButton}
 			>
 				<span
-					class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {showSubscribeButton ? 'translate-x-5' : 'translate-x-0'}"
+					class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {showSubscribeButton ? 'translate-x-5' : 'translate-x-0'}"
 				></span>
 			</button>
 		</div>

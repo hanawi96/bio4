@@ -55,7 +55,7 @@
 		<button
 			type="button"
 			on:click={() => bgType = 'solid'}
-			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgType === 'solid' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgType === 'solid' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 		>
 			Solid Color
 		</button>
@@ -63,7 +63,7 @@
 			type="button"
 			on:click={() => bgType = 'gradient'}
 			disabled={isAvatarCover}
-			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'gradient' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'gradient' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
 		>
 			Gradient
@@ -72,7 +72,7 @@
 			type="button"
 			on:click={() => bgType = 'image'}
 			disabled={isAvatarCover}
-			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'image' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'image' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
 		>
 			Image
@@ -81,7 +81,7 @@
 			type="button"
 			on:click={() => bgType = 'video'}
 			disabled={isAvatarCover}
-			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'video' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'video' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
 		>
 			Video

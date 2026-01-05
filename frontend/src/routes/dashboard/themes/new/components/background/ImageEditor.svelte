@@ -95,7 +95,7 @@
 					on:click={() => (activeFilter = activeFilter === 'blur' ? null : 'blur')}
 					class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter ===
 					'blur'
-						? 'bg-blue-600 text-white shadow-md'
+						? 'bg-[#00aa4f] text-white shadow-md'
 						: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 				>
 					<div class="flex items-center justify-center gap-2">
@@ -121,7 +121,7 @@
 					on:click={() => (activeFilter = activeFilter === 'brightness' ? null : 'brightness')}
 					class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter ===
 					'brightness'
-						? 'bg-blue-600 text-white shadow-md'
+						? 'bg-[#00aa4f] text-white shadow-md'
 						: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 				>
 					<div class="flex items-center justify-center gap-2">
@@ -141,7 +141,7 @@
 					on:click={() => (activeFilter = activeFilter === 'grayscale' ? null : 'grayscale')}
 					class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter ===
 					'grayscale'
-						? 'bg-blue-600 text-white shadow-md'
+						? 'bg-[#00aa4f] text-white shadow-md'
 						: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 				>
 					<div class="flex items-center justify-center gap-2">
@@ -167,12 +167,12 @@
 							on:click={() => (bgBlur = 'none')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'none' ||
 							bgBlur === 0
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBlur === 'none' || bgBlur === 0
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								None
@@ -183,12 +183,12 @@
 							type="button"
 							on:click={() => (bgBlur = 'subtle')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'subtle'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBlur === 'subtle'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Subtle
@@ -199,12 +199,12 @@
 							type="button"
 							on:click={() => (bgBlur = 'medium')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'medium'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBlur === 'medium'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Medium
@@ -215,12 +215,12 @@
 							type="button"
 							on:click={() => (bgBlur = 'strong')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'strong'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBlur === 'strong'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Strong
@@ -231,12 +231,12 @@
 							type="button"
 							on:click={() => (bgBlur = 'extreme')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'extreme'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBlur === 'extreme'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Extreme
@@ -253,12 +253,12 @@
 							on:click={() => (bgBrightness = 'darkest')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
 							'darkest'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBrightness === 'darkest'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Darkest
@@ -272,12 +272,12 @@
 							on:click={() => (bgBrightness = 'dark')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
 							'dark'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBrightness === 'dark'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Dark
@@ -289,12 +289,12 @@
 							on:click={() => (bgBrightness = 'normal')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
 								'normal' || bgBrightness === 100
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBrightness === 'normal' || bgBrightness === 100
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Normal
@@ -308,12 +308,12 @@
 							on:click={() => (bgBrightness = 'bright')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
 							'bright'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBrightness === 'bright'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Bright
@@ -327,12 +327,12 @@
 							on:click={() => (bgBrightness = 'brightest')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
 							'brightest'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgBrightness === 'brightest'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Brightest
@@ -351,12 +351,12 @@
 							on:click={() => (bgGrayscale = 'none')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
 								'none' || bgGrayscale === 0
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgGrayscale === 'none' || bgGrayscale === 0
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								None
@@ -368,12 +368,12 @@
 							on:click={() => (bgGrayscale = 'subtle')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
 							'subtle'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgGrayscale === 'subtle'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Subtle
@@ -387,12 +387,12 @@
 							on:click={() => (bgGrayscale = 'medium')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
 							'medium'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgGrayscale === 'medium'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Medium
@@ -406,12 +406,12 @@
 							on:click={() => (bgGrayscale = 'strong')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
 							'strong'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgGrayscale === 'strong'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Strong
@@ -425,12 +425,12 @@
 							on:click={() => (bgGrayscale = 'full')}
 							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
 							'full'
-								? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 								: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						>
 							<div
 								class="text-xs font-semibold {bgGrayscale === 'full'
-									? 'text-blue-600'
+									? 'text-[#00aa4f]'
 									: 'text-gray-900'}"
 							>
 								Full
@@ -452,10 +452,10 @@
 				class="hidden"
 			/>
 			<div
-				class="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all"
+				class="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#00aa4f] hover:bg-[#e6f7ed] transition-all"
 			>
-				<div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-					<svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<div class="w-16 h-16 rounded-full bg-[#e6f7ed] flex items-center justify-center">
+					<svg class="w-8 h-8 text-[#00aa4f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -469,7 +469,7 @@
 					<p class="text-xs text-gray-500 mt-1">JPG, PNG or WebP (max 5MB)</p>
 				</div>
 				<div
-					class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+					class="px-4 py-2 bg-[#00aa4f] text-white rounded-lg text-sm font-medium hover:bg-[#008f42] transition"
 				>
 					Choose File
 				</div>

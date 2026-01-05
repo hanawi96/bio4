@@ -234,7 +234,13 @@
 
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
-	$: coverHeight = header?.coverHeight ? coverHeights[header.coverHeight] : 160;
+	$: coverHeight = (() => {
+		// For avatar-cover, use 280px (phone width) to maintain 1:1 aspect ratio
+		if (isAvatarCover) {
+			return 280;
+		}
+		return header?.coverHeight ? coverHeights[header.coverHeight] : 160;
+	})();
 	
 	// Helper: Get border radius for avatar shape
 	function getAvatarBorderRadius(shape: string | undefined): string {
@@ -378,27 +384,37 @@
 		return 'none';
 	})();
 	
-	// Get background color for gradient overlay (for avatar-cover)
-	$: overlayGradientColor = (() => {
-		if (!isAvatarCover) return 'rgba(0, 0, 0, 0.7)';
+	// Convert background color to rgba gradient colors for mask (for avatar-cover)
+	$: maskGradientColors = (() => {
+		if (!isAvatarCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
 		
-		// Read directly from overrides (most up-to-date source)
+		// Read directly from overrides
 		const bgColor = $appearanceState.overrides['backgroundColor'];
 		
-		if (!bgColor) {
-			return 'rgba(0, 0, 0, 0.7)';
-		}
+		let r = 0, g = 0, b = 0;
 		
-		// If solid color, convert to rgba
-		if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-			const r = parseInt(bgColor.slice(1, 3), 16);
-			const g = parseInt(bgColor.slice(3, 5), 16);
-			const b = parseInt(bgColor.slice(5, 7), 16);
-			return `rgba(${r}, ${g}, ${b}, 0.95)`;
+		// Parse hex color (#RRGGBB)
+		if (bgColor && bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			r = parseInt(bgColor.slice(1, 3), 16);
+			g = parseInt(bgColor.slice(3, 5), 16);
+			b = parseInt(bgColor.slice(5, 7), 16);
 		}
+		// Parse rgb/rgba
+		else if (bgColor && bgColor.startsWith('rgb')) {
+			const match = bgColor.match(/\d+/g);
+			if (match && match.length >= 3) {
+				r = parseInt(match[0]);
+				g = parseInt(match[1]);
+				b = parseInt(match[2]);
+			}
+		}
+		// Fallback to black if can't parse
 		
-		// Fallback
-		return 'rgba(0, 0, 0, 0.7)';
+		return {
+			solid: `rgba(${r}, ${g}, ${b}, 1)`,
+			dark: `rgba(${r}, ${g}, ${b}, 0.8)`,
+			medium: `rgba(${r}, ${g}, ${b}, 0.4)`
+		};
 	})();
 
 	// Get socialIconPosition from theme config
@@ -659,20 +675,13 @@
 							>
 								<!-- Double gradient overlay for avatar-cover -->
 								{#if isAvatarCover}
-									<!-- Gradient 1 - Avatar bottom fade -->
-									<div 
-										class="absolute inset-0" 
-										style="background: linear-gradient(to bottom, transparent 0%, transparent 30%, {overlayGradientColor} 100%);"
-									></div>
-									
-									<!-- Gradient 2 - Darken middle -->
-									<div 
-										class="absolute inset-0" 
-										style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);"
-									></div>
+									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
+									<!-- Layer 2: Bottom fade mask - extend 2px below to prevent gap -->
+									<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
 									
 									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
-									<div class="absolute bottom-6 left-0 right-0 z-20 text-center px-4">
+									<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
 										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
 										{#if header.showBio && $page?.bio}
 											<p 

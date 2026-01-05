@@ -236,11 +236,11 @@
 					<button
 						type="button"
 						on:click={() => selectedBlockStyle = recipeId}
-						class="group relative rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+						class="group relative rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-[#00aa4f]' : 'hover:ring-2 hover:ring-gray-300'}"
 					>
 						<!-- Preview Container -->
 						<div
-							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white overflow-hidden"
+							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-[#00aa4f]' : 'border-gray-200'} bg-white overflow-hidden"
 							style="background: {previewBackground}; background-size: cover; background-position: center;"
 						>
 							<div
@@ -260,8 +260,8 @@
 						</div>
 						
 						<!-- Name Label -->
-						<div class="py-2 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
-							<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
+						<div class="py-2 px-2 {isSelected ? 'bg-[#e6f7ed] border-t border-[#00aa4f]/30' : 'bg-gray-50 border-t border-gray-200'}">
+							<p class="text-xs font-semibold {isSelected ? 'text-[#00aa4f]' : 'text-gray-700'} truncate text-center">
 								{getBlockStyleRecipeName(recipeId)}
 							</p>
 						</div>
@@ -282,7 +282,7 @@
 				min="10"
 				max="100"
 				step="1"
-				class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+				class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00aa4f]"
 			/>
 			<div class="flex justify-between text-xs text-gray-500 mt-1">
 				<span>10% (Subtle)</span>
@@ -301,7 +301,7 @@
 					<button
 						type="button"
 						on:click={() => borderWidth = 'none'}
-						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'none' || borderWidth === 0 ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'none' || borderWidth === 0 ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">None</div>
 						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.none}px</div>
@@ -309,7 +309,7 @@
 					<button
 						type="button"
 						on:click={() => borderWidth = 'thin'}
-						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'thin' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'thin' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">Thin</div>
 						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.thin}px</div>
@@ -317,7 +317,7 @@
 					<button
 						type="button"
 						on:click={() => borderWidth = 'default'}
-						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'default' || borderWidth === 2 ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'default' || borderWidth === 2 ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">Default</div>
 						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.default}px</div>
@@ -325,7 +325,7 @@
 					<button
 						type="button"
 						on:click={() => borderWidth = 'medium'}
-						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'medium' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'medium' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">Medium</div>
 						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.medium}px</div>
@@ -333,7 +333,7 @@
 					<button
 						type="button"
 						on:click={() => borderWidth = 'thick'}
-						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'thick' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {borderWidth === 'thick' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">Thick</div>
 						<div class="text-[10px] opacity-60 mt-0.5">{BORDER_WIDTH_PRESETS.thick}px</div>
@@ -356,15 +356,15 @@
 						<button
 							type="button"
 							on:click={() => selectedGradientPreset = preset}
-							class="group relative rounded-lg overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+							class="group relative rounded-lg overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-[#00aa4f]' : 'hover:ring-2 hover:ring-gray-300'}"
 						>
 							<!-- Gradient Preview -->
 							<div
-								class="h-12 relative border {isSelected ? 'border-blue-500' : 'border-gray-200'}"
+								class="h-12 relative border {isSelected ? 'border-[#00aa4f]' : 'border-gray-200'}"
 								style="background: {gradient.css};"
 							>
 								{#if isSelected}
-									<div class="absolute top-1 right-1 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+									<div class="absolute top-1 right-1 w-4 h-4 bg-[#00aa4f] rounded-full flex items-center justify-center">
 										<svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
 											<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
 										</svg>
@@ -373,8 +373,8 @@
 							</div>
 							
 							<!-- Name Label -->
-							<div class="py-1.5 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
-								<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
+							<div class="py-1.5 px-2 {isSelected ? 'bg-[#e6f7ed] border-t border-[#00aa4f]/30' : 'bg-gray-50 border-t border-gray-200'}">
+								<p class="text-xs font-semibold {isSelected ? 'text-[#00aa4f]' : 'text-gray-700'} truncate text-center">
 									{getGradientPresetName(preset)}
 								</p>
 							</div>
@@ -401,7 +401,7 @@
 							if (shadowId === 'custom') showAdvancedShadow = true;
 						}}
 						disabled={isDisabled}
-						class="px-3 py-2 rounded-lg text-sm font-medium transition-all {isDisabled ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-500' : isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+						class="px-3 py-2 rounded-lg text-sm font-medium transition-all {isDisabled ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-500' : isSelected ? 'bg-[#00aa4f] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
 					>
 						{getShadowStyleName(shadowId)}
 					</button>
@@ -423,7 +423,7 @@
 						<button
 							type="button"
 							on:click={() => showAdvancedShadow = !showAdvancedShadow}
-							class="text-xs text-blue-600 hover:text-blue-700"
+							class="text-xs text-[#00aa4f] hover:text-[#00aa4f]"
 						>
 							{showAdvancedShadow ? 'Hide' : 'Show'}
 						</button>
@@ -442,7 +442,7 @@
 								min="-20"
 								max="20"
 								step="1"
-								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00aa4f]"
 							/>
 						</div>
 						
@@ -458,7 +458,7 @@
 								min="-20"
 								max="20"
 								step="1"
-								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00aa4f]"
 							/>
 						</div>
 						
@@ -474,7 +474,7 @@
 								min="0"
 								max="50"
 								step="1"
-								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00aa4f]"
 							/>
 						</div>
 						
@@ -490,7 +490,7 @@
 								min="-10"
 								max="10"
 								step="1"
-								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00aa4f]"
 							/>
 						</div>
 						
@@ -506,7 +506,7 @@
 								min="0"
 								max="1"
 								step="0.01"
-								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+								class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#00aa4f]"
 							/>
 						</div>
 					{/if}
@@ -525,20 +525,20 @@
 					<button
 						type="button"
 						on:click={() => selectedLinkIconShape = shape.value}
-						class="group relative rounded-lg overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+						class="group relative rounded-lg overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-[#00aa4f]' : 'hover:ring-2 hover:ring-gray-300'}"
 					>
 						<!-- Preview Container -->
 						<div
-							class="p-4 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white"
+							class="p-4 flex items-center justify-center relative border {isSelected ? 'border-[#00aa4f]' : 'border-gray-200'} bg-white"
 						>
 							<div
-								class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 {shape.preview}"
+								class="w-10 h-10 bg-gradient-to-br from-[#00aa4f] to-[#008f42] {shape.preview}"
 							></div>
 						</div>
 						
 						<!-- Name Label -->
-						<div class="py-1.5 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
-							<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
+						<div class="py-1.5 px-2 {isSelected ? 'bg-[#e6f7ed] border-t border-[#00aa4f]/30' : 'bg-gray-50 border-t border-gray-200'}">
+							<p class="text-xs font-semibold {isSelected ? 'text-[#00aa4f]' : 'text-gray-700'} truncate text-center">
 								{shape.label}
 							</p>
 						</div>

@@ -94,7 +94,7 @@
 		<input
 			type="checkbox"
 			bind:checked={bgGradientMiddleEnabled}
-			class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+			class="w-4 h-4 rounded border-gray-300 text-[#00aa4f] focus:ring-[#00aa4f]"
 		/>
 		<span class="text-sm font-medium text-gray-700">3-Color Gradient</span>
 	</label>
@@ -183,7 +183,7 @@
 			type="button"
 			on:click={() => (bgGradientType = 'linear')}
 			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgGradientType === 'linear'
-				? 'bg-blue-600 text-white shadow-md'
+				? 'bg-[#00aa4f] text-white shadow-md'
 				: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 		>
 			Linear
@@ -192,7 +192,7 @@
 			type="button"
 			on:click={() => (bgGradientType = 'radial')}
 			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgGradientType === 'radial'
-				? 'bg-blue-600 text-white shadow-md'
+				? 'bg-[#00aa4f] text-white shadow-md'
 				: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 		>
 			Radial
@@ -210,14 +210,14 @@
 						on:click={() => (bgGradientDirection = preset.value)}
 						class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGradientDirection ===
 						preset.value
-							? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+							? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 							: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						title={preset.name}
 					>
 						<div class="text-2xl mb-1">{preset.label}</div>
 						<div
 							class="text-[10px] {bgGradientDirection === preset.value
-								? 'text-blue-600 font-semibold'
+								? 'text-[#00aa4f] font-semibold'
 								: 'text-gray-500'}"
 						>
 							{preset.value}
@@ -237,7 +237,7 @@
 						on:click={() => (bgRadialPosition = preset.value)}
 						class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgRadialPosition ===
 						preset.value
-							? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+							? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
 							: 'border-gray-200 hover:border-gray-300 bg-white'}"
 						title={preset.name}
 					>
@@ -276,7 +276,7 @@
 				<button
 					type="button"
 					on:click={() => applyPreset(preset)}
-					class="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all hover:scale-105"
+					class="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-[#00aa4f] transition-all hover:scale-105"
 					style="background: linear-gradient(135deg, {preset.from} 0%, {bgGradientMiddleEnabled
 						? `${preset.middle} 50%, `
 						: ''}{preset.to} 100%); height: 60px;"
@@ -304,12 +304,13 @@
 			<button
 				type="button"
 				on:click={() => (bgAnimationEnabled = !bgAnimationEnabled)}
-				class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {bgAnimationEnabled
-					? 'bg-green-600'
+				class="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 {bgAnimationEnabled
+					? 'bg-[#00aa4f]'
 					: 'bg-gray-200'}"
+				style={bgAnimationEnabled ? 'box-shadow: 0 2px 8px rgba(0, 170, 79, 0.2);' : ''}
 			>
 				<span
-					class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {bgAnimationEnabled
+					class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 {bgAnimationEnabled
 						? 'translate-x-6'
 						: 'translate-x-1'}"
 				></span>
@@ -327,7 +328,7 @@
 							on:click={() => (bgAnimationVariant = 'rotating')}
 							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationVariant ===
 							'rotating'
-								? 'bg-blue-600 text-white shadow-md'
+								? 'bg-[#00aa4f] text-white shadow-md'
 								: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 						>
 							🔄 Rotating
@@ -337,7 +338,7 @@
 							on:click={() => (bgAnimationVariant = 'flowing')}
 							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationVariant ===
 							'flowing'
-								? 'bg-blue-600 text-white shadow-md'
+								? 'bg-[#00aa4f] text-white shadow-md'
 								: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 						>
 							→ Flowing
@@ -347,7 +348,7 @@
 							on:click={() => (bgAnimationVariant = 'pulsing')}
 							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationVariant ===
 							'pulsing'
-								? 'bg-blue-600 text-white shadow-md'
+								? 'bg-[#00aa4f] text-white shadow-md'
 								: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 						>
 							💫 Pulsing
@@ -364,7 +365,7 @@
 							on:click={() => (bgAnimationSpeed = 'slow')}
 							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationSpeed ===
 							'slow'
-								? 'bg-blue-600 text-white shadow-md'
+								? 'bg-[#00aa4f] text-white shadow-md'
 								: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 						>
 							🐢 Slow
@@ -374,7 +375,7 @@
 							on:click={() => (bgAnimationSpeed = 'medium')}
 							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationSpeed ===
 							'medium'
-								? 'bg-blue-600 text-white shadow-md'
+								? 'bg-[#00aa4f] text-white shadow-md'
 								: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 						>
 							⚡ Medium
@@ -384,7 +385,7 @@
 							on:click={() => (bgAnimationSpeed = 'fast')}
 							class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {bgAnimationSpeed ===
 							'fast'
-								? 'bg-blue-600 text-white shadow-md'
+								? 'bg-[#00aa4f] text-white shadow-md'
 								: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
 						>
 							🚀 Fast

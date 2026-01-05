@@ -188,7 +188,13 @@
 	
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
-	$: coverHeight = header?.coverHeight ? coverHeights[header.coverHeight] : 160;
+	$: coverHeight = (() => {
+		// For avatar-cover, use 280px (phone width) to maintain 1:1 aspect ratio
+		if (isAvatarCover) {
+			return 280;
+		}
+		return header?.coverHeight ? coverHeights[header.coverHeight] : 160;
+	})();
 	
 	function getAvatarBorderRadius(shape: string | undefined): string {
 		if (shape === 'circle') return '50%';
@@ -586,11 +592,9 @@
 								style="{coverStyle} height: {coverHeight}px;"
 							>
 								{#if isAvatarCover}
-									<!-- Layer 1: Main gradient overlay - fade from transparent to dark -->
-									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.7) 100%);"></div>
-									<!-- Layer 2: Subtle vignette for depth -->
-									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.15) 50%, transparent 100%);"></div>
-									<!-- Layer 3: Bottom fade mask - extend 2px below to prevent gap -->
+									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
+									<!-- Layer 2: Bottom fade mask - extend 2px below to prevent gap -->
 									<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
 									<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
 										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>

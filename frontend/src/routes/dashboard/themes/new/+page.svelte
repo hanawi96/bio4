@@ -722,6 +722,7 @@
 					...(coverImageUrl ? { 'header.coverValue': coverImageUrl } : {}),
 					'header.avatarSize': avatarSize,
 					'header.avatarShape': avatarShape,
+					'header.showBio': showBio,
 					'header.avatarBorderColor': avatarBorderColor,
 					'header.avatarBorderWidth': avatarBorderWidth,
 					'backgroundColor': backgroundValue,

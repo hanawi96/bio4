@@ -80,7 +80,7 @@
 					<button
 						type="button"
 						on:click={() => selectedHeaderPreset = preset.key}
-						class="relative group text-left rounded-xl border-2 transition-all overflow-hidden {selectedHeaderPreset === preset.key ? 'border-blue-500 bg-blue-50 shadow-lg ring-2 ring-blue-200' : 'border-gray-200 hover:border-blue-300 bg-white hover:shadow-md'}"
+						class="relative group text-left rounded-xl border-2 transition-all overflow-hidden {selectedHeaderPreset === preset.key ? 'border-[#00aa4f] bg-[#e6f7ed] shadow-lg ring-2 ring-[#00aa4f]/20' : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-md'}"
 					>
 						<!-- Simple Header Preview -->
 						<div class="aspect-[3/4] bg-white relative overflow-hidden">
@@ -135,7 +135,7 @@
 							
 							<!-- Selected Indicator with animation -->
 							{#if selectedHeaderPreset === preset.key}
-								<div class="absolute top-2 right-2 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
+								<div class="absolute top-2 right-2 w-7 h-7 bg-[#00aa4f] rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
 									<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
 										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
 									</svg>
@@ -143,7 +143,7 @@
 							{/if}
 							
 							<!-- Hover overlay -->
-							<div class="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 transition-colors pointer-events-none"></div>
+							<div class="absolute inset-0 bg-[#00aa4f]/0 group-hover:bg-[#00aa4f]/5 transition-colors pointer-events-none"></div>
 						</div>
 						
 						<!-- Info with better typography -->
@@ -227,10 +227,10 @@
 							class="hidden"
 						/>
 						<div
-							class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all"
+							class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#00aa4f] hover:bg-[#e6f7ed] transition-all"
 						>
-							<div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-								<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<div class="w-12 h-12 rounded-full bg-[#e6f7ed] flex items-center justify-center">
+								<svg class="w-6 h-6 text-[#00aa4f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path
 										stroke-linecap="round"
 										stroke-linejoin="round"
@@ -244,7 +244,7 @@
 								<p class="text-xs text-gray-500 mt-1">JPG, PNG or WebP (max 5MB)</p>
 							</div>
 							<div
-								class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+								class="px-4 py-2 bg-[#00aa4f] text-white rounded-lg text-sm font-medium hover:bg-[#008f42] transition"
 							>
 								Choose File
 							</div>
@@ -257,12 +257,12 @@
 			<div class="border-t border-gray-200 pt-4">
 				<label class="block text-sm font-medium text-gray-700 mb-2">Avatar Preview</label>
 				{#if previewPage?.avatar_url}
-					<div class="rounded-xl overflow-hidden border-2 border-gray-200">
-						<img src={previewPage.avatar_url} alt="Avatar" class="w-full h-32 object-cover" />
+					<div class="rounded-xl overflow-hidden border-2 border-gray-200 aspect-square">
+						<img src={previewPage.avatar_url} alt="Avatar" class="w-full h-full object-cover" />
 					</div>
 					<p class="text-xs text-gray-500 mt-2">
 						This avatar will be used as your cover background.
-						<a href="/dashboard/profile" class="text-blue-600 hover:text-blue-700 font-medium"
+						<a href="/dashboard/profile" class="text-[#00aa4f] hover:text-[#008f42] font-medium"
 							>Change avatar</a
 						>
 					</p>
@@ -283,7 +283,7 @@
 						<div class="text-center">
 							<p class="text-sm font-medium text-gray-900">No Avatar Set</p>
 							<p class="text-xs text-gray-500 mt-1">
-								<a href="/dashboard/profile" class="text-blue-600 hover:text-blue-700 font-medium"
+								<a href="/dashboard/profile" class="text-[#00aa4f] hover:text-[#008f42] font-medium"
 									>Upload an avatar</a
 								> to use as cover
 							</p>
@@ -306,7 +306,7 @@
 						type="button"
 						on:click={() => (avatarSize = 'xs')}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === 'xs'
-							? 'border-blue-600 bg-blue-50 text-blue-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">XS</div>
@@ -316,7 +316,7 @@
 						type="button"
 						on:click={() => (avatarSize = 'sm')}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === 'sm'
-							? 'border-blue-600 bg-blue-50 text-blue-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">SM</div>
@@ -326,7 +326,7 @@
 						type="button"
 						on:click={() => (avatarSize = 'md')}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === 'md'
-							? 'border-blue-600 bg-blue-50 text-blue-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">MD</div>
@@ -336,7 +336,7 @@
 						type="button"
 						on:click={() => (avatarSize = 'lg')}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === 'lg'
-							? 'border-blue-600 bg-blue-50 text-blue-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">LG</div>
@@ -346,7 +346,7 @@
 						type="button"
 						on:click={() => (avatarSize = 'xl')}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === 'xl'
-							? 'border-blue-600 bg-blue-50 text-blue-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">XL</div>
@@ -356,7 +356,7 @@
 						type="button"
 						on:click={() => (avatarSize = '2xl')}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === '2xl'
-							? 'border-blue-600 bg-blue-50 text-blue-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">2XL</div>
@@ -366,7 +366,7 @@
 						type="button"
 						on:click={() => (avatarSize = '3xl')}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === '3xl'
-							? 'border-blue-600 bg-blue-50 text-blue-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">3XL</div>
@@ -377,7 +377,7 @@
 						on:click={() => (avatarSize = 'full')}
 						disabled={selectedHeaderPreset === 'with-cover'}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarSize === 'full'
-							? 'border-blue-600 bg-blue-50 text-blue-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: selectedHeaderPreset === 'with-cover'
 								? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
 								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
@@ -408,7 +408,7 @@
 					<button
 						type="button"
 						on:click={() => avatarShape = 'circle'}
-						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'circle' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'circle' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="w-8 h-8 rounded-full bg-current opacity-20"></div>
 						<div class="font-semibold">Circle</div>
@@ -416,7 +416,7 @@
 					<button
 						type="button"
 						on:click={() => avatarShape = 'rounded'}
-						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'rounded' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'rounded' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="w-8 h-8 rounded-md bg-current opacity-20"></div>
 						<div class="font-semibold">Rounded</div>
@@ -424,7 +424,7 @@
 					<button
 						type="button"
 						on:click={() => avatarShape = 'square'}
-						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'square' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'square' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="w-8 h-8 bg-current opacity-20"></div>
 						<div class="font-semibold">Square</div>
@@ -432,7 +432,7 @@
 					<button
 						type="button"
 						on:click={() => avatarShape = 'oval'}
-						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'oval' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'oval' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="w-6 h-8 rounded-full bg-current opacity-20"></div>
 						<div class="font-semibold">Oval</div>
@@ -440,7 +440,7 @@
 					<button
 						type="button"
 						on:click={() => avatarShape = 'portrait'}
-						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'portrait' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'portrait' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="w-6 h-8 rounded-sm bg-current opacity-20"></div>
 						<div class="font-semibold">Portrait</div>
@@ -448,7 +448,7 @@
 					<button
 						type="button"
 						on:click={() => avatarShape = 'landscape'}
-						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'landscape' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						class="py-3 px-3 text-xs font-medium rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 {avatarShape === 'landscape' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="w-8 h-6 rounded-sm bg-current opacity-20"></div>
 						<div class="font-semibold">Landscape</div>
@@ -472,7 +472,7 @@
 					<button
 						type="button"
 						on:click={() => showBio = !showBio}
-						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {showBio ? 'bg-blue-600' : 'bg-gray-200'}"
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {showBio ? 'bg-[#00aa4f]' : 'bg-gray-200'}"
 					>
 						<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {showBio ? 'translate-x-6' : 'translate-x-1'}"></span>
 					</button>
@@ -491,7 +491,7 @@
 					<button
 						type="button"
 						on:click={toggleAvatarBorder}
-						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {avatarBorderEnabled ? 'bg-blue-600' : 'bg-gray-200'}"
+						class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {avatarBorderEnabled ? 'bg-[#00aa4f]' : 'bg-gray-200'}"
 					>
 						<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {avatarBorderEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
 					</button>
@@ -527,7 +527,7 @@
 								<button
 									type="button"
 									on:click={() => avatarBorderWidth = 'thin'}
-									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thin' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thin' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 								>
 									<div class="font-semibold">Thin</div>
 									<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.thin}px</div>
@@ -535,7 +535,7 @@
 								<button
 									type="button"
 									on:click={() => avatarBorderWidth = 'default'}
-									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'default' || avatarBorderWidth === 4 ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'default' || avatarBorderWidth === 4 ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 								>
 									<div class="font-semibold">Default</div>
 									<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.default}px</div>
@@ -543,7 +543,7 @@
 								<button
 									type="button"
 									on:click={() => avatarBorderWidth = 'thick'}
-									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thick' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'thick' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 								>
 									<div class="font-semibold">Thick</div>
 									<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.thick}px</div>
@@ -551,7 +551,7 @@
 								<button
 									type="button"
 									on:click={() => avatarBorderWidth = 'bold'}
-									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'bold' ? 'border-blue-600 bg-blue-50 text-blue-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+									class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {avatarBorderWidth === 'bold' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 								>
 									<div class="font-semibold">Bold</div>
 									<div class="text-[10px] opacity-60 mt-0.5">{AVATAR_BORDER_WIDTH_PRESETS.bold}px</div>
@@ -599,7 +599,7 @@
 								type="text"
 								bind:value={avatarGlowColor}
 								placeholder="#3b82f6"
-								class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+								class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-mono focus:border-[#00aa4f] focus:ring-2 focus:ring-[#00aa4f]/20 outline-none"
 							/>
 							<button
 								type="button"
@@ -642,14 +642,14 @@
 				<button
 					type="button"
 					on:click={() => socialIconPosition = 'header'}
-					class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'header' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'header' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					Below Bio
 				</button>
 				<button
 					type="button"
 					on:click={() => socialIconPosition = 'footer'}
-					class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'footer' ? 'border-gray-900 bg-gray-50 text-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'footer' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					Below Links
 				</button>

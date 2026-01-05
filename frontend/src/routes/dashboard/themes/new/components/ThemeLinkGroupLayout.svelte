@@ -48,7 +48,7 @@
 					type="button"
 					on:click={() => selectedLinkGroupLayout = 'list'}
 					class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLinkGroupLayout === 'list' 
-						? 'bg-blue-50 ring-2 ring-blue-500' 
+						? 'bg-[#e6f7ed] ring-2 ring-[#00aa4f]' 
 						: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
 				>
 					<!-- Preview -->
@@ -59,7 +59,7 @@
 						<div class="w-full h-3 bg-gray-300 rounded"></div>
 						<div class="w-full h-3 bg-gray-300 rounded"></div>
 					</div>
-					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'list' ? 'text-blue-700' : 'text-gray-700'}">List</p>
+					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'list' ? 'text-[#00aa4f]' : 'text-gray-700'}">List</p>
 				</button>
 
 				<!-- Grid Layout -->
@@ -67,7 +67,7 @@
 					type="button"
 					on:click={() => selectedLinkGroupLayout = 'grid'}
 					class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLinkGroupLayout === 'grid' 
-						? 'bg-blue-50 ring-2 ring-blue-500' 
+						? 'bg-[#e6f7ed] ring-2 ring-[#00aa4f]' 
 						: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
 				>
 					<!-- Preview -->
@@ -77,7 +77,7 @@
 						<div class="bg-gray-300 rounded"></div>
 						<div class="bg-gray-300 rounded"></div>
 					</div>
-					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'grid' ? 'text-blue-700' : 'text-gray-700'}">Grid</p>
+					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'grid' ? 'text-[#00aa4f]' : 'text-gray-700'}">Grid</p>
 				</button>
 
 				<!-- Card Layout -->
@@ -85,34 +85,34 @@
 					type="button"
 					on:click={() => selectedLinkGroupLayout = 'cards'}
 					class="group relative flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-[1.02] {selectedLinkGroupLayout === 'cards' 
-						? 'bg-blue-50 ring-2 ring-blue-500' 
+						? 'bg-[#e6f7ed] ring-2 ring-[#00aa4f]' 
 						: 'bg-white hover:bg-gray-50 ring-1 ring-gray-200 hover:ring-gray-300'}"
 				>
 					<!-- Preview -->
 					<div class="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 rounded-md p-2.5 flex flex-col gap-1.5 shadow-sm">
 						<div class="flex gap-1.5 items-center">
-							<div class="w-8 h-8 bg-blue-300 rounded"></div>
+							<div class="w-8 h-8 bg-[#00aa4f]/40 rounded"></div>
 							<div class="flex-1 flex flex-col gap-1">
 								<div class="w-full h-1.5 bg-gray-300 rounded"></div>
 								<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
 							</div>
 						</div>
 						<div class="flex gap-1.5 items-center">
-							<div class="w-8 h-8 bg-blue-300 rounded"></div>
+							<div class="w-8 h-8 bg-[#00aa4f]/40 rounded"></div>
 							<div class="flex-1 flex flex-col gap-1">
 								<div class="w-full h-1.5 bg-gray-300 rounded"></div>
 								<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
 							</div>
 						</div>
 						<div class="flex gap-1.5 items-center">
-							<div class="w-8 h-8 bg-blue-300 rounded"></div>
+							<div class="w-8 h-8 bg-[#00aa4f]/40 rounded"></div>
 							<div class="flex-1 flex flex-col gap-1">
 								<div class="w-full h-1.5 bg-gray-300 rounded"></div>
 								<div class="w-3/4 h-1.5 bg-gray-200 rounded"></div>
 							</div>
 						</div>
 					</div>
-					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'cards' ? 'text-blue-700' : 'text-gray-700'}">Cards</p>
+					<p class="text-xs font-semibold {selectedLinkGroupLayout === 'cards' ? 'text-[#00aa4f]' : 'text-gray-700'}">Cards</p>
 				</button>
 			</div>
 			<p class="text-xs text-gray-500 mt-2">Default layout style for link groups</p>
@@ -132,7 +132,7 @@
 								type="button"
 								on:click={() => updateGridConfig('columns', cols)}
 								class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all {gridConfig.columns === cols
-									? 'border-gray-900 bg-gray-50 text-gray-900'
+									? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 									: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 							>
 								{cols}
@@ -150,7 +150,7 @@
 								type="button"
 								on:click={() => updateGridConfig('aspectRatio', ratio)}
 								class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all capitalize {gridConfig.aspectRatio === ratio
-									? 'border-gray-900 bg-gray-50 text-gray-900'
+									? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 									: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 							>
 								{ratio}
@@ -211,7 +211,7 @@
 								type="button"
 								on:click={() => updateCardConfig('imagePosition', pos)}
 								class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all capitalize {cardConfig.imagePosition === pos
-									? 'border-gray-900 bg-gray-50 text-gray-900'
+									? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 									: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 							>
 								{pos}
@@ -229,7 +229,7 @@
 								type="button"
 								on:click={() => updateCardConfig('imageSize', size)}
 								class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all {cardConfig.imageSize === size
-									? 'border-gray-900 bg-gray-50 text-gray-900'
+									? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 									: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 							>
 								{size}%
@@ -247,7 +247,7 @@
 								type="button"
 								on:click={() => updateCardConfig('imageAspect', aspect)}
 								class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all capitalize {cardConfig.imageAspect === aspect
-									? 'border-gray-900 bg-gray-50 text-gray-900'
+									? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 									: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 							>
 								{aspect}
@@ -308,7 +308,7 @@
 								type="button"
 								on:click={() => updateListConfig('iconPosition', pos)}
 								class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all capitalize {listConfig.iconPosition === pos
-									? 'border-gray-900 bg-gray-50 text-gray-900'
+									? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 									: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 							>
 								{pos}
@@ -326,7 +326,7 @@
 								type="button"
 								on:click={() => updateListConfig('textAlign', align)}
 								class="flex-1 py-2 px-3 text-sm font-medium rounded-lg border-2 transition-all capitalize {listConfig.textAlign === align
-									? 'border-gray-900 bg-gray-50 text-gray-900'
+									? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 									: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 							>
 								{align}

@@ -113,7 +113,7 @@
 				<button
 					type="button"
 					on:click|stopPropagation={() => fontDropdownOpen = !fontDropdownOpen}
-					class="w-full px-4 py-3 bg-white border-2 rounded-lg text-left transition-all {fontDropdownOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-300 hover:border-gray-400'}"
+					class="w-full px-4 py-3 bg-white border-2 rounded-lg text-left transition-all {fontDropdownOpen ? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20' : 'border-gray-300 hover:border-gray-400'}"
 				>
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-3">
@@ -147,10 +147,10 @@
 								<button
 									type="button"
 									on:click={() => selectFont(font)}
-									class="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors {selectedFontName === font.name ? 'bg-blue-50' : ''}"
+									class="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors {selectedFontName === font.name ? 'bg-[#e6f7ed]' : ''}"
 								>
 									<div 
-										class="text-2xl font-bold {selectedFontName === font.name ? 'text-blue-600' : 'text-gray-900'}"
+										class="text-2xl font-bold {selectedFontName === font.name ? 'text-[#00aa4f]' : 'text-gray-900'}"
 										style="font-family: '{font.name}', sans-serif;"
 									>
 										Aa
@@ -160,7 +160,7 @@
 										<div class="text-xs text-gray-500">{font.category}</div>
 									</div>
 									{#if selectedFontName === font.name}
-										<svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+										<svg class="w-5 h-5 text-[#00aa4f]" fill="currentColor" viewBox="0 0 20 20">
 											<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
 										</svg>
 									{/if}
@@ -187,7 +187,7 @@
 				<button
 					type="button"
 					on:click|stopPropagation={() => headingFontDropdownOpen = !headingFontDropdownOpen}
-					class="w-full px-4 py-3 bg-white border-2 rounded-lg text-left transition-all {headingFontDropdownOpen ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-300 hover:border-gray-400'}"
+					class="w-full px-4 py-3 bg-white border-2 rounded-lg text-left transition-all {headingFontDropdownOpen ? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20' : 'border-gray-300 hover:border-gray-400'}"
 				>
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-3">
@@ -221,10 +221,10 @@
 								<button
 									type="button"
 									on:click={() => selectHeadingFont(font)}
-									class="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors {selectedHeadingFontName === font.name ? 'bg-blue-50' : ''}"
+									class="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors {selectedHeadingFontName === font.name ? 'bg-[#e6f7ed]' : ''}"
 								>
 									<div 
-										class="text-2xl font-bold {selectedHeadingFontName === font.name ? 'text-blue-600' : 'text-gray-900'}"
+										class="text-2xl font-bold {selectedHeadingFontName === font.name ? 'text-[#00aa4f]' : 'text-gray-900'}"
 										style="font-family: '{font.name}', sans-serif;"
 									>
 										Aa
@@ -234,7 +234,7 @@
 										<div class="text-xs text-gray-500">{font.category}</div>
 									</div>
 									{#if selectedHeadingFontName === font.name}
-										<svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+										<svg class="w-5 h-5 text-[#00aa4f]" fill="currentColor" viewBox="0 0 20 20">
 											<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
 										</svg>
 									{/if}
@@ -265,7 +265,7 @@
 						type="button"
 						on:click={() => headingFontSize = option.value}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {headingFontSize === option.value
-							? 'border-gray-900 bg-gray-50 text-gray-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">{option.label}</div>
@@ -291,9 +291,10 @@
 							titleGlowColor = primaryColor;
 						}
 					}}
-					class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {titleGlowEnabled ? 'bg-green-600' : 'bg-gray-200'}"
+					class="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 {titleGlowEnabled ? 'bg-[#00aa4f]' : 'bg-gray-200'}"
+					style={titleGlowEnabled ? 'box-shadow: 0 2px 8px rgba(0, 170, 79, 0.2);' : ''}
 				>
-					<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {titleGlowEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+					<span class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 {titleGlowEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
 				</button>
 			</div>
 			
@@ -311,7 +312,7 @@
 								type="text"
 								bind:value={titleGlowColor}
 								placeholder="#3b82f6"
-								class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+								class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-mono focus:border-[#00aa4f] focus:ring-2 focus:ring-[#00aa4f]/20 outline-none"
 							/>
 							<button
 								type="button"
@@ -348,7 +349,7 @@
 						type="button"
 						on:click={() => linkFontSize = option.value}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {linkFontSize === option.value
-							? 'border-gray-900 bg-gray-50 text-gray-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">{option.label}</div>
@@ -370,7 +371,7 @@
 						type="button"
 						on:click={() => bioFontSize = option.value}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {bioFontSize === option.value
-							? 'border-gray-900 bg-gray-50 text-gray-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">{option.label}</div>
@@ -392,7 +393,7 @@
 						type="button"
 						on:click={() => subtitleFontSize = option.value}
 						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {subtitleFontSize === option.value
-							? 'border-gray-900 bg-gray-50 text-gray-900'
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">{option.label}</div>

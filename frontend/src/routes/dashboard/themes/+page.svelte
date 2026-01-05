@@ -121,7 +121,7 @@
 					<div class="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
 						<a
 							href="/dashboard/themes/{theme.key}"
-							class="w-8 h-8 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all flex items-center justify-center shadow-lg"
+							class="w-8 h-8 bg-[#00aa4f] text-white rounded-full hover:bg-[#008f42] transition-all flex items-center justify-center shadow-lg"
 							title="Edit theme"
 						>
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

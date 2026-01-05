@@ -217,12 +217,12 @@
 			>
 				<div
 					class="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed rounded-xl transition-all {isDragging
-						? 'border-blue-500 bg-blue-50 scale-105'
-						: 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}"
+						? 'border-[#00aa4f] bg-[#e6f7ed] scale-105'
+						: 'border-gray-300 hover:border-[#00aa4f] hover:bg-[#e6f7ed]'}"
 				>
 					{#if uploading}
 						<div
-							class="animate-spin w-10 h-10 border-2 border-blue-600 border-t-transparent rounded-full"
+							class="animate-spin w-10 h-10 border-2 border-[#00aa4f] border-t-transparent rounded-full"
 						></div>
 						<p class="text-sm font-medium text-gray-900">Uploading video...</p>
 					{:else}
