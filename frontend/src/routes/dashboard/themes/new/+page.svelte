@@ -63,6 +63,8 @@
 	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	let socialIconPosition: 'header' | 'footer' = 'header';
 	let socialIconColor = '#000000';
+	let socialIconSize: 'sm' | 'md' | 'lg' = 'md';
+	let socialIconsEnabled = true;
 	let selectedGradientPreset: 'diagonal-dark' | 'vertical-fade' | 'horizontal-flow' | 'sunset-glow' | 'ocean-deep' | 'forest-path' | 'royal-luxury' | 'fire-blaze' | 'spotlight' | 'cosmic-burst' | 'aurora' | 'nebula' | 'spin' | 'vortex' | 'prism' | 'kaleidoscope' = 'diagonal-dark';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
 	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif'; // Font riêng cho heading
@@ -254,8 +256,10 @@
 			}
 		}
 		
-		socialIconPosition = theme.config.page?.defaults?.socialIconPosition || 'header';
+		socialIconPosition = 'header'; // Always default to header for new themes
 		socialIconColor = theme.config.page?.defaults?.socialIconColor || textColor;
+		socialIconSize = theme.config.page?.defaults?.socialIconSize || 'md';
+		socialIconsEnabled = theme.config.page?.defaults?.socialIconsEnabled ?? true;
 		selectedGradientPreset = theme.config.page?.defaults?.gradientPreset || 'diagonal-dark';
 		showShareButton = theme.config.page?.defaults?.showShareButton ?? true;
 		showSubscribeButton = theme.config.page?.defaults?.showSubscribeButton ?? true;
@@ -498,6 +502,8 @@
 			config.page.defaults.linkIconShape = selectedLinkIconShape;
 			config.page.defaults.socialIconPosition = socialIconPosition;
 			config.page.defaults.socialIconColor = socialIconColor;
+			config.page.defaults.socialIconSize = socialIconSize;
+			config.page.defaults.socialIconsEnabled = socialIconsEnabled;
 			config.page.defaults.gradientPreset = selectedGradientPreset;
 			config.page.defaults.avatarBorderColor = avatarBorderColor;
 			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
@@ -678,7 +684,12 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+		updateConfig();
+	}
+	
+	// Force update preview when socialIconsEnabled changes
+	$: if (socialIconsEnabled !== undefined && configJson) {
 		updateConfig();
 	}
 
@@ -686,6 +697,7 @@
 	$: if (configJson) {
 		try {
 			const config = JSON.parse(configJson);
+			console.log('🔄 [Preview Update] socialIconsEnabled:', socialIconsEnabled);
 			previewAppearance.set(buildPreviewAppearance(config, selectedBlockStyle, selectedShadowStyle, blockOpacity, shadowCustom, selectedGradientPreset));
 			
 			// Resolve blockBorderRadius from centralized tokens
@@ -736,6 +748,8 @@
 					'page.linkGroupConfig.list': listConfig,
 					'page.socialIconPosition': socialIconPosition,
 					'page.socialIconColor': socialIconColor,
+			'page.socialIconSize': socialIconSize,
+					'page.socialIconsEnabled': socialIconsEnabled,
 					'page.gradientPreset': selectedGradientPreset,
 					'page.showShareButton': showShareButton,
 					'page.showSubscribeButton': showSubscribeButton
@@ -963,6 +977,8 @@
 					bind:avatarBorderWidth
 					bind:socialIconPosition
 					bind:socialIconColor
+				bind:socialIconSize
+					bind:socialIconsEnabled
 					bind:avatarGlowEnabled
 					bind:avatarGlowColor
 					bind:titleGlowEnabled

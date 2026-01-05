@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { AVATAR_BORDER_WIDTH_PRESETS, type AvatarBorderWidthKey } from '$lib/appearance/spacingTokens';
+	import { AVATAR_BORDER_WIDTH_PRESETS, SOCIAL_ICON_SIZE_PRESETS, type AvatarBorderWidthKey, type SocialIconSizeKey } from '$lib/appearance/spacingTokens';
 	import { HEADER_PRESETS, DEFAULT_COVER_IMAGE } from '$lib/appearance/presets';
 
 	export let headerPresets: any[];
@@ -14,6 +14,8 @@
 	export let avatarBorderWidth: AvatarBorderWidthKey | number;
 	export let socialIconPosition: 'header' | 'footer';
 	export let socialIconColor: string;
+	export let socialIconSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
+	export let socialIconsEnabled: boolean = true;
 	export let avatarGlowEnabled: boolean = false;
 	export let avatarGlowColor: string = '#3b82f6';
 	export let titleGlowEnabled: boolean = false;
@@ -699,51 +701,118 @@
 			{/if}
 		</div>
 
-		<!-- Social Icons Position -->
-		<div>
-			<label class="block text-sm font-medium text-gray-700 mb-2">Social Icons Position</label>
-			<div class="grid grid-cols-2 gap-2">
+		<!-- Social Icons Toggle -->
+		<div class="border-t border-gray-200 pt-4">
+			<div class="flex items-center justify-between mb-3">
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Show Social Icons</label>
+					<p class="text-xs text-gray-500 mt-0.5">Display social media icons on page</p>
+				</div>
 				<button
 					type="button"
-					on:click={() => socialIconPosition = 'header'}
-					class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'header' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					on:click={() => socialIconsEnabled = !socialIconsEnabled}
+					class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {socialIconsEnabled ? 'bg-[#00aa4f]' : 'bg-gray-200'}"
 				>
-					Below Bio
-				</button>
-				<button
-					type="button"
-					on:click={() => socialIconPosition = 'footer'}
-					class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'footer' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
-				>
-					Below Links
+					<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {socialIconsEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
 				</button>
 			</div>
-			<p class="text-xs text-gray-500 mt-1.5">Where to display social media icons</p>
 		</div>
 
-		<!-- Social Icons Color -->
-		<div>
-			<label class="block text-sm font-medium text-gray-700 mb-2">Social Icons Color</label>
-			<div class="flex items-center gap-3">
-				<div class="relative flex-shrink-0">
-					<input
-						type="color"
-						bind:value={socialIconColor}
-						class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-					/>
-					<div 
-						class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
-						style="background-color: {socialIconColor};"
-					></div>
+		{#if socialIconsEnabled}
+			<!-- Social Icons Position -->
+			<div class="animate-in fade-in slide-in-from-top-2 duration-200">
+				<label class="block text-sm font-medium text-gray-700 mb-2">Social Icons Position</label>
+				<div class="grid grid-cols-2 gap-2">
+					<button
+						type="button"
+						on:click={() => socialIconPosition = 'header'}
+						class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'header' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						Below Bio
+					</button>
+					<button
+						type="button"
+						on:click={() => socialIconPosition = 'footer'}
+						class="py-2.5 px-3 text-sm font-medium rounded-lg border-2 transition-all {socialIconPosition === 'footer' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						Below Links
+					</button>
 				</div>
-				<input
-					type="text"
-					bind:value={socialIconColor}
-					class="flex-1 input-ios font-mono text-sm"
-					placeholder="#000000"
-				/>
+				<p class="text-xs text-gray-500 mt-1.5">Where to display social media icons</p>
 			</div>
-			<p class="text-xs text-gray-500 mt-1">Color for social media icons</p>
-		</div>
+
+			<!-- Social Icons Color -->
+			<div class="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+				<label class="block text-sm font-medium text-gray-700 mb-2">Social Icons Color</label>
+				<div class="flex items-center gap-3">
+					<div class="relative flex-shrink-0">
+						<input
+							type="color"
+							bind:value={socialIconColor}
+							class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+						/>
+						<div 
+							class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
+							style="background-color: {socialIconColor};"
+						></div>
+					</div>
+					<input
+						type="text"
+						bind:value={socialIconColor}
+						class="flex-1 input-ios font-mono text-sm"
+						placeholder="#000000"
+					/>
+				</div>
+				<p class="text-xs text-gray-500 mt-1">Color for social media icons</p>
+			</div>
+
+			<!-- Social Icons Size -->
+			<div class="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+				<label class="block text-sm font-medium text-gray-700 mb-2">Social Icons Size</label>
+				<div class="grid grid-cols-5 gap-2">
+					<button
+						type="button"
+						on:click={() => socialIconSize = 'xs'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {socialIconSize === 'xs' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">XS</div>
+						<div class="text-[10px] opacity-60 mt-0.5">12px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => socialIconSize = 'sm'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {socialIconSize === 'sm' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">SM</div>
+						<div class="text-[10px] opacity-60 mt-0.5">14px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => socialIconSize = 'md'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {socialIconSize === 'md' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">MD</div>
+						<div class="text-[10px] opacity-60 mt-0.5">16px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => socialIconSize = 'lg'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {socialIconSize === 'lg' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">LG</div>
+						<div class="text-[10px] opacity-60 mt-0.5">18px</div>
+					</button>
+					<button
+						type="button"
+						on:click={() => socialIconSize = 'xl'}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {socialIconSize === 'xl' ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">XL</div>
+						<div class="text-[10px] opacity-60 mt-0.5">20px</div>
+					</button>
+				</div>
+				<p class="text-xs text-gray-500 mt-1.5">Icon size for social media</p>
+			</div>
+		{/if}
 	</div>
 </section>

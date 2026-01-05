@@ -3,7 +3,7 @@
 	import { groups } from '$lib/stores/page';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
-	import { resolveMaxWidth, resolvePagePadding, resolveBlockGap, resolveAvatarBorderWidth } from '$lib/appearance/spacingTokens';
+	import { resolveMaxWidth, resolvePagePadding, resolveBlockGap, resolveAvatarBorderWidth, resolveSocialIconSize } from '$lib/appearance/spacingTokens';
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
@@ -423,6 +423,20 @@
 	// Get socialIconColor from overrides or default
 	$: socialIconColor = $previewAppearanceState.overrides?.['page.socialIconColor'] || tokens?.textColor || '#000000';
 	
+	// Get socialIconSize from overrides or default with resolver
+	$: socialIconSizePx = (() => {
+		const override = $previewAppearanceState.overrides?.['page.socialIconSize'];
+		if (override !== undefined) {
+			return resolveSocialIconSize(override);
+		}
+		const themeConfig = $previewAppearance?.theme?.config;
+		const sizeValue = themeConfig?.page?.defaults?.socialIconSize;
+		return resolveSocialIconSize(sizeValue);
+	})();
+	
+	// Get socialIconsEnabled from overrides or default
+	$: socialIconsEnabled = ($previewAppearanceState.overrides?.['page.socialIconsEnabled'] as boolean) ?? true;
+	
 	// Get page settings from overrides or default
 	$: showShareButton = ($previewAppearanceState.overrides?.['page.showShareButton'] as boolean) ?? true;
 	$: showSubscribeButton = ($previewAppearanceState.overrides?.['page.showSubscribeButton'] as boolean) ?? true;
@@ -618,11 +632,11 @@
 					{/if}
 
 					<!-- Social Icons (Header Position) -->
-					{#if $previewPage?.show_social_icons && $previewPage?.social_links && socialIconPosition === 'header'}
+					{#if socialIconsEnabled && $previewPage?.show_social_icons && $previewPage?.social_links && socialIconPosition === 'header'}
 						<div class="flex items-center gap-3 mt-1.5" style="justify-content: center;">
 							{#if $previewPage.social_links.instagram}
 								<div class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+									<svg style="width: {socialIconSizePx}px; height: {socialIconSizePx}px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
 										<rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
 										<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
 										<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
@@ -631,14 +645,14 @@
 							{/if}
 							{#if $previewPage.social_links.twitter}
 								<div class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
-									<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+									<svg style="width: {socialIconSizePx}px; height: {socialIconSizePx}px;" fill="currentColor" viewBox="0 0 24 24">
 										<path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
 									</svg>
 								</div>
 							{/if}
 							{#if $previewPage.social_links.linkedin}
 								<div class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
-									<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+									<svg style="width: {socialIconSizePx}px; height: {socialIconSizePx}px;" fill="currentColor" viewBox="0 0 24 24">
 										<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
 									</svg>
 								</div>
@@ -839,11 +853,11 @@
 					</div>
 
 					<!-- Social Icons (Footer Position) -->
-					{#if $previewPage?.show_social_icons && $previewPage?.social_links && socialIconPosition === 'footer'}
+					{#if socialIconsEnabled && $previewPage?.show_social_icons && $previewPage?.social_links && socialIconPosition === 'footer'}
 						<div class="flex items-center justify-center gap-3 mt-6">
 							{#if $previewPage.social_links.instagram}
 								<div class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+									<svg style="width: {socialIconSizePx}px; height: {socialIconSizePx}px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
 										<rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
 										<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
 										<line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
@@ -852,14 +866,14 @@
 							{/if}
 							{#if $previewPage.social_links.twitter}
 								<div class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
-									<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+									<svg style="width: {socialIconSizePx}px; height: {socialIconSizePx}px;" fill="currentColor" viewBox="0 0 24 24">
 										<path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
 									</svg>
 								</div>
 							{/if}
 							{#if $previewPage.social_links.linkedin}
 								<div class="hover:scale-110 transition-transform" style="color: {socialIconColor};">
-									<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+									<svg style="width: {socialIconSizePx}px; height: {socialIconSizePx}px;" fill="currentColor" viewBox="0 0 24 24">
 										<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
 									</svg>
 								</div>

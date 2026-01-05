@@ -52,6 +52,8 @@
 	let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	let socialIconPosition: 'header' | 'footer' = 'header';
 	let socialIconColor = '#000000';
+	let socialIconSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
+	let socialIconsEnabled = true;
 	let selectedGradientPreset: 'diagonal-dark' | 'vertical-fade' | 'horizontal-flow' | 'sunset-glow' | 'ocean-deep' | 'forest-path' | 'royal-luxury' | 'fire-blaze' | 'spotlight' | 'cosmic-burst' | 'aurora' | 'nebula' | 'spin' | 'vortex' | 'prism' | 'kaleidoscope' = 'diagonal-dark';
 	let fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
 	let headingFontFamily = 'Inter, system-ui, -apple-system, sans-serif';
@@ -210,6 +212,8 @@
 		
 		socialIconPosition = theme.config.page?.defaults?.socialIconPosition || 'header';
 		socialIconColor = theme.config.page?.defaults?.socialIconColor || textColor;
+		socialIconSize = theme.config.page?.defaults?.socialIconSize || 'md';
+		socialIconsEnabled = theme.config.page?.defaults?.socialIconsEnabled ?? true;
 		selectedGradientPreset = theme.config.page?.defaults?.gradientPreset || 'diagonal-dark';
 		showShareButton = theme.config.page?.defaults?.showShareButton ?? true;
 		showSubscribeButton = theme.config.page?.defaults?.showSubscribeButton ?? true;
@@ -404,6 +408,8 @@
 			config.page.defaults.linkIconShape = selectedLinkIconShape;
 			config.page.defaults.socialIconPosition = socialIconPosition;
 			config.page.defaults.socialIconColor = socialIconColor;
+			config.page.defaults.socialIconSize = socialIconSize;
+			config.page.defaults.socialIconsEnabled = socialIconsEnabled;
 			config.page.defaults.gradientPreset = selectedGradientPreset;
 			config.page.defaults.avatarBorderColor = avatarBorderColor;
 			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
@@ -551,7 +557,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 
@@ -603,6 +609,8 @@
 					'page.linkGroupConfig.list': listConfig,
 					'page.socialIconPosition': socialIconPosition,
 					'page.socialIconColor': socialIconColor,
+			'page.socialIconSize': socialIconSize,
+					'page.socialIconsEnabled': socialIconsEnabled,
 					'page.gradientPreset': selectedGradientPreset,
 					'page.showShareButton': showShareButton,
 					'page.showSubscribeButton': showSubscribeButton
@@ -779,7 +787,7 @@
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
 							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor />
-							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:titleGlowEnabled bind:titleGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
+							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:socialIconSize bind:socialIconsEnabled bind:avatarGlowEnabled bind:avatarGlowColor bind:titleGlowEnabled bind:titleGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
 							<ThemeBackground 
 								bind:bgType 
 								bind:bgSolidColor 

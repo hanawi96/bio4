@@ -117,6 +117,20 @@ export const AVATAR_BORDER_WIDTH_PRESETS = {
 export type AvatarBorderWidthKey = keyof typeof AVATAR_BORDER_WIDTH_PRESETS;
 
 /**
+ * Social Icon Size Presets (in pixels)
+ * Standard size values for social media icons
+ */
+export const SOCIAL_ICON_SIZE_PRESETS = {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    xl: 20
+} as const;
+
+export type SocialIconSizeKey = keyof typeof SOCIAL_ICON_SIZE_PRESETS;
+
+/**
  * Get spacing value by key
  * @param key - Space key (0, 1, 2, 3, 4, 5, 6, 8)
  * @returns Spacing value in pixels
@@ -213,4 +227,11 @@ export function resolvePagePadding(value: PagePaddingKey | number | undefined): 
  */
 export function resolveAvatarBorderWidth(value: AvatarBorderWidthKey | number | undefined): number {
     return resolvePreset(value, AVATAR_BORDER_WIDTH_PRESETS, 'default');
+}
+
+/**
+ * Resolve social icon size - supports both string keys and numbers
+ */
+export function resolveSocialIconSize(value: SocialIconSizeKey | number | undefined): number {
+    return resolvePreset(value, SOCIAL_ICON_SIZE_PRESETS, 'md');
 }
