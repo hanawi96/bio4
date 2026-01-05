@@ -372,11 +372,6 @@
 		avatarGlowEnabled = theme.config.page?.defaults?.avatarGlow?.enabled || false;
 		avatarGlowColor = theme.config.page?.defaults?.avatarGlow?.color || primaryColor;
 		
-		// Extract background effects
-		bgBlur = theme.config.background?.effects?.blur || 0;
-		bgBrightness = theme.config.background?.effects?.brightness || 100;
-		bgGrayscale = theme.config.background?.effects?.grayscale || 0;
-		
 		// Load animation settings
 		bgAnimationEnabled = theme.config.background?.animation?.enabled || false;
 		bgAnimationVariant = theme.config.background?.animation?.variant || 'rotating';
@@ -447,6 +442,18 @@
 			bgSolidColor = '#000000';
 			pageBgColor = '#000000';
 		}
+		
+		// Load effects only for image/video backgrounds
+		if (bgType === 'image' || bgType === 'video') {
+			bgBlur = theme.config.background?.effects?.blur || 'none';
+			bgBrightness = theme.config.background?.effects?.brightness || 'normal';
+			bgGrayscale = theme.config.background?.effects?.grayscale || 'none';
+		} else {
+			// Set default values for non-image/video backgrounds
+			bgBlur = 'none';
+			bgBrightness = 'normal';
+			bgGrayscale = 'none';
+		}
 	}
 
 	$: if (baseThemeKey && themes.length > 0) {
@@ -463,11 +470,19 @@
 	// Auto-set default background image when switching to image type
 	$: if (bgType === 'image' && bgImageUrl === '') {
 		bgImageUrl = '/presets/images/preset-img.jpg';
+		// Reset effects to default when first switching to image
+		bgBlur = 'none';
+		bgBrightness = 'normal';
+		bgGrayscale = 'none';
 	}
 
 	// Auto-set default background video when switching to video type
 	$: if (bgType === 'video' && bgVideoUrl === '') {
 		bgVideoUrl = 'https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev/background-vide-preset/14950008_1080_1920_60fps.mp4';
+		// Reset effects to default when first switching to video
+		bgBlur = 'none';
+		bgBrightness = 'normal';
+		bgGrayscale = 'none';
 	}
 
 	// Force solid black background when avatar-cover is selected
