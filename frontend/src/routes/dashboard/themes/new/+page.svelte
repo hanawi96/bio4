@@ -952,6 +952,26 @@
 					bind:shadowColor
 				/>
 
+				<!-- Header Style -->
+				<HeaderStyleManager
+					bind:selectedHeaderPreset
+					bind:avatarSize
+					bind:avatarShape
+					bind:coverImageUrl
+					bind:showBio
+					bind:avatarBorderColor
+					bind:avatarBorderWidth
+					bind:socialIconPosition
+					bind:socialIconColor
+					bind:avatarGlowEnabled
+					bind:avatarGlowColor
+					bind:headerPresets
+					previewPage={$previewPage}
+					{uploading}
+					{primaryColor}
+					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}
+				/>
+
 				<!-- Page Background -->
 				<ThemeBackground
 					bind:bgType
@@ -987,26 +1007,6 @@
 					on:videoRemove={handleVideoRemove}
 				/>
 
-				<!-- Header Style -->
-				<HeaderStyleManager
-					bind:selectedHeaderPreset
-					bind:avatarSize
-					bind:avatarShape
-					bind:coverImageUrl
-					bind:showBio
-					bind:avatarBorderColor
-					bind:avatarBorderWidth
-					bind:socialIconPosition
-					bind:socialIconColor
-					bind:avatarGlowEnabled
-					bind:avatarGlowColor
-					bind:headerPresets
-					previewPage={$previewPage}
-					{uploading}
-					{primaryColor}
-					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}
-				/>
-
 				<!-- Block Style -->
 				<ThemeBlockStyle
 					bind:selectedBlockStyle
@@ -1034,6 +1034,14 @@
 					{bgImageUrl}
 				/>
 
+				<!-- Link Group Layout -->
+				<ThemeLinkGroupLayout
+					bind:selectedLinkGroupLayout
+					bind:gridConfig
+					bind:cardConfig
+					bind:listConfig
+				/>
+
 				<!-- Typography -->
 				<ThemeTypography
 					bind:fontFamily
@@ -1045,14 +1053,6 @@
 					bind:titleGlowEnabled
 					bind:titleGlowColor
 					{primaryColor}
-				/>
-
-				<!-- Link Group Layout -->
-				<ThemeLinkGroupLayout
-					bind:selectedLinkGroupLayout
-					bind:gridConfig
-					bind:cardConfig
-					bind:listConfig
 				/>
 
 				<!-- Layout -->

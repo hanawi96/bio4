@@ -779,6 +779,7 @@
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
 							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor />
+							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
 							<ThemeBackground 
 								bind:bgType 
 								bind:bgSolidColor 
@@ -812,7 +813,6 @@
 								on:videoUpload={handleVideoUpload} 
 								on:videoRemove={handleVideoRemove} 
 							/>
-							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
 							<ThemeBlockStyle 
 								bind:selectedBlockStyle 
 								bind:selectedShadowStyle 
@@ -838,8 +838,8 @@
 								{bgGradientDirection} 
 								{bgImageUrl} 
 							/>
-							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize bind:titleGlowEnabled bind:titleGlowColor {primaryColor} />
 							<ThemeLinkGroupLayout bind:selectedLinkGroupLayout bind:gridConfig bind:cardConfig bind:listConfig />
+							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize bind:titleGlowEnabled bind:titleGlowColor {primaryColor} />
 							<ThemeLayout 
 								bind:maxWidth 
 								bind:textAlign 
