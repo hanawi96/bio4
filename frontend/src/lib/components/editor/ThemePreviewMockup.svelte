@@ -438,54 +438,6 @@
 
 </script>
 
-<!-- DEBUG PANEL - Outside mockup -->
-{#if isAvatarCover}
-	<div class="fixed top-4 right-4 z-[9999] space-y-2 max-w-xs">
-		<!-- Cover Info -->
-		<div class="bg-blue-500 text-white p-3 rounded-lg shadow-xl text-xs font-mono">
-			<div class="font-bold mb-2 text-sm">📱 COVER INFO</div>
-			<div>Height: {coverHeight}px</div>
-			<div>Overlay: rgba(0,0,0,0.7) at 100%</div>
-			<div class="mt-2 pt-2 border-t border-blue-300">
-				<div class="text-blue-100">Gradient stops:</div>
-				<div>• 0%: transparent</div>
-				<div>• 20%: transparent</div>
-				<div>• 60%: rgba(0,0,0,0.4)</div>
-				<div>• 100%: rgba(0,0,0,0.7)</div>
-			</div>
-		</div>
-		
-		<!-- Mask Info -->
-		<div class="bg-green-500 text-white p-3 rounded-lg shadow-xl text-xs font-mono">
-			<div class="font-bold mb-2 text-sm">🎭 BOTTOM MASK INFO</div>
-			<div>Position: bottom of cover</div>
-			<div>Height: 100px</div>
-			<div>Direction: to top (↑)</div>
-			<div class="mt-2 pt-2 border-t border-green-300">
-				<div class="text-green-100">Gradient colors (from bg):</div>
-				<div>• Solid: {maskGradientColors.solid}</div>
-				<div>• Dark: {maskGradientColors.dark}</div>
-				<div>• Medium: {maskGradientColors.medium}</div>
-			</div>
-		</div>
-		
-		<!-- Container Info -->
-		<div class="bg-yellow-500 text-black p-3 rounded-lg shadow-xl text-xs font-mono">
-			<div class="font-bold mb-2 text-sm">📦 CONTAINER INFO</div>
-			<div>isAvatarCover: {isAvatarCover}</div>
-			<div>pagePadding: {pagePadding}px</div>
-			<div>margin-top: -100px</div>
-			<div>padding-top: 100px</div>
-			<div class="mt-2 pt-2 border-t border-yellow-600">
-				<div class="font-semibold">Calculation:</div>
-				<div>Cover ends at: {coverHeight}px</div>
-				<div>Mask starts at: {coverHeight - 20}px</div>
-				<div>Mask ends at: {coverHeight - 20 + 120}px</div>
-			</div>
-		</div>
-	</div>
-{/if}
-
 <!-- Phone Frame -->
 <div class="relative scale-125">
 	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
