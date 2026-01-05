@@ -779,7 +779,7 @@
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
 							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor />
-							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
+							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:titleGlowEnabled bind:titleGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
 							<ThemeBackground 
 								bind:bgType 
 								bind:bgSolidColor 
@@ -839,7 +839,7 @@
 								{bgImageUrl} 
 							/>
 							<ThemeLinkGroupLayout bind:selectedLinkGroupLayout bind:gridConfig bind:cardConfig bind:listConfig />
-							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize bind:titleGlowEnabled bind:titleGlowColor {primaryColor} />
+							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize />
 							<ThemeLayout 
 								bind:maxWidth 
 								bind:textAlign 

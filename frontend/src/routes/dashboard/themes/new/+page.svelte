@@ -965,6 +965,8 @@
 					bind:socialIconColor
 					bind:avatarGlowEnabled
 					bind:avatarGlowColor
+					bind:titleGlowEnabled
+					bind:titleGlowColor
 					bind:headerPresets
 					previewPage={$previewPage}
 					{uploading}
@@ -1050,9 +1052,6 @@
 					bind:linkFontSize
 					bind:bioFontSize
 					bind:subtitleFontSize
-					bind:titleGlowEnabled
-					bind:titleGlowColor
-					{primaryColor}
 				/>
 
 				<!-- Layout -->
