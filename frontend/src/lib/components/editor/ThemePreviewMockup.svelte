@@ -100,7 +100,7 @@
 	$: isBackgroundImage = backgroundValue.startsWith('url(');
 	$: backgroundImageUrl = isBackgroundImage ? backgroundValue.match(/url\(['"]?([^'"]+)['"]?\)/)?.[1] || '' : '';
 	
-	// Get background filters from overrides
+	// Get background filters from overrides - for both image and video backgrounds
 	$: bgBlur = resolveBlur(
 		$previewAppearanceState.overrides?.['backgroundBlur'] 
 		?? $previewAppearance?.theme?.config?.background?.effects?.blur

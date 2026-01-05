@@ -135,7 +135,15 @@
 
 	<!-- Video Upload -->
 	{#if bgType === 'video'}
-		<VideoEditor bind:bgVideoUrl {uploading} on:videoUpload on:videoRemove />
+		<VideoEditor
+			bind:bgVideoUrl
+			bind:bgBlur
+			bind:bgBrightness
+			bind:bgGrayscale
+			{uploading}
+			on:videoUpload
+			on:videoRemove
+		/>
 	{/if}
 	
 	<!-- Floating Particles Section -->

@@ -519,7 +519,7 @@
 	$: showSubscribeButton = ($appearanceState.overrides?.['page.showSubscribeButton'] as boolean) ?? true;
 	$: bioUrl = `https://biolink.com/${$page?.username || 'demo'}`;
 
-	// Background filters - computed once with resolvers
+	// Background filters - for both image and video backgrounds
 	$: backgroundFilters = (() => {
 		const blur = resolveBlur($appearanceState.overrides['backgroundBlur'] ?? $appearance?.theme?.config?.background?.effects?.blur);
 		const brightness = resolveBrightness($appearanceState.overrides['backgroundBrightness'] ?? $appearance?.theme?.config?.background?.effects?.brightness);
