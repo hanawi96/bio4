@@ -813,10 +813,38 @@
 								on:videoRemove={handleVideoRemove} 
 							/>
 							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:avatarGlowEnabled bind:avatarGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
-							<ThemeBlockStyle bind:selectedBlockStyle bind:selectedShadowStyle bind:blockOpacity bind:shadowCustom bind:selectedLinkIconShape bind:selectedGradientPreset bind:borderWidth {primaryColor} {textColor} {borderColor} {blockTextColor} {shadowColor} {bgType} {bgSolidColor} {bgGradientFrom} {bgGradientTo} {bgGradientDirection} {bgImageUrl} />
+							<ThemeBlockStyle 
+								bind:selectedBlockStyle 
+								bind:selectedShadowStyle 
+								bind:blockOpacity 
+								bind:shadowCustom 
+								bind:selectedLinkIconShape 
+								bind:selectedGradientPreset 
+								bind:borderWidth 
+								bind:blockGapPreset
+								bind:blockPaddingX
+								bind:blockPaddingY
+								bind:blockBorderRadiusType
+								bind:selectedLinkGroupLayout
+								{primaryColor} 
+								{textColor} 
+								{borderColor} 
+								{blockTextColor} 
+								{shadowColor} 
+								{bgType} 
+								{bgSolidColor} 
+								{bgGradientFrom} 
+								{bgGradientTo} 
+								{bgGradientDirection} 
+								{bgImageUrl} 
+							/>
 							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize bind:titleGlowEnabled bind:titleGlowColor {primaryColor} />
 							<ThemeLinkGroupLayout bind:selectedLinkGroupLayout bind:gridConfig bind:cardConfig bind:listConfig />
-							<ThemeLayout bind:maxWidth bind:textAlign bind:pagePadding bind:blockGapPreset bind:blockPaddingX bind:blockPaddingY bind:blockBorderRadiusType selectedLinkGroupLayout={selectedLinkGroupLayout} />
+							<ThemeLayout 
+								bind:maxWidth 
+								bind:textAlign 
+								bind:pagePadding 
+							/>
 							<ThemePageSettings bind:showShareButton bind:showSubscribeButton />
 							<ThemeJsonEditor bind:configJson />
 						</form>

@@ -368,7 +368,7 @@
 	})();
 
 	// Get blockBorderRadius from overrides
-	$: blockBorderRadius = $previewAppearanceState.overrides?.['block.borderRadius'] 
+	$: blockBorderRadius = $previewAppearanceState.overrides?.['block.borderRadius'] !== undefined
 		? `${$previewAppearanceState.overrides['block.borderRadius']}px` 
 		: '12px';
 

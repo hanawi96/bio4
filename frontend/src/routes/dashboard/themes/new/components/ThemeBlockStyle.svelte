@@ -11,7 +11,7 @@
 	} from '$lib/appearance/blockStyles';
 	import { resolveToken, resolveAutoTextColor } from '$lib/appearance/tokenResolver';
 	import { getGradientColors, getGradientPresetName, type GradientPreset } from '$lib/utils/colorUtils';
-	import { BORDER_WIDTH_PRESETS, type BorderWidthKey } from '$lib/appearance/spacingTokens';
+	import { BORDER_WIDTH_PRESETS, BLOCK_GAP_PRESETS, BLOCK_PADDING_PRESETS, RADIUS_TOKENS, type BorderWidthKey, type BlockGapPreset, type BlockPaddingPreset } from '$lib/appearance/spacingTokens';
 
 	export let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient';
 	export let selectedLinkIconShape: 'square' | 'rounded' | 'circle';
@@ -19,6 +19,11 @@
 	export let blockOpacity: number = 100;
 	export let selectedGradientPreset: GradientPreset = 'darken';
 	export let borderWidth: BorderWidthKey | number = 'default';
+	export let blockGapPreset: BlockGapPreset;
+	export let blockPaddingX: number;
+	export let blockPaddingY: number;
+	export let blockBorderRadiusType: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
+	export let selectedLinkGroupLayout: 'list' | 'grid' | 'cards' = 'list';
 	export let shadowCustom = {
 		offsetX: 0,
 		offsetY: 4,
@@ -40,6 +45,55 @@
 	
 	// Check if current block style has border
 	$: hasBorder = selectedBlockStyle === 'outline' || selectedBlockStyle === 'glass' || selectedBlockStyle === 'brutal';
+	
+	// Disable "full" option for grid and card layouts
+	$: isFullDisabled = selectedLinkGroupLayout === 'grid' || selectedLinkGroupLayout === 'cards';
+	
+	// Auto-adjust to 'xl' if currently 'full' and switching to grid/card
+	$: if (isFullDisabled && blockBorderRadiusType === 'full') {
+		blockBorderRadiusType = 'xl';
+	}
+	
+	// Block Padding preset mode
+	let blockPaddingMode: BlockPaddingPreset | 'custom' = 'default';
+	let isInitialized = false;
+	
+	// Auto-detect preset only on initial load
+	$: if (!isInitialized && blockPaddingX && blockPaddingY) {
+		const matchedPreset = Object.entries(BLOCK_PADDING_PRESETS).find(
+			([_, preset]) => preset.x === blockPaddingX && preset.y === blockPaddingY
+		);
+		blockPaddingMode = matchedPreset ? (matchedPreset[0] as BlockPaddingPreset) : 'custom';
+		isInitialized = true;
+	}
+	
+	function selectPaddingPreset(preset: BlockPaddingPreset | 'custom') {
+		blockPaddingMode = preset;
+		if (preset !== 'custom') {
+			const values = BLOCK_PADDING_PRESETS[preset];
+			blockPaddingX = values.x;
+			blockPaddingY = values.y;
+		}
+	}
+	
+	const blockGapOptions: Array<{ value: BlockGapPreset; label: string; description: string }> = [
+		{ value: 'compact', label: 'Compact', description: '8px' },
+		{ value: 'default', label: 'Default', description: '16px' },
+		{ value: 'spacious', label: 'Spacious', description: '24px' }
+	];
+	
+	// Border radius options
+	const borderRadiusOptions: Array<{ value: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full'; label: string; size: string }> = [
+		{ value: 'none', label: 'None', size: '0px' },
+		{ value: 'sm', label: 'Small', size: '4px' },
+		{ value: 'md', label: 'Medium', size: '8px' },
+		{ value: 'lg', label: 'Large', size: '12px' },
+		{ value: 'xl', label: 'XL', size: '16px' },
+		{ value: 'full', label: 'Full', size: 'Pill' }
+	];
+	
+	// Convert blockBorderRadiusType to CSS value for preview (reuse RADIUS_TOKENS)
+	$: previewBorderRadius = `${RADIUS_TOKENS[blockBorderRadiusType] ?? 12}px`;
 
 	// Get all available recipes
 	const recipes = getBlockStyleRecipeIds();
@@ -244,7 +298,7 @@
 							style="background: {previewBackground}; background-size: cover; background-position: center;"
 						>
 							<div
-								class="w-full h-8 transition-all flex items-center justify-center rounded-lg relative z-10"
+								class="w-full h-8 transition-all flex items-center justify-center relative z-10"
 								style="
 									background-color: {displayStyle.backgroundImage !== 'none' ? 'transparent' : displayStyle.backgroundColor};
 									background-image: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : 'none'};
@@ -253,6 +307,7 @@
 									box-shadow: {displayStyle.boxShadow || 'none'};
 									backdrop-filter: {displayStyle.backdropFilter || 'none'};
 									-webkit-backdrop-filter: {displayStyle.backdropFilter || 'none'};
+									border-radius: {previewBorderRadius};
 								"
 							>
 								<span class="text-xs font-semibold">Button</span>
@@ -512,6 +567,140 @@
 					{/if}
 				</div>
 			{/if}
+		</div>
+
+		<!-- Block Gap -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Block Gap
+			</label>
+			<div class="grid grid-cols-3 gap-2">
+				{#each blockGapOptions as option}
+					<button
+						type="button"
+						on:click={() => blockGapPreset = option.value}
+						class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockGapPreset === option.value
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">{option.label}</div>
+						<div class="text-[10px] opacity-60 mt-0.5">{option.description}</div>
+					</button>
+				{/each}
+			</div>
+			<p class="text-xs text-gray-500 mt-1.5">Balanced spacing ({BLOCK_GAP_PRESETS[blockGapPreset]}px)</p>
+		</div>
+		
+		<!-- Block Padding -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Block Padding
+			</label>
+			<div class="grid grid-cols-4 gap-2 mb-3">
+				<button
+					type="button"
+					on:click={() => selectPaddingPreset('tight')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'tight'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Tight</div>
+					<div class="text-[10px] opacity-60 mt-0.5">12×8</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPaddingPreset('default')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'default'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Default</div>
+					<div class="text-[10px] opacity-60 mt-0.5">16×12</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPaddingPreset('spacious')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'spacious'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Spacious</div>
+					<div class="text-[10px] opacity-60 mt-0.5">24×16</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => selectPaddingPreset('custom')}
+					class="py-2.5 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockPaddingMode === 'custom'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Custom</div>
+					<div class="text-[10px] opacity-60 mt-0.5">•••</div>
+				</button>
+			</div>
+			
+			{#if blockPaddingMode === 'custom'}
+				<div class="grid grid-cols-2 gap-3 mt-3">
+					<div>
+						<label for="blockPaddingX" class="block text-xs font-medium text-gray-600 mb-1.5">
+							Horizontal (px)
+						</label>
+						<input
+							id="blockPaddingX"
+							type="number"
+							bind:value={blockPaddingX}
+							min="4"
+							max="32"
+							class="input-ios text-sm"
+						/>
+					</div>
+					<div>
+						<label for="blockPaddingY" class="block text-xs font-medium text-gray-600 mb-1.5">
+							Vertical (px)
+						</label>
+						<input
+							id="blockPaddingY"
+							type="number"
+							bind:value={blockPaddingY}
+							min="4"
+							max="32"
+							class="input-ios text-sm"
+						/>
+					</div>
+				</div>
+			{/if}
+			<p class="text-xs text-gray-500 mt-1.5">Padding inside blocks (X × Y)</p>
+		</div>
+		
+		<!-- Block Border Radius -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Block Border Radius
+			</label>
+			<div class="grid grid-cols-6 gap-2">
+				{#each borderRadiusOptions as option}
+					<button
+						type="button"
+						on:click={() => blockBorderRadiusType = option.value}
+						disabled={option.value === 'full' && isFullDisabled}
+						class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadiusType === option.value
+							? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+							: option.value === 'full' && isFullDisabled
+								? 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+					>
+						<div class="font-semibold">{option.label}</div>
+						<div class="text-[10px] opacity-60">{option.size}</div>
+					</button>
+				{/each}
+			</div>
+			<p class="text-xs text-gray-500 mt-1.5">
+				{#if isFullDisabled}
+					<span class="text-orange-600">Full radius disabled for Grid/Card layouts</span>
+				{:else}
+					Border radius style for blocks/links
+				{/if}
+			</p>
 		</div>
 
 		<!-- Link Icon Shape -->
