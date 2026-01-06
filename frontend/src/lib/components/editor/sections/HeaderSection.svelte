@@ -40,18 +40,12 @@
 	$: isDefaultCover = coverImageUrl === DEFAULT_COVER_IMAGE;
 	$: showCoverOptions = selectedPreset?.hasCover && selectedPresetId !== 'avatar-cover';
 
-	// Title Font options
+	// Title Font options - include all available fonts plus Default option
+	import { AVAILABLE_FONTS } from '$lib/appearance/fontConstants';
+	
 	const titleFonts = [
 		{ name: 'Default', category: 'Theme Default', isDefault: true },
-		{ name: 'Inter', category: 'Sans Serif' },
-		{ name: 'Poppins', category: 'Sans Serif' },
-		{ name: 'Roboto', category: 'Sans Serif' },
-		{ name: 'Montserrat', category: 'Sans Serif' },
-		{ name: 'Playfair Display', category: 'Serif' },
-		{ name: 'Merriweather', category: 'Serif' },
-		{ name: 'Crimson Text', category: 'Serif' },
-		{ name: 'Pacifico', category: 'Display' },
-		{ name: 'Space Mono', category: 'Monospace' }
+		...AVAILABLE_FONTS
 	];
 
 
@@ -60,18 +54,62 @@
 	$: themeFontFamily = $appearance?.theme?.config?.tokens?.fontFamily || 'Inter, sans-serif';
 	$: themeDefaultFontName = themeFontFamily.split(',')[0].trim();
 
-	// Get current title font
-	$: selectedTitleFont = $appearanceState.overrides?.['header.titleFontFamily']
-		? ($appearanceState.overrides['header.titleFontFamily'] as string).split(',')[0].trim()
-		: 'Default';
+	// Get current title font with proper fallback chain
+	$: selectedTitleFont = (() => {
+		// Priority 1: Override from user customization
+		const override = $appearanceState.overrides?.['header.titleFontFamily'];
+		if (override) {
+			return (override as string).split(',')[0].trim();
+		}
+		
+		// Priority 2: Theme config default
+		const themeHeadingFont = $appearance?.theme?.config?.semantic?.typography?.heading?.fontFamily;
+		if (themeHeadingFont && typeof themeHeadingFont === 'string') {
+			// Remove "ref:" prefix if exists
+			const cleanFont = themeHeadingFont.startsWith('ref:') 
+				? themeHeadingFont.substring(4) 
+				: themeHeadingFont;
+			
+			// If it's not a reference, extract font name
+			if (!cleanFont.includes('.')) {
+				return cleanFont.split(',')[0].trim();
+			}
+		}
+		
+		// Final fallback
+		return 'Default';
+	})();
 
 	$: selectedTitleFontObj = titleFonts.find(f => f.name === selectedTitleFont) || titleFonts[0];
 
-	// Get current title size
-	$: currentTitleSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
+	// Get current title size with proper fallback chain
+	$: currentTitleSize = (() => {
+		// Priority 1: Override from user customization
+		const override = $appearanceState.overrides?.['page.titleFontSize'];
+		if (override) {
+			return override as number;
+		}
+		
+		// Priority 2: Theme config default
+		const themeFontSize = $appearance?.theme?.config?.semantic?.typography?.heading?.fontSize;
+		if (themeFontSize && typeof themeFontSize === 'string') {
+			// Parse ref like "ref:tokens.typography.fontSize.2xl"
+			if (themeFontSize.includes('2xl')) return 24;
+			if (themeFontSize.includes('xl')) return 20;
+			if (themeFontSize.includes('lg')) return 18;
+		}
+		
+		// Final fallback
+		return 20;
+	})();
 
 	function selectTitleFont(fontName: string) {
-		updateAppearance('header.titleFontFamily', fontName === 'Default' ? null : `${fontName}, sans-serif`);
+		if (fontName === 'Default') {
+			updateAppearance('header.titleFontFamily', null);
+		} else {
+			const font = titleFonts.find(f => f.name === fontName);
+			updateAppearance('header.titleFontFamily', font ? `${fontName}, sans-serif` : null);
+		}
 		titleFontDropdownOpen = false;
 	}
 
@@ -509,25 +547,42 @@
 					</div>
 				</div>
 
-				<!-- Title Size - Slider -->
+				<!-- Title Size - Button Presets -->
 				<div>
-					<div class="flex items-center justify-between mb-2">
-						<label class="text-xs font-medium text-gray-700">Title Size</label>
-						<span class="text-xs font-semibold text-blue-600">{currentTitleSize}px</span>
+					<label class="block text-xs font-medium text-gray-700 mb-2">Title Size</label>
+					<div class="grid grid-cols-3 gap-2">
+						<button
+							type="button"
+							on:click={() => updateTitleSize(18)}
+							class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {currentTitleSize === 18
+								? 'border-blue-500 bg-blue-50 text-blue-600'
+								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						>
+							<div class="font-semibold">LG</div>
+							<div class="text-[10px] opacity-60">18px</div>
+						</button>
+						<button
+							type="button"
+							on:click={() => updateTitleSize(20)}
+							class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {currentTitleSize === 20
+								? 'border-blue-500 bg-blue-50 text-blue-600'
+								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						>
+							<div class="font-semibold">XL</div>
+							<div class="text-[10px] opacity-60">20px</div>
+						</button>
+						<button
+							type="button"
+							on:click={() => updateTitleSize(24)}
+							class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {currentTitleSize === 24
+								? 'border-blue-500 bg-blue-50 text-blue-600'
+								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+						>
+							<div class="font-semibold">2XL</div>
+							<div class="text-[10px] opacity-60">24px</div>
+						</button>
 					</div>
-					<input
-						type="range"
-						min="14"
-						max="32"
-						step="1"
-						value={currentTitleSize}
-						on:input={(e) => updateTitleSize(Number(e.currentTarget.value))}
-						class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-					/>
-					<div class="flex justify-between text-[10px] text-gray-500 mt-1">
-						<span>Small</span>
-						<span>Large</span>
-					</div>
+					<p class="text-xs text-gray-500 mt-1">Name/title size</p>
 				</div>
 			</div>
 		</div>

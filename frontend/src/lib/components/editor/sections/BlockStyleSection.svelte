@@ -270,24 +270,72 @@
 			</div>
 		</div>
 
-		<!-- Corners Slider -->
+		<!-- Corners - Button Presets -->
 		<div>
-			<div class="flex items-center justify-between mb-3">
-				<h3 class="text-sm font-medium text-gray-900">Corners</h3>
-				<span class="text-xs text-gray-500">{blockBorderRadius}px</span>
+			<h3 class="text-sm font-medium text-gray-900 mb-3">Corners</h3>
+			<div class="grid grid-cols-6 gap-2">
+				<button
+					type="button"
+					on:click={() => updateAppearance('block.borderRadius', 0)}
+					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 0
+						? 'border-blue-500 bg-blue-50 text-blue-600'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">None</div>
+					<div class="text-[10px] opacity-60">0px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => updateAppearance('block.borderRadius', 4)}
+					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 4
+						? 'border-blue-500 bg-blue-50 text-blue-600'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">SM</div>
+					<div class="text-[10px] opacity-60">4px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => updateAppearance('block.borderRadius', 8)}
+					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 8
+						? 'border-blue-500 bg-blue-50 text-blue-600'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">MD</div>
+					<div class="text-[10px] opacity-60">8px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => updateAppearance('block.borderRadius', 12)}
+					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 12
+						? 'border-blue-500 bg-blue-50 text-blue-600'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">LG</div>
+					<div class="text-[10px] opacity-60">12px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => updateAppearance('block.borderRadius', 16)}
+					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 16
+						? 'border-blue-500 bg-blue-50 text-blue-600'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">XL</div>
+					<div class="text-[10px] opacity-60">16px</div>
+				</button>
+				<button
+					type="button"
+					on:click={() => updateAppearance('block.borderRadius', 9999)}
+					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 9999
+						? 'border-blue-500 bg-blue-50 text-blue-600'
+						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+				>
+					<div class="font-semibold">Full</div>
+					<div class="text-[10px] opacity-60">∞</div>
+				</button>
 			</div>
-			<div class="flex items-center gap-3">
-				<span class="text-xs text-gray-500 w-12">Square</span>
-				<input
-					type="range"
-					min="0"
-					max="50"
-					value={blockBorderRadius}
-					on:input={(e) => updateAppearance('block.borderRadius', parseInt(e.currentTarget.value))}
-					class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-				/>
-				<span class="text-xs text-gray-500 w-12 text-right">Round</span>
-			</div>
+			<p class="text-xs text-gray-500 mt-2">Border radius for blocks/links</p>
 		</div>
 
 		<!-- Shadows (hide when Neon is selected) -->

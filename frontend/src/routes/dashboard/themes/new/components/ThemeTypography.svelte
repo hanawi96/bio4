@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
+	import { AVAILABLE_FONTS, findFont } from '$lib/appearance/fontConstants';
 	
 	export let fontFamily: string;
 	export let headingFontFamily: string;
@@ -8,50 +9,17 @@
 	export let bioFontSize: 'xs' | 'sm' | 'base' | 'lg';
 	export let subtitleFontSize: 'xs' | 'sm' | 'base' | 'lg';
 
-	const fonts = [
-		{ name: 'Inter', category: 'Sans Serif', value: 'Inter, system-ui, -apple-system, sans-serif' },
-		{ name: 'Poppins', category: 'Sans Serif', value: 'Poppins, sans-serif' },
-		{ name: 'Roboto', category: 'Sans Serif', value: 'Roboto, sans-serif' },
-		{ name: 'Open Sans', category: 'Sans Serif', value: 'Open Sans, sans-serif' },
-		{ name: 'Montserrat', category: 'Sans Serif', value: 'Montserrat, sans-serif' },
-		{ name: 'Lato', category: 'Sans Serif', value: 'Lato, sans-serif' },
-		{ name: 'Playfair Display', category: 'Serif', value: 'Playfair Display, serif' },
-		{ name: 'Merriweather', category: 'Serif', value: 'Merriweather, serif' },
-		{ name: 'Crimson Text', category: 'Serif', value: 'Crimson Text, serif' },
-		{ name: 'Space Mono', category: 'Monospace', value: 'Space Mono, monospace' },
-		{ name: 'JetBrains Mono', category: 'Monospace', value: 'JetBrains Mono, monospace' },
-		{ name: 'Pacifico', category: 'Display', value: 'Pacifico, cursive' },
-		{ name: 'System Default', category: 'System', value: 'system-ui, -apple-system, sans-serif' }
-	];
+	const fonts = AVAILABLE_FONTS;
 
 	let fontDropdownOpen = false;
 	let headingFontDropdownOpen = false;
 	let dropdownButton: HTMLElement;
 	let headingDropdownButton: HTMLElement;
 
-	$: selectedFontName = (() => {
-		if (!fontFamily) return fonts[0].name;
-		// Try exact match first (for full font stack)
-		const exactMatch = fonts.find(f => f.value === fontFamily);
-		if (exactMatch) return exactMatch.name;
-		// Try partial match (check if font name is in the font family string)
-		const partialMatch = fonts.find(f => fontFamily.includes(f.name));
-		return partialMatch ? partialMatch.name : fonts[0].name;
-	})();
-
+	$: selectedFontName = findFont(fontFamily)?.name || fonts[0].name;
 	$: selectedFontObj = fonts.find(f => f.name === selectedFontName) || fonts[0];
 	
-	$: selectedHeadingFontName = (() => {
-		const fontToCheck = headingFontFamily || fontFamily;
-		if (!fontToCheck) return fonts[0].name;
-		// Try exact match first
-		const exactMatch = fonts.find(f => f.value === fontToCheck);
-		if (exactMatch) return exactMatch.name;
-		// Try partial match
-		const partialMatch = fonts.find(f => fontToCheck.includes(f.name));
-		return partialMatch ? partialMatch.name : fonts[0].name;
-	})();
-
+	$: selectedHeadingFontName = findFont(headingFontFamily || fontFamily)?.name || fonts[0].name;
 	$: selectedHeadingFontObj = fonts.find(f => f.name === selectedHeadingFontName) || fonts[0];
 
 	function selectFont(font: typeof fonts[0]) {
