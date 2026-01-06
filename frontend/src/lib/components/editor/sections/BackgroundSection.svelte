@@ -3,9 +3,27 @@
 	import { appearanceState, updateAppearance } from '$lib/stores/appearanceManager';
 	import { themes } from '$lib/stores/themes';
 	import { api } from '$lib/api.client';
-	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import { generatePatternColors, type PatternType } from '$lib/utils/patternColors';
 	import { FALLBACK_THEME } from '$lib/appearance/presets';
+	
+	// New components
+	import BackgroundTypeSelector from './background/BackgroundTypeSelector.svelte';
+	import SolidColorPicker from './background/SolidColorPicker.svelte';
+	import GradientEditor from './background/GradientEditor.svelte';
+	import PatternEditor from './background/PatternEditor.svelte';
+	import ImageUploader from './background/ImageUploader.svelte';
+	import VideoUploader from './background/VideoUploader.svelte';
+	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
+	
+	// Utils
+	import { 
+		normalizeGradient, 
+		parseGradient, 
+		extractSolidColorFromCurrent, 
+		generateSmartGradient,
+		getPatternStyle 
+	} from '$lib/utils/background/backgroundUtils';
+	import { DEFAULT_IMAGE_BG, DEFAULT_VIDEO_BG } from '$lib/utils/background/backgroundConstants';
 
 	const username = 'demo';
 
@@ -98,32 +116,7 @@
 		}
 	}
 
-	const bgTypes = [
-		{ id: 'solid', name: 'Solid Color', description: 'Single color' },
-		{ id: 'gradient', name: 'Gradient', description: 'Color blend' },
-		{ id: 'image', name: 'Image', description: 'Custom photo' },
-		{ id: 'video', name: 'Video', description: 'Animated background' },
-		{ id: 'pattern', name: 'Pattern', description: 'Repeating design' }
-	];
 
-	const solidColors = [
-		{ name: 'White', color: '#ffffff' },
-		{ name: 'Light Gray', color: '#f3f4f6' },
-		{ name: 'Dark Gray', color: '#1f2937' },
-		{ name: 'Black', color: '#000000' },
-		{ name: 'Blue', color: '#3b82f6' },
-		{ name: 'Purple', color: '#8b5cf6' },
-		{ name: 'Pink', color: '#ec4899' },
-		{ name: 'Green', color: '#10b981' }
-	];
-	
-	// Check nếu currentBgColor không match preset nào
-	$: isCustomSolidColor = (() => {
-		if (selectedType === 'solid' && currentBgColor && currentBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
-			return !solidColors.some(c => c.color.toLowerCase() === currentBgColor.toLowerCase());
-		}
-		return false;
-	})();
 	
 	// Check if Avatar Cover mode (only allow solid background)
 	$: isAvatarCoverMode = $appearanceState.headerPresetId === 'avatar-cover';
@@ -137,113 +130,8 @@
 		updateAppearance('backgroundColor', solidColor);
 	}
 	
-	// Helper: Normalize gradient string để so sánh
-	function normalizeGradient(gradient: string): string {
-		if (!gradient) return '';
-		return gradient
-			.replace(/\s+/g, ' ') // Normalize spaces
-			.replace(/\s*,\s*/g, ',') // Remove spaces around commas
-			.replace(/\(\s*/g, '(') // Remove space after (
-			.replace(/\s*\)/g, ')') // Remove space before )
-			.replace(/#([0-9a-fA-F]{6})\s+0%/g, '#$1 0%') // Normalize 0%
-			.replace(/#([0-9a-fA-F]{6})\s+100%/g, '#$1 100%') // Normalize 100%
-			.toLowerCase()
-			.trim();
-	}
-	
-	// Helper: Parse gradient để extract colors và direction
-	function parseGradient(gradient: string): { from: string; to: string; direction: string; type: 'linear' | 'radial' } | null {
-		if (!gradient || !gradient.includes('gradient')) return null;
-		
-		const isRadial = gradient.includes('radial-gradient');
-		const type = isRadial ? 'radial' : 'linear';
-		
-		// Extract colors
-		const colorMatches = gradient.match(/#[0-9a-fA-F]{6}/g);
-		if (!colorMatches || colorMatches.length < 2) return null;
-		
-		const from = colorMatches[0];
-		const to = colorMatches[1];
-		
-		// Extract direction (only for linear)
-		let direction = '135deg'; // default
-		if (!isRadial) {
-			const dirMatch = gradient.match(/linear-gradient\(([^,]+),/);
-			if (dirMatch && dirMatch[1]) {
-				const dir = dirMatch[1].trim();
-				if (dir.includes('deg')) {
-					direction = dir;
-				}
-			}
-		}
-		
-		return { from, to, direction, type };
-	}
-	
-	// Check nếu currentBgColor không match gradient preset nào
-	$: isCustomGradient = (() => {
-		if (selectedType === 'gradient' && currentBgColor && currentBgColor.includes('gradient')) {
-			const normalized = normalizeGradient(currentBgColor);
-			return !gradients.some(g => normalizeGradient(g.gradient) === normalized);
-		}
-		return false;
-	})();
 
-	const gradients = [
-		{ name: 'Sunset', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', from: '#667eea', to: '#764ba2', direction: '135deg' },
-		{ name: 'Ocean', gradient: 'linear-gradient(135deg, #667eea 0%, #00d4ff 100%)', from: '#667eea', to: '#00d4ff', direction: '135deg' },
-		{ name: 'Forest', gradient: 'linear-gradient(135deg, #0ba360 0%, #3cba92 100%)', from: '#0ba360', to: '#3cba92', direction: '135deg' },
-		{ name: 'Fire', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', from: '#f093fb', to: '#f5576c', direction: '135deg' },
-		{ name: 'Peach', gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', from: '#fa709a', to: '#fee140', direction: '135deg' },
-		{ name: 'Night', gradient: 'linear-gradient(135deg, #2c3e50 0%, #000000 100%)', from: '#2c3e50', to: '#000000', direction: '135deg' },
-		{ name: 'Aurora', gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', from: '#a8edea', to: '#fed6e3', direction: '135deg' }
-	];
 
-	const patterns = [
-		{ 
-			id: 'dots', 
-			name: 'Dots',
-			css: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
-			size: '20px 20px'
-		},
-		{ 
-			id: 'grid', 
-			name: 'Grid',
-			css: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)',
-			size: '30px 30px'
-		},
-		{ 
-			id: 'diagonal', 
-			name: 'Diagonal',
-			css: 'repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px)',
-			size: 'auto'
-		},
-		{ 
-			id: 'cross', 
-			name: 'Circuit',
-			svg: `<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.25"><circle cx="10" cy="10" r="3"/><circle cx="70" cy="10" r="3"/><circle cx="10" cy="70" r="3"/><circle cx="70" cy="70" r="3"/><circle cx="40" cy="40" r="4"/><line x1="13" y1="10" x2="37" y2="40"/><line x1="67" y1="10" x2="43" y2="40"/><line x1="13" y1="70" x2="37" y2="43"/><line x1="67" y1="70" x2="43" y2="43"/><rect x="38" y="8" width="4" height="4"/><rect x="38" y="68" width="4" height="4"/><rect x="8" y="38" width="4" height="4"/><rect x="68" y="38" width="4" height="4"/></g></svg>`
-		},
-		{ 
-			id: 'zigzag', 
-			name: 'Hexagon',
-			svg: `<svg width="56" height="100" xmlns="http://www.w3.org/2000/svg"><path d="M28 0L0 16v32l28 16 28-16V16L28 0zm0 6l22 12.5v25L28 56 6 43.5v-25L28 6z" fill="currentColor" opacity="0.15"/><path d="M28 50L0 66v32l28 16 28-16V66L28 50zm0 6l22 12.5v25L28 106 6 93.5v-25L28 56z" fill="currentColor" opacity="0.15"/></svg>`
-		},
-		{ 
-			id: 'organic', 
-			name: 'Organic',
-			svg: `<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><path d="M30 10c-8 0-12 8-12 12s4 8 8 12c4-4 12-8 12-12s-4-12-8-12z" fill="currentColor" opacity="0.3"/></svg>`
-		},
-		{ 
-			id: 'noise', 
-			name: 'Topography',
-			svg: `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><path d="M20 10c-5 0-10 5-10 10s5 10 10 10 10-5 10-10-5-10-10-10zm0 3c4 0 7 3 7 7s-3 7-7 7-7-3-7-7 3-7 7-7z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><path d="M60 15c-8 0-15 7-15 15s7 15 15 15 15-7 15-15-7-15-15-15zm0 4c6 0 11 5 11 11s-5 11-11 11-11-5-11-11 5-11 11-11z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><path d="M30 60c-6 0-12 6-12 12s6 12 12 12 12-6 12-12-6-12-12-12zm0 3c5 0 9 4 9 9s-4 9-9 9-9-4-9-9 4-9 9-9z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><path d="M75 65c-7 0-13 6-13 13s6 13 13 13 13-6 13-13-6-13-13-13zm0 3c6 0 10 4 10 10s-4 10-10 10-10-4-10-10 4-10 10-10z" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"/></svg>`
-		},
-		{ 
-			id: 'waves', 
-			name: 'Waves',
-			svg: `<svg width="100" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q 25 0, 50 10 T 100 10" stroke="currentColor" fill="none" stroke-width="2" opacity="0.3"/></svg>`
-		}
-	];
 
 	let selectedType = 'solid';
 	let currentBgColor = '#ffffff';
@@ -301,51 +189,32 @@
 		updateAppearance('backgroundVideo', videoUrl);
 	}
 	
-	// Custom gradient state
-	let showCustomGradient = false;
+	
+	// Gradient state
 	let gradientFromColor = '#667eea';
 	let gradientToColor = '#764ba2';
 	let gradientDirection = '135deg';
 	let gradientType: 'linear' | 'radial' = 'linear';
 	
-	// Custom solid color state
-	let showCustomColor = false;
-	
-	// Image upload state
-	let uploading = false;
-	let showCropModal = false;
-	let tempImageUrl = '';
+	// Image/Video state
 	let backgroundImageUrl = '';
-	let isDragging = false;
-	
-	// Default image background (local)
-	const DEFAULT_IMAGE_BG = '/presets/images/preset-img.jpg';
-	
-	// Video upload state
 	let backgroundVideoUrl = '';
-	let showVideoCropModal = false;
-	let tempVideoFile: File | null = null;
-	let tempVideoPreviewUrl = '';
-	
-	// Default video background (local)
-	const DEFAULT_VIDEO_BG = '/presets/videos/14950008_1080_1920_60fps.mp4';
 	
 	// Pattern state
 	let selectedPattern = 'dots';
 	let patternColor = '#e5e7eb';
 	let patternBgColor = '#ffffff';
-	
-	// Store the base background color (before pattern applied) for consistent pattern generation
 	let basePatternBgColor = '#ffffff';
-	
-	// Base theme color for pattern preview
 	let baseThemeColor = '#ffffff';
 
-	// Filter UI state
-	let activeFilter: 'blur' | 'brightness' | 'grayscale' | null = null;
-
-	// Background filters - computed once for preview
-	$: previewFilters = `blur(${$appearanceState.overrides['backgroundBlur'] ?? 0}px) brightness(${($appearanceState.overrides['backgroundBrightness'] ?? 100) / 100}) grayscale(${($appearanceState.overrides['backgroundGrayscale'] ?? 0) / 100})`;
+	// Upload/Modal state
+	let showCropModal = false;
+	let tempImageUrl = '';
+	let uploading = false;
+	let showVideoCropModal = false;
+	let tempVideoPreviewUrl = '';
+	let tempVideoFile: File | null = null;
+	let isDragging = false;
 	
 	// Background history (session-only)
 	let backgroundHistory = {
@@ -457,58 +326,6 @@
 			const colors = generatePatternColors(bgColorForPattern, selectedPattern);
 			updatePatternColor(selectedPattern, colors.inkColor, colors.bgColor);
 		}
-	}
-	
-	// Helper: Extract solid color from current background (gradient, solid, etc.)
-	function extractSolidColorFromCurrent(bgValue: string): string {
-		// Already solid color
-		if (bgValue.match(/^#[0-9a-fA-F]{6}$/)) {
-			return bgValue;
-		}
-		
-		// Extract from gradient
-		if (bgValue.includes('gradient')) {
-			const colorMatch = bgValue.match(/#[0-9a-fA-F]{6}/);
-			if (colorMatch) {
-				return colorMatch[0];
-			}
-		}
-		
-		// Extract from pattern (already has background color)
-		if (bgValue.startsWith('background:')) {
-			const colorMatch = bgValue.match(/#[0-9a-fA-F]{6}/g);
-			if (colorMatch && colorMatch.length > 0) {
-				// Last color is usually the background color
-				return colorMatch[colorMatch.length - 1];
-			}
-		}
-		
-		// Fallback to white
-		return '#ffffff';
-	}
-	
-	// Helper: Generate smart gradient from solid color
-	function generateSmartGradient(solidColor: string): { gradient: string; from: string; to: string; direction: string } {
-		// Parse hex color to RGB
-		const hex = solidColor.replace('#', '');
-		const r = parseInt(hex.substring(0, 2), 16);
-		const g = parseInt(hex.substring(2, 4), 16);
-		const b = parseInt(hex.substring(4, 6), 16);
-		
-		// Calculate luminance to determine if color is light or dark
-		const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-		
-		// Generate darker shade for "to" color
-		const darkenFactor = luminance > 0.5 ? 0.6 : 0.7; // Darker for light colors
-		const toR = Math.round(r * darkenFactor);
-		const toG = Math.round(g * darkenFactor);
-		const toB = Math.round(b * darkenFactor);
-		
-		const toColor = `#${toR.toString(16).padStart(2, '0')}${toG.toString(16).padStart(2, '0')}${toB.toString(16).padStart(2, '0')}`;
-		const direction = '135deg';
-		const gradient = `linear-gradient(${direction}, ${solidColor} 0%, ${toColor} 100%)`;
-		
-		return { gradient, from: solidColor, to: toColor, direction };
 	}
 	
 	function handleBackgroundUpload(event: Event) {
@@ -699,23 +516,6 @@
 		tempVideoFile = null;
 	}
 	
-	function getPatternStyle(patternId: string, color: string, bgColor: string): string {
-		const pattern = patterns.find(p => p.id === patternId);
-		
-		if (!pattern) return `background: ${bgColor};`;
-		
-		if (pattern.svg) {
-			// SVG pattern - encode as data URI
-			const svg = pattern.svg.replace(/currentColor/g, color);
-			const encoded = btoa(svg);
-			return `background: url('data:image/svg+xml;base64,${encoded}') repeat, ${bgColor};`;
-		} else {
-			// CSS pattern
-			const css = pattern.css!.replace(/currentColor/g, color);
-			return `background: ${css}, ${bgColor}; background-size: ${pattern.size};`;
-		}
-	}
-	
 	async function handleRemoveVideo() {
 		// Check if current video is the default one
 		if (backgroundVideoUrl === DEFAULT_VIDEO_BG) {
@@ -788,743 +588,66 @@
 		{/if}
 		
 		<!-- Background Type Selector -->
-		<div class="grid grid-cols-5 gap-3">
-			{#each bgTypes as type}
-				<button
-					on:click={() => selectType(type.id)}
-					disabled={isAvatarCoverMode && type.id !== 'solid'}
-					class="p-4 rounded-xl border-2 transition-all {isAvatarCoverMode && type.id !== 'solid' ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'} {selectedType === type.id ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-					title={isAvatarCoverMode && type.id !== 'solid' ? 'Not available in Avatar Cover mode' : ''}
-				>
-					<!-- Icon -->
-					<div class="w-12 h-12 mx-auto mb-3 rounded-lg flex items-center justify-center transition-colors {selectedType === type.id ? 'bg-blue-100' : 'bg-gray-100'}">
-						{#if type.id === 'solid'}
-							<!-- Palette Icon -->
-							<svg class="w-6 h-6 transition-colors {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-							</svg>
-						{:else if type.id === 'gradient'}
-							<!-- Sparkles Icon -->
-							<svg class="w-6 h-6 transition-colors {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-							</svg>
-						{:else if type.id === 'image'}
-							<!-- Image Icon -->
-							<svg class="w-6 h-6 transition-colors {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-							</svg>
-						{:else if type.id === 'video'}
-							<!-- Video Icon -->
-							<svg class="w-6 h-6 transition-colors {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-							</svg>
-						{:else}
-							<!-- Grid Pattern Icon -->
-							<svg class="w-6 h-6 transition-colors {selectedType === type.id ? 'text-blue-600' : 'text-gray-600'}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-							</svg>
-						{/if}
-					</div>
-					<p class="text-sm font-semibold text-gray-900">{type.name}</p>
-					<p class="text-xs text-gray-500 mt-1">{type.description}</p>
-				</button>
-			{/each}
-		</div>
+		<BackgroundTypeSelector 
+			{selectedType} 
+			{isAvatarCoverMode}
+			on:select={(e) => selectType(e.detail)}
+		/>
 
 		<!-- Solid Color Options -->
 		{#if selectedType === 'solid'}
-			<div class="space-y-4">
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Preset Colors</label>
-					<div class="grid grid-cols-9 gap-1.5">
-						{#each solidColors as color}
-							<button
-								on:click={() => updateSolidColor(color.color)}
-								class="group relative aspect-square rounded-md transition-all hover:scale-105 border {currentBgColor === color.color ? 'border-blue-500 ring-1 ring-blue-100' : 'border-gray-200'}"
-								style="background: {color.color};"
-								title={color.name}
-							>
-								{#if currentBgColor === color.color}
-									<svg class="absolute inset-0 m-auto w-3 h-3 {color.color === '#ffffff' || color.color === '#f3f4f6' ? 'text-gray-900' : 'text-white'}" fill="currentColor" viewBox="0 0 20 20">
-										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-									</svg>
-								{/if}
-							</button>
-						{/each}
-						
-						<!-- Custom Color Button -->
-						<button
-							on:click={() => showCustomColor = !showCustomColor}
-							class="relative aspect-square rounded-md transition-all hover:scale-105 border {isCustomSolidColor ? 'border-blue-500 ring-1 ring-blue-100' : showCustomColor ? 'border-blue-500 ring-1 ring-blue-100 bg-blue-50' : 'border-dashed border-gray-300 hover:border-blue-400 bg-white'}"
-							style="{isCustomSolidColor ? `background: ${currentBgColor};` : ''}"
-							title="Custom Color"
-						>
-							{#if isCustomSolidColor}
-								<!-- Hiển thị checkmark nếu đang dùng custom color -->
-								<svg class="absolute inset-0 m-auto w-3 h-3 {currentBgColor === '#ffffff' || currentBgColor === '#f3f4f6' ? 'text-gray-900' : 'text-white'}" fill="currentColor" viewBox="0 0 20 20">
-									<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-								</svg>
-							{:else}
-								<!-- Hiển thị icon + nếu không dùng custom color -->
-								<svg class="absolute inset-0 m-auto w-4 h-4 {showCustomColor ? 'text-blue-600' : 'text-gray-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-								</svg>
-							{/if}
-						</button>
-					</div>
-				</div>
-				
-				<!-- Custom Color Panel -->
-				{#if showCustomColor}
-					<div class="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl space-y-3">
-						<div class="flex items-center justify-between">
-							<h4 class="text-sm font-semibold text-gray-900">Custom Color</h4>
-							<button
-								on:click={() => showCustomColor = false}
-								class="p-1 hover:bg-white/50 rounded transition"
-							>
-								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button>
-						</div>
-						
-						<div class="flex items-center gap-3">
-							<div class="relative">
-								<input 
-									type="color" 
-									value={currentBgColor}
-									on:input={(e) => updateSolidColor(e.currentTarget.value)}
-									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-								/>
-								<div 
-									class="w-12 h-12 rounded-lg border-2 border-white shadow-sm cursor-pointer"
-									style="background-color: {currentBgColor};"
-								></div>
-							</div>
-							<input 
-								type="text"
-								value={currentBgColor}
-								on:input={(e) => updateSolidColor(e.currentTarget.value)}
-								class="flex-1 px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm font-mono bg-white"
-								placeholder="#ffffff"
-							/>
-						</div>
-					</div>
-				{/if}
-			</div>
+			<SolidColorPicker 
+				{currentBgColor}
+				on:update={(e) => updateSolidColor(e.detail)}
+			/>
 		{/if}
 
 		<!-- Gradient Options -->
 		{#if selectedType === 'gradient'}
-			<div class="space-y-4">
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Gradient Presets</label>
-					<div class="grid grid-cols-8 gap-2">
-						{#each gradients as grad}
-							<button
-								on:click={() => updateGradientColor(grad.gradient, grad.from, grad.to, grad.direction, 'linear')}
-								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 {normalizeGradient(currentBgColor) === normalizeGradient(grad.gradient) ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
-								style="background: {grad.gradient};"
-								title={grad.name}
-							>
-								{#if normalizeGradient(currentBgColor) === normalizeGradient(grad.gradient)}
-									<svg class="absolute inset-0 m-auto w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-									</svg>
-								{/if}
-							</button>
-						{/each}
-						
-						<!-- Custom Gradient Button -->
-						<button
-							on:click={() => showCustomGradient = !showCustomGradient}
-							class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 {isCustomGradient ? 'border-blue-500 ring-2 ring-blue-100' : showCustomGradient ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-dashed border-gray-300 hover:border-blue-400 bg-white'}"
-							style="{isCustomGradient ? `background: ${currentBgColor};` : ''}"
-							title="Custom Gradient"
-						>
-							{#if isCustomGradient}
-								<!-- Hiển thị checkmark nếu đang dùng custom gradient -->
-								<svg class="absolute inset-0 m-auto w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-									<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-								</svg>
-							{:else}
-								<!-- Hiển thị icon + nếu không dùng custom gradient -->
-								<svg class="absolute inset-0 m-auto w-5 h-5 {showCustomGradient ? 'text-blue-600' : 'text-gray-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-								</svg>
-							{/if}
-						</button>
-					</div>
-				</div>
-				
-				<!-- Custom Gradient Panel -->
-				{#if showCustomGradient}
-					<div class="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl space-y-4">
-						<div class="flex items-center justify-between">
-							<h4 class="text-sm font-semibold text-gray-900">Custom Gradient</h4>
-							<button
-								on:click={() => showCustomGradient = false}
-								class="p-1 hover:bg-white/50 rounded transition"
-							>
-								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</button>
-						</div>
-						
-						<!-- Color Pickers -->
-						<div class="grid grid-cols-2 gap-3">
-							<div>
-								<label class="block text-xs font-medium text-gray-700 mb-2">From Color</label>
-								<div class="relative">
-									<input
-										type="color"
-										bind:value={gradientFromColor}
-										on:input={() => {
-											const gradient = gradientType === 'radial' 
-												? `radial-gradient(circle, ${gradientFromColor} 0%, ${gradientToColor} 100%)`
-												: `linear-gradient(${gradientDirection}, ${gradientFromColor} 0%, ${gradientToColor} 100%)`;
-											updateGradientColor(gradient);
-										}}
-										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-									/>
-									<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
-										<div class="w-8 h-8 rounded border-2 border-white shadow-sm" style="background-color: {gradientFromColor};"></div>
-										<p class="text-xs font-mono text-gray-900">{gradientFromColor}</p>
-									</div>
-								</div>
-							</div>
-							<div>
-								<label class="block text-xs font-medium text-gray-700 mb-2">To Color</label>
-								<div class="relative">
-									<input
-										type="color"
-										bind:value={gradientToColor}
-										on:input={() => {
-											const gradient = gradientType === 'radial' 
-												? `radial-gradient(circle, ${gradientFromColor}, ${gradientToColor})`
-												: `linear-gradient(${gradientDirection}, ${gradientFromColor}, ${gradientToColor})`;
-											updateGradientColor(gradient);
-										}}
-										class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-									/>
-									<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
-										<div class="w-8 h-8 rounded border-2 border-white shadow-sm" style="background-color: {gradientToColor};"></div>
-										<p class="text-xs font-mono text-gray-900">{gradientToColor}</p>
-									</div>
-								</div>
-							</div>
-						</div>
-						
-						<!-- Gradient Type -->
-						<div>
-							<label class="block text-xs font-medium text-gray-700 mb-2">Type</label>
-							<div class="grid grid-cols-2 gap-2">
-								<button
-									on:click={() => {
-										gradientType = 'linear';
-										const gradient = `linear-gradient(${gradientDirection}, ${gradientFromColor}, ${gradientToColor})`;
-										updateGradientColor(gradient);
-									}}
-									class="px-3 py-2 rounded-lg text-xs font-medium transition {gradientType === 'linear' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-								>
-									Linear
-								</button>
-								<button
-									on:click={() => {
-										gradientType = 'radial';
-										const gradient = `radial-gradient(circle, ${gradientFromColor}, ${gradientToColor})`;
-										updateGradientColor(gradient);
-									}}
-									class="px-3 py-2 rounded-lg text-xs font-medium transition {gradientType === 'radial' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-								>
-									Radial
-								</button>
-							</div>
-						</div>
-						
-						<!-- Direction (only for linear) -->
-						{#if gradientType === 'linear'}
-							<div>
-								<label class="block text-xs font-medium text-gray-700 mb-2">Direction</label>
-								<div class="grid grid-cols-4 gap-2">
-									<button
-										on:click={() => {
-											gradientDirection = '0deg';
-											const gradient = `linear-gradient(0deg, ${gradientFromColor}, ${gradientToColor})`;
-											updateGradientColor(gradient);
-										}}
-										class="p-2 rounded-lg transition {gradientDirection === '0deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-										title="Top to Bottom"
-									>
-										<svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-										</svg>
-									</button>
-									<button
-										on:click={() => {
-											gradientDirection = '90deg';
-											const gradient = `linear-gradient(90deg, ${gradientFromColor}, ${gradientToColor})`;
-											updateGradientColor(gradient);
-										}}
-										class="p-2 rounded-lg transition {gradientDirection === '90deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-										title="Left to Right"
-									>
-										<svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-										</svg>
-									</button>
-									<button
-										on:click={() => {
-											gradientDirection = '135deg';
-											const gradient = `linear-gradient(135deg, ${gradientFromColor}, ${gradientToColor})`;
-											updateGradientColor(gradient);
-										}}
-										class="p-2 rounded-lg transition {gradientDirection === '135deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-										title="Diagonal"
-									>
-										<svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M19 19L5 5m14 0v14" />
-										</svg>
-									</button>
-									<button
-										on:click={() => {
-											gradientDirection = '180deg';
-											const gradient = `linear-gradient(180deg, ${gradientFromColor}, ${gradientToColor})`;
-											updateGradientColor(gradient);
-										}}
-										class="p-2 rounded-lg transition {gradientDirection === '180deg' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-										title="Bottom to Top"
-									>
-										<svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-										</svg>
-									</button>
-								</div>
-							</div>
-						{/if}
-					</div>
-				{/if}
-			</div>
+			<GradientEditor 
+				{currentBgColor}
+				bind:gradientFromColor
+				bind:gradientToColor
+				bind:gradientDirection
+				bind:gradientType
+				on:update={(e) => {
+					const { gradient, from, to, direction, type } = e.detail;
+					updateGradientColor(gradient, from, to, direction, type);
+				}}
+			/>
 		{/if}
 
 		<!-- Image Upload -->
 		{#if selectedType === 'image'}
-			<div class="space-y-3">
-				{#if backgroundImageUrl}
-					<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
-						<img 
-							src={backgroundImageUrl} 
-							alt="Background" 
-							class="w-full h-48 object-cover" 
-							style="filter: {previewFilters};"
-						/>
-						<div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2">
-							<label class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-								<input
-									type="file"
-									accept="image/*"
-									on:change={handleBackgroundUpload}
-									disabled={uploading}
-									class="hidden"
-								/>
-								<div class="px-4 py-2 bg-white text-gray-900 rounded-lg font-medium text-sm shadow-lg hover:bg-gray-100 transition flex items-center gap-2">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-									</svg>
-									Change
-								</div>
-							</label>
-							<button
-								on:click={handleRemoveBackground}
-								disabled={uploading}
-								class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 {backgroundImageUrl === DEFAULT_IMAGE_BG ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} text-white rounded-lg font-medium text-sm shadow-lg disabled:opacity-50 flex items-center gap-2"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-								</svg>
-								{backgroundImageUrl === DEFAULT_IMAGE_BG ? 'Default' : 'Remove'}
-							</button>
-						</div>
-						{#if uploading}
-							<div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-								<div class="flex items-center gap-3 text-white">
-									<div class="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full"></div>
-									<span class="font-medium">Uploading...</span>
-								</div>
-							</div>
-						{/if}
-					</div>
-					
-					<!-- Image Filters -->
-					<div class="p-4 bg-gray-50 rounded-xl space-y-3">
-						<h4 class="text-sm font-semibold text-gray-900 mb-3">Image Filters</h4>
-						
-						<!-- Filter Tabs -->
-						<div class="grid grid-cols-3 gap-2">
-							<button
-								on:click={() => activeFilter = activeFilter === 'blur' ? null : 'blur'}
-								class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter === 'blur' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-							>
-								<div class="flex items-center justify-center gap-2">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-									</svg>
-									<span>Blur</span>
-								</div>
-							</button>
-							<button
-								on:click={() => activeFilter = activeFilter === 'brightness' ? null : 'brightness'}
-								class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter === 'brightness' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-							>
-								<div class="flex items-center justify-center gap-2">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-									</svg>
-									<span>Brightness</span>
-								</div>
-							</button>
-							<button
-								on:click={() => activeFilter = activeFilter === 'grayscale' ? null : 'grayscale'}
-								class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter === 'grayscale' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-							>
-								<div class="flex items-center justify-center gap-2">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-									</svg>
-									<span>Grayscale</span>
-								</div>
-							</button>
-						</div>
-
-						<!-- Filter Presets (Expandable) -->
-						{#if activeFilter === 'blur'}
-							<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-								<div class="grid grid-cols-4 gap-2">
-									<button
-										on:click={() => updateAppearance('backgroundBlur', 0)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBlur'] ?? 0) === 0 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBlur'] ?? 0) === 0 ? 'text-blue-600' : 'text-gray-900'}">None</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">0px</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundBlur', 4)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBlur'] ?? 0) === 4 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBlur'] ?? 0) === 4 ? 'text-blue-600' : 'text-gray-900'}">Light</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">4px</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundBlur', 8)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBlur'] ?? 0) === 8 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBlur'] ?? 0) === 8 ? 'text-blue-600' : 'text-gray-900'}">Medium</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">8px</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundBlur', 15)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBlur'] ?? 0) === 15 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBlur'] ?? 0) === 15 ? 'text-blue-600' : 'text-gray-900'}">Strong</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">15px</div>
-									</button>
-								</div>
-							</div>
-						{:else if activeFilter === 'brightness'}
-							<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-								<div class="grid grid-cols-5 gap-2">
-									<button
-										on:click={() => updateAppearance('backgroundBrightness', 50)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 50 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 50 ? 'text-blue-600' : 'text-gray-900'}">Dark</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">50%</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundBrightness', 75)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 75 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 75 ? 'text-blue-600' : 'text-gray-900'}">Dim</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">75%</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundBrightness', 100)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 100 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 100 ? 'text-blue-600' : 'text-gray-900'}">Normal</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">100%</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundBrightness', 125)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 125 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 125 ? 'text-blue-600' : 'text-gray-900'}">Bright</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">125%</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundBrightness', 150)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 150 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundBrightness'] ?? 100) === 150 ? 'text-blue-600' : 'text-gray-900'}">Very Bright</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">150%</div>
-									</button>
-								</div>
-							</div>
-						{:else if activeFilter === 'grayscale'}
-							<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-								<div class="grid grid-cols-4 gap-2">
-									<button
-										on:click={() => updateAppearance('backgroundGrayscale', 0)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 0 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 0 ? 'text-blue-600' : 'text-gray-900'}">Color</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">0%</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundGrayscale', 50)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 50 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 50 ? 'text-blue-600' : 'text-gray-900'}">Half</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">50%</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundGrayscale', 75)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 75 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 75 ? 'text-blue-600' : 'text-gray-900'}">Mostly</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">75%</div>
-									</button>
-									<button
-										on:click={() => updateAppearance('backgroundGrayscale', 100)}
-										class="p-3 rounded-lg border-2 transition-all hover:scale-105 {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 100 ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'}"
-									>
-										<div class="text-xs font-semibold {($appearanceState.overrides['backgroundGrayscale'] ?? 0) === 100 ? 'text-blue-600' : 'text-gray-900'}">B&W</div>
-										<div class="text-[10px] text-gray-500 mt-0.5">100%</div>
-									</button>
-								</div>
-							</div>
-						{/if}
-					</div>
-				{:else}
-					<label class="block cursor-pointer">
-						<input
-							type="file"
-							accept="image/jpeg,image/png,image/webp"
-							on:change={handleBackgroundUpload}
-							disabled={uploading}
-							class="hidden"
-						/>
-						<div 
-							class="relative group"
-							on:dragover={handleDragOver}
-							on:dragleave={handleDragLeave}
-							on:drop={handleDrop}
-							role="button"
-							tabindex="0"
-						>
-							<div class="flex flex-col items-center justify-center gap-3 px-6 py-10 border-2 border-dashed rounded-xl transition-all {isDragging ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}">
-								{#if uploading}
-									<div class="animate-spin w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full"></div>
-									<p class="text-sm font-medium text-gray-900">Uploading...</p>
-								{:else}
-									<div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transition-transform {isDragging ? 'scale-110' : 'group-hover:scale-110'}">
-										<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-										</svg>
-									</div>
-									<div class="text-center">
-										<p class="text-sm font-semibold text-gray-900 mb-1">
-											{isDragging ? 'Drop image here' : 'Upload Background Image'}
-										</p>
-										<p class="text-xs text-gray-600">
-											{isDragging ? 'Release to upload' : 'Click to browse or drag and drop'}
-										</p>
-									</div>
-									<div class="flex items-center gap-3 text-xs text-gray-500">
-										<span>JPG, PNG, WebP</span>
-										<span>•</span>
-										<span>Max 5MB</span>
-									</div>
-								{/if}
-							</div>
-						</div>
-					</label>
-				{/if}
-			</div>
+			<ImageUploader 
+				{backgroundImageUrl}
+				{username}
+				on:update={(e) => updateImageBackground(e.detail)}
+				on:remove={() => updateImageBackground(DEFAULT_IMAGE_BG)}
+			/>
 		{/if}
 
 		<!-- Video Upload -->
 		{#if selectedType === 'video'}
-			<div class="space-y-3">
-				{#if backgroundVideoUrl}
-					<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
-						<video src={backgroundVideoUrl} class="w-full h-48 object-cover" autoplay loop muted playsinline></video>
-						<div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2">
-							<label class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-								<input
-									type="file"
-									accept="video/mp4,video/webm"
-									on:change={handleVideoUpload}
-									disabled={uploading}
-									class="hidden"
-								/>
-								<div class="px-4 py-2 bg-white text-gray-900 rounded-lg font-medium text-sm shadow-lg hover:bg-gray-100 transition flex items-center gap-2">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-									</svg>
-									Change
-								</div>
-							</label>
-							<button
-								on:click={handleRemoveVideo}
-								disabled={uploading}
-								class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 {backgroundVideoUrl === DEFAULT_VIDEO_BG ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} text-white rounded-lg font-medium text-sm shadow-lg disabled:opacity-50 flex items-center gap-2"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-								</svg>
-								{backgroundVideoUrl === DEFAULT_VIDEO_BG ? 'Default' : 'Remove'}
-							</button>
-						</div>
-						{#if uploading}
-							<div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-								<div class="flex items-center gap-3 text-white">
-									<div class="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
-									<span class="font-medium">Uploading...</span>
-								</div>
-							</div>
-						{/if}
-					</div>
-				{:else}
-					<label class="block cursor-pointer">
-						<input
-							type="file"
-							accept="video/mp4,video/webm"
-							on:change={handleVideoUpload}
-							disabled={uploading}
-							class="hidden"
-						/>
-						<div 
-							class="relative group"
-							on:dragover={handleDragOver}
-							on:dragleave={handleDragLeave}
-							on:drop={handleVideoDrop}
-							role="button"
-							tabindex="0"
-						>
-							<div class="flex flex-col items-center justify-center gap-3 px-6 py-10 border-2 border-dashed rounded-xl transition-all {isDragging ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}">
-								{#if uploading}
-									<div class="animate-spin w-10 h-10 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-									<p class="text-sm font-medium text-gray-900">Uploading video...</p>
-								{:else}
-									<div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg transition-transform {isDragging ? 'scale-110' : 'group-hover:scale-110'}">
-										<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-										</svg>
-									</div>
-									<div class="text-center">
-										<p class="text-sm font-semibold text-gray-900 mb-1">
-											{isDragging ? 'Drop video here' : 'Upload Background Video'}
-										</p>
-										<p class="text-xs text-gray-600">
-											{isDragging ? 'Release to upload' : 'Click to browse or drag and drop'}
-										</p>
-									</div>
-									<div class="flex items-center gap-3 text-xs text-gray-500">
-										<span>MP4, WebM</span>
-										<span>•</span>
-										<span>Max 20MB</span>
-									</div>
-								{/if}
-							</div>
-						</div>
-					</label>
-				{/if}
-			</div>
+			<VideoUploader 
+				{backgroundVideoUrl}
+				{username}
+				on:update={(e) => updateVideoBackground(e.detail)}
+				on:remove={() => updateVideoBackground(DEFAULT_VIDEO_BG)}
+			/>
 		{/if}
 
 		<!-- Pattern -->
 		{#if selectedType === 'pattern'}
-			<div class="space-y-4">
-				<!-- Pattern Presets -->
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-2">Pattern Style</label>
-					<div class="grid grid-cols-4 gap-2">
-						{#each patterns as pattern}
-							<button
-								on:click={() => {
-									// Keep current customized colors, only change pattern type
-									updatePatternColor(pattern.id, patternColor, patternBgColor);
-								}}
-								class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
-								title={pattern.name}
-							>
-								<div 
-									class="w-full h-full"
-									style={getPatternStyle(pattern.id, patternColor, patternBgColor)}
-								></div>
-								{#if selectedPattern === pattern.id}
-									<div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
-										<svg class="w-6 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-											<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-										</svg>
-									</div>
-								{/if}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<!-- Pattern Customization -->
-				<div class="p-4 bg-gray-50 rounded-xl space-y-3">
-					<h4 class="text-sm font-semibold text-gray-900">Customize Pattern</h4>
-					
-					<div class="grid grid-cols-2 gap-3">
-						<!-- Pattern Color -->
-						<div>
-							<label class="block text-xs font-medium text-gray-700 mb-2">Pattern Color</label>
-							<div class="relative">
-								<input
-									type="color"
-									bind:value={patternColor}
-									on:input={() => updatePatternColor(selectedPattern, patternColor, patternBgColor)}
-									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-								/>
-								<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
-									<div 
-										class="w-8 h-8 rounded border-2 border-white shadow-sm"
-										style="background-color: {patternColor};"
-									></div>
-									<p class="text-xs font-mono text-gray-900">{patternColor}</p>
-								</div>
-							</div>
-						</div>
-
-						<!-- Background Color -->
-						<div>
-							<label class="block text-xs font-medium text-gray-700 mb-2">Background</label>
-							<div class="relative">
-								<input
-									type="color"
-									bind:value={patternBgColor}
-									on:input={() => updatePatternColor(selectedPattern, patternColor, patternBgColor)}
-									class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-								/>
-								<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
-									<div 
-										class="w-8 h-8 rounded border-2 border-white shadow-sm"
-										style="background-color: {patternBgColor};"
-									></div>
-									<p class="text-xs font-mono text-gray-900">{patternBgColor}</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+			<PatternEditor 
+				{selectedPattern}
+				bind:patternColor
+				bind:patternBgColor
+				on:update={(e) => {
+					const { patternId, inkColor, bgColor } = e.detail;
+					updatePatternColor(patternId, inkColor, bgColor);
+				}}
+			/>
 		{/if}
 	</div>
 </section>

@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import {
-		BLUR_PRESETS,
-		BRIGHTNESS_PRESETS,
-		GRAYSCALE_PRESETS,
 		resolveBlur,
 		resolveBrightness,
 		resolveGrayscale,
@@ -11,6 +8,8 @@
 		type BrightnessKey,
 		type GrayscaleKey
 	} from '$lib/appearance/effectsTokens';
+	import FilterTabs from '$lib/components/editor/sections/background/shared/FilterTabs.svelte';
+	import BackgroundFilterPanel from '$lib/components/editor/sections/background/shared/BackgroundFilterPanel.svelte';
 
 	export let bgImageUrl: string;
 	export let uploading: boolean;
@@ -30,6 +29,22 @@
 
 	function handleImageUpload(event: Event) {
 		dispatch('imageUpload', { originalEvent: event });
+	}
+
+	function handleFilterSelect(filter: 'blur' | 'brightness' | 'grayscale' | null) {
+		activeFilter = filter;
+	}
+
+	function handleBlurChange(value: string | number) {
+		bgBlur = value as BlurKey;
+	}
+
+	function handleBrightnessChange(value: string | number) {
+		bgBrightness = value as BrightnessKey;
+	}
+
+	function handleGrayscaleChange(value: string | number) {
+		bgGrayscale = value as GrayscaleKey;
 	}
 </script>
 
@@ -89,356 +104,27 @@
 			<h4 class="text-sm font-semibold text-gray-900 mb-3">Image Filters</h4>
 
 			<!-- Filter Tabs -->
-			<div class="grid grid-cols-3 gap-2">
-				<button
-					type="button"
-					on:click={() => (activeFilter = activeFilter === 'blur' ? null : 'blur')}
-					class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter ===
-					'blur'
-						? 'bg-[#00aa4f] text-white shadow-md'
-						: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-				>
-					<div class="flex items-center justify-center gap-2">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-							/>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-							/>
-						</svg>
-						<span>Blur</span>
-					</div>
-				</button>
-				<button
-					type="button"
-					on:click={() => (activeFilter = activeFilter === 'brightness' ? null : 'brightness')}
-					class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter ===
-					'brightness'
-						? 'bg-[#00aa4f] text-white shadow-md'
-						: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-				>
-					<div class="flex items-center justify-center gap-2">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-							/>
-						</svg>
-						<span>Brightness</span>
-					</div>
-				</button>
-				<button
-					type="button"
-					on:click={() => (activeFilter = activeFilter === 'grayscale' ? null : 'grayscale')}
-					class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {activeFilter ===
-					'grayscale'
-						? 'bg-[#00aa4f] text-white shadow-md'
-						: 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-				>
-					<div class="flex items-center justify-center gap-2">
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-							/>
-						</svg>
-						<span>Grayscale</span>
-					</div>
-				</button>
-			</div>
+			<FilterTabs {activeFilter} onSelect={handleFilterSelect} />
 
 			<!-- Filter Presets (Expandable) -->
 			{#if activeFilter === 'blur'}
-				<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-					<div class="grid grid-cols-5 gap-2">
-						<button
-							type="button"
-							on:click={() => (bgBlur = 'none')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'none' ||
-							bgBlur === 0
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBlur === 'none' || bgBlur === 0
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								None
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.none}px</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgBlur = 'subtle')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'subtle'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBlur === 'subtle'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Subtle
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.subtle}px</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgBlur = 'medium')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'medium'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBlur === 'medium'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Medium
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.medium}px</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgBlur = 'strong')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'strong'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBlur === 'strong'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Strong
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.strong}px</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgBlur = 'extreme')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBlur === 'extreme'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBlur === 'extreme'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Extreme
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">{BLUR_PRESETS.extreme}px</div>
-						</button>
-					</div>
-				</div>
+				<BackgroundFilterPanel
+					filterType="blur"
+					currentValue={bgBlur}
+					onChange={handleBlurChange}
+				/>
 			{:else if activeFilter === 'brightness'}
-				<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-					<div class="grid grid-cols-5 gap-2">
-						<button
-							type="button"
-							on:click={() => (bgBrightness = 'darkest')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
-							'darkest'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBrightness === 'darkest'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Darkest
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">
-								{BRIGHTNESS_PRESETS.darkest}%
-							</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgBrightness = 'dark')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
-							'dark'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBrightness === 'dark'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Dark
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">{BRIGHTNESS_PRESETS.dark}%</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgBrightness = 'normal')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
-								'normal' || bgBrightness === 100
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBrightness === 'normal' || bgBrightness === 100
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Normal
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">
-								{BRIGHTNESS_PRESETS.normal}%
-							</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgBrightness = 'bright')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
-							'bright'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBrightness === 'bright'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Bright
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">
-								{BRIGHTNESS_PRESETS.bright}%
-							</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgBrightness = 'brightest')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgBrightness ===
-							'brightest'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgBrightness === 'brightest'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Brightest
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">
-								{BRIGHTNESS_PRESETS.brightest}%
-							</div>
-						</button>
-					</div>
-				</div>
+				<BackgroundFilterPanel
+					filterType="brightness"
+					currentValue={bgBrightness}
+					onChange={handleBrightnessChange}
+				/>
 			{:else if activeFilter === 'grayscale'}
-				<div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">
-					<div class="grid grid-cols-5 gap-2">
-						<button
-							type="button"
-							on:click={() => (bgGrayscale = 'none')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
-								'none' || bgGrayscale === 0
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgGrayscale === 'none' || bgGrayscale === 0
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								None
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">{GRAYSCALE_PRESETS.none}%</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgGrayscale = 'subtle')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
-							'subtle'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgGrayscale === 'subtle'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Subtle
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">
-								{GRAYSCALE_PRESETS.subtle}%
-							</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgGrayscale = 'medium')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
-							'medium'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgGrayscale === 'medium'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Medium
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">
-								{GRAYSCALE_PRESETS.medium}%
-							</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgGrayscale = 'strong')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
-							'strong'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgGrayscale === 'strong'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Strong
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">
-								{GRAYSCALE_PRESETS.strong}%
-							</div>
-						</button>
-						<button
-							type="button"
-							on:click={() => (bgGrayscale = 'full')}
-							class="p-3 rounded-lg border-2 transition-all hover:scale-105 {bgGrayscale ===
-							'full'
-								? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed]'
-								: 'border-gray-200 hover:border-gray-300 bg-white'}"
-						>
-							<div
-								class="text-xs font-semibold {bgGrayscale === 'full'
-									? 'text-[#00aa4f]'
-									: 'text-gray-900'}"
-							>
-								Full
-							</div>
-							<div class="text-[10px] text-gray-500 mt-0.5">{GRAYSCALE_PRESETS.full}%</div>
-						</button>
-					</div>
-				</div>
+				<BackgroundFilterPanel
+					filterType="grayscale"
+					currentValue={bgGrayscale}
+					onChange={handleGrayscaleChange}
+				/>
 			{/if}
 		</div>
 	{:else}
