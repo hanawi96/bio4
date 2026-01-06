@@ -42,8 +42,6 @@
 
 	$: selectedFontObj = fonts.find(f => f.name === selectedFont) || fonts[0];
 
-	$: currentTitleSize = ($appearanceState.overrides?.['page.titleFontSize'] as number) || 20;
-
 	$: currentTextColor = ($appearanceState.overrides?.['tokens.text'] as string) 
 		|| $appearance?.tokens?.text 
 		|| '#000000';
@@ -51,10 +49,6 @@
 	function selectFont(fontName: string) {
 		updateAppearance('tokens.fontFamily', fontName === 'Default' ? null : `${fontName}, sans-serif`);
 		fontDropdownOpen = false;
-	}
-
-	function updateTitleSize(size: number) {
-		updateAppearance('page.titleFontSize', size);
 	}
 
 	function handleClickOutside(event: MouseEvent) {
@@ -146,36 +140,6 @@
 			>
 				<div class="text-2xl font-bold text-gray-900 mb-1">The quick brown fox</div>
 				<div class="text-sm text-gray-600">jumps over the lazy dog</div>
-			</div>
-		</div>
-
-		<!-- Title Size - Slider -->
-		<div>
-			<div class="flex items-center justify-between mb-2">
-				<label class="text-sm font-medium text-gray-700">Title Size</label>
-				<span class="text-sm font-semibold text-blue-600">{currentTitleSize}px</span>
-			</div>
-			<input
-				type="range"
-				min="14"
-				max="32"
-				step="1"
-				value={currentTitleSize}
-				on:input={(e) => updateTitleSize(Number(e.currentTarget.value))}
-				class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-			/>
-			<div class="flex justify-between text-xs text-gray-500 mt-1">
-				<span>Small</span>
-				<span>Large</span>
-			</div>
-			<!-- Live Preview -->
-			<div class="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
-				<div 
-					class="font-bold text-gray-900"
-					style="font-size: {currentTitleSize}px; font-family: {selectedFont === 'Default' ? themeDefaultFontName : `'${selectedFont}'`}, sans-serif;"
-				>
-					Your Name
-				</div>
 			</div>
 		</div>
 

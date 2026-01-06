@@ -5,6 +5,7 @@
 	import { triggerAutosave, initializeAutosave } from '$lib/stores/autosave';
 	import { appearanceState, resetToThemeDefault, hasCustomizations } from '$lib/stores/appearanceManager';
 	import { appearance } from '$lib/stores/appearance';
+	import { themes } from '$lib/stores/themes';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 	import ThemeSection from '$lib/components/editor/sections/ThemeSection.svelte';
 	import HeaderSection from '$lib/components/editor/sections/HeaderSection.svelte';
@@ -107,6 +108,9 @@
 	// Setup autosave trigger
 	onMount(async () => {
 		try {
+			// Load themes first to ensure theme configs are available
+			await themes.load();
+			
 			const data = await api.getEditorData(username);
 			loadEditorData(data);
 			

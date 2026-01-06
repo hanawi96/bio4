@@ -148,8 +148,8 @@
 		return text || '#000000';
 	}
 
-	// Check if current preset is selected - fallback to appearance.theme.key
-	$: currentThemeKey = $appearanceState.themeKey || $appearance?.theme?.key;
+	// Check if current preset is selected
+	$: currentThemeKey = $appearanceState.presetKey;
 
 	// Pagination
 	$: totalThemes = $hasCustomizations ? themes.length + 1 : themes.length;

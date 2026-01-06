@@ -117,10 +117,15 @@ export function updateAppearance(path: string, value: any) {
 // ============================================
 
 export async function changeThemePreset(presetKey: string) {
+    const currentState = get(appearanceState);
     const $themes = get(themes);
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
 
-    const newState = resetToPreset(themesMap, presetKey);
+    // If selecting the same theme, keep overrides (don't reset)
+    const newState = presetKey === currentState.presetKey
+        ? { ...currentState, presetKey } // Keep current overrides
+        : resetToPreset(themesMap, presetKey); // Reset overrides when switching to different theme
+
     const oldFormat = migrateNewToOld(themesMap, newState);
 
     page.update(p => {
@@ -139,24 +144,26 @@ export async function changeThemePreset(presetKey: string) {
             draft_appearance: JSON.stringify(oldFormat)
         });
         
-        // Reset all groups layout_type and layout_config to apply theme defaults
-        const $groups = get(groups);
-        const resetPromises = $groups.map(group => 
-            api.updateGroup(group.id, { 
+        // Only reset groups if actually switching to a different theme
+        if (presetKey !== currentState.presetKey) {
+            const $groups = get(groups);
+            const resetPromises = $groups.map(group => 
+                api.updateGroup(group.id, { 
+                    layout_type: null,
+                    layout_config: null 
+                })
+            );
+            await Promise.all(resetPromises);
+            
+            // Update local store
+            groups.update(g => g.map(group => ({ 
+                ...group, 
                 layout_type: null,
                 layout_config: null 
-            })
-        );
-        await Promise.all(resetPromises);
-        
-        // Update local store
-        groups.update(g => g.map(group => ({ 
-            ...group, 
-            layout_type: null,
-            layout_config: null 
-        })));
-        
-        console.log('[appearanceManager] Reset all group layout_type and layout_config to apply theme defaults');
+            })));
+            
+            console.log('[appearanceManager] Reset all group layout_type and layout_config to apply theme defaults');
+        }
     } catch (e) {
         console.error('[appearanceManager] Failed to change theme:', e);
     }
