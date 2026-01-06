@@ -226,21 +226,14 @@
 		};
 	}
 
-	// Reactive: Recompute all styles when dependencies change
-	$: displayStyles = recipes.reduce((acc, recipeId) => {
+	// Reactive: Recompute all styles when dependencies change (including shadowCustom)
+	$: displayStyles = (shadowCustom, recipes.reduce((acc, recipeId) => {
 		acc[recipeId] = getPreviewStyle(recipeId, selectedShadowStyle, blockOpacity, !userHasAdjustedOpacity);
 		return acc;
-	}, {} as Record<BlockStylePresetId, any>);
+	}, {} as Record<BlockStylePresetId, any>));
 
 	// Convert blockBorderRadiusType to CSS value for preview
 	$: previewBorderRadius = `${RADIUS_TOKENS[blockBorderRadiusType] ?? 12}px`;
-	
-	// When user adjusts custom shadow, switch to custom mode
-	function handleCustomShadowChange() {
-		if (selectedShadowStyle !== 'custom') {
-			selectedShadowStyle = 'custom';
-		}
-	}
 	
 	// Load preset values into custom when selecting preset
 	$: if (selectedShadowStyle !== 'custom') {
@@ -280,7 +273,7 @@
 							style="background-color: #dbdde0;"
 						>
 							<div
-								class="w-full transition-all flex items-center justify-center relative z-10"
+								class="w-full transition-all flex items-center justify-center relative"
 								style="
 									background-color: {displayStyle.backgroundImage !== 'none' ? 'transparent' : displayStyle.backgroundColor};
 									background-image: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : 'none'};
@@ -476,7 +469,6 @@
 							<input
 								type="range"
 								bind:value={shadowCustom.offsetX}
-								on:input={handleCustomShadowChange}
 								min="-20"
 								max="20"
 								step="1"
@@ -492,7 +484,6 @@
 							<input
 								type="range"
 								bind:value={shadowCustom.offsetY}
-								on:input={handleCustomShadowChange}
 								min="-20"
 								max="20"
 								step="1"
@@ -508,7 +499,6 @@
 							<input
 								type="range"
 								bind:value={shadowCustom.blur}
-								on:input={handleCustomShadowChange}
 								min="0"
 								max="50"
 								step="1"
@@ -524,7 +514,6 @@
 							<input
 								type="range"
 								bind:value={shadowCustom.spread}
-								on:input={handleCustomShadowChange}
 								min="-10"
 								max="10"
 								step="1"
@@ -540,7 +529,6 @@
 							<input
 								type="range"
 								bind:value={shadowCustom.opacity}
-								on:input={handleCustomShadowChange}
 								min="0"
 								max="1"
 								step="0.01"
