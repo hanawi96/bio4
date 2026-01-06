@@ -3,7 +3,7 @@ import { api } from '$lib/api.client';
 import type { Theme } from '$lib/appearance/types';
 
 function createThemesStore() {
-	const { subscribe, set } = writable<Record<string, Theme>>({});
+	const { subscribe, set, update } = writable<Record<string, Theme>>({});
 	
 	return {
 		subscribe,
@@ -20,6 +20,12 @@ function createThemesStore() {
 				console.error('[themes store] Failed to load:', e);
 				return {};
 			}
+		},
+		updateTheme: (key: string, theme: Theme) => {
+			update(themes => ({
+				...themes,
+				[key]: theme
+			}));
 		}
 	};
 }

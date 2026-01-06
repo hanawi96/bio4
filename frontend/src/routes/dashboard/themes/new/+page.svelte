@@ -812,7 +812,11 @@
 		error = '';
 
 		try {
-			await api.createTheme({ key, name, config, description, category, tier });
+			const result = await api.createTheme({ key, name, config, description, category, tier });
+			
+			// Reload themes to include the new theme in cache
+			await themes.load();
+			
 			goto('/dashboard/themes');
 		} catch (e: any) {
 			error = e.message || 'Failed to create theme';

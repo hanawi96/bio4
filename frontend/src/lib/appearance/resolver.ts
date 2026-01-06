@@ -486,7 +486,7 @@ export function resolveAppearance(
 		)
 	};
 
-	return {
+	const result = {
 		theme: theme || {
 			id: 0,
 			key: 'custom',
@@ -499,6 +499,8 @@ export function resolveAppearance(
 		block: blockConfig,
 		blockStyle
 	};
+	
+	return result;
 }
 
 // ============================================

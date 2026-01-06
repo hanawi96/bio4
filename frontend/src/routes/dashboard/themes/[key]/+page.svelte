@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import { api } from '$lib/api.client';
 	import { themeEditor } from '$lib/stores/themeEditor';
+	import { themes } from '$lib/stores/themes';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import ThemePreviewMockup from '$lib/components/editor/ThemePreviewMockup.svelte';
 	import ThemeBackground from '../new/components/ThemeBackground.svelte';
@@ -666,6 +667,39 @@
 
 		try {
 			await api.updateTheme(themeKey, { name, config, description, category, tier });
+			
+			// Update theme in cache to ensure appearance page gets fresh data
+			const updatedTheme = {
+				id: originalTheme.id,
+				key: themeKey,
+				name,
+				description,
+				category,
+				tier,
+				config,
+				defaultHeaderPresetId: config.page?.defaults?.headerPresetId || 'no-cover'
+			};
+			
+			themes.updateTheme(themeKey, updatedTheme);
+			
+			// Reset headerPresetId in draft_appearance for users using this theme
+			// This ensures the appearance page picks up the new header style from theme config
+			try {
+				const editorData = await api.getEditorData('demo');
+				if (editorData?.page?.theme_preset_key === themeKey) {
+					const currentAppearance = JSON.parse(editorData.page.draft_appearance || '{}');
+					
+					// Remove headerPresetId completely so it uses theme default
+					const { headerPresetId, ...updatedAppearance } = currentAppearance;
+					
+					await api.saveDraft('demo', {
+						draft_appearance: JSON.stringify(updatedAppearance)
+					});
+				}
+			} catch (e) {
+				console.error('Failed to reset headerPresetId:', e);
+			}
+			
 			goto('/dashboard/themes');
 		} catch (e: any) {
 			error = e.message || 'Failed to update theme';

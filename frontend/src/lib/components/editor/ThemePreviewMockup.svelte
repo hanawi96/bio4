@@ -120,18 +120,21 @@
 		const themeConfig = $previewAppearance?.theme?.config;
 		const merged: any = { ...baseHeaderPreset };
 		
-		// Apply overrides
+		// Apply defaults from theme config first (lower priority)
+		const defaults = themeConfig?.page?.defaults;
+		if (defaults) {
+			if (defaults.showBio !== undefined) merged.showBio = defaults.showBio;
+			if (defaults.avatarSize !== undefined) merged.avatarSize = defaults.avatarSize;
+			if (defaults.avatarShape !== undefined) merged.avatarShape = defaults.avatarShape;
+		}
+		
+		// Apply overrides last (higher priority)
 		Object.entries(overrides).forEach(([key, value]) => {
 			if (key.startsWith('header.')) {
 				const field = key.replace('header.', '');
 				merged[field] = value;
 			}
 		});
-		
-		// Apply showBio from theme config if not in overrides
-		if (themeConfig?.page?.defaults?.showBio !== undefined) {
-			merged.showBio = themeConfig.page.defaults.showBio;
-		}
 		
 		return merged;
 	})();
@@ -148,12 +151,12 @@
 	$: fullSizeAspectRatio = (() => {
 		if (!isFullSizeAvatar) return null;
 		const shape = header?.avatarShape;
-		if (shape === 'circle') return '1/1'; // Square for perfect circle
-		if (shape === 'oval') return '4/5'; // Slightly taller oval (more rounded)
-		if (shape === 'portrait') return '4/5'; // Portrait rectangle (less tall)
-		if (shape === 'landscape') return '4/3'; // Landscape rectangle
-		if (shape === 'rounded') return '1/1'; // Square with rounded corners
-		if (shape === 'square') return '1/1'; // Perfect square
+		// Most shapes use 1/1 (square)
+		if (shape === 'circle' || shape === 'rounded' || shape === 'square') return '1/1';
+		// Oval and portrait use taller ratio
+		if (shape === 'oval' || shape === 'portrait') return '4/5';
+		// Landscape uses wider ratio
+		if (shape === 'landscape') return '4/3';
 		return '1/1'; // Default to square
 	})();
 	
@@ -197,11 +200,9 @@
 	})();
 	
 	function getAvatarBorderRadius(shape: string | undefined): string {
-		if (shape === 'circle') return '50%';
+		if (shape === 'circle' || shape === 'oval') return '50%';
 		if (shape === 'rounded') return '12%';
-		if (shape === 'oval') return '50%';
-		if (shape === 'portrait') return '8%';
-		if (shape === 'landscape') return '8%';
+		if (shape === 'portrait' || shape === 'landscape') return '8%';
 		return '0';
 	}
 

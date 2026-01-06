@@ -134,16 +134,46 @@
 		return { iconPosition: 'left', textAlign, iconShape: globalIconShape };
 	})();
 	
-	// Get header from NEW format appearanceState
-	$: headerPresetId = $appearanceState.headerPresetId || 'no-cover';
+	// Get header preset ID with proper fallback chain
+	$: headerPresetId = (() => {
+		// Priority 1: Override from appearanceState
+		if ($appearanceState.headerPresetId) {
+			return $appearanceState.headerPresetId;
+		}
+		
+		// Priority 2: Default from theme config
+		const themeConfig = $appearance?.theme?.config;
+		const themeDefault = themeConfig?.page?.defaults?.headerPresetId;
+		if (themeDefault) {
+			return themeDefault;
+		}
+		
+		// Priority 3: Theme's defaultHeaderPresetId
+		if ($appearance?.theme?.defaultHeaderPresetId) {
+			return $appearance.theme.defaultHeaderPresetId;
+		}
+		
+		// Final fallback
+		return 'no-cover';
+	})();
+	
 	$: baseHeaderPreset = HEADER_PRESETS[headerPresetId];
 	
 	// Merge preset with overrides (flat format)
 	$: header = (() => {
 		const overrides = $appearanceState.overrides || {};
+		const themeConfig = $appearance?.theme?.config;
 		const merged: any = { ...baseHeaderPreset };
 		
-		// Apply header.* overrides
+		// Apply defaults from theme config first (lower priority)
+		const defaults = themeConfig?.page?.defaults;
+		if (defaults) {
+			if (defaults.showBio !== undefined) merged.showBio = defaults.showBio;
+			if (defaults.avatarSize !== undefined) merged.avatarSize = defaults.avatarSize;
+			if (defaults.avatarShape !== undefined) merged.avatarShape = defaults.avatarShape;
+		}
+		
+		// Apply overrides last (higher priority)
 		Object.entries(overrides).forEach(([key, value]) => {
 			if (key.startsWith('header.')) {
 				const field = key.replace('header.', '');
@@ -189,32 +219,35 @@
 	$: tokens = $appearance?.tokens;
 
 	// Avatar size mapping
-	const avatarSizes = { xs: 48, sm: 64, md: 80, lg: 96, xl: 120, full: 0 };
-	$: avatarSize = header ? avatarSizes[header.avatarSize] : 80;
+	const avatarSizes = { xs: 80, sm: 96, md: 112, lg: 128, xl: 144, '2xl': 160, '3xl': 176, full: 0 };
+	$: avatarSize = header ? avatarSizes[header.avatarSize] : 112;
 	$: isFullSizeAvatar = header?.avatarSize === 'full';
 	
 	// Smart aspect ratio calculation for full size avatars
 	$: fullSizeAspectRatio = (() => {
 		if (!isFullSizeAvatar) return null;
 		const shape = header?.avatarShape;
-		if (shape === 'circle') return '1/1'; // Square for perfect circle
-		if (shape === 'oval') return '4/5'; // Slightly taller oval (more rounded)
-		if (shape === 'portrait') return '3/4'; // Portrait rectangle
-		if (shape === 'landscape') return '4/3'; // Landscape rectangle
-		if (shape === 'rounded') return '1/1'; // Square with rounded corners
-		if (shape === 'square') return '1/1'; // Perfect square
+		// Most shapes use 1/1 (square)
+		if (shape === 'circle' || shape === 'rounded' || shape === 'square') return '1/1';
+		// Oval and portrait use taller ratio
+		if (shape === 'oval' || shape === 'portrait') return '4/5';
+		// Landscape uses wider ratio
+		if (shape === 'landscape') return '4/3';
 		return '1/1'; // Default to square
 	})();
 	
-	// Avatar dimensions for oval shape
 	$: avatarWidth = (() => {
 		if (isFullSizeAvatar) return '100%';
 		if (header?.avatarShape === 'oval') return Math.round(avatarSize * 1.067);
+		if (header?.avatarShape === 'portrait') return Math.round(avatarSize * 0.8);
+		if (header?.avatarShape === 'landscape') return Math.round(avatarSize * 1.333);
 		return avatarSize;
 	})();
 	$: avatarHeight = (() => {
 		if (isFullSizeAvatar) return 'auto';
 		if (header?.avatarShape === 'oval') return Math.round(avatarSize * 1.333);
+		if (header?.avatarShape === 'portrait') return Math.round(avatarSize * 1.0);
+		if (header?.avatarShape === 'landscape') return Math.round(avatarSize * 0.75);
 		return avatarSize;
 	})();
 	
@@ -244,11 +277,9 @@
 	
 	// Helper: Get border radius for avatar shape
 	function getAvatarBorderRadius(shape: string | undefined): string {
-		if (shape === 'circle') return '50%';
-		if (shape === 'rounded') return '20%';
-		if (shape === 'oval') return '50%';
-		if (shape === 'portrait') return '8%';
-		if (shape === 'landscape') return '8%';
+		if (shape === 'circle' || shape === 'oval') return '50%';
+		if (shape === 'rounded') return '12%';
+		if (shape === 'portrait' || shape === 'landscape') return '8%';
 		return '0';
 	}
 
