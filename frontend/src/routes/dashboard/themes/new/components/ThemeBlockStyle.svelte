@@ -226,8 +226,8 @@
 		};
 	}
 
-	// Reactive: Recompute all styles when dependencies change (including shadowCustom)
-	$: displayStyles = (shadowCustom, recipes.reduce((acc, recipeId) => {
+	// Reactive: Recompute all styles when dependencies change (including shadowCustom and shadowColor)
+	$: displayStyles = (shadowCustom, shadowColor, recipes.reduce((acc, recipeId) => {
 		acc[recipeId] = getPreviewStyle(recipeId, selectedShadowStyle, blockOpacity, !userHasAdjustedOpacity);
 		return acc;
 	}, {} as Record<BlockStylePresetId, any>));
