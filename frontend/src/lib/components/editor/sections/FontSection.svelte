@@ -1,34 +1,44 @@
 <script lang="ts">
 	import { appearanceState, updateAppearance } from '$lib/stores/appearanceManager';
 	import { appearance } from '$lib/stores/appearance';
+	import { AVAILABLE_FONTS, findFont } from '$lib/appearance/fontConstants';
 
 	const fonts = [
-		{ name: 'Default', category: 'System', isDefault: true },
-		{ name: 'Inter', category: 'Sans Serif' },
-		{ name: 'Poppins', category: 'Sans Serif' },
-		{ name: 'Roboto', category: 'Sans Serif' },
-		{ name: 'Open Sans', category: 'Sans Serif' },
-		{ name: 'Montserrat', category: 'Sans Serif' },
-		{ name: 'Lato', category: 'Sans Serif' },
-		{ name: 'Playfair Display', category: 'Serif' },
-		{ name: 'Merriweather', category: 'Serif' },
-		{ name: 'Crimson Text', category: 'Serif' },
-		{ name: 'Space Mono', category: 'Monospace' },
-		{ name: 'JetBrains Mono', category: 'Monospace' },
-		{ name: 'Pacifico', category: 'Display' }
+		{ name: 'Default', category: 'Theme Default', isDefault: true },
+		...AVAILABLE_FONTS
 	];
 
 	let fontDropdownOpen = false;
 	let dropdownButton: HTMLElement;
 
 	// Get theme's default font (from theme config)
-	$: themeFontFamily = $appearance?.theme?.config?.tokens?.fontFamily || 'Inter, sans-serif';
+	$: themeFontFamily = (() => {
+		// Try tokens.typography.fontFamily.sans first (new structure)
+		const sansFontFamily = $appearance?.theme?.config?.tokens?.typography?.fontFamily?.sans;
+		if (sansFontFamily) return sansFontFamily;
+		
+		// Fallback to tokens.fontFamily (old structure)
+		return $appearance?.theme?.config?.tokens?.fontFamily || 'Inter, sans-serif';
+	})();
 	$: themeDefaultFontName = themeFontFamily.split(',')[0].trim();
 	
-	// Determine selected font
-	$: selectedFont = $appearanceState.overrides?.['tokens.fontFamily']
-		? ($appearanceState.overrides['tokens.fontFamily'] as string).split(',')[0].trim()
-		: 'Default';
+	// Determine selected font with proper fallback
+	$: selectedFont = (() => {
+		// Priority 1: Override
+		const override = $appearanceState.overrides?.['tokens.fontFamily'];
+		if (override) {
+			return (override as string).split(',')[0].trim();
+		}
+		
+		// Priority 2: Theme config
+		if (themeFontFamily) {
+			const found = findFont(themeFontFamily);
+			if (found) return found.name;
+		}
+		
+		// Final fallback
+		return 'Default';
+	})();
 
 	$: selectedFontObj = fonts.find(f => f.name === selectedFont) || fonts[0];
 
