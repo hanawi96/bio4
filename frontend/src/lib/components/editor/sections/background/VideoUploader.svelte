@@ -1,8 +1,21 @@
 <script lang="ts">
 	import { DEFAULT_VIDEO_BG } from '$lib/utils/background/backgroundConstants';
+	import { updateAppearance, appearanceState } from '$lib/stores/appearanceManager';
 	import { api } from '$lib/api.client';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
+	import { extractVideoFrame, validateVideoFile } from '$lib/utils/videoUtils';
+	import {
+		resolveBlur,
+		resolveBrightness,
+		resolveGrayscale,
+		type BlurKey,
+		type BrightnessKey,
+		type GrayscaleKey
+	} from '$lib/appearance/effectsTokens';
+	import FilterTabs from './shared/FilterTabs.svelte';
+	import BackgroundFilterPanel from './shared/BackgroundFilterPanel.svelte';
 
 	export let backgroundVideoUrl: string;
 	export let username: string = 'demo';
@@ -17,61 +30,59 @@
 	let tempVideoFile: File | null = null;
 	let tempVideoPreviewUrl = '';
 	let isDragging = false;
+	let activeFilter: 'blur' | 'brightness' | 'grayscale' | null = null;
+	let videoElement: HTMLVideoElement;
+
+	// Get current filter values from appearanceState
+	$: currentBlur = ($appearanceState.overrides['backgroundBlur'] ?? 'none') as BlurKey | number;
+	$: currentBrightness = ($appearanceState.overrides['backgroundBrightness'] ?? 'normal') as
+		| BrightnessKey
+		| number;
+	$: currentGrayscale = ($appearanceState.overrides['backgroundGrayscale'] ?? 'none') as
+		| GrayscaleKey
+		| number;
+
+	// Resolve filter values to numbers for preview
+	$: resolvedBlur = resolveBlur(currentBlur);
+	$: resolvedBrightness = resolveBrightness(currentBrightness);
+	$: resolvedGrayscale = resolveGrayscale(currentGrayscale);
+
+	// Create video fade handler
+	const handleVideoTimeUpdate = createVideoFadeHandler();
+
+	function handleFilterSelect(filter: 'blur' | 'brightness' | 'grayscale' | null) {
+		activeFilter = filter;
+	}
+
+	function handleBlurChange(value: string | number) {
+		updateAppearance('backgroundBlur', value);
+	}
+
+	function handleBrightnessChange(value: string | number) {
+		updateAppearance('backgroundBrightness', value);
+	}
+
+	function handleGrayscaleChange(value: string | number) {
+		updateAppearance('backgroundGrayscale', value);
+	}
 
 	async function handleVideoUpload(event: Event) {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
 
-		if (!file.type.startsWith('video/')) {
-			alert('Please upload a video file (MP4, WebM)');
+		const validation = validateVideoFile(file);
+		if (!validation.valid) {
+			alert(validation.error);
+			input.value = '';
 			return;
 		}
 
-		if (file.size > 20 * 1024 * 1024) {
-			alert('Video must be less than 20MB');
-			return;
-		}
-
-		// Extract first frame and show crop modal
 		tempVideoFile = file;
 		tempVideoPreviewUrl = await extractVideoFrame(file);
 		showVideoCropModal = true;
 		
 		input.value = '';
-	}
-	
-	async function extractVideoFrame(file: File): Promise<string> {
-		return new Promise((resolve, reject) => {
-			const video = document.createElement('video');
-			video.preload = 'metadata';
-			video.muted = true;
-			video.playsInline = true;
-			
-			video.onloadeddata = () => {
-				video.currentTime = 0.1; // Seek to 0.1s
-			};
-			
-			video.onseeked = () => {
-				const canvas = document.createElement('canvas');
-				canvas.width = video.videoWidth;
-				canvas.height = video.videoHeight;
-				
-				const ctx = canvas.getContext('2d')!;
-				ctx.drawImage(video, 0, 0);
-				
-				canvas.toBlob((blob) => {
-					if (blob) {
-						resolve(URL.createObjectURL(blob));
-					} else {
-						reject(new Error('Failed to extract frame'));
-					}
-				}, 'image/jpeg', 0.9);
-			};
-			
-			video.onerror = reject;
-			video.src = URL.createObjectURL(file);
-		});
 	}
 
 	async function handleVideoCropAccept(event: CustomEvent<Blob>) {
@@ -139,17 +150,12 @@
 		const file = event.dataTransfer?.files[0];
 		if (!file) return;
 
-		if (!file.type.startsWith('video/')) {
-			alert('Please upload a video file (MP4, WebM)');
+		const validation = validateVideoFile(file);
+		if (!validation.valid) {
+			alert(validation.error);
 			return;
 		}
 
-		if (file.size > 20 * 1024 * 1024) {
-			alert('Video must be less than 20MB');
-			return;
-		}
-
-		// Extract first frame and show crop modal
 		tempVideoFile = file;
 		tempVideoPreviewUrl = await extractVideoFrame(file);
 		showVideoCropModal = true;
@@ -160,7 +166,17 @@
 <div class="space-y-3">
 	{#if backgroundVideoUrl}
 		<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
-			<video src={backgroundVideoUrl} class="w-full h-48 object-cover" autoplay loop muted playsinline></video>
+			<video 
+				bind:this={videoElement}
+				src={backgroundVideoUrl} 
+				class="w-full h-48 object-cover" 
+				style="filter: blur({resolvedBlur}px) brightness({resolvedBrightness / 100}) grayscale({resolvedGrayscale / 100});"
+				autoplay 
+				loop 
+				muted 
+				playsinline
+				on:timeupdate={handleVideoTimeUpdate}
+			></video>
 			<div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2">
 				<label class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
 					<input
@@ -197,6 +213,35 @@
 				</div>
 			{/if}
 		</div>
+		
+		<!-- Video Filters -->
+		<div class="p-4 bg-gray-50 rounded-xl space-y-3">
+			<h4 class="text-sm font-semibold text-gray-900 mb-3">Video Filters</h4>
+			
+			<!-- Filter Tabs -->
+			<FilterTabs {activeFilter} onSelect={handleFilterSelect} />
+
+			<!-- Filter Presets (Expandable) -->
+			{#if activeFilter === 'blur'}
+				<BackgroundFilterPanel
+					filterType="blur"
+					currentValue={currentBlur}
+					onChange={handleBlurChange}
+				/>
+			{:else if activeFilter === 'brightness'}
+				<BackgroundFilterPanel
+					filterType="brightness"
+					currentValue={currentBrightness}
+					onChange={handleBrightnessChange}
+				/>
+			{:else if activeFilter === 'grayscale'}
+				<BackgroundFilterPanel
+					filterType="grayscale"
+					currentValue={currentGrayscale}
+					onChange={handleGrayscaleChange}
+				/>
+			{/if}
+		</div>
 	{:else}
 		<label class="block cursor-pointer">
 			<input
@@ -214,9 +259,9 @@
 				role="button"
 				tabindex="0"
 			>
-				<div class="flex flex-col items-center justify-center gap-3 px-6 py-10 border-2 border-dashed rounded-xl transition-all {isDragging ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'}">
+				<div class="flex flex-col items-center justify-center gap-3 px-6 py-10 border-2 border-dashed rounded-xl transition-all {isDragging ? 'border-[#00aa4f] bg-[#e6f7ed] scale-105' : 'border-gray-300 hover:border-gray-400'}">
 					{#if uploading}
-						<div class="animate-spin w-10 h-10 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+						<div class="animate-spin w-10 h-10 border-2 border-[#00aa4f] border-t-transparent rounded-full"></div>
 						<p class="text-sm font-medium text-gray-900">Uploading video...</p>
 					{:else}
 						<div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg transition-transform {isDragging ? 'scale-110' : 'group-hover:scale-110'}">

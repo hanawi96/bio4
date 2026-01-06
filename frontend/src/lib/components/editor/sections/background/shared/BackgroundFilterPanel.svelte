@@ -23,16 +23,6 @@
 	// Get preset entries as array
 	$: presetEntries = Object.entries(presets) as Array<[string, number]>;
 
-	// Check if current value matches a preset - simplified logic
-	function isActive(presetKey: string, presetValue: number): boolean {
-		// String key comparison
-		if (typeof currentValue === 'string') {
-			return currentValue === presetKey;
-		}
-		// Number value comparison
-		return currentValue === presetValue;
-	}
-
 	// Get display label for preset
 	function getLabel(key: string): string {
 		return key.charAt(0).toUpperCase() + key.slice(1);
@@ -40,6 +30,16 @@
 
 	// Get unit suffix
 	$: unit = filterType === 'blur' ? 'px' : '%';
+	
+	// Reactive check if a preset is active - this ensures Svelte tracks currentValue changes
+	$: isActive = (presetKey: string, presetValue: number): boolean => {
+		// String key comparison
+		if (typeof currentValue === 'string') {
+			return currentValue === presetKey;
+		}
+		// Number value comparison
+		return currentValue === presetValue;
+	};
 </script>
 
 <div class="pt-3 animate-in fade-in slide-in-from-top-2 duration-200">

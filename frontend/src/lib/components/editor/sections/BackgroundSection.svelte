@@ -24,6 +24,7 @@
 		getPatternStyle 
 	} from '$lib/utils/background/backgroundUtils';
 	import { DEFAULT_IMAGE_BG, DEFAULT_VIDEO_BG } from '$lib/utils/background/backgroundConstants';
+	import { extractVideoFrame, validateVideoFile } from '$lib/utils/videoUtils';
 
 	const username = 'demo';
 
@@ -123,11 +124,19 @@
 	
 	// Auto-switch to solid when Avatar Cover mode is activated
 	$: if (isAvatarCoverMode && selectedType !== 'solid') {
+		// Extract solid color from current background
 		const solidColor = extractSolidColorFromCurrent(currentBgColor);
+		
+		// Switch to solid type
 		selectedType = 'solid';
 		currentBgColor = solidColor;
 		backgroundHistory.solid = solidColor;
+		
+		// Update appearance with solid color
 		updateAppearance('backgroundColor', solidColor);
+		
+		// Clear video background if exists (important!)
+		updateAppearance('backgroundVideo', null);
 	}
 	
 
@@ -437,55 +446,18 @@
 		const file = input.files?.[0];
 		if (!file) return;
 
-		if (!file.type.startsWith('video/')) {
-			alert('Please upload a video file (MP4, WebM)');
+		const validation = validateVideoFile(file);
+		if (!validation.valid) {
+			alert(validation.error);
+			input.value = '';
 			return;
 		}
 
-		if (file.size > 20 * 1024 * 1024) {
-			alert('Video must be less than 20MB');
-			return;
-		}
-
-		// Extract first frame and show crop modal
 		tempVideoFile = file;
 		tempVideoPreviewUrl = await extractVideoFrame(file);
 		showVideoCropModal = true;
 		
 		input.value = '';
-	}
-	
-	async function extractVideoFrame(file: File): Promise<string> {
-		return new Promise((resolve, reject) => {
-			const video = document.createElement('video');
-			video.preload = 'metadata';
-			video.muted = true;
-			video.playsInline = true;
-			
-			video.onloadeddata = () => {
-				video.currentTime = 0.1; // Seek to 0.1s
-			};
-			
-			video.onseeked = () => {
-				const canvas = document.createElement('canvas');
-				canvas.width = video.videoWidth;
-				canvas.height = video.videoHeight;
-				
-				const ctx = canvas.getContext('2d')!;
-				ctx.drawImage(video, 0, 0);
-				
-				canvas.toBlob((blob) => {
-					if (blob) {
-						resolve(URL.createObjectURL(blob));
-					} else {
-						reject(new Error('Failed to extract frame'));
-					}
-				}, 'image/jpeg', 0.9);
-			};
-			
-			video.onerror = reject;
-			video.src = URL.createObjectURL(file);
-		});
 	}
 	
 	async function handleVideoCropAccept(event: CustomEvent<Blob>) {
@@ -570,23 +542,6 @@
 	</div>
 	
 	<div class="p-6 space-y-6">
-		<!-- Avatar Cover Mode Warning -->
-		{#if isAvatarCoverMode}
-			<div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-				<div class="flex gap-3">
-					<div class="flex-shrink-0">
-						<svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-						</svg>
-					</div>
-					<div class="flex-1">
-						<p class="text-sm font-medium text-amber-900">Avatar Cover Mode</p>
-						<p class="text-xs text-amber-700 mt-0.5">Only solid color backgrounds are available in this header style</p>
-					</div>
-				</div>
-			</div>
-		{/if}
-		
 		<!-- Background Type Selector -->
 		<BackgroundTypeSelector 
 			{selectedType} 
