@@ -69,7 +69,7 @@
 	let cardConfig: import('$lib/types').CardLayoutConfig = { imagePosition: 'left', imageSize: 50, imageAspect: 'square', showSubtitle: true, imagePadding: false };
 	let listConfig: import('$lib/types').ListLayoutConfig = { iconPosition: 'left', textAlign: 'center', showSubtitle: true };
 	
-	let primaryColor = '#3b82f6';
+	let primaryColor = '#00aa4f';
 	let textColor = '#18181b';
 	let borderColor = '#e4e4e7';
 	let borderWidth: BorderWidthKey | number = 'default';
@@ -854,13 +854,7 @@
 								{textColor} 
 								{borderColor} 
 								{blockTextColor} 
-								{shadowColor} 
-								{bgType} 
-								{bgSolidColor} 
-								{bgGradientFrom} 
-								{bgGradientTo} 
-								{bgGradientDirection} 
-								{bgImageUrl} 
+								{shadowColor}
 							/>
 							<ThemeLinkGroupLayout bind:selectedLinkGroupLayout bind:gridConfig bind:cardConfig bind:listConfig />
 							<ThemeTypography bind:fontFamily bind:headingFontFamily bind:headingFontSize bind:linkFontSize bind:bioFontSize bind:subtitleFontSize />

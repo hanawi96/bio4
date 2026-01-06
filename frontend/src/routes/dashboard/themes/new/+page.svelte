@@ -97,7 +97,7 @@
 	};
 	
 	// Color fields
-	let primaryColor = '#3b82f6';
+	let primaryColor = '#00aa4f';
 	let textColor = '#18181b';
 	let borderColor = '#e4e4e7';
 	let borderWidth: BorderWidthKey | number = 'default';
@@ -322,7 +322,7 @@
 		}
 		
 		// Extract colors
-		primaryColor = resolveRef(theme.config.semantic?.color?.primary) || '#3b82f6';
+		primaryColor = resolveRef(theme.config.semantic?.color?.primary) || '#00aa4f';
 		textColor = resolveRef(theme.config.semantic?.color?.text?.default) || '#18181b';
 		borderColor = resolveRef(theme.config.semantic?.color?.border?.default) || '#e4e4e7';
 		
@@ -1059,12 +1059,6 @@
 					{borderColor}
 					{blockTextColor}
 					{shadowColor}
-					{bgType}
-					{bgSolidColor}
-					{bgGradientFrom}
-					{bgGradientTo}
-					{bgGradientDirection}
-					{bgImageUrl}
 				/>
 
 				<!-- Link Group Layout -->

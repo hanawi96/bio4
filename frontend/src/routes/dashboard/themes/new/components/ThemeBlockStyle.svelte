@@ -36,12 +36,6 @@
 	export let borderColor: string = '#e4e4e7';
 	export let blockTextColor: string = '#ffffff';
 	export let shadowColor: string = '#000000';
-	export let bgType: 'solid' | 'gradient' | 'image' = 'solid';
-	export let bgSolidColor: string = '#ffffff';
-	export let bgGradientFrom: string = '#667eea';
-	export let bgGradientTo: string = '#764ba2';
-	export let bgGradientDirection: string = '135deg';
-	export let bgImageUrl: string = '';
 	
 	// Check if current block style has border
 	$: hasBorder = selectedBlockStyle === 'outline' || selectedBlockStyle === 'glass' || selectedBlockStyle === 'brutal';
@@ -76,25 +70,29 @@
 		}
 	}
 	
-	const blockGapOptions: Array<{ value: BlockGapPreset; label: string; description: string }> = [
+	// Icon shape options
+	const iconShapes = [
+		{ value: 'square', label: 'Square', preview: 'rounded-none' },
+		{ value: 'rounded', label: 'Rounded', preview: 'rounded-lg' },
+		{ value: 'circle', label: 'Circle', preview: 'rounded-full' }
+	] as const;
+	
+	const blockGapOptions = [
 		{ value: 'compact', label: 'Compact', description: '8px' },
 		{ value: 'default', label: 'Default', description: '16px' },
 		{ value: 'spacious', label: 'Spacious', description: '24px' }
-	];
+	] as const;
 	
 	// Border radius options
-	const borderRadiusOptions: Array<{ value: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full'; label: string; size: string }> = [
+	const borderRadiusOptions = [
 		{ value: 'none', label: 'None', size: '0px' },
 		{ value: 'sm', label: 'Small', size: '4px' },
 		{ value: 'md', label: 'Medium', size: '8px' },
 		{ value: 'lg', label: 'Large', size: '12px' },
 		{ value: 'xl', label: 'XL', size: '16px' },
 		{ value: 'full', label: 'Full', size: 'Pill' }
-	];
+	] as const;
 	
-	// Convert blockBorderRadiusType to CSS value for preview (reuse RADIUS_TOKENS)
-	$: previewBorderRadius = `${RADIUS_TOKENS[blockBorderRadiusType] ?? 12}px`;
-
 	// Get all available recipes
 	const recipes = getBlockStyleRecipeIds();
 	const shadowStyles = getShadowStyleIds();
@@ -103,7 +101,7 @@
 	const defaultOpacity: Record<BlockStylePresetId, number> = {
 		solid: 100,
 		outline: 100,
-		glass: 35, // Max glass opacity (will be mapped to 10-35% range)
+		glass: 35,
 		neon: 100,
 		brutal: 100,
 		gradient: 100
@@ -125,20 +123,11 @@
 		surface: '#ffffff',
 		border: borderColor,
 		shadowColor: shadowColor,
-		backgroundColor: bgSolidColor
+		backgroundColor: '#dbdde0'
 	};
 
-	// Compute background value
-	$: previewBackground = (() => {
-		if (bgType === 'solid') {
-			return bgSolidColor;
-		} else if (bgType === 'gradient') {
-			return `linear-gradient(${bgGradientDirection}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
-		} else if (bgType === 'image' && bgImageUrl) {
-			return `url('${bgImageUrl}')`;
-		}
-		return '#fafafa';
-	})();
+	// Advanced shadow controls
+	let showAdvancedShadow = false;
 
 	// Helper: Apply opacity to color
 	function applyOpacity(color: string, opacity: number): string {
@@ -238,20 +227,13 @@
 	}
 
 	// Reactive: Recompute all styles when dependencies change
-	$: displayStyles = (mockTokens && selectedShadowStyle && blockOpacity !== undefined && shadowCustom && borderWidth !== undefined) ? recipes.reduce((acc, recipeId) => {
+	$: displayStyles = recipes.reduce((acc, recipeId) => {
 		acc[recipeId] = getPreviewStyle(recipeId, selectedShadowStyle, blockOpacity, !userHasAdjustedOpacity);
 		return acc;
-	}, {} as Record<BlockStylePresetId, any>) : {};
+	}, {} as Record<BlockStylePresetId, any>);
 
-	// Icon shape options
-	const iconShapes = [
-		{ value: 'square', label: 'Square', preview: 'rounded-none' },
-		{ value: 'rounded', label: 'Rounded', preview: 'rounded-lg' },
-		{ value: 'circle', label: 'Circle', preview: 'rounded-full' }
-	];
-	
-	// Advanced shadow controls
-	let showAdvancedShadow = false;
+	// Convert blockBorderRadiusType to CSS value for preview
+	$: previewBorderRadius = `${RADIUS_TOKENS[blockBorderRadiusType] ?? 12}px`;
 	
 	// When user adjusts custom shadow, switch to custom mode
 	function handleCustomShadowChange() {
@@ -294,8 +276,8 @@
 					>
 						<!-- Preview Container -->
 						<div
-							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-[#00aa4f]' : 'border-gray-200'} bg-white overflow-hidden"
-							style="background: {previewBackground}; background-size: cover; background-position: center;"
+							class="h-20 p-2 flex items-center justify-center relative border border-gray-200 overflow-hidden"
+							style="background-color: #dbdde0;"
 						>
 							<div
 								class="w-full transition-all flex items-center justify-center relative z-10"
@@ -316,7 +298,7 @@
 						</div>
 						
 						<!-- Name Label -->
-						<div class="py-2 px-2 {isSelected ? 'bg-[#e6f7ed] border-t border-[#00aa4f]/30' : 'bg-gray-50 border-t border-gray-200'}">
+						<div class="py-1.5 px-2 border-t border-gray-200 {isSelected ? 'bg-[#e6f7ed]' : 'bg-gray-50'}">
 							<p class="text-xs font-semibold {isSelected ? 'text-[#00aa4f]' : 'text-gray-700'} truncate text-center">
 								{getBlockStyleRecipeName(recipeId)}
 							</p>
