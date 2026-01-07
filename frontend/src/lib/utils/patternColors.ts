@@ -1,6 +1,6 @@
 import { formatHex, oklch, rgb } from 'culori';
 
-export type PatternType = 'grid' | 'dots' | 'diagonal' | 'cross' | 'zigzag' | 'organic' | 'noise' | 'waves';
+export type PatternType = 'grid' | 'dots' | 'diagonal' | 'cross' | 'organic' | 'noise' | 'waves' | 'abstract';
 
 export interface PatternColors {
 	bgColor: string;
@@ -189,10 +189,10 @@ export function generatePatternColors(
 		dots: 1.0,       // Balanced
 		diagonal: 0.95,  // Slightly subtle
 		cross: 0.92,     // Subtle for geometric patterns
-		zigzag: 0.96,    // Slightly visible
 		organic: 1.08,   // More visible for organic shapes
 		noise: 1.18,     // Most visible for texture
-		waves: 1.02      // Slightly more than balanced
+		waves: 1.02,     // Slightly more than balanced
+		abstract: 1.10   // More visible for complex abstract shapes
 	};
 	
 	const opacity = baseOpacity * (patternMultipliers[normalizedType] || 1.0);
