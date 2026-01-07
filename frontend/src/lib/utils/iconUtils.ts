@@ -6,6 +6,8 @@ export interface ParsedIcon {
 	svg?: string;
 }
 
+export type IconType = 'none' | 'image' | 'iconify';
+
 /**
  * Parse icon_url to determine if it's an image URL or icon ID
  * @param iconUrl - The icon_url from database (e.g., "icon:home" or "https://...")
@@ -50,4 +52,45 @@ export function getIconSvg(iconId: string): string | null {
  */
 export function isIconReference(iconUrl: string | null | undefined): boolean {
 	return !!iconUrl && iconUrl.startsWith('icon:');
+}
+
+// NEW: Convert icon type and data to display URL
+export function getIconUrl(iconType: IconType, iconData: string | null): string | null {
+	if (!iconData) return null;
+	
+	if (iconType === 'iconify') {
+		// Convert 'tabler:brand-github' to 'https://api.iconify.design/tabler/brand-github.svg'
+		return `https://api.iconify.design/${iconData.replace(':', '/')}.svg`;
+	}
+	
+	if (iconType === 'image') {
+		return iconData; // Direct URL from R2
+	}
+	
+	return null;
+}
+
+// NEW: Search icons from Iconify API
+export async function searchIconifyIcons(query: string, limit = 64): Promise<string[]> {
+	try {
+		const res = await fetch(
+			`https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=${limit}&prefixes=tabler,mdi,heroicons,lucide,fa6-brands`
+		);
+		const data = await res.json();
+		return data.icons || [];
+	} catch (error) {
+		console.error('Failed to search icons:', error);
+		return [];
+	}
+}
+
+// NEW: Get icon collections info
+export async function getIconCollections(): Promise<any> {
+	try {
+		const res = await fetch('https://api.iconify.design/collections');
+		return await res.json();
+	} catch (error) {
+		console.error('Failed to get collections:', error);
+		return {};
+	}
 }

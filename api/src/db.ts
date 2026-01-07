@@ -62,12 +62,12 @@ export async function saveDraft(
 
 	if (draftData.appearance !== undefined) {
 		// Check if this is a full reset (has themeKey) or partial update
-		const isFullReset = draftData.appearance.themeKey !== undefined && 
-		                    draftData.appearance.overrides !== undefined &&
-		                    Object.keys(draftData.appearance.overrides).length === 0;
-		
+		const isFullReset = draftData.appearance.themeKey !== undefined &&
+			draftData.appearance.overrides !== undefined &&
+			Object.keys(draftData.appearance.overrides).length === 0;
+
 		let finalAppearance: any;
-		
+
 		if (isFullReset) {
 			// Full reset: Replace entire appearance (when changing theme preset)
 			finalAppearance = draftData.appearance;
@@ -105,7 +105,7 @@ export async function saveDraft(
 				...currentAppearance,
 				...cleanedAppearance
 			};
-			
+
 			// Remove fields that are explicitly set to undefined
 			Object.keys(finalAppearance).forEach(key => {
 				if (finalAppearance[key] === undefined) {
@@ -231,13 +231,28 @@ export async function getLinksByGroupId(db: D1Database, groupId: number) {
 export async function createLink(
 	db: D1Database,
 	groupId: number,
-	data: { title: string; url: string; icon_url?: string; sort_order?: number }
+	data: {
+		title: string;
+		url: string;
+		icon_url?: string;
+		icon_type?: string;
+		icon_data?: string;
+		sort_order?: number;
+	}
 ) {
 	const result = await db
 		.prepare(
-			'INSERT INTO links (group_id, title, url, icon_url, sort_order) VALUES (?, ?, ?, ?, ?)'
+			'INSERT INTO links (group_id, title, url, icon_url, icon_type, icon_data, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
 		)
-		.bind(groupId, data.title, data.url, data.icon_url || null, data.sort_order || 0)
+		.bind(
+			groupId,
+			data.title,
+			data.url,
+			data.icon_url || null,
+			data.icon_type || 'none',
+			data.icon_data || null,
+			data.sort_order || 0
+		)
 		.run();
 
 	return result.meta.last_row_id;
@@ -246,7 +261,15 @@ export async function createLink(
 export async function updateLink(
 	db: D1Database,
 	linkId: number,
-	data: { title?: string; url?: string; icon_url?: string; sort_order?: number; is_active?: number }
+	data: {
+		title?: string;
+		url?: string;
+		icon_url?: string;
+		icon_type?: string;
+		icon_data?: string;
+		sort_order?: number;
+		is_active?: number;
+	}
 ) {
 	const fields: string[] = [];
 	const values: any[] = [];
@@ -262,6 +285,14 @@ export async function updateLink(
 	if (data.icon_url !== undefined) {
 		fields.push('icon_url = ?');
 		values.push(data.icon_url);
+	}
+	if (data.icon_type !== undefined) {
+		fields.push('icon_type = ?');
+		values.push(data.icon_type);
+	}
+	if (data.icon_data !== undefined) {
+		fields.push('icon_data = ?');
+		values.push(data.icon_data);
 	}
 	if (data.sort_order !== undefined) {
 		fields.push('sort_order = ?');

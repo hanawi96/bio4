@@ -1,30 +1,71 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-	import { tablerIcons, type TablerIcon } from '$lib/data/tablerIcons';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { searchIconifyIcons, getIconUrl } from '$lib/utils/iconUtils';
 
 	const dispatch = createEventDispatcher();
 
-	let searchQuery = '';
-	let selectedIcon: TablerIcon | null = null;
+	// Popular social media icons
+	const popularIcons = [
+		'fa6-brands:facebook',
+		'fa6-brands:instagram',
+		'fa6-brands:twitter',
+		'fa6-brands:youtube',
+		'fa6-brands:tiktok',
+		'fa6-brands:linkedin',
+		'fa6-brands:github',
+		'fa6-brands:discord',
+		'fa6-brands:telegram',
+		'fa6-brands:whatsapp',
+		'fa6-brands:snapchat',
+		'fa6-brands:pinterest',
+		'fa6-brands:reddit',
+		'fa6-brands:twitch',
+		'fa6-brands:spotify',
+		'fa6-brands:apple',
+		'fa6-brands:google',
+		'mdi:web',
+		'mdi:email',
+		'mdi:phone'
+	];
 
-	$: filteredIcons = tablerIcons.filter(icon => {
-		const query = searchQuery.toLowerCase();
-		return (
-			icon.name.toLowerCase().includes(query) ||
-			icon.keywords.some(keyword => keyword.includes(query))
-		);
+	let searchQuery = '';
+	let icons: string[] = [];
+	let loading = false;
+	let selectedIcon: string | null = null;
+
+	// Show popular icons on mount
+	onMount(() => {
+		icons = popularIcons;
 	});
 
-	function selectIcon(icon: TablerIcon) {
-		selectedIcon = icon;
+	// Debounced search
+	let searchTimeout: any;
+	$: {
+		clearTimeout(searchTimeout);
+		if (searchQuery.trim()) {
+			searchTimeout = setTimeout(() => {
+				handleSearch();
+			}, 300);
+		} else {
+			icons = popularIcons; // Reset to popular icons when search is cleared
+		}
+	}
+
+	async function handleSearch() {
+		loading = true;
+		icons = await searchIconifyIcons(searchQuery);
+		loading = false;
+	}
+
+	function selectIcon(iconId: string) {
+		selectedIcon = iconId;
 	}
 
 	function handleConfirm() {
 		if (selectedIcon) {
 			dispatch('select', { 
-				iconId: selectedIcon.id, 
-				svg: selectedIcon.svg,
-				name: selectedIcon.name
+				iconType: 'iconify',
+				iconData: selectedIcon
 			});
 		}
 	}
@@ -56,7 +97,7 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 					</svg>
 				</button>
-				<h2 class="text-xl font-semibold text-gray-900">Choose from Tabler Icons</h2>
+				<h2 class="text-xl font-semibold text-gray-900">Choose Icon</h2>
 			</div>
 			<button
 				on:click={handleCancel}
@@ -78,31 +119,43 @@
 				<input
 					type="text"
 					bind:value={searchQuery}
-					placeholder="Search icons..."
+					placeholder="Search icons... (e.g. github, home, user)"
 					class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					autofocus
 				/>
 			</div>
 		</div>
 
 		<!-- Icon Grid -->
 		<div class="flex-1 overflow-y-auto p-6">
-			{#if filteredIcons.length > 0}
-				<div class="grid grid-cols-6 gap-3">
-					{#each filteredIcons as icon}
-						<button
-							on:click={() => selectIcon(icon)}
-							class="aspect-square rounded-xl border-2 transition-all flex items-center justify-center group {selectedIcon?.id === icon.id 
-								? 'border-blue-500 bg-blue-50' 
-								: 'border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:scale-105'}"
-							title={icon.name}
-						>
-							<div class="w-8 h-8 {selectedIcon?.id === icon.id ? 'text-blue-600' : 'text-gray-600 group-hover:text-blue-600'}">
-								{@html icon.svg}
-							</div>
-						</button>
-					{/each}
+			{#if loading}
+				<div class="flex items-center justify-center h-full">
+					<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
 				</div>
-			{:else}
+			{:else if icons.length > 0}
+				<div class="space-y-4">
+					{#if !searchQuery}
+						<div class="text-sm font-medium text-gray-600 mb-3">Popular Social Icons</div>
+					{/if}
+					<div class="grid grid-cols-8 gap-3">
+						{#each icons as iconId}
+							<button
+								on:click={() => selectIcon(iconId)}
+								class="aspect-square rounded-xl border-2 transition-all flex items-center justify-center group {selectedIcon === iconId 
+									? 'border-blue-500 bg-blue-50' 
+									: 'border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:scale-105'}"
+								title={iconId}
+							>
+								<img 
+									src={getIconUrl('iconify', iconId)} 
+									alt={iconId}
+									class="w-7 h-7 {selectedIcon === iconId ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}"
+								/>
+							</button>
+						{/each}
+					</div>
+				</div>
+			{:else if searchQuery}
 				<div class="flex flex-col items-center justify-center h-full text-center">
 					<div class="text-4xl mb-3">🔍</div>
 					<h3 class="text-lg font-semibold text-gray-900 mb-1">No icons found</h3>
@@ -116,10 +169,12 @@
 			<div class="flex items-center gap-3">
 				{#if selectedIcon}
 					<div class="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
-						<div class="w-5 h-5 text-blue-600">
-							{@html selectedIcon.svg}
-						</div>
-						<span class="text-sm font-medium text-gray-900">{selectedIcon.name}</span>
+						<img 
+							src={getIconUrl('iconify', selectedIcon)} 
+							alt={selectedIcon}
+							class="w-5 h-5"
+						/>
+						<span class="text-sm font-medium text-gray-900">{selectedIcon}</span>
 					</div>
 				{:else}
 					<span class="text-sm text-gray-500">Select an icon</span>

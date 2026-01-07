@@ -15,11 +15,12 @@ import {
 const app = new Hono<{ Bindings: Bindings }>();
 
 // Helper function to delete link icon from R2
-async function deleteLinkIconFromR2(storage: R2Bucket, iconUrl: string | null): Promise<void> {
-	if (!iconUrl || !iconUrl.includes('/link-icons/')) return;
+async function deleteLinkIconFromR2(storage: R2Bucket, iconType: string | null, iconData: string | null): Promise<void> {
+	// Only delete if it's an image type
+	if (iconType !== 'image' || !iconData || !iconData.includes('/link-icons/')) return;
 	
 	try {
-		const urlParts = iconUrl.split('/');
+		const urlParts = iconData.split('/');
 		const storageKey = urlParts.slice(urlParts.indexOf('link-icons')).join('/');
 		await storage.delete(storageKey);
 	} catch (e) {
@@ -90,13 +91,13 @@ app.delete('/groups/:groupId', async (c) => {
 	
 	// Get all links in this group to delete their icons
 	const links = await c.env.DB.prepare(
-		'SELECT icon_url FROM links WHERE group_id = ?'
-	).bind(groupId).all() as { results: { icon_url: string | null }[] };
+		'SELECT icon_type, icon_data FROM links WHERE group_id = ?'
+	).bind(groupId).all() as { results: { icon_type: string | null; icon_data: string | null }[] };
 	
-	// Delete all link icons from R2
+	// Delete all link icons from R2 (only images)
 	if (links.results) {
 		await Promise.all(
-			links.results.map(link => deleteLinkIconFromR2(c.env.STORAGE, link.icon_url))
+			links.results.map(link => deleteLinkIconFromR2(c.env.STORAGE, link.icon_type, link.icon_data))
 		);
 	}
 	
@@ -121,6 +122,8 @@ app.post('/:groupId', async (c) => {
 		title: body.title,
 		url: body.url,
 		icon_url: body.icon_url,
+		icon_type: body.icon_type || 'none',
+		icon_data: body.icon_data || null,
 		sort_order: body.sort_order
 	});
 
@@ -134,18 +137,25 @@ app.put('/:linkId', async (c) => {
 
 	// Get old link to check if icon changed
 	const oldLink = await c.env.DB.prepare(
-		'SELECT icon_url FROM links WHERE id = ?'
-	).bind(linkId).first() as { icon_url: string | null } | null;
+		'SELECT icon_type, icon_data FROM links WHERE id = ?'
+	).bind(linkId).first() as { icon_type: string | null; icon_data: string | null } | null;
 
-	// Delete old icon ONLY if icon_url is explicitly provided and changed
-	if (body.icon_url !== undefined && oldLink?.icon_url && body.icon_url !== oldLink.icon_url) {
-		await deleteLinkIconFromR2(c.env.STORAGE, oldLink.icon_url);
+	// Delete old icon if changing from image to something else, or changing image URL
+	if (body.icon_type !== undefined && oldLink) {
+		const isChangingFromImage = oldLink.icon_type === 'image' && body.icon_type !== 'image';
+		const isChangingImageUrl = body.icon_type === 'image' && body.icon_data !== undefined && body.icon_data !== oldLink.icon_data;
+		
+		if (isChangingFromImage || isChangingImageUrl) {
+			await deleteLinkIconFromR2(c.env.STORAGE, oldLink.icon_type, oldLink.icon_data);
+		}
 	}
 
 	await updateLink(c.env.DB, linkId, {
 		title: body.title,
 		url: body.url,
 		icon_url: body.icon_url,
+		icon_type: body.icon_type,
+		icon_data: body.icon_data,
 		sort_order: body.sort_order,
 		is_active: body.is_active
 	});
@@ -157,13 +167,15 @@ app.put('/:linkId', async (c) => {
 app.delete('/:linkId', async (c) => {
 	const linkId = parseInt(c.req.param('linkId'));
 	
-	// Get link to check if it has icon_url
+	// Get link to check if it has icon
 	const link = await c.env.DB.prepare(
-		'SELECT icon_url FROM links WHERE id = ?'
-	).bind(linkId).first() as { icon_url: string | null } | null;
+		'SELECT icon_type, icon_data FROM links WHERE id = ?'
+	).bind(linkId).first() as { icon_type: string | null; icon_data: string | null } | null;
 	
-	// Delete icon from R2 if exists
-	await deleteLinkIconFromR2(c.env.STORAGE, link?.icon_url || null);
+	// Delete icon from R2 if it's an image
+	if (link) {
+		await deleteLinkIconFromR2(c.env.STORAGE, link.icon_type, link.icon_data);
+	}
 	
 	// Delete link from database
 	await deleteLink(c.env.DB, linkId);

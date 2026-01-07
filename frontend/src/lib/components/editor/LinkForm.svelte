@@ -3,15 +3,15 @@
 	import ImageCropModal from '../modals/ImageCropModal.svelte';
 	import ThumbnailSelectionModal from '../modals/ThumbnailSelectionModal.svelte';
 	import IconPickerModal from '../modals/IconPickerModal.svelte';
+	import { getIconUrl, type IconType } from '$lib/utils/iconUtils';
 
 	export let headline = '';
 	export let subtitle = '';
 	export let url = '';
-	export let iconPreviewUrl = '';
+	export let iconType: IconType = 'none';
+	export let iconData: string | null = null;
 	export let uploading = false;
 	export let isEditMode = false;
-	export let iconSvg = '';
-	export let iconId = '';
 
 	const dispatch = createEventDispatcher();
 
@@ -20,14 +20,9 @@
 	let showThumbnailModal = false;
 	let showIconPickerModal = false;
 	let tempImageUrl = '';
-	let thumbnailType: 'image' | 'icon' | null = iconPreviewUrl ? 'image' : (iconSvg ? 'icon' : null);
-	let selectedIconSvg = iconSvg || '';
 
-	// Sync selectedIconSvg with prop
-	$: if (iconSvg) {
-		selectedIconSvg = iconSvg;
-		thumbnailType = 'icon';
-	}
+	// Computed icon preview URL
+	$: iconPreviewUrl = getIconUrl(iconType, iconData);
 
 	function handleIconClick() {
 		showThumbnailModal = true;
@@ -43,17 +38,15 @@
 		}
 	}
 
-	function handleIconSelect(event: CustomEvent<{ iconId: string; svg: string; name: string }>) {
-		thumbnailType = 'icon';
-		selectedIconSvg = event.detail.svg;
-		iconPreviewUrl = ''; // Clear image URL
+	function handleIconSelect(event: CustomEvent<{ iconType: string; iconData: string }>) {
+		iconType = event.detail.iconType as IconType;
+		iconData = event.detail.iconData;
 		showIconPickerModal = false;
 		
-		// Dispatch icon selection
-		dispatch('iconSelect', { 
-			iconId: event.detail.iconId, 
-			svg: event.detail.svg,
-			name: event.detail.name
+		// Dispatch icon change
+		dispatch('iconChange', { 
+			iconType: event.detail.iconType,
+			iconData: event.detail.iconData
 		});
 	}
 
@@ -96,8 +89,7 @@
 		const croppedFile = new File([croppedBlob], 'icon.jpg', { type: 'image/jpeg' });
 		
 		// Set thumbnail type to image
-		thumbnailType = 'image';
-		selectedIconSvg = '';
+		iconType = 'image';
 		
 		// Dispatch with cropped file
 		dispatch('fileChange', { target: { files: [croppedFile] } });
@@ -119,10 +111,9 @@
 	}
 
 	function handleRemoveIcon() {
-		thumbnailType = null;
-		selectedIconSvg = '';
-		iconPreviewUrl = '';
-		dispatch('removeIcon');
+		iconType = 'none';
+		iconData = null;
+		dispatch('iconChange', { iconType: 'none', iconData: null });
 	}
 
 	function handleCancel() {
@@ -176,34 +167,18 @@
 					<div class="w-full h-full bg-gray-100 rounded-xl flex items-center justify-center">
 						<div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
 					</div>
-				{:else if thumbnailType === 'image' && iconPreviewUrl}
-					<!-- Image thumbnail -->
+				{:else if iconPreviewUrl}
+					<!-- Icon/Image thumbnail -->
 					<button
 						type="button"
 						on:click={handleIconClick}
-						class="w-full h-full rounded-xl overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition cursor-pointer relative group"
+						class="w-full h-full rounded-xl border-2 border-gray-200 hover:border-blue-400 transition cursor-pointer relative group bg-gray-50 flex items-center justify-center overflow-hidden"
 					>
 						<img 
 							src={iconPreviewUrl} 
 							alt="Link icon preview" 
-							class="w-full h-full object-cover"
+							class="w-full h-full {iconType === 'image' ? 'object-cover' : 'object-contain p-3'}"
 						/>
-						<div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-							<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-							</svg>
-						</div>
-					</button>
-				{:else if thumbnailType === 'icon' && selectedIconSvg}
-					<!-- Icon thumbnail -->
-					<button
-						type="button"
-						on:click={handleIconClick}
-						class="w-full h-full rounded-xl border-2 border-gray-200 hover:border-blue-400 transition cursor-pointer relative group bg-gray-50 flex items-center justify-center"
-					>
-						<div class="w-12 h-12 text-gray-700">
-							{@html selectedIconSvg}
-						</div>
 						<div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-xl">
 							<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
