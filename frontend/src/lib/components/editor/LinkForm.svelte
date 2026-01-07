@@ -159,7 +159,13 @@
 
 	function handleClickOutside(e: MouseEvent) {
 		if (showColorTooltip) {
-			showColorTooltip = false;
+			// Close tooltip when clicking outside, but let button handlers run first
+			// This prevents race condition where tooltip closes before Cancel/Save handlers execute
+			requestAnimationFrame(() => {
+				if (showColorTooltip) {
+					showColorTooltip = false;
+				}
+			});
 		}
 	}
 </script>
