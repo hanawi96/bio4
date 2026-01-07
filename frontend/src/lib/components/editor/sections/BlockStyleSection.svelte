@@ -114,34 +114,18 @@
 	}
 
 	$: currentShadow = (() => {
-		// Special case: Neon uses glow, not shadow - always return 'none'
-		if (currentRecipeId === 'neon') {
-			return 'none';
-		}
-		
-		// Use override first (should be shadow ID), then theme default, then recipe default
-		const override = $appearanceState.overrides?.['block.shadow'];
-		const themeDefault = $appearance?.theme?.config?.defaults?.blockShadow;
-		const recipeDefault = $appearance?.blockStyle?.shadow;
-		
-		// Return shadow ID (not resolved value)
-		return override || themeDefault || recipeDefault || 'none';
-	})();
-
-	// Get current shadow style ID from shadow value
-	$: currentShadowStyleId = (() => {
-		// currentShadow is now shadow ID, not value
-		return currentShadow as ShadowStylePreset;
+		if (currentRecipeId === 'neon') return 'none';
+		return $appearanceState.overrides?.['block.shadow'] 
+			|| $appearance?.theme?.config?.defaults?.blockShadow 
+			|| $appearance?.blockStyle?.shadow 
+			|| 'none';
 	})();
 
 	// Helper: Get display style for a recipe
 	function getDisplayStyle(recipeId: BlockStylePresetId): any {
-		// Get base style from recipe
 		const baseStyle = getPreviewStyle(recipeId);
 		
-		// Apply shadow based on current shadow selection
 		if (recipeId !== 'neon' && currentShadow && currentShadow !== 'none') {
-			// Resolve shadow ID to value for display
 			const shadowValue = resolveToken(
 				getShadowRecipe(currentShadow as ShadowStylePreset).value,
 				$appearance?.tokens || {}
@@ -152,24 +136,16 @@
 		return baseStyle;
 	}
 
-	// Memoize display styles for all recipes (reactive)
-	// Dependencies: recipes, currentShadow, $appearance.tokens (blockBase, shadowColor, etc.)
-	$: displayStyles = (() => {
-		// Track dependencies
-		const _shadow = currentShadow;
-		const _tokens = $appearance?.tokens;
-		
-		return recipes.reduce((acc, recipeId) => {
-			acc[recipeId] = getDisplayStyle(recipeId);
-			return acc;
-		}, {} as Record<BlockStylePresetId, any>);
-	})();
+	// Memoize display styles (reactive to shadow and tokens changes)
+	$: displayStyles = recipes.reduce((acc, recipeId) => {
+		acc[recipeId] = getDisplayStyle(recipeId);
+		return acc;
+	}, {} as Record<BlockStylePresetId, any>);
 
 	// Get border-radius from preset or override
 	$: blockBorderRadius = $appearanceState.overrides?.['block.borderRadius'] ?? $appearance?.block?.borderRadius ?? 12;
 
 	function selectShadow(shadowId: ShadowStylePreset) {
-		// Store shadow ID instead of resolved value for consistency
 		updateAppearance('block.shadow', shadowId);
 	}
 </script>
@@ -303,7 +279,7 @@
 			</label>
 			<div class="grid grid-cols-6 gap-2">
 				{#each shadowStyles as shadowId}
-					{@const isSelected = currentShadowStyleId === shadowId}
+					{@const isSelected = currentShadow === shadowId}
 					{@const isDisabled = currentRecipeId === 'neon'}
 					<button
 						type="button"

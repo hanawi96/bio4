@@ -424,6 +424,18 @@ export function resolveAppearance(
 	const shadowStyle = themeConfig.page?.defaults?.shadowStyle;
 	const shadowCustom = themeConfig.page?.defaults?.shadowCustom;
 	
+	// Helper: Apply opacity to shadow color
+	const applyOpacityToShadow = (color: string, opacity: number): string => {
+		if (color.startsWith('#')) {
+			const hex = color.replace('#', '');
+			const r = parseInt(hex.substring(0, 2), 16);
+			const g = parseInt(hex.substring(2, 4), 16);
+			const b = parseInt(hex.substring(4, 6), 16);
+			return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+		}
+		return `rgba(0, 0, 0, ${opacity})`;
+	};
+	
 	// Check for shadow override from appearanceState (now stores shadow ID)
 	const shadowOverride = pageState.overrides?.['block.shadow'];
 	
@@ -432,16 +444,6 @@ export function resolveAppearance(
 		if (shadowOverride === 'custom' && shadowCustom) {
 			// Custom shadow
 			const shadowColor = tokens.shadowColor || '#000000';
-			const applyOpacityToShadow = (color: string, opacity: number): string => {
-				if (color.startsWith('#')) {
-					const hex = color.replace('#', '');
-					const r = parseInt(hex.substring(0, 2), 16);
-					const g = parseInt(hex.substring(2, 4), 16);
-					const b = parseInt(hex.substring(4, 6), 16);
-					return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-				}
-				return `rgba(0, 0, 0, ${opacity})`;
-			};
 			blockOverrides.shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${applyOpacityToShadow(shadowColor, shadowCustom.opacity)}`;
 		} else if (shadowOverride.includes('px')) {
 			// Backward compatibility: already a resolved value (old data)
@@ -453,16 +455,6 @@ export function resolveAppearance(
 	} else if (shadowStyle === 'custom' && shadowCustom) {
 		// Build shadow from custom values (theme default)
 		const shadowColor = tokens.shadowColor || '#000000';
-		const applyOpacityToShadow = (color: string, opacity: number): string => {
-			if (color.startsWith('#')) {
-				const hex = color.replace('#', '');
-				const r = parseInt(hex.substring(0, 2), 16);
-				const g = parseInt(hex.substring(2, 4), 16);
-				const b = parseInt(hex.substring(4, 6), 16);
-				return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-			}
-			return `rgba(0, 0, 0, ${opacity})`;
-		};
 		blockOverrides.shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${applyOpacityToShadow(shadowColor, shadowCustom.opacity)}`;
 	} else if (shadowStyle && shadowStyle !== 'none' && shadowStyle !== 'custom') {
 		// Use centralized shadow recipes (theme default)
