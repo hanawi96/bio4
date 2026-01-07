@@ -57,7 +57,8 @@
 	// Get animation settings and build class
 	$: bgAnimation = (() => {
 		const themeConfig = $appearance?.theme?.config;
-		return themeConfig?.background?.animation;
+		const animation = themeConfig?.background?.animation;
+		return animation;
 	})();
 	
 	$: bgType = $appearance?.theme?.config?.background?.type;
@@ -73,7 +74,9 @@
 	})();
 	
 	$: animationClass = (() => {
-		if (bgType !== 'gradient' || !bgAnimation?.enabled) return '';
+		if (bgType !== 'gradient' || !bgAnimation?.enabled) {
+			return '';
+		}
 		const variant = bgAnimation.variant || 'rotating';
 		const speed = bgAnimation.speed || 'medium';
 		
@@ -600,7 +603,7 @@
 			{#if hasVideoInDraft}
 				<video 
 					src={backgroundVideo || ''} 
-					class="absolute inset-0 w-full h-full object-cover"
+					class="absolute inset-0 z-0 w-full h-full object-cover"
 					style="filter: {backgroundFilters};"
 					autoplay 
 					loop 
@@ -608,16 +611,20 @@
 					playsinline
 					on:timeupdate={handleVideoTimeUpdate}
 				></video>
-			{/if}
-
-			<!-- Background Image Layer (separate from content) -->
-			{#if !hasVideoInDraft && resolvedBackground && resolvedBackground.includes('url(')}
+			{:else if resolvedBackground && resolvedBackground.includes('url(')}
+				<!-- Background Image Layer -->
 				<div 
-					class="absolute inset-0 w-full h-full"
+					class="absolute inset-0 z-0 w-full h-full"
 					style="
 						background: {resolvedBackground} center/cover no-repeat;
 						filter: {backgroundFilters};
 					"
+				></div>
+			{:else if bgType === 'gradient' && bgAnimation?.enabled}
+				<!-- Animated Gradient Background -->
+				<div 
+					class="absolute inset-0 z-0 {animationClass}"
+					style="background-image: {resolvedBackground}; background-size: 200% 200%;"
 				></div>
 			{/if}
 			
@@ -630,38 +637,28 @@
 					speed={particles.speed || 'medium'}
 					variant={particles.variant || 'floating'}
 					blur={particles.blur || 'medium'}
+					opacity={particles.opacity ?? 60}
 				/>
-			{/if}
-			
-			<!-- Animated Background Layer (for gradient animations) -->
-			{#if !hasVideoInDraft && bgType === 'gradient' && bgAnimation?.enabled && resolvedBackground && !resolvedBackground.includes('url(')}
-				<div 
-					class="absolute inset-0 z-0 {animationClass}"
-					style="
-						{bgAnimation.enabled
-							? `background-image: ${resolvedBackground}; background-size: 200% 200%;`
-							: `background: ${resolvedBackground};`}
-					"
-				></div>
 			{/if}
 
 			<!-- Content -->
 			<div 
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
-					{!hasVideoInDraft && resolvedBackground 
-						? (bgType === 'pattern'
-							? resolvedBackground
-							: resolvedBackground.includes('background:') && resolvedBackground.includes('background-size:')
-								? resolvedBackground
-								: resolvedBackground.includes('background:') 
-									? resolvedBackground 
-									: resolvedBackground.includes('url(')
-										? 'background: transparent;'
-										: bgType === 'gradient' && bgAnimation?.enabled
-											? 'background: transparent;'
-											: `background: ${resolvedBackground};`)
-						: !hasVideoInDraft ? 'background: #ffffff;' : 'background: transparent;'}
+					{(() => {
+						const hasVideo = hasVideoInDraft;
+						const hasValue = !!resolvedBackground;
+						const isImage = resolvedBackground?.includes('url(');
+						const isAnimatedGradient = bgType === 'gradient' && bgAnimation?.enabled;
+						
+						if (!hasVideo && hasValue) {
+							if (bgType === 'pattern') return resolvedBackground;
+							if (isImage) return 'background: transparent;';
+							if (isAnimatedGradient) return 'background: transparent;';
+							return `background: ${resolvedBackground};`;
+						}
+						return hasVideo ? 'background: transparent;' : 'background: #ffffff;';
+					})()}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 				"
@@ -1386,15 +1383,15 @@
 	}
 
 	/* Speed Classes */
-	.phone-content.gradient-speed-slow {
+	.gradient-speed-slow {
 		animation-duration: 8s;
 	}
 
-	.phone-content.gradient-speed-medium {
+	.gradient-speed-medium {
 		animation-duration: 4s;
 	}
 
-	.phone-content.gradient-speed-fast {
+	.gradient-speed-fast {
 		animation-duration: 2s;
 	}
 </style>
