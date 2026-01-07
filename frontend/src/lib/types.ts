@@ -46,6 +46,7 @@ export interface Link {
 	icon_url: string | null; // deprecated
 	icon_type: 'none' | 'image' | 'iconify';
 	icon_data: string | null;
+	icon_color: string | null;
 	sort_order: number;
 	is_active: number;
 	open_in_new_tab?: number; // 0 = same tab, 1 = new tab

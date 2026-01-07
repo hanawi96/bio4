@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { searchIconifyIcons, getIconUrl } from '$lib/utils/iconUtils';
+	import { searchIconifyIcons, getIconUrl, ICON_COLOR_PRESETS } from '$lib/utils/iconUtils';
 
 	const dispatch = createEventDispatcher();
+
+	export let initialColor: string | null = null;
 
 	// Popular social media icons
 	const popularIcons = [
@@ -32,10 +34,17 @@
 	let icons: string[] = [];
 	let loading = false;
 	let selectedIcon: string | null = null;
+	let selectedColor: string | null = null;
+	let showCustomColorPicker = false;
+	let customColorInput = '#000000';
 
 	// Show popular icons on mount
 	onMount(() => {
 		icons = popularIcons;
+		selectedColor = initialColor;
+		if (initialColor && !ICON_COLOR_PRESETS.find(p => p.value === initialColor)) {
+			customColorInput = initialColor;
+		}
 	});
 
 	// Debounced search
@@ -47,7 +56,7 @@
 				handleSearch();
 			}, 300);
 		} else {
-			icons = popularIcons; // Reset to popular icons when search is cleared
+			icons = popularIcons;
 		}
 	}
 
@@ -61,11 +70,23 @@
 		selectedIcon = iconId;
 	}
 
+	function selectColor(color: string | null) {
+		selectedColor = color;
+		showCustomColorPicker = false;
+	}
+
+	function handleCustomColorChange(e: Event) {
+		const input = e.target as HTMLInputElement;
+		customColorInput = input.value;
+		selectedColor = input.value;
+	}
+
 	function handleConfirm() {
 		if (selectedIcon) {
 			dispatch('select', { 
 				iconType: 'iconify',
-				iconData: selectedIcon
+				iconData: selectedIcon,
+				iconColor: selectedColor
 			});
 		}
 	}
@@ -77,6 +98,12 @@
 	function handleBack() {
 		dispatch('back');
 	}
+
+	// Check if color is selected (for highlighting)
+	function isColorSelected(color: string | null): boolean {
+		if (color === null) return selectedColor === null;
+		return selectedColor === color;
+	}
 </script>
 
 <!-- Backdrop -->
@@ -84,7 +111,7 @@
 
 <!-- Modal -->
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-	<div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[600px] flex flex-col animate-scale-in" on:click|stopPropagation>
+	<div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[650px] flex flex-col animate-scale-in" on:click|stopPropagation>
 		<!-- Header -->
 		<div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
 			<div class="flex items-center gap-3">
@@ -147,7 +174,7 @@
 								title={iconId}
 							>
 								<img 
-									src={getIconUrl('iconify', iconId)} 
+									src={getIconUrl('iconify', iconId, selectedIcon === iconId ? selectedColor : null)} 
 									alt={iconId}
 									class="w-7 h-7 {selectedIcon === iconId ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}"
 								/>
@@ -164,17 +191,74 @@
 			{/if}
 		</div>
 
+		<!-- Color Picker Section -->
+		{#if selectedIcon}
+			<div class="px-6 py-4 border-t border-gray-200 bg-gray-50/50">
+				<div class="flex items-center gap-4">
+					<span class="text-sm font-medium text-gray-700">Icon Color:</span>
+					<div class="flex items-center gap-2">
+						<!-- Default (no color) -->
+						<button
+							on:click={() => selectColor(null)}
+							class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all {isColorSelected(null) ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300 hover:border-gray-400'}"
+							title="Default"
+							style="background: linear-gradient(135deg, #fff 45%, #e5e7eb 45%, #e5e7eb 55%, #fff 55%);"
+						>
+							{#if isColorSelected(null)}
+								<svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+								</svg>
+							{/if}
+						</button>
+						
+						<!-- Preset Colors -->
+						{#each ICON_COLOR_PRESETS as preset}
+							<button
+								on:click={() => selectColor(preset.value)}
+								class="w-7 h-7 rounded-full border-2 transition-all {isColorSelected(preset.value) ? 'border-blue-500 ring-2 ring-blue-200 scale-110' : 'border-gray-200 hover:scale-110'}"
+								style="background-color: {preset.value};"
+								title={preset.name}
+							/>
+						{/each}
+						
+						<!-- Custom Color -->
+						<div class="relative">
+							<button
+								on:click={() => showCustomColorPicker = !showCustomColorPicker}
+								class="w-7 h-7 rounded-full border-2 border-dashed flex items-center justify-center transition-all {showCustomColorPicker ? 'border-blue-500' : 'border-gray-300 hover:border-gray-400'}"
+								style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);"
+								title="Custom color"
+							/>
+							{#if showCustomColorPicker}
+								<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-white rounded-lg shadow-lg border border-gray-200">
+									<input
+										type="color"
+										value={customColorInput}
+										on:input={handleCustomColorChange}
+										class="w-8 h-8 cursor-pointer rounded border-0"
+									/>
+								</div>
+							{/if}
+						</div>
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Footer -->
 		<div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
 			<div class="flex items-center gap-3">
 				{#if selectedIcon}
 					<div class="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
 						<img 
-							src={getIconUrl('iconify', selectedIcon)} 
+							src={getIconUrl('iconify', selectedIcon, selectedColor)} 
 							alt={selectedIcon}
 							class="w-5 h-5"
 						/>
 						<span class="text-sm font-medium text-gray-900">{selectedIcon}</span>
+						{#if selectedColor}
+							<div class="w-4 h-4 rounded-full border border-gray-200" style="background-color: {selectedColor};"></div>
+						{/if}
 					</div>
 				{:else}
 					<span class="text-sm text-gray-500">Select an icon</span>

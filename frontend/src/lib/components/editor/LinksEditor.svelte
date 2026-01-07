@@ -92,6 +92,7 @@
 	let linkUrl = '';
 	let iconType: IconType = 'none';
 	let iconData: string | null = null;
+	let iconColor: string | null = null;
 	let iconFile: File | null = null;
 	let uploading = false;
 
@@ -218,6 +219,7 @@
 		// Load icon data from link
 		iconType = (link.icon_type as IconType) || 'none';
 		iconData = link.icon_data || null;
+		iconColor = link.icon_color || null;
 		iconFile = null;
 	}
 
@@ -233,6 +235,7 @@
 		iconFile = null;
 		iconType = 'none';
 		iconData = null;
+		iconColor = null;
 	}
 
 	function handleFileChange(event: CustomEvent<any>) {
@@ -246,9 +249,10 @@
 		iconData = URL.createObjectURL(file);
 	}
 
-	function handleIconChange(event: CustomEvent<{ iconType: string; iconData: string | null }>) {
+	function handleIconChange(event: CustomEvent<{ iconType: string; iconData: string | null; iconColor: string | null }>) {
 		iconType = event.detail.iconType as IconType;
 		iconData = event.detail.iconData;
+		iconColor = event.detail.iconColor;
 		iconFile = null; // Clear file when selecting icon
 	}
 
@@ -285,7 +289,8 @@
 			title: title.trim(),
 			url: normalizedUrl,
 			icon_type: finalIconType,
-			icon_data: finalIconData
+			icon_data: finalIconData,
+			icon_color: finalIconType === 'iconify' ? iconColor : null
 		};
 
 		if (isEditMode && editingLink) {
@@ -500,6 +505,7 @@
 				bind:url={linkUrl}
 				bind:iconType
 				bind:iconData
+				bind:iconColor
 				{uploading}
 				isEditMode={false}
 				on:fileChange={handleFileChange}
@@ -528,6 +534,7 @@
 						bind:url={linkUrl}
 						bind:iconType
 						bind:iconData
+						bind:iconColor
 						{uploading}
 						isEditMode={true}
 						on:fileChange={handleFileChange}

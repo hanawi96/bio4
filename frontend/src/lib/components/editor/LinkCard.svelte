@@ -13,7 +13,7 @@
 	let menuPosition = { top: 0, right: 0 };
 
 	// Computed icon URL and classes
-	$: iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null);
+	$: iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, link.icon_color || null);
 	$: iconClasses = getIconClasses(link.icon_type || 'none', 'list-left', 'w-8 h-8 rounded-lg');
 
 	function handleToggle(e: MouseEvent) {

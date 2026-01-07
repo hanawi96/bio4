@@ -997,7 +997,7 @@
 									
 									<div class="grid" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr)); gap: {blockGap}px;">										{#each groupLinks as link}
 											{@const headline = link.title.split(' - ')[0]}
-											{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null)}
+											{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, link.icon_color || null)}
 											{@const hasImage = !!linkIconUrl}
 											{@const showImageOnly = hasImage && !config.imagePadding && !config.showLabels}
 											{@const imageRadius = config.imagePadding 
@@ -1069,7 +1069,7 @@
 											{@const parts = link.title.split(' - ')}
 											{@const headline = parts[0]}
 											{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
-											{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null)}
+											{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, link.icon_color || null)}
 											{@const iconClasses = getIconClasses(link.icon_type || 'none', 'card', 'flex-shrink-0')}
 											{@const position = config.imagePosition === 'alternate' 
 												? (index % 2 === 0 ? 'left' : 'right')
@@ -1149,7 +1149,7 @@
 										{@const parts = link.title.split(' - ')}
 										{@const headline = parts[0]}
 										{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
-										{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null)}
+										{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, link.icon_color || null)}
 										{@const iconClassesTop = getIconClasses(link.icon_type || 'none', 'list-top', `w-10 h-10 ${iconShapeClass}`)}
 										{@const iconClassesLeft = getIconClasses(link.icon_type || 'none', 'list-left', `w-8 h-8 flex-shrink-0 ${iconShapeClass}`)}
 										

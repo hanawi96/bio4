@@ -280,7 +280,7 @@
 	}
 
 	async function handleAddLink(event: CustomEvent<any>) {
-		const { title, url, icon_type, icon_data } = event.detail;
+		const { title, url, icon_type, icon_data, icon_color } = event.detail;
 		
 		// Wait for groupId if still creating
 		if (isCreatingGroup || currentGroupId === null) {
@@ -305,6 +305,7 @@
 			url: url,
 			icon_type: icon_type || 'none',
 			icon_data: icon_data || null,
+			icon_color: icon_color || null,
 			icon_url: null, // deprecated
 			sort_order: currentLinks.length,
 			is_active: 1,
@@ -322,6 +323,7 @@
 				url,
 				icon_type: icon_type || 'none',
 				icon_data: icon_data || null,
+				icon_color: icon_color || null,
 				sort_order: currentLinks.length - 1
 			});
 
@@ -342,7 +344,7 @@
 	}
 
 	async function handleUpdateLink(event: CustomEvent<any>) {
-		const { linkId, title, url, icon_type, icon_data } = event.detail;
+		const { linkId, title, url, icon_type, icon_data, icon_color } = event.detail;
 
 		// Store old link for revert
 		const oldLink = currentLinks.find(link => link.id === linkId);
@@ -350,7 +352,14 @@
 		// OPTIMISTIC UI: Update immediately
 		currentLinks = currentLinks.map(link =>
 			link.id === linkId
-				? { ...link, title, url, icon_type: icon_type || link.icon_type, icon_data: icon_data !== undefined ? icon_data : link.icon_data }
+				? { 
+					...link, 
+					title, 
+					url, 
+					icon_type: icon_type || link.icon_type, 
+					icon_data: icon_data !== undefined ? icon_data : link.icon_data,
+					icon_color: icon_color !== undefined ? icon_color : link.icon_color
+				}
 				: link
 		);
 
@@ -367,7 +376,8 @@
 				title,
 				url,
 				icon_type: icon_type || 'none',
-				icon_data: icon_data || null
+				icon_data: icon_data || null,
+				icon_color: icon_color || null
 			});
 
 			// Update store silently in background

@@ -237,12 +237,13 @@ export async function createLink(
 		icon_url?: string;
 		icon_type?: string;
 		icon_data?: string;
+		icon_color?: string;
 		sort_order?: number;
 	}
 ) {
 	const result = await db
 		.prepare(
-			'INSERT INTO links (group_id, title, url, icon_url, icon_type, icon_data, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
+			'INSERT INTO links (group_id, title, url, icon_url, icon_type, icon_data, icon_color, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
 		)
 		.bind(
 			groupId,
@@ -251,6 +252,7 @@ export async function createLink(
 			data.icon_url || null,
 			data.icon_type || 'none',
 			data.icon_data || null,
+			data.icon_color || null,
 			data.sort_order || 0
 		)
 		.run();
@@ -267,6 +269,7 @@ export async function updateLink(
 		icon_url?: string;
 		icon_type?: string;
 		icon_data?: string;
+		icon_color?: string;
 		sort_order?: number;
 		is_active?: number;
 	}
@@ -293,6 +296,10 @@ export async function updateLink(
 	if (data.icon_data !== undefined) {
 		fields.push('icon_data = ?');
 		values.push(data.icon_data);
+	}
+	if (data.icon_color !== undefined) {
+		fields.push('icon_color = ?');
+		values.push(data.icon_color);
 	}
 	if (data.sort_order !== undefined) {
 		fields.push('sort_order = ?');

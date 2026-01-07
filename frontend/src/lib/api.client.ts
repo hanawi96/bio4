@@ -112,7 +112,7 @@ class ApiClient {
 		return res.json();
 	}
 
-	async createLink(groupId: number, data: { title: string; url: string; icon_type?: string; icon_data?: string | null; sort_order?: number }): Promise<{ id: number }> {
+	async createLink(groupId: number, data: { title: string; url: string; icon_type?: string; icon_data?: string | null; icon_color?: string | null; sort_order?: number }): Promise<{ id: number }> {
 		const res = await this.fetchWithRetry(`${this.baseUrl}/links/${groupId}`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },

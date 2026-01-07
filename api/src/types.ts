@@ -69,6 +69,7 @@ export interface Link {
 	icon_url: string | null; // deprecated, kept for backward compatibility
 	icon_type: 'none' | 'image' | 'iconify'; // new: type of icon
 	icon_data: string | null; // new: icon data (URL for image, icon ID for iconify)
+	icon_color: string | null; // new: icon color (hex, only for iconify)
 	sort_order: number;
 	is_active: number;
 	open_in_new_tab?: number; // 0 = same tab, 1 = new tab

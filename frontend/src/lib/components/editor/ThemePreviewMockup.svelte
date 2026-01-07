@@ -7,6 +7,7 @@
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
+	import { getIconUrl } from '$lib/utils/iconUtils';
 
 	// Create video fade handler
 	const handleVideoTimeUpdate = createVideoFadeHandler();
@@ -751,7 +752,8 @@
 							<div style="display: grid; grid-template-columns: repeat({gridConfig.columns}, 1fr); gap: {gridGap}px;">
 								{#each realLinks as link}
 									{@const headline = link.title.split(' - ')[0]}
-									{@const hasImage = !!link.icon_url}
+									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
+									{@const hasImage = !!linkIconUrl}
 									{@const showImageOnly = hasImage && !gridConfig.imagePadding && !gridConfig.showLabels}
 									{@const imageRadius = gridConfig.imagePadding 
 										? imageBorderRadius 
@@ -777,7 +779,7 @@
 									>
 										{#if hasImage}
 											<img 
-												src={link.icon_url} 
+												src={linkIconUrl} 
 												alt="" 
 												class="w-full object-cover {iconShapeClass} {aspectClass} {showImageOnly ? 'h-full' : ''}"
 												style="border-radius: {imageRadius};"
@@ -799,6 +801,7 @@
 									{@const parts = link.title.split(' - ')}
 									{@const headline = parts[0]}
 									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
 									{@const position = cardConfig.imagePosition === 'alternate' 
 										? (index % 2 === 0 ? 'left' : 'right')
 										: cardConfig.imagePosition}
@@ -826,9 +829,9 @@
 											font-size: {linkFontSizePx}px;
 										"
 									>
-										{#if link.icon_url}
+										{#if linkIconUrl}
 											<img 
-												src={link.icon_url} 
+												src={linkIconUrl} 
 												alt="" 
 												class="object-cover flex-shrink-0 {iconShapeClass}"
 												style="
@@ -858,6 +861,7 @@
 									{@const parts = link.title.split(' - ')}
 									{@const headline = parts[0]}
 									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
 									
 									<div
 										class="link-button block text-sm font-medium transition-transform hover:scale-[1.02]"
@@ -874,11 +878,11 @@
 											font-size: {linkFontSizePx}px;
 										"
 									>
-										{#if showIcon && link.icon_url && iconOnTop}
+										{#if showIcon && linkIconUrl && iconOnTop}
 											<!-- Icon on top -->
 											<div class="flex flex-col items-center gap-2">
 												<img 
-													src={link.icon_url} 
+													src={linkIconUrl} 
 													alt="" 
 													class="w-10 h-10 object-cover {listIconShapeClass}"
 												/>
@@ -889,11 +893,11 @@
 													{/if}
 												</div>
 											</div>
-										{:else if showIcon && link.icon_url}
+										{:else if showIcon && linkIconUrl}
 											<!-- Icon on left -->
 											<div class="flex items-center gap-3" style="justify-content: {listTextAlign === 'right' ? 'flex-end' : listTextAlign === 'center' ? 'center' : 'flex-start'};">
 												<img 
-													src={link.icon_url} 
+													src={linkIconUrl} 
 													alt="" 
 													class="w-8 h-8 object-cover flex-shrink-0 {listIconShapeClass}"
 												/>

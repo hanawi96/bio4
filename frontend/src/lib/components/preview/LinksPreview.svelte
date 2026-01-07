@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { groups } from '$lib/stores/page';
 	import { appearance } from '$lib/stores/appearance';
+	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 	// import { resolveShadow } from '$lib/appearance/tokenResolver';
 	
 	// Resolve shadow with shadowColor token (for hard shadows)
@@ -18,6 +19,7 @@
 		
 		<div class="flex flex-col gap-3">
 			{#each group.links.filter((l) => l.is_active === 1) as link}
+				{@const iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
 				<a
 					href={link.url}
 					target="_blank"
@@ -37,8 +39,8 @@
 						? `blur(${$appearance.blockStyle.blur}px)`
 						: 'none'}
 				>
-					{#if link.icon_url}
-						<img src={link.icon_url} alt="" class="w-5 h-5 inline-block mr-2" />
+					{#if iconUrl}
+						<img src={iconUrl} alt="" class="w-5 h-5 inline-block mr-2" />
 					{/if}
 					{link.title}
 				</a>

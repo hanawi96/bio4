@@ -41,12 +41,20 @@ export function getIconClasses(iconType: IconType, layout: IconLayout, baseClass
 }
 
 // Convert icon type and data to display URL
-export function getIconUrl(iconType: IconType, iconData: string | null): string | null {
+export function getIconUrl(iconType: IconType, iconData: string | null, iconColor?: string | null): string | null {
 	if (!iconData) return null;
 
 	if (iconType === 'iconify') {
 		// Convert 'tabler:brand-github' to 'https://api.iconify.design/tabler/brand-github.svg'
-		return `https://api.iconify.design/${iconData.replace(':', '/')}.svg`;
+		const baseUrl = `https://api.iconify.design/${iconData.replace(':', '/')}.svg`;
+		
+		// Append color parameter if provided (remove # from hex)
+		if (iconColor) {
+			const colorParam = iconColor.startsWith('#') ? iconColor.slice(1) : iconColor;
+			return `${baseUrl}?color=%23${colorParam}`;
+		}
+		
+		return baseUrl;
 	}
 
 	if (iconType === 'image') {
@@ -69,3 +77,17 @@ export async function searchIconifyIcons(query: string, limit = 64): Promise<str
 		return [];
 	}
 }
+
+// Preset colors for icon color picker
+export const ICON_COLOR_PRESETS = [
+	{ name: 'Black', value: '#000000' },
+	{ name: 'White', value: '#ffffff' },
+	{ name: 'Gray', value: '#6b7280' },
+	{ name: 'Red', value: '#ef4444' },
+	{ name: 'Orange', value: '#f97316' },
+	{ name: 'Yellow', value: '#eab308' },
+	{ name: 'Green', value: '#22c55e' },
+	{ name: 'Blue', value: '#3b82f6' },
+	{ name: 'Purple', value: '#a855f7' },
+	{ name: 'Pink', value: '#ec4899' },
+];

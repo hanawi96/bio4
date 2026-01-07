@@ -10,6 +10,7 @@
 	export let url = '';
 	export let iconType: IconType = 'none';
 	export let iconData: string | null = null;
+	export let iconColor: string | null = null;
 	export let uploading = false;
 	export let isEditMode = false;
 
@@ -22,7 +23,7 @@
 	let tempImageUrl = '';
 
 	// Computed icon preview URL and classes
-	$: iconPreviewUrl = getIconUrl(iconType, iconData);
+	$: iconPreviewUrl = getIconUrl(iconType, iconData, iconColor);
 	$: iconPreviewClasses = getIconClasses(iconType, 'editor', 'w-full h-full');
 
 	function handleIconClick() {
@@ -39,15 +40,17 @@
 		}
 	}
 
-	function handleIconSelect(event: CustomEvent<{ iconType: string; iconData: string }>) {
+	function handleIconSelect(event: CustomEvent<{ iconType: string; iconData: string; iconColor: string | null }>) {
 		iconType = event.detail.iconType as IconType;
 		iconData = event.detail.iconData;
+		iconColor = event.detail.iconColor;
 		showIconPickerModal = false;
 		
 		// Dispatch icon change
 		dispatch('iconChange', { 
 			iconType: event.detail.iconType,
-			iconData: event.detail.iconData
+			iconData: event.detail.iconData,
+			iconColor: event.detail.iconColor
 		});
 	}
 
@@ -89,8 +92,9 @@
 		// Create File from Blob
 		const croppedFile = new File([croppedBlob], 'icon.jpg', { type: 'image/jpeg' });
 		
-		// Set thumbnail type to image
+		// Set thumbnail type to image, clear color
 		iconType = 'image';
+		iconColor = null;
 		
 		// Dispatch with cropped file
 		dispatch('fileChange', { target: { files: [croppedFile] } });
@@ -242,6 +246,7 @@
 <!-- Icon Picker Modal -->
 {#if showIconPickerModal}
 	<IconPickerModal
+		initialColor={iconColor}
 		on:select={handleIconSelect}
 		on:back={handleIconPickerBack}
 		on:cancel={() => showIconPickerModal = false}
