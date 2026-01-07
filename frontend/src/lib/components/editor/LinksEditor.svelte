@@ -41,12 +41,13 @@
 		// First check if there's a shadow override from BlockStyleSection
 		const shadowOverride = $appearanceState?.overrides?.['block.shadow'];
 		if (shadowOverride && shadowOverride !== 'none') {
-			return resolveShadow(shadowOverride, $appearance?.tokens?.shadowColor || '#000000') !== 'none';
+			return true;
 		}
 		
 		// Then check recipe default shadow
-		if ($appearance?.blockStyle?.shadow) {
-			return resolveShadow($appearance.blockStyle.shadow, $appearance?.tokens?.shadowColor || '#000000') !== 'none';
+		const recipeShadow = $appearance?.blockStyle?.shadow;
+		if (recipeShadow && recipeShadow !== 'none') {
+			return true;
 		}
 		
 		return false;
