@@ -3,6 +3,7 @@
 	import { appearance } from '$lib/stores/appearance';
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { groups } from '$lib/stores/page';
+	import { resolveShadowValue, type ShadowStylePreset } from '$lib/appearance/blockStyles';
 	import LinkCard from './LinkCard.svelte';
 	import LinkForm from './LinkForm.svelte';
 	import LayoutSelector from './LayoutSelector.svelte';
@@ -38,16 +39,30 @@
 			return false;
 		}
 		
-		// First check if there's a shadow override from BlockStyleSection
+		// First check if there's a shadow override from BlockStyleSection (now stores ID)
 		const shadowOverride = $appearanceState?.overrides?.['block.shadow'];
 		if (shadowOverride && shadowOverride !== 'none') {
-			return true;
+			// Resolve shadow ID to value to check if it's actually a shadow
+			const shadowValue = resolveShadowValue(
+				shadowOverride as ShadowStylePreset,
+				$appearance?.tokens?.shadowColor || '#000000'
+			);
+			return shadowValue !== 'none';
 		}
 		
-		// Then check recipe default shadow
+		// Then check recipe default shadow (also ID)
 		const recipeShadow = $appearance?.blockStyle?.shadow;
 		if (recipeShadow && recipeShadow !== 'none') {
-			return true;
+			// If it's already a resolved value (old data), check directly
+			if (recipeShadow.includes('px')) {
+				return true;
+			}
+			// Otherwise resolve as ID
+			const shadowValue = resolveShadowValue(
+				recipeShadow as ShadowStylePreset,
+				$appearance?.tokens?.shadowColor || '#000000'
+			);
+			return shadowValue !== 'none';
 		}
 		
 		return false;

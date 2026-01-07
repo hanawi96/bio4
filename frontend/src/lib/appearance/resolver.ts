@@ -423,8 +423,35 @@ export function resolveAppearance(
 	// Build custom shadow if shadowStyle is 'custom'
 	const shadowStyle = themeConfig.page?.defaults?.shadowStyle;
 	const shadowCustom = themeConfig.page?.defaults?.shadowCustom;
-	if (shadowStyle === 'custom' && shadowCustom) {
-		// Build shadow from custom values
+	
+	// Check for shadow override from appearanceState (now stores shadow ID)
+	const shadowOverride = pageState.overrides?.['block.shadow'];
+	
+	if (shadowOverride && shadowOverride !== 'none') {
+		// Shadow override exists - resolve it
+		if (shadowOverride === 'custom' && shadowCustom) {
+			// Custom shadow
+			const shadowColor = tokens.shadowColor || '#000000';
+			const applyOpacityToShadow = (color: string, opacity: number): string => {
+				if (color.startsWith('#')) {
+					const hex = color.replace('#', '');
+					const r = parseInt(hex.substring(0, 2), 16);
+					const g = parseInt(hex.substring(2, 4), 16);
+					const b = parseInt(hex.substring(4, 6), 16);
+					return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+				}
+				return `rgba(0, 0, 0, ${opacity})`;
+			};
+			blockOverrides.shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${applyOpacityToShadow(shadowColor, shadowCustom.opacity)}`;
+		} else if (shadowOverride.includes('px')) {
+			// Backward compatibility: already a resolved value (old data)
+			blockOverrides.shadow = shadowOverride;
+		} else {
+			// Shadow ID - resolve using recipe
+			blockOverrides.shadow = resolveShadowValue(shadowOverride as ShadowStylePreset, tokens.shadowColor || '#000000');
+		}
+	} else if (shadowStyle === 'custom' && shadowCustom) {
+		// Build shadow from custom values (theme default)
 		const shadowColor = tokens.shadowColor || '#000000';
 		const applyOpacityToShadow = (color: string, opacity: number): string => {
 			if (color.startsWith('#')) {
@@ -438,7 +465,7 @@ export function resolveAppearance(
 		};
 		blockOverrides.shadow = `${shadowCustom.offsetX}px ${shadowCustom.offsetY}px ${shadowCustom.blur}px ${shadowCustom.spread}px ${applyOpacityToShadow(shadowColor, shadowCustom.opacity)}`;
 	} else if (shadowStyle && shadowStyle !== 'none' && shadowStyle !== 'custom') {
-		// Use centralized shadow recipes
+		// Use centralized shadow recipes (theme default)
 		blockOverrides.shadow = resolveShadowValue(shadowStyle as ShadowStylePreset, tokens.shadowColor || '#000000');
 	}
 

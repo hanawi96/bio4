@@ -119,36 +119,19 @@
 			return 'none';
 		}
 		
-		// Use override first, then theme default, then recipe default
+		// Use override first (should be shadow ID), then theme default, then recipe default
 		const override = $appearanceState.overrides?.['block.shadow'];
 		const themeDefault = $appearance?.theme?.config?.defaults?.blockShadow;
 		const recipeDefault = $appearance?.blockStyle?.shadow;
 		
+		// Return shadow ID (not resolved value)
 		return override || themeDefault || recipeDefault || 'none';
 	})();
 
 	// Get current shadow style ID from shadow value
 	$: currentShadowStyleId = (() => {
-		const shadow = currentShadow;
-		if (!shadow || shadow === 'none') return 'none';
-		
-		// Try to match with shadow recipes
-		for (const styleId of shadowStyles) {
-			const recipe = getShadowRecipe(styleId as ShadowStylePreset);
-			const resolvedValue = resolveToken(recipe.value, $appearance?.tokens || {});
-			
-			// For brutal shadow, check pattern
-			if (styleId === 'brutal' && shadow.includes('4px 4px 0px')) {
-				return 'brutal';
-			}
-			
-			// For other shadows, check if values match
-			if (resolvedValue === shadow) {
-				return styleId;
-			}
-		}
-		
-		return 'none';
+		// currentShadow is now shadow ID, not value
+		return currentShadow as ShadowStylePreset;
 	})();
 
 	// Helper: Get display style for a recipe
@@ -158,10 +141,13 @@
 		
 		// Apply shadow based on current shadow selection
 		if (recipeId !== 'neon' && currentShadow && currentShadow !== 'none') {
-			// Apply current shadow selection (except for Neon which uses glow)
-			baseStyle.boxShadow = currentShadow;
+			// Resolve shadow ID to value for display
+			const shadowValue = resolveToken(
+				getShadowRecipe(currentShadow as ShadowStylePreset).value,
+				$appearance?.tokens || {}
+			);
+			baseStyle.boxShadow = shadowValue;
 		}
-		// Neon keeps its glow from baseStyle, others keep recipe default if no shadow selected
 		
 		return baseStyle;
 	}
@@ -183,9 +169,8 @@
 	$: blockBorderRadius = $appearanceState.overrides?.['block.borderRadius'] ?? $appearance?.block?.borderRadius ?? 12;
 
 	function selectShadow(shadowId: ShadowStylePreset) {
-		const recipe = getShadowRecipe(shadowId);
-		const shadowValue = resolveToken(recipe.value, $appearance?.tokens || {});
-		updateAppearance('block.shadow', shadowValue);
+		// Store shadow ID instead of resolved value for consistency
+		updateAppearance('block.shadow', shadowId);
 	}
 </script>
 
