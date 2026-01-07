@@ -11,6 +11,7 @@
 	import CardLayoutConfig from './CardLayoutConfig.svelte';
 	import type { Link } from '$lib/types';
 	import { api } from '$lib/api.client';
+	import { tablerIcons } from '$lib/data/tablerIcons';
 
 	export let links: Link[] = [];
 	export let groupName = 'Links';
@@ -91,6 +92,8 @@
 	let linkUrl = '';
 	let iconFile: File | null = null;
 	let iconPreviewUrl = '';
+	let iconSvg = '';
+	let iconId = '';
 	let uploading = false;
 
 	// Group title editing
@@ -209,7 +212,20 @@
 		linkHeadline = parts[0];
 		linkSubtitle = parts.length > 1 ? parts.slice(1).join(' - ') : '';
 		linkUrl = link.url;
-		iconPreviewUrl = link.icon_url || '';
+		
+		// Check if icon_url is an icon reference (icon:iconId) or image URL
+		if (link.icon_url && link.icon_url.startsWith('icon:')) {
+			const iconIdValue = link.icon_url.replace('icon:', '');
+			iconId = iconIdValue;
+			// Find the icon SVG from tablerIcons
+			const icon = tablerIcons.find(i => i.id === iconIdValue);
+			iconSvg = icon?.svg || '';
+			iconPreviewUrl = '';
+		} else {
+			iconPreviewUrl = link.icon_url || '';
+			iconSvg = '';
+			iconId = '';
+		}
 	}
 
 	function cancelEdit() {
@@ -222,6 +238,8 @@
 		linkSubtitle = '';
 		linkUrl = '';
 		iconFile = null;
+		iconSvg = '';
+		iconId = '';
 		cleanupPreview();
 	}
 
@@ -239,12 +257,24 @@
 		
 		cleanupPreview();
 		iconFile = file;
+		iconSvg = '';
+		iconId = '';
 		iconPreviewUrl = URL.createObjectURL(file);
+	}
+
+	function handleIconSelect(event: CustomEvent<{ iconId: string; svg: string; name: string }>) {
+		cleanupPreview();
+		iconFile = null;
+		iconSvg = event.detail.svg;
+		iconId = event.detail.iconId;
+		iconPreviewUrl = ''; // Clear image preview
 	}
 
 	function handleRemoveIcon() {
 		cleanupPreview();
 		iconFile = null;
+		iconSvg = '';
+		iconId = '';
 	}
 
 	async function handleSave() {
@@ -254,7 +284,14 @@
 		const title = linkSubtitle ? `${linkHeadline} - ${linkSubtitle}` : linkHeadline;
 		
 		let uploadedIconUrl = null;
-		if (iconFile) {
+		
+		// If user selected an icon (not uploaded image)
+		if (iconSvg && iconId) {
+			// For now, we'll store the icon SVG as a data URL or just the iconId
+			// You might want to save iconId to database and render SVG on frontend
+			uploadedIconUrl = `icon:${iconId}`; // Special format to indicate it's an icon
+		} else if (iconFile) {
+			// Upload image file
 			uploading = true;
 			try {
 				const result = await api.uploadLinkIcon(iconFile);
@@ -485,9 +522,12 @@
 				bind:subtitle={linkSubtitle}
 				bind:url={linkUrl}
 				bind:iconPreviewUrl
+				bind:iconSvg
+				bind:iconId
 				{uploading}
 				isEditMode={false}
 				on:fileChange={handleFileChange}
+				on:iconSelect={handleIconSelect}
 				on:removeIcon={handleRemoveIcon}
 				on:cancel={toggleAddForm}
 				on:save={handleSave}
@@ -512,9 +552,12 @@
 						bind:subtitle={linkSubtitle}
 						bind:url={linkUrl}
 						bind:iconPreviewUrl
+						bind:iconSvg
+						bind:iconId
 						{uploading}
 						isEditMode={true}
 						on:fileChange={handleFileChange}
+						on:iconSelect={handleIconSelect}
 						on:removeIcon={handleRemoveIcon}
 						on:cancel={cancelEdit}
 						on:save={handleSave}

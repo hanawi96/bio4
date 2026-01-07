@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import ImageCropModal from '../modals/ImageCropModal.svelte';
+	import ThumbnailSelectionModal from '../modals/ThumbnailSelectionModal.svelte';
+	import IconPickerModal from '../modals/IconPickerModal.svelte';
 
 	export let headline = '';
 	export let subtitle = '';
@@ -8,15 +10,56 @@
 	export let iconPreviewUrl = '';
 	export let uploading = false;
 	export let isEditMode = false;
+	export let iconSvg = '';
+	export let iconId = '';
 
 	const dispatch = createEventDispatcher();
 
 	let fileInput: HTMLInputElement;
 	let showCropModal = false;
+	let showThumbnailModal = false;
+	let showIconPickerModal = false;
 	let tempImageUrl = '';
+	let thumbnailType: 'image' | 'icon' | null = iconPreviewUrl ? 'image' : (iconSvg ? 'icon' : null);
+	let selectedIconSvg = iconSvg || '';
+
+	// Sync selectedIconSvg with prop
+	$: if (iconSvg) {
+		selectedIconSvg = iconSvg;
+		thumbnailType = 'icon';
+	}
 
 	function handleIconClick() {
-		fileInput?.click();
+		showThumbnailModal = true;
+	}
+
+	function handleThumbnailSelect(event: CustomEvent<{ type: 'upload' | 'icon' }>) {
+		showThumbnailModal = false;
+		
+		if (event.detail.type === 'upload') {
+			fileInput?.click();
+		} else {
+			showIconPickerModal = true;
+		}
+	}
+
+	function handleIconSelect(event: CustomEvent<{ iconId: string; svg: string; name: string }>) {
+		thumbnailType = 'icon';
+		selectedIconSvg = event.detail.svg;
+		iconPreviewUrl = ''; // Clear image URL
+		showIconPickerModal = false;
+		
+		// Dispatch icon selection
+		dispatch('iconSelect', { 
+			iconId: event.detail.iconId, 
+			svg: event.detail.svg,
+			name: event.detail.name
+		});
+	}
+
+	function handleIconPickerBack() {
+		showIconPickerModal = false;
+		showThumbnailModal = true;
 	}
 
 	function handleFileChange(event: Event) {
@@ -52,6 +95,10 @@
 		// Create File from Blob
 		const croppedFile = new File([croppedBlob], 'icon.jpg', { type: 'image/jpeg' });
 		
+		// Set thumbnail type to image
+		thumbnailType = 'image';
+		selectedIconSvg = '';
+		
 		// Dispatch with cropped file
 		dispatch('fileChange', { target: { files: [croppedFile] } });
 		
@@ -72,6 +119,9 @@
 	}
 
 	function handleRemoveIcon() {
+		thumbnailType = null;
+		selectedIconSvg = '';
+		iconPreviewUrl = '';
 		dispatch('removeIcon');
 	}
 
@@ -112,7 +162,7 @@
 				/>
 			</div>
 
-			<!-- Image Upload -->
+			<!-- Thumbnail Upload/Select -->
 			<div class="flex-shrink-0 w-24 aspect-square">
 				<input
 					type="file"
@@ -126,7 +176,8 @@
 					<div class="w-full h-full bg-gray-100 rounded-xl flex items-center justify-center">
 						<div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
 					</div>
-				{:else if iconPreviewUrl}
+				{:else if thumbnailType === 'image' && iconPreviewUrl}
+					<!-- Image thumbnail -->
 					<button
 						type="button"
 						on:click={handleIconClick}
@@ -143,7 +194,24 @@
 							</svg>
 						</div>
 					</button>
+				{:else if thumbnailType === 'icon' && selectedIconSvg}
+					<!-- Icon thumbnail -->
+					<button
+						type="button"
+						on:click={handleIconClick}
+						class="w-full h-full rounded-xl border-2 border-gray-200 hover:border-blue-400 transition cursor-pointer relative group bg-gray-50 flex items-center justify-center"
+					>
+						<div class="w-12 h-12 text-gray-700">
+							{@html selectedIconSvg}
+						</div>
+						<div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-xl">
+							<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+							</svg>
+						</div>
+					</button>
 				{:else}
+					<!-- Empty state -->
 					<button
 						type="button"
 						on:click={handleIconClick}
@@ -192,6 +260,23 @@
 		</button>
 	</div>
 </div>
+
+<!-- Thumbnail Selection Modal -->
+{#if showThumbnailModal}
+	<ThumbnailSelectionModal
+		on:select={handleThumbnailSelect}
+		on:cancel={() => showThumbnailModal = false}
+	/>
+{/if}
+
+<!-- Icon Picker Modal -->
+{#if showIconPickerModal}
+	<IconPickerModal
+		on:select={handleIconSelect}
+		on:back={handleIconPickerBack}
+		on:cancel={() => showIconPickerModal = false}
+	/>
+{/if}
 
 <!-- Crop Modal -->
 {#if showCropModal}
