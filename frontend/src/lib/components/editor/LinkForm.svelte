@@ -153,13 +153,8 @@
 
 	function handleCustomColorChange(e: Event) {
 		const input = e.target as HTMLInputElement;
-		const color = input.value;
-		// Update temp color for preview
-		tempIconColor = color;
-		// Also update actual iconColor for realtime preview in PhoneMockup
-		iconColor = color;
-		// Dispatch to parent immediately for preview
-		dispatch('iconChange', { iconType, iconData, iconColor: color });
+		// Reuse selectTempColor logic - DRY principle
+		selectTempColor(input.value);
 	}
 
 	function handleClickOutside(e: MouseEvent) {
