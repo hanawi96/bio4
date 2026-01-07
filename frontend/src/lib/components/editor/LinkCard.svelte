@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onDestroy } from 'svelte';
 	import type { Link } from '$lib/types';
+	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 
 	export let link: Link;
 	export let isFirst = false;
@@ -10,6 +11,10 @@
 	let showMenu = false;
 	let menuButton: HTMLButtonElement;
 	let menuPosition = { top: 0, right: 0 };
+
+	// Computed icon URL and classes
+	$: iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null);
+	$: iconClasses = getIconClasses(link.icon_type || 'none', 'list-left', 'w-8 h-8 rounded-lg');
 
 	function handleToggle(e: MouseEvent) {
 		e.stopPropagation();
@@ -108,8 +113,8 @@
 
 		<!-- Icon/Favicon -->
 		<div class="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-			{#if link.icon_url}
-				<img src={link.icon_url} alt="" class="w-8 h-8 rounded-lg object-cover" />
+			{#if iconUrl}
+				<img src={iconUrl} alt="" class="{iconClasses}" />
 			{:else}
 				<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />

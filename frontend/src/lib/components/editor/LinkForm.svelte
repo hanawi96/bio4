@@ -3,7 +3,7 @@
 	import ImageCropModal from '../modals/ImageCropModal.svelte';
 	import ThumbnailSelectionModal from '../modals/ThumbnailSelectionModal.svelte';
 	import IconPickerModal from '../modals/IconPickerModal.svelte';
-	import { getIconUrl, type IconType } from '$lib/utils/iconUtils';
+	import { getIconUrl, getIconClasses, type IconType } from '$lib/utils/iconUtils';
 
 	export let headline = '';
 	export let subtitle = '';
@@ -21,8 +21,9 @@
 	let showIconPickerModal = false;
 	let tempImageUrl = '';
 
-	// Computed icon preview URL
+	// Computed icon preview URL and classes
 	$: iconPreviewUrl = getIconUrl(iconType, iconData);
+	$: iconPreviewClasses = getIconClasses(iconType, 'editor', 'w-full h-full');
 
 	function handleIconClick() {
 		showThumbnailModal = true;
@@ -103,17 +104,11 @@
 			URL.revokeObjectURL(tempImageUrl);
 			tempImageUrl = '';
 		}
-		
+
 		// Reset file input
 		if (fileInput) fileInput.value = '';
-		
-		showCropModal = false;
-	}
 
-	function handleRemoveIcon() {
-		iconType = 'none';
-		iconData = null;
-		dispatch('iconChange', { iconType: 'none', iconData: null });
+		showCropModal = false;
 	}
 
 	function handleCancel() {
@@ -174,10 +169,10 @@
 						on:click={handleIconClick}
 						class="w-full h-full rounded-xl border-2 border-gray-200 hover:border-blue-400 transition cursor-pointer relative group bg-gray-50 flex items-center justify-center overflow-hidden"
 					>
-						<img 
-							src={iconPreviewUrl} 
-							alt="Link icon preview" 
-							class="w-full h-full {iconType === 'image' ? 'object-cover' : 'object-contain p-3'}"
+						<img
+							src={iconPreviewUrl}
+							alt="Link icon preview"
+							class="{iconPreviewClasses}"
 						/>
 						<div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-xl">
 							<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

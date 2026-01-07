@@ -280,7 +280,7 @@
 	}
 
 	async function handleAddLink(event: CustomEvent<any>) {
-		const { title, url, icon_url } = event.detail;
+		const { title, url, icon_type, icon_data } = event.detail;
 		
 		// Wait for groupId if still creating
 		if (isCreatingGroup || currentGroupId === null) {
@@ -303,7 +303,9 @@
 			group_id: currentGroupId,
 			title: title,
 			url: url,
-			icon_url: icon_url || null,
+			icon_type: icon_type || 'none',
+			icon_data: icon_data || null,
+			icon_url: null, // deprecated
 			sort_order: currentLinks.length,
 			is_active: 1,
 			created_at: new Date().toISOString(),
@@ -313,12 +315,13 @@
 		// Show link immediately
 		currentLinks = [...currentLinks, tempLink];
 
-		// Create link in background (icon already uploaded in LinksEditor)
+		// Create link in background
 		try {
 			await api.createLink(currentGroupId, {
 				title,
 				url,
-				icon_url: icon_url || null,
+				icon_type: icon_type || 'none',
+				icon_data: icon_data || null,
 				sort_order: currentLinks.length - 1
 			});
 
@@ -339,24 +342,32 @@
 	}
 
 	async function handleUpdateLink(event: CustomEvent<any>) {
-		const { linkId, title, url, icon_url } = event.detail;
+		const { linkId, title, url, icon_type, icon_data } = event.detail;
 
 		// Store old link for revert
 		const oldLink = currentLinks.find(link => link.id === linkId);
 
-		// OPTIMISTIC UI: Update immediately with uploaded icon_url
+		// OPTIMISTIC UI: Update immediately
 		currentLinks = currentLinks.map(link =>
 			link.id === linkId
-				? { ...link, title, url, icon_url: icon_url || link.icon_url }
+				? { ...link, title, url, icon_type: icon_type || link.icon_type, icon_data: icon_data !== undefined ? icon_data : link.icon_data }
 				: link
 		);
+
+		// Update in store for PhoneMockup
+		groups.update(g => g.map(group => 
+			group.id === currentGroupId 
+				? { ...group, links: currentLinks }
+				: group
+		));
 
 		// Update in background
 		try {
 			await api.updateLink(linkId, {
 				title,
 				url,
-				icon_url: icon_url || null
+				icon_type: icon_type || 'none',
+				icon_data: icon_data || null
 			});
 
 			// Update store silently in background
@@ -368,6 +379,11 @@
 				currentLinks = currentLinks.map(link =>
 					link.id === linkId ? oldLink : link
 				);
+				groups.update(g => g.map(group => 
+					group.id === currentGroupId 
+						? { ...group, links: currentLinks }
+						: group
+				));
 			}
 			error = e.message || 'Failed to update link';
 		}

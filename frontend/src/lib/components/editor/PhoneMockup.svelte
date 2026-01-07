@@ -9,6 +9,7 @@
 	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
+	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 	import { onMount } from 'svelte';
 
 	// Preload default video on mount
@@ -996,13 +997,15 @@
 									
 									<div class="grid" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr)); gap: {blockGap}px;">										{#each groupLinks as link}
 											{@const headline = link.title.split(' - ')[0]}
-											{@const hasImage = !!link.icon_url}
+											{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null)}
+											{@const hasImage = !!linkIconUrl}
 											{@const showImageOnly = hasImage && !config.imagePadding && !config.showLabels}
 											{@const imageRadius = config.imagePadding 
 												? imageBorderRadius 
 												: config.showLabels 
 													? `${blockBorderRadius} ${blockBorderRadius} 0 0` 
 													: blockBorderRadius}
+											{@const iconClasses = getIconClasses(link.icon_type || 'none', 'grid', `w-full ${aspectClass}`)}
 											
 											<a
 												href={link.url}
@@ -1022,9 +1025,9 @@
 											>
 												{#if hasImage}
 													<img 
-														src={link.icon_url} 
+														src={linkIconUrl} 
 														alt="" 
-														class="w-full object-cover {aspectClass} {showImageOnly ? 'h-full' : ''}"
+														class="{iconClasses} {showImageOnly ? 'h-full' : ''}"
 														style="border-radius: {imageRadius};"
 													/>
 												{/if}
@@ -1066,6 +1069,8 @@
 											{@const parts = link.title.split(' - ')}
 											{@const headline = parts[0]}
 											{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+											{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null)}
+											{@const iconClasses = getIconClasses(link.icon_type || 'none', 'card', 'flex-shrink-0')}
 											{@const position = config.imagePosition === 'alternate' 
 												? (index % 2 === 0 ? 'left' : 'right')
 												: config.imagePosition}
@@ -1095,11 +1100,11 @@
 													flex-direction: {position === 'right' ? 'row-reverse' : 'row'};
 												"
 											>
-												{#if link.icon_url}
+												{#if linkIconUrl}
 													<img 
-														src={link.icon_url} 
+														src={linkIconUrl} 
 														alt="" 
-														class="object-cover flex-shrink-0"
+														class="{iconClasses}"
 														style="
 															width: {config.imageSize}%;
 															aspect-ratio: {config.imageAspect === 'square' ? '1' : config.imageAspect === 'portrait' ? '3/4' : '4/3'};
@@ -1144,6 +1149,9 @@
 										{@const parts = link.title.split(' - ')}
 										{@const headline = parts[0]}
 										{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+										{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null)}
+										{@const iconClassesTop = getIconClasses(link.icon_type || 'none', 'list-top', `w-10 h-10 ${iconShapeClass}`)}
+										{@const iconClassesLeft = getIconClasses(link.icon_type || 'none', 'list-left', `w-8 h-8 flex-shrink-0 ${iconShapeClass}`)}
 										
 										<a
 											href={link.url}
@@ -1162,13 +1170,13 @@
 												font-size: {linkFontSizePx}px;
 											"
 										>
-											{#if showIcon && link.icon_url && iconOnTop}
+											{#if showIcon && linkIconUrl && iconOnTop}
 												<!-- Icon on top -->
 												<div class="flex flex-col items-center gap-2">
 													<img 
-														src={link.icon_url} 
+														src={linkIconUrl} 
 														alt="" 
-														class="w-10 h-10 object-cover {iconShapeClass}"
+														class="{iconClassesTop}"
 													/>
 													<div>
 														<div class="font-semibold">{headline}</div>
@@ -1177,13 +1185,13 @@
 														{/if}
 													</div>
 												</div>
-											{:else if showIcon && link.icon_url}
+											{:else if showIcon && linkIconUrl}
 												<!-- Icon on left -->
 												<div class="flex items-center gap-3" style="justify-content: {config.textAlign === 'right' ? 'flex-end' : config.textAlign === 'center' ? 'center' : 'flex-start'};">
 													<img 
-														src={link.icon_url} 
+														src={linkIconUrl} 
 														alt="" 
-														class="w-8 h-8 object-cover flex-shrink-0 {iconShapeClass}"
+														class="{iconClassesLeft}"
 													/>
 													<div class="flex-1" style="text-align: {config.textAlign};">
 														<div class="font-semibold">{headline}</div>

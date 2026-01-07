@@ -1,76 +1,62 @@
-import { tablerIcons } from '$lib/data/tablerIcons';
-
-export interface ParsedIcon {
-	type: 'image' | 'icon';
-	value: string;
-	svg?: string;
-}
-
 export type IconType = 'none' | 'image' | 'iconify';
 
-/**
- * Parse icon_url to determine if it's an image URL or icon ID
- * @param iconUrl - The icon_url from database (e.g., "icon:home" or "https://...")
- * @returns Parsed icon object with type and value
- */
-export function parseIconUrl(iconUrl: string | null | undefined): ParsedIcon | null {
-	if (!iconUrl) return null;
+// Layout types for icon display
+export type IconLayout = 'list-left' | 'list-top' | 'grid' | 'card' | 'editor';
 
-	// Check if it's an icon reference (format: "icon:iconId")
-	if (iconUrl.startsWith('icon:')) {
-		const iconId = iconUrl.replace('icon:', '');
-		const icon = tablerIcons.find(i => i.id === iconId);
-		
-		return {
-			type: 'icon',
-			value: iconId,
-			svg: icon?.svg
-		};
+// Icon display configuration
+export interface IconDisplayConfig {
+	objectFit: 'cover' | 'contain';
+	padding: string; // Tailwind padding class
+}
+
+// Get icon display style based on type and layout
+export function getIconDisplayStyle(iconType: IconType, layout: IconLayout): IconDisplayConfig {
+	const isIconify = iconType === 'iconify';
+
+	// Image always uses object-cover, no padding
+	if (!isIconify) {
+		return { objectFit: 'cover', padding: '' };
 	}
 
-	// Otherwise, it's an image URL
+	// Iconify uses object-contain with layout-specific padding
+	const paddingMap: Record<IconLayout, string> = {
+		'list-left': 'p-1',   // 32x32 container, small padding
+		'list-top': 'p-1.5', // 40x40 container, medium padding
+		'grid': 'p-4',       // Full width container, large padding
+		'card': 'p-3',       // % width container, medium-large padding
+		'editor': 'p-3'      // 96x96 preview, large padding
+	};
+
 	return {
-		type: 'image',
-		value: iconUrl
+		objectFit: 'contain',
+		padding: paddingMap[layout]
 	};
 }
 
-/**
- * Get icon SVG by icon ID
- * @param iconId - The icon ID (e.g., "home", "star")
- * @returns SVG string or null if not found
- */
-export function getIconSvg(iconId: string): string | null {
-	const icon = tablerIcons.find(i => i.id === iconId);
-	return icon?.svg || null;
+// Get CSS classes for icon image element
+export function getIconClasses(iconType: IconType, layout: IconLayout, baseClasses = ''): string {
+	const config = getIconDisplayStyle(iconType, layout);
+	const fitClass = config.objectFit === 'cover' ? 'object-cover' : 'object-contain';
+	return `${baseClasses} ${fitClass} ${config.padding}`.trim();
 }
 
-/**
- * Check if icon_url is an icon reference
- * @param iconUrl - The icon_url from database
- * @returns true if it's an icon reference
- */
-export function isIconReference(iconUrl: string | null | undefined): boolean {
-	return !!iconUrl && iconUrl.startsWith('icon:');
-}
-
-// NEW: Convert icon type and data to display URL
+// Convert icon type and data to display URL
 export function getIconUrl(iconType: IconType, iconData: string | null): string | null {
 	if (!iconData) return null;
-	
+
 	if (iconType === 'iconify') {
 		// Convert 'tabler:brand-github' to 'https://api.iconify.design/tabler/brand-github.svg'
 		return `https://api.iconify.design/${iconData.replace(':', '/')}.svg`;
 	}
-	
+
 	if (iconType === 'image') {
 		return iconData; // Direct URL from R2
 	}
-	
+
 	return null;
 }
 
-// NEW: Search icons from Iconify API
+// Search icons from Iconify API
 export async function searchIconifyIcons(query: string, limit = 64): Promise<string[]> {
 	try {
 		const res = await fetch(
@@ -81,16 +67,5 @@ export async function searchIconifyIcons(query: string, limit = 64): Promise<str
 	} catch (error) {
 		console.error('Failed to search icons:', error);
 		return [];
-	}
-}
-
-// NEW: Get icon collections info
-export async function getIconCollections(): Promise<any> {
-	try {
-		const res = await fetch('https://api.iconify.design/collections');
-		return await res.json();
-	} catch (error) {
-		console.error('Failed to get collections:', error);
-		return {};
 	}
 }

@@ -11,7 +11,7 @@
 	import CardLayoutConfig from './CardLayoutConfig.svelte';
 	import type { Link } from '$lib/types';
 	import { api } from '$lib/api.client';
-	import { tablerIcons } from '$lib/data/tablerIcons';
+	import type { IconType } from '$lib/utils/iconUtils';
 
 	export let links: Link[] = [];
 	export let groupName = 'Links';
@@ -90,10 +90,9 @@
 	let linkHeadline = '';
 	let linkSubtitle = '';
 	let linkUrl = '';
+	let iconType: IconType = 'none';
+	let iconData: string | null = null;
 	let iconFile: File | null = null;
-	let iconPreviewUrl = '';
-	let iconSvg = '';
-	let iconId = '';
 	let uploading = false;
 
 	// Group title editing
@@ -197,7 +196,10 @@
 	function toggleAddForm() {
 		showAddForm = !showAddForm;
 		editingLink = null;
-		if (!showAddForm) cleanupPreview();
+		// Clean up blob URL if exists
+		if (!showAddForm && iconData && iconData.startsWith('blob:')) {
+			URL.revokeObjectURL(iconData);
+		}
 		resetForm();
 	}
 
@@ -213,19 +215,10 @@
 		linkSubtitle = parts.length > 1 ? parts.slice(1).join(' - ') : '';
 		linkUrl = link.url;
 		
-		// Check if icon_url is an icon reference (icon:iconId) or image URL
-		if (link.icon_url && link.icon_url.startsWith('icon:')) {
-			const iconIdValue = link.icon_url.replace('icon:', '');
-			iconId = iconIdValue;
-			// Find the icon SVG from tablerIcons
-			const icon = tablerIcons.find(i => i.id === iconIdValue);
-			iconSvg = icon?.svg || '';
-			iconPreviewUrl = '';
-		} else {
-			iconPreviewUrl = link.icon_url || '';
-			iconSvg = '';
-			iconId = '';
-		}
+		// Load icon data from link
+		iconType = (link.icon_type as IconType) || 'none';
+		iconData = link.icon_data || null;
+		iconFile = null;
 	}
 
 	function cancelEdit() {
@@ -238,16 +231,8 @@
 		linkSubtitle = '';
 		linkUrl = '';
 		iconFile = null;
-		iconSvg = '';
-		iconId = '';
-		cleanupPreview();
-	}
-
-	function cleanupPreview() {
-		if (iconPreviewUrl && iconPreviewUrl.startsWith('blob:')) {
-			URL.revokeObjectURL(iconPreviewUrl);
-		}
-		iconPreviewUrl = '';
+		iconType = 'none';
+		iconData = null;
 	}
 
 	function handleFileChange(event: CustomEvent<any>) {
@@ -255,26 +240,16 @@
 		const file = detail.target?.files?.[0];
 		if (!file) return;
 		
-		cleanupPreview();
 		iconFile = file;
-		iconSvg = '';
-		iconId = '';
-		iconPreviewUrl = URL.createObjectURL(file);
+		// Will be set to 'image' after upload, for now show preview
+		iconType = 'image';
+		iconData = URL.createObjectURL(file);
 	}
 
-	function handleIconSelect(event: CustomEvent<{ iconId: string; svg: string; name: string }>) {
-		cleanupPreview();
-		iconFile = null;
-		iconSvg = event.detail.svg;
-		iconId = event.detail.iconId;
-		iconPreviewUrl = ''; // Clear image preview
-	}
-
-	function handleRemoveIcon() {
-		cleanupPreview();
-		iconFile = null;
-		iconSvg = '';
-		iconId = '';
+	function handleIconChange(event: CustomEvent<{ iconType: string; iconData: string | null }>) {
+		iconType = event.detail.iconType as IconType;
+		iconData = event.detail.iconData;
+		iconFile = null; // Clear file when selecting icon
 	}
 
 	async function handleSave() {
@@ -283,19 +258,16 @@
 		const normalizedUrl = linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`;
 		const title = linkSubtitle ? `${linkHeadline} - ${linkSubtitle}` : linkHeadline;
 		
-		let uploadedIconUrl = null;
+		let finalIconType: IconType = iconType;
+		let finalIconData: string | null = iconData;
 		
-		// If user selected an icon (not uploaded image)
-		if (iconSvg && iconId) {
-			// For now, we'll store the icon SVG as a data URL or just the iconId
-			// You might want to save iconId to database and render SVG on frontend
-			uploadedIconUrl = `icon:${iconId}`; // Special format to indicate it's an icon
-		} else if (iconFile) {
-			// Upload image file
+		// If user uploaded a new image file
+		if (iconFile) {
 			uploading = true;
 			try {
 				const result = await api.uploadLinkIcon(iconFile);
-				uploadedIconUrl = result.url;
+				finalIconType = 'image';
+				finalIconData = result.url;
 			} catch (error: any) {
 				alert(error.message || 'Failed to upload icon');
 				uploading = false;
@@ -304,10 +276,16 @@
 			uploading = false;
 		}
 
+		// Clean up blob URL if exists
+		if (iconData && iconData.startsWith('blob:')) {
+			URL.revokeObjectURL(iconData);
+		}
+
 		const payload = {
 			title: title.trim(),
 			url: normalizedUrl,
-			icon_url: uploadedIconUrl || (iconPreviewUrl && !iconPreviewUrl.startsWith('blob:') ? iconPreviewUrl : null)
+			icon_type: finalIconType,
+			icon_data: finalIconData
 		};
 
 		if (isEditMode && editingLink) {
@@ -318,7 +296,6 @@
 			showAddForm = false;
 		}
 
-		cleanupPreview();
 		resetForm();
 	}
 
@@ -521,14 +498,12 @@
 				bind:headline={linkHeadline}
 				bind:subtitle={linkSubtitle}
 				bind:url={linkUrl}
-				bind:iconPreviewUrl
-				bind:iconSvg
-				bind:iconId
+				bind:iconType
+				bind:iconData
 				{uploading}
 				isEditMode={false}
 				on:fileChange={handleFileChange}
-				on:iconSelect={handleIconSelect}
-				on:removeIcon={handleRemoveIcon}
+				on:iconChange={handleIconChange}
 				on:cancel={toggleAddForm}
 				on:save={handleSave}
 			/>
@@ -551,14 +526,12 @@
 						bind:headline={linkHeadline}
 						bind:subtitle={linkSubtitle}
 						bind:url={linkUrl}
-						bind:iconPreviewUrl
-						bind:iconSvg
-						bind:iconId
+						bind:iconType
+						bind:iconData
 						{uploading}
 						isEditMode={true}
 						on:fileChange={handleFileChange}
-						on:iconSelect={handleIconSelect}
-						on:removeIcon={handleRemoveIcon}
+						on:iconChange={handleIconChange}
 						on:cancel={cancelEdit}
 						on:save={handleSave}
 					/>
