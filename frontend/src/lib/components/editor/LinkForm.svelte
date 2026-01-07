@@ -3,7 +3,7 @@
 	import ImageCropModal from '../modals/ImageCropModal.svelte';
 	import ThumbnailSelectionModal from '../modals/ThumbnailSelectionModal.svelte';
 	import IconPickerModal from '../modals/IconPickerModal.svelte';
-	import { getIconUrl, getIconClasses, type IconType } from '$lib/utils/iconUtils';
+	import { getIconUrl, getIconClasses, ICON_COLOR_PRESETS, type IconType } from '$lib/utils/iconUtils';
 
 	export let headline = '';
 	export let subtitle = '';
@@ -20,11 +20,17 @@
 	let showCropModal = false;
 	let showThumbnailModal = false;
 	let showIconPickerModal = false;
+	let showColorTooltip = false;
 	let tempImageUrl = '';
+	let colorDotButton: HTMLButtonElement;
+	let tempIconColor: string | null = null; // Temp color for preview
+	let originalIconColor: string | null = null; // Store original color for cancel
 
-	// Computed icon preview URL and classes
-	$: iconPreviewUrl = getIconUrl(iconType, iconData, iconColor);
-	$: iconPreviewClasses = getIconClasses(iconType, 'editor', 'w-full h-full');
+	// Computed icon preview URL and classes - use tempIconColor when tooltip is open
+	$: previewColor = showColorTooltip ? tempIconColor : iconColor;
+	$: iconPreviewUrl = getIconUrl(iconType, iconData, previewColor);
+	$: iconPreviewClasses = getIconClasses(iconType, 'list-left', 'w-full h-full');
+	$: canChangeColor = iconType === 'iconify' && iconData;
 
 	function handleIconClick() {
 		showThumbnailModal = true;
@@ -46,7 +52,6 @@
 		iconColor = event.detail.iconColor;
 		showIconPickerModal = false;
 		
-		// Dispatch icon change
 		dispatch('iconChange', { 
 			iconType: event.detail.iconType,
 			iconData: event.detail.iconData,
@@ -64,7 +69,6 @@
 		const file = target.files?.[0];
 		if (!file) return;
 
-		// Validate
 		if (!file.type.startsWith('image/')) {
 			alert('Please select an image file');
 			return;
@@ -75,7 +79,6 @@
 			return;
 		}
 
-		// Show crop modal
 		tempImageUrl = URL.createObjectURL(file);
 		showCropModal = true;
 	}
@@ -83,35 +86,26 @@
 	function handleCropAccept(event: CustomEvent<Blob>) {
 		const croppedBlob = event.detail;
 		
-		// Clean up temp URL
 		if (tempImageUrl) {
 			URL.revokeObjectURL(tempImageUrl);
 			tempImageUrl = '';
 		}
 
-		// Create File from Blob
 		const croppedFile = new File([croppedBlob], 'icon.jpg', { type: 'image/jpeg' });
 		
-		// Set thumbnail type to image, clear color
 		iconType = 'image';
 		iconColor = null;
 		
-		// Dispatch with cropped file
 		dispatch('fileChange', { target: { files: [croppedFile] } });
-		
 		showCropModal = false;
 	}
 
 	function handleCropCancel() {
-		// Clean up temp URL
 		if (tempImageUrl) {
 			URL.revokeObjectURL(tempImageUrl);
 			tempImageUrl = '';
 		}
-
-		// Reset file input
 		if (fileInput) fileInput.value = '';
-
 		showCropModal = false;
 	}
 
@@ -122,7 +116,60 @@
 	function handleSave() {
 		dispatch('save');
 	}
+
+	// Color tooltip handlers
+	function toggleColorTooltip(e: MouseEvent) {
+		e.stopPropagation();
+		if (!showColorTooltip) {
+			// Opening tooltip - save original color for cancel
+			originalIconColor = iconColor;
+			tempIconColor = iconColor;
+		}
+		showColorTooltip = !showColorTooltip;
+	}
+
+	function selectTempColor(color: string | null) {
+		// Update temp color for preview
+		tempIconColor = color;
+		// Also update actual iconColor for realtime preview in PhoneMockup
+		iconColor = color;
+		// Dispatch to parent immediately for preview
+		dispatch('iconChange', { iconType, iconData, iconColor: color });
+	}
+
+	function saveColorChange() {
+		// Just close tooltip, color already applied
+		showColorTooltip = false;
+	}
+
+	function cancelColorChange() {
+		// Revert to original color
+		iconColor = originalIconColor;
+		tempIconColor = originalIconColor;
+		showColorTooltip = false;
+		// Dispatch to revert in parent
+		dispatch('iconChange', { iconType, iconData, iconColor: originalIconColor });
+	}
+
+	function handleCustomColorChange(e: Event) {
+		const input = e.target as HTMLInputElement;
+		const color = input.value;
+		// Update temp color for preview
+		tempIconColor = color;
+		// Also update actual iconColor for realtime preview in PhoneMockup
+		iconColor = color;
+		// Dispatch to parent immediately for preview
+		dispatch('iconChange', { iconType, iconData, iconColor: color });
+	}
+
+	function handleClickOutside(e: MouseEvent) {
+		if (showColorTooltip) {
+			showColorTooltip = false;
+		}
+	}
 </script>
+
+<svelte:window on:click={handleClickOutside} />
 
 <div class="card-ios p-5 space-y-5 {isEditMode ? 'ring-2 ring-blue-500' : ''}">
 	<!-- Link Text Section -->
@@ -153,7 +200,7 @@
 			</div>
 
 			<!-- Thumbnail Upload/Select -->
-			<div class="flex-shrink-0 w-24 aspect-square">
+			<div class="flex-shrink-0 w-24 aspect-square relative">
 				<input
 					type="file"
 					accept="image/*"
@@ -184,6 +231,18 @@
 							</svg>
 						</div>
 					</button>
+
+					<!-- Color Dot (only for iconify) - Outside the button -->
+					{#if canChangeColor}
+						<button
+							type="button"
+							on:click={toggleColorTooltip}
+							bind:this={colorDotButton}
+							class="color-dot-btn absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white shadow-md transition-transform hover:scale-110 z-10"
+							style="background: {iconColor || '#000000'};"
+							title="Change icon color"
+						/>
+					{/if}
 				{:else}
 					<!-- Empty state -->
 					<button
@@ -266,3 +325,77 @@
 		on:cancel={handleCropCancel}
 	/>
 {/if}
+
+<!-- Color Tooltip - Fixed positioning outside all containers -->
+{#if showColorTooltip && canChangeColor && colorDotButton}
+	{@const buttonRect = colorDotButton.getBoundingClientRect()}
+	{@const tooltipWidth = 200}
+	{@const tooltipLeft = buttonRect.right - tooltipWidth - 8}
+	<div 
+		class="fixed bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 animate-fade-in"
+		style="z-index: 99999; top: {buttonRect.bottom + 8}px; left: {tooltipLeft}px; width: {tooltipWidth}px;"
+		on:click|stopPropagation
+	>
+		<div class="text-sm font-medium text-gray-600 mb-3">Icon Color</div>
+		<div class="grid grid-cols-4 gap-2 mb-4">
+			<!-- Custom Color Picker -->
+			<button
+				type="button"
+				on:click={() => document.getElementById('custom-color-input')?.click()}
+				class="w-9 h-9 rounded-full border-2 border-gray-300 hover:border-gray-400 hover:scale-110 transition-all bg-white flex items-center justify-center"
+				title="Add custom color"
+			>
+				<svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+				</svg>
+				<input
+					id="custom-color-input"
+					type="color"
+					value={tempIconColor || '#000000'}
+					on:input={handleCustomColorChange}
+					class="absolute opacity-0 w-0 h-0 pointer-events-none"
+				/>
+			</button>
+
+			<!-- Preset Colors -->
+			{#each ICON_COLOR_PRESETS as preset}
+				<button
+					type="button"
+					on:click={() => selectTempColor(preset.value)}
+					class="w-9 h-9 rounded-full border-2 transition-all {tempIconColor === preset.value ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:scale-110'}"
+					style="background-color: {preset.value};"
+					title={preset.name}
+				/>
+			{/each}
+		</div>
+
+		<!-- Action Buttons -->
+		<div class="flex gap-2">
+			<button
+				type="button"
+				on:click={cancelColorChange}
+				class="flex-1 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+			>
+				Cancel
+			</button>
+			<button
+				type="button"
+				on:click={saveColorChange}
+				class="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+			>
+				Save
+			</button>
+		</div>
+	</div>
+{/if}
+
+<style>
+	@keyframes fade-in {
+		from { opacity: 0; transform: translateY(4px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+	
+	.animate-fade-in {
+		animation: fade-in 0.15s ease-out;
+	}
+</style>

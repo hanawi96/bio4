@@ -254,6 +254,22 @@
 		iconData = event.detail.iconData;
 		iconColor = event.detail.iconColor;
 		iconFile = null; // Clear file when selecting icon
+
+		// If editing existing link, update store immediately for preview
+		if (editingLink) {
+			groups.update(g => g.map(group => 
+				group.id === groupId 
+					? { 
+						...group, 
+						links: group.links.map(link => 
+							link.id === editingLink.id 
+								? { ...link, icon_type: iconType, icon_data: iconData, icon_color: iconColor }
+								: link
+						)
+					}
+					: group
+			));
+		}
 	}
 
 	async function handleSave() {

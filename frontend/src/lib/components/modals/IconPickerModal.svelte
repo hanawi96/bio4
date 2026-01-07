@@ -68,6 +68,10 @@
 
 	function selectIcon(iconId: string) {
 		selectedIcon = iconId;
+		// Set default color to black if no color selected yet
+		if (selectedColor === null) {
+			selectedColor = '#000000';
+		}
 	}
 
 	function selectColor(color: string | null) {
@@ -111,7 +115,7 @@
 
 <!-- Modal -->
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-	<div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[650px] flex flex-col animate-scale-in" on:click|stopPropagation>
+	<div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl h-[650px] flex flex-col animate-scale-in" on:click|stopPropagation>
 		<!-- Header -->
 		<div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
 			<div class="flex items-center gap-3">
@@ -164,19 +168,22 @@
 					{#if !searchQuery}
 						<div class="text-sm font-medium text-gray-600 mb-3">Popular Social Icons</div>
 					{/if}
-					<div class="grid grid-cols-8 gap-3">
-						{#each icons as iconId}
+					<div class="grid grid-cols-6 gap-3">
+						{#each icons as iconId (iconId)}
+							{@const isSelected = selectedIcon === iconId}
 							<button
 								on:click={() => selectIcon(iconId)}
-								class="aspect-square rounded-xl border-2 transition-all flex items-center justify-center group {selectedIcon === iconId 
+								class="aspect-square rounded-xl border-2 transition-all flex items-center justify-center group {isSelected 
 									? 'border-blue-500 bg-blue-50' 
 									: 'border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:scale-105'}"
 								title={iconId}
 							>
+								<!-- Always use base icon (no color) for grid - cached by browser -->
 								<img 
-									src={getIconUrl('iconify', iconId, selectedIcon === iconId ? selectedColor : null)} 
+									src={getIconUrl('iconify', iconId, null)} 
 									alt={iconId}
-									class="w-7 h-7 {selectedIcon === iconId ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}"
+									class="w-7 h-7 {isSelected ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}"
+									loading="lazy"
 								/>
 							</button>
 						{/each}
@@ -194,51 +201,47 @@
 		<!-- Color Picker Section -->
 		{#if selectedIcon}
 			<div class="px-6 py-4 border-t border-gray-200 bg-gray-50/50">
-				<div class="flex items-center gap-4">
-					<span class="text-sm font-medium text-gray-700">Icon Color:</span>
-					<div class="flex items-center gap-2">
-						<!-- Default (no color) -->
-						<button
-							on:click={() => selectColor(null)}
-							class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all {isColorSelected(null) ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300 hover:border-gray-400'}"
-							title="Default"
-							style="background: linear-gradient(135deg, #fff 45%, #e5e7eb 45%, #e5e7eb 55%, #fff 55%);"
-						>
-							{#if isColorSelected(null)}
-								<svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-									<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+				<div class="flex items-center gap-6">
+					<!-- Large preview of selected icon with color -->
+					<div class="w-14 h-14 rounded-xl border-2 border-gray-200 bg-white flex items-center justify-center flex-shrink-0">
+						<img 
+							src={getIconUrl('iconify', selectedIcon, selectedColor)} 
+							alt={selectedIcon}
+							class="w-10 h-10"
+						/>
+					</div>
+					
+					<div class="flex-1">
+						<span class="text-sm font-medium text-gray-700 block mb-2">Icon Color:</span>
+						<div class="flex items-center gap-2">
+							<!-- Custom Color Picker -->
+							<button
+								type="button"
+								on:click={() => document.getElementById('icon-modal-custom-color')?.click()}
+								class="w-7 h-7 rounded-full border-2 border-gray-300 hover:border-gray-400 hover:scale-110 transition-all bg-white flex items-center justify-center"
+								title="Add custom color"
+							>
+								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 								</svg>
-							{/if}
-						</button>
-						
-						<!-- Preset Colors -->
-						{#each ICON_COLOR_PRESETS as preset}
-							<button
-								on:click={() => selectColor(preset.value)}
-								class="w-7 h-7 rounded-full border-2 transition-all {isColorSelected(preset.value) ? 'border-blue-500 ring-2 ring-blue-200 scale-110' : 'border-gray-200 hover:scale-110'}"
-								style="background-color: {preset.value};"
-								title={preset.name}
-							/>
-						{/each}
-						
-						<!-- Custom Color -->
-						<div class="relative">
-							<button
-								on:click={() => showCustomColorPicker = !showCustomColorPicker}
-								class="w-7 h-7 rounded-full border-2 border-dashed flex items-center justify-center transition-all {showCustomColorPicker ? 'border-blue-500' : 'border-gray-300 hover:border-gray-400'}"
-								style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);"
-								title="Custom color"
-							/>
-							{#if showCustomColorPicker}
-								<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-white rounded-lg shadow-lg border border-gray-200">
-									<input
-										type="color"
-										value={customColorInput}
-										on:input={handleCustomColorChange}
-										class="w-8 h-8 cursor-pointer rounded border-0"
-									/>
-								</div>
-							{/if}
+								<input
+									id="icon-modal-custom-color"
+									type="color"
+									value={customColorInput}
+									on:input={handleCustomColorChange}
+									class="absolute opacity-0 w-0 h-0 pointer-events-none"
+								/>
+							</button>
+
+							<!-- Preset Colors -->
+							{#each ICON_COLOR_PRESETS as preset (preset.value)}
+								<button
+									on:click={() => selectColor(preset.value)}
+									class="w-7 h-7 rounded-full border-2 transition-all {isColorSelected(preset.value) ? 'border-blue-500 ring-2 ring-blue-200 scale-110' : 'border-gray-200 hover:scale-110'}"
+									style="background-color: {preset.value};"
+									title={preset.name}
+								/>
+							{/each}
 						</div>
 					</div>
 				</div>
@@ -249,17 +252,10 @@
 		<div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
 			<div class="flex items-center gap-3">
 				{#if selectedIcon}
-					<div class="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
-						<img 
-							src={getIconUrl('iconify', selectedIcon, selectedColor)} 
-							alt={selectedIcon}
-							class="w-5 h-5"
-						/>
-						<span class="text-sm font-medium text-gray-900">{selectedIcon}</span>
-						{#if selectedColor}
-							<div class="w-4 h-4 rounded-full border border-gray-200" style="background-color: {selectedColor};"></div>
-						{/if}
-					</div>
+					<span class="text-sm text-gray-600">{selectedIcon}</span>
+					{#if selectedColor}
+						<div class="w-4 h-4 rounded-full border border-gray-300" style="background-color: {selectedColor};"></div>
+					{/if}
 				{:else}
 					<span class="text-sm text-gray-500">Select an icon</span>
 				{/if}

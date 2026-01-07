@@ -7,7 +7,7 @@
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
-	import { getIconUrl } from '$lib/utils/iconUtils';
+	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 
 	// Create video fade handler
 	const handleVideoTimeUpdate = createVideoFadeHandler();
@@ -753,6 +753,7 @@
 								{#each realLinks as link}
 									{@const headline = link.title.split(' - ')[0]}
 									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
+									{@const iconClasses = getIconClasses(link.icon_type || 'none', 'grid', 'w-full')}
 									{@const hasImage = !!linkIconUrl}
 									{@const showImageOnly = hasImage && !gridConfig.imagePadding && !gridConfig.showLabels}
 									{@const imageRadius = gridConfig.imagePadding 
@@ -781,7 +782,7 @@
 											<img 
 												src={linkIconUrl} 
 												alt="" 
-												class="w-full object-cover {iconShapeClass} {aspectClass} {showImageOnly ? 'h-full' : ''}"
+												class="{iconClasses} {iconShapeClass} {aspectClass} {showImageOnly ? 'h-full' : ''}"
 												style="border-radius: {imageRadius};"
 											/>
 										{/if}
@@ -802,6 +803,7 @@
 									{@const headline = parts[0]}
 									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
 									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
+									{@const iconClasses = getIconClasses(link.icon_type || 'none', 'card', 'flex-shrink-0')}
 									{@const position = cardConfig.imagePosition === 'alternate' 
 										? (index % 2 === 0 ? 'left' : 'right')
 										: cardConfig.imagePosition}
@@ -833,7 +835,7 @@
 											<img 
 												src={linkIconUrl} 
 												alt="" 
-												class="object-cover flex-shrink-0 {iconShapeClass}"
+												class="{iconClasses} {iconShapeClass}"
 												style="
 													width: {cardConfig.imageSize}%;
 													aspect-ratio: {cardConfig.imageAspect === 'square' ? '1' : cardConfig.imageAspect === 'portrait' ? '3/4' : '4/3'};
@@ -862,6 +864,8 @@
 									{@const headline = parts[0]}
 									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
 									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
+									{@const iconClassesTop = getIconClasses(link.icon_type || 'none', 'list-top', `w-10 h-10 ${listIconShapeClass}`)}
+									{@const iconClassesLeft = getIconClasses(link.icon_type || 'none', 'list-left', `w-8 h-8 flex-shrink-0 ${listIconShapeClass}`)}
 									
 									<div
 										class="link-button block text-sm font-medium transition-transform hover:scale-[1.02]"
@@ -884,7 +888,7 @@
 												<img 
 													src={linkIconUrl} 
 													alt="" 
-													class="w-10 h-10 object-cover {listIconShapeClass}"
+													class="{iconClassesTop}"
 												/>
 												<div>
 													<div class="font-semibold">{headline}</div>
@@ -899,7 +903,7 @@
 												<img 
 													src={linkIconUrl} 
 													alt="" 
-													class="w-8 h-8 object-cover flex-shrink-0 {listIconShapeClass}"
+													class="{iconClassesLeft}"
 												/>
 												<div class="flex-1" style="text-align: {listTextAlign};">
 													<div class="font-semibold">{headline}</div>

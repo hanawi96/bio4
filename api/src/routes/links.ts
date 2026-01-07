@@ -124,6 +124,7 @@ app.post('/:groupId', async (c) => {
 		icon_url: body.icon_url,
 		icon_type: body.icon_type || 'none',
 		icon_data: body.icon_data || null,
+		icon_color: body.icon_color || null,
 		sort_order: body.sort_order
 	});
 
@@ -156,6 +157,7 @@ app.put('/:linkId', async (c) => {
 		icon_url: body.icon_url,
 		icon_type: body.icon_type,
 		icon_data: body.icon_data,
+		icon_color: body.icon_color,
 		sort_order: body.sort_order,
 		is_active: body.is_active
 	});
