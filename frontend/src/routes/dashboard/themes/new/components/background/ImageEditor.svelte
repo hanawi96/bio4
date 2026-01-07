@@ -8,8 +8,8 @@
 		type BrightnessKey,
 		type GrayscaleKey
 	} from '$lib/appearance/effectsTokens';
-	import FilterTabs from '$lib/components/editor/sections/background/shared/FilterTabs.svelte';
-	import BackgroundFilterPanel from '$lib/components/editor/sections/background/shared/BackgroundFilterPanel.svelte';
+	import FilterTabs from '$lib/components/shared/FilterTabs.svelte';
+	import BackgroundFilterPanel from '$lib/components/shared/BackgroundFilterPanel.svelte';
 
 	export let bgImageUrl: string;
 	export let uploading: boolean;

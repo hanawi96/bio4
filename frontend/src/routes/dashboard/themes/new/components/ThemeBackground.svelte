@@ -5,6 +5,7 @@
 	import SolidColorEditor from './background/SolidColorEditor.svelte';
 	import GradientEditor from './background/GradientEditor.svelte';
 	import PatternEditor from '$lib/components/shared/PatternEditor.svelte';
+	import { generatePatternColors } from '$lib/utils/patternColors';
 	import {
 		type BlurKey,
 		type BrightnessKey,
@@ -27,7 +28,7 @@
 	export let bgBlur: BlurKey | number;
 	export let bgBrightness: BrightnessKey | number;
 	export let bgGrayscale: GrayscaleKey | number;
-	export let selectedHeaderPreset: string = 'no-cover'; // Add this prop
+	export let selectedHeaderPreset: string = 'no-cover';
 	
 	// Pattern props
 	export let selectedPattern: string = 'dots';
@@ -51,6 +52,26 @@
 	
 	// Check if avatar-cover is selected
 	$: isAvatarCover = selectedHeaderPreset === 'avatar-cover';
+	
+	// Track previous bgType to detect when switching to pattern
+	let previousBgType = bgType;
+	let isInitialLoad = true;
+	
+	// Auto-generate pattern colors when switching to pattern mode (not on initial load)
+	$: if (bgType === 'pattern' && previousBgType !== 'pattern' && !isInitialLoad) {
+		// Generate smart colors from current solid color
+		const colors = generatePatternColors(bgSolidColor, selectedPattern);
+		patternColor = colors.inkColor;
+		patternBgColor = colors.bgColor;
+		previousBgType = bgType;
+	} else if (bgType !== 'pattern') {
+		previousBgType = bgType;
+		isInitialLoad = false;
+	} else if (bgType === 'pattern' && isInitialLoad) {
+		// On initial load with pattern, just mark as loaded
+		isInitialLoad = false;
+		previousBgType = bgType;
+	}
 </script>
 
 <section class="card-ios p-6">

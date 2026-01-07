@@ -14,8 +14,8 @@
 		type BrightnessKey,
 		type GrayscaleKey
 	} from '$lib/appearance/effectsTokens';
-	import FilterTabs from './shared/FilterTabs.svelte';
-	import BackgroundFilterPanel from './shared/BackgroundFilterPanel.svelte';
+	import FilterTabs from '$lib/components/shared/FilterTabs.svelte';
+	import BackgroundFilterPanel from '$lib/components/shared/BackgroundFilterPanel.svelte';
 
 	export let backgroundVideoUrl: string;
 	export let username: string = 'demo';
