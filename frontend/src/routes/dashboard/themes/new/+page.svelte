@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { api } from '$lib/api.client';
 	import { themeEditor } from '$lib/stores/themeEditor';
+	import { themes as themesStore } from '$lib/stores/themes';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import ThemePreviewMockup from '$lib/components/editor/ThemePreviewMockup.svelte';
 	import ThemeBackground from './components/ThemeBackground.svelte';
@@ -804,6 +805,8 @@
 	}
 
 	async function handleSubmit() {
+		console.log('🚀 [handleSubmit] Creating theme...');
+		
 		if (!name.trim()) {
 			error = 'Theme name is required';
 			return;
@@ -842,12 +845,16 @@
 
 		try {
 			const result = await api.createTheme({ key, name, config, description, category, tier });
+			console.log('✅ [handleSubmit] Theme created successfully:', result);
 			
 			// Reload themes to include the new theme in cache
-			await themes.load();
+			await themesStore.load();
+			console.log('✅ [handleSubmit] Themes reloaded');
 			
+			console.log('🔄 [handleSubmit] Redirecting to /dashboard/themes...');
 			goto('/dashboard/themes');
 		} catch (e: any) {
+			console.error('❌ [handleSubmit] Error creating theme:', e);
 			error = e.message || 'Failed to create theme';
 		} finally {
 			saving = false;

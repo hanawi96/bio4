@@ -19,12 +19,19 @@
 	$: backgroundValue = (() => {
 		// Priority 1: Check overrides
 		const override = $previewAppearanceState.overrides?.['backgroundColor'];
-		if (override) return override;
+		console.log('🎨 [backgroundValue] override:', override);
+		
+		if (override) {
+			console.log('✅ [backgroundValue] Using override');
+			return override;
+		}
 		
 		// Priority 2: Check theme config (NEW structure)
 		const themeConfig = $previewAppearance?.theme?.config;
 		const bgType = themeConfig?.background?.type;
 		const bgValue = themeConfig?.background?.value;
+		
+		console.log('🎨 [backgroundValue] theme config - type:', bgType, 'value:', bgValue?.substring(0, 50));
 		
 		if (bgType && bgValue) {
 			if (bgType === 'solid') return bgValue;
@@ -34,7 +41,9 @@
 			else if (bgType === 'video') return '#000000';
 		}
 		
-		return tokens?.backgroundColor || '#ffffff';
+		const fallback = tokens?.backgroundColor || '#ffffff';
+		console.log('⚠️ [backgroundValue] Using fallback:', fallback);
+		return fallback;
 	})();
 	
 	$: backgroundVideoUrl = (() => {
@@ -57,7 +66,35 @@
 		return themeConfig?.background?.animation;
 	})();
 	
-	$: bgType = $previewAppearance?.theme?.config?.background?.type;
+	$: bgType = (() => {
+		// Priority 1: Detect from override backgroundColor
+		const override = $previewAppearanceState.overrides?.['backgroundColor'];
+		console.log('🔍 [bgType Detection] override:', override);
+		
+		if (override) {
+			if (override.startsWith('background:')) {
+				console.log('✅ [bgType Detection] Detected PATTERN from override');
+				return 'pattern';
+			}
+			if (override.startsWith('linear-gradient') || override.startsWith('radial-gradient')) {
+				console.log('✅ [bgType Detection] Detected GRADIENT from override');
+				return 'gradient';
+			}
+			if (override.startsWith('url(')) {
+				console.log('✅ [bgType Detection] Detected IMAGE from override');
+				return 'image';
+			}
+			if (override.match(/^#[0-9a-fA-F]{6}$/)) {
+				console.log('✅ [bgType Detection] Detected SOLID from override');
+				return 'solid';
+			}
+		}
+		
+		// Priority 2: From theme config
+		const configType = $previewAppearance?.theme?.config?.background?.type || 'solid';
+		console.log('✅ [bgType Detection] Using theme config:', configType);
+		return configType;
+	})();
 	
 	$: bgGradientDirection = (() => {
 		const themeConfig = $previewAppearance?.theme?.config;
@@ -502,6 +539,9 @@
 						const hasVideo = !!backgroundVideoUrl;
 						const hasValue = !!backgroundValue;
 						
+						console.log('🖼️ [Render] hasVideo:', hasVideo, 'hasValue:', hasValue, 'bgType:', bgType);
+						console.log('🖼️ [Render] backgroundValue:', backgroundValue?.substring(0, 100));
+						
 						let result;
 						if (!hasVideo && hasValue) {
 							if (bgType === 'pattern') {
@@ -525,6 +565,7 @@
 							console.log('🎨 [ThemePreviewMockup] Content style: VIDEO (transparent)');
 						}
 						
+						console.log('🖼️ [Render] Final result:', result?.substring(0, 100));
 						return result;
 					})()}
 					color: {tokens?.textColor || '#000000'};

@@ -28,6 +28,7 @@
 		<div class="grid grid-cols-4 gap-2">
 			{#each patterns as pattern}
 				<button
+					type="button"
 					on:click={() => handlePatternSelect(pattern.id)}
 					class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
 					title={pattern.name}

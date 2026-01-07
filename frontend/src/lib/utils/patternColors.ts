@@ -41,6 +41,7 @@ export function getContrastRatio(color1: string, color2: string): number {
 
 /**
  * Generate pattern colors from background color using OKLCH color space
+ * Optimized for perceptual uniformity and accessibility
  */
 export function generatePatternColors(
 	bgColor: string,
@@ -49,46 +50,63 @@ export function generatePatternColors(
 	// Normalize pattern type
 	const normalizedType = patternType as PatternType;
 	
-	// Convert to OKLCH
+	// Convert to OKLCH with validation
 	const bgOklch = oklch(bgColor);
 	
-	if (!bgOklch) {
-		// Fallback if conversion fails
+	if (!bgOklch || typeof bgOklch.l !== 'number') {
+		// Enhanced fallback for invalid colors
+		console.warn(`Invalid color: ${bgColor}, using fallback`);
 		return {
-			bgColor,
-			inkColor: '#000000',
-			opacity: 0.15
+			bgColor: '#ffffff',
+			inkColor: '#e5e7eb',
+			opacity: 0.20
 		};
 	}
 	
 	const { l: L, c: C, h: H } = bgOklch;
 	
-	// Determine if background is light or dark
-	const isLight = L >= 0.62;
+	// Validate color components with tolerance for floating point errors
+	if (L < -0.001 || L > 1.001 || C < -0.001) {
+		console.warn(`Out of range color values: L=${L}, C=${C}`);
+		return {
+			bgColor: '#ffffff',
+			inkColor: '#e5e7eb',
+			opacity: 0.20
+		};
+	}
 	
-	// Calculate adaptive deltaL
-	const baseDelta = 0.10 + 0.22 * Math.abs(L - 0.55);
+	// Clamp values to valid range (handle floating point precision)
+	const L_clamped = Math.max(0, Math.min(1, L));
+	const C_clamped = Math.max(0, C);
+	
+	// Determine if background is light or dark
+	const isLight = L_clamped >= 0.62;
+	
+	// Calculate adaptive deltaL with enhanced formula
+	const baseDelta = 0.10 + 0.22 * Math.abs(L_clamped - 0.55);
 	let deltaL = Math.max(0.10, Math.min(0.26, baseDelta));
 	
-	// Adjust chroma for ink color
+	// ✨ OPTIMIZATION 1: Smooth chroma adjustment
 	let C_ink: number;
-	if (C < 0.02) {
+	if (C_clamped < 0.02) {
 		// Achromatic (gray/black/white) - keep chroma at 0
 		C_ink = 0;
-	} else if (C > 0.12) {
-		C_ink = C * 0.85;
+	} else if (C_clamped > 0.30) {
+		// Extreme saturation (neon/fluorescent) - reduce significantly
+		C_ink = C_clamped * 0.60;
 	} else {
-		C_ink = Math.min(0.12, C + 0.03);
+		// Normal chromatic colors - smooth reduction for subtlety
+		C_ink = C_clamped * 0.75;
 	}
 	
 	// Calculate ink lightness
-	let L_ink = isLight ? L - deltaL : L + deltaL;
+	let L_ink = isLight ? L_clamped - deltaL : L_clamped + deltaL;
 	L_ink = Math.max(0, Math.min(1, L_ink)); // Clamp to valid range
 	
 	// Create ink color in OKLCH
 	// For achromatic colors (C ≈ 0), don't use hue to avoid color shift
 	let inkOklch: { mode: 'oklch'; l: number; c: number; h?: number };
-	if (C < 0.02) {
+	if (C_clamped < 0.02) {
 		// Achromatic (gray/black/white) - no hue
 		inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink };
 	} else {
@@ -98,35 +116,51 @@ export function generatePatternColors(
 	
 	let inkColor = formatHex(inkOklch);
 	
-	// Contrast safety: ensure ratio between 1.5 and 2.4
+	// ✨ OPTIMIZATION 2: Adaptive contrast range based on lightness
+	let minRatio: number;
+	let maxRatio: number;
+	
+	if (L_clamped > 0.85 || L_clamped < 0.15) {
+		// Extreme lightness - need higher contrast
+		minRatio = 1.8;
+		maxRatio = 3.0;
+	} else {
+		// Normal lightness - subtle contrast
+		minRatio = 1.3;
+		maxRatio = 2.8;
+	}
+	
+	// ✨ OPTIMIZATION 3: Proportional adjustment for faster convergence
 	let attempts = 0;
-	const maxAttempts = 5; // Tăng từ 3 lên 5
+	const maxAttempts = 8; // Increased for better accuracy
 	
 	while (attempts < maxAttempts) {
 		const ratio = getContrastRatio(bgColor, inkColor);
 		
-		if (ratio < 1.5) {
-			// Too low contrast, increase deltaL
-			deltaL += 0.03; // Tăng từ 0.02 lên 0.03 để điều chỉnh nhanh hơn
-			L_ink = isLight ? L - deltaL : L + deltaL;
+		if (ratio < minRatio) {
+			// Too low contrast - proportional increase
+			const deficit = minRatio - ratio;
+			deltaL += deficit * 0.04; // Proportional adjustment
+			L_ink = isLight ? L_clamped - deltaL : L_clamped + deltaL;
 			L_ink = Math.max(0, Math.min(1, L_ink));
 			
 			// Recreate ink color
-			if (C < 0.02) {
+			if (C_clamped < 0.02) {
 				inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink };
 			} else {
 				inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink, h: H || 0 };
 			}
 			inkColor = formatHex(inkOklch);
 			attempts++;
-		} else if (ratio > 2.4) {
-			// Too high contrast, decrease deltaL
-			deltaL -= 0.02;
-			L_ink = isLight ? L - deltaL : L + deltaL;
+		} else if (ratio > maxRatio) {
+			// Too high contrast - proportional decrease
+			const excess = ratio - maxRatio;
+			deltaL -= excess * 0.03; // Proportional adjustment
+			L_ink = isLight ? L_clamped - deltaL : L_clamped + deltaL;
 			L_ink = Math.max(0, Math.min(1, L_ink));
 			
 			// Recreate ink color
-			if (C < 0.02) {
+			if (C_clamped < 0.02) {
 				inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink };
 			} else {
 				inkOklch = { mode: 'oklch' as const, l: L_ink, c: C_ink, h: H || 0 };
@@ -134,29 +168,31 @@ export function generatePatternColors(
 			inkColor = formatHex(inkOklch);
 			attempts++;
 		} else {
-			// Perfect range
+			// Perfect range - exit early
 			break;
 		}
 	}
 	
-	// Calculate base opacity based on lightness
+	// ✨ OPTIMIZATION 4: Enhanced opacity calculation
 	let baseOpacity: number;
 	if (isLight) {
-		baseOpacity = 0.22 + (L - 0.62) * 0.15; // 0.22-0.28 for light backgrounds
+		// Light backgrounds: 0.25-0.35 range
+		baseOpacity = 0.25 + (L_clamped - 0.62) * 0.18;
 	} else {
-		baseOpacity = 0.16 + (0.62 - L) * 0.10; // 0.16-0.22 for dark backgrounds
+		// Dark backgrounds: 0.20-0.30 range
+		baseOpacity = 0.20 + (0.62 - L_clamped) * 0.15;
 	}
 	
-	// Adjust opacity by pattern type
+	// Adjust opacity by pattern type with refined multipliers
 	const patternMultipliers: Record<PatternType, number> = {
-		grid: 0.9,
-		dots: 1.0,
-		diagonal: 0.95,
-		cross: 0.9,
-		zigzag: 0.95,
-		organic: 1.05,
-		noise: 1.15,
-		waves: 1.0
+		grid: 0.92,      // Subtle for geometric patterns
+		dots: 1.0,       // Balanced
+		diagonal: 0.95,  // Slightly subtle
+		cross: 0.92,     // Subtle for geometric patterns
+		zigzag: 0.96,    // Slightly visible
+		organic: 1.08,   // More visible for organic shapes
+		noise: 1.18,     // Most visible for texture
+		waves: 1.02      // Slightly more than balanced
 	};
 	
 	const opacity = baseOpacity * (patternMultipliers[normalizedType] || 1.0);
@@ -164,6 +200,6 @@ export function generatePatternColors(
 	return {
 		bgColor,
 		inkColor,
-		opacity: Math.max(0.1, Math.min(0.35, opacity)) // Clamp opacity
+		opacity: Math.max(0.12, Math.min(0.40, opacity)) // Enhanced range
 	};
 }
