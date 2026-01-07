@@ -179,40 +179,8 @@
 		}, {} as Record<BlockStylePresetId, any>);
 	})();
 
-	// Get background style from theme (NEW structure) - check override first, then theme default
-	$: previewBackground = (() => {
-		// Check override first
-		const override = $appearanceState.overrides?.['backgroundColor'];
-		if (override) return override;
-		
-		// Check theme config (NEW structure)
-		const themeConfig = $appearance?.theme?.config;
-		const bgType = themeConfig?.background?.type;
-		const bgValue = themeConfig?.background?.value;
-		
-		if (bgType && bgValue) {
-			if (bgType === 'solid') return bgValue;
-			if (bgType === 'gradient') return bgValue;
-			if (bgType === 'image') return `url('${bgValue}')`;
-			if (bgType === 'video') return '#000000';
-		}
-		
-		// Fallback
-		return $appearance?.tokens?.backgroundColor || '#ffffff';
-	})();
-
-	// Get block shape from current block preset
-	$: blockShape = $appearance?.block?.shape || 'rounded';
-
 	// Get border-radius from preset or override
 	$: blockBorderRadius = $appearanceState.overrides?.['block.borderRadius'] ?? $appearance?.block?.borderRadius ?? 12;
-
-	// Map shape to border-radius class for preview
-	$: shapeClass = {
-		rounded: 'rounded-lg',
-		pill: 'rounded-full',
-		square: 'rounded-none'
-	}[blockShape] || 'rounded-lg';
 
 	function selectShadow(shadowId: ShadowStylePreset) {
 		const recipe = getShadowRecipe(shadowId);
@@ -221,38 +189,40 @@
 	}
 </script>
 
-<section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-	<div class="px-6 py-4 border-b border-gray-100">
-		<h2 class="font-semibold text-gray-900">Block Style</h2>
-		<p class="text-sm text-gray-500 mt-1">Customize your link buttons</p>
-	</div>
-	
-	<div class="p-6 space-y-6">
+<section class="card-ios p-6">
+	<h2 class="text-lg font-semibold text-gray-900 mb-4">Block Style</h2>
+	<div class="space-y-6">
 		<!-- Button Style -->
 		<div>
-			<h3 class="text-sm font-medium text-gray-900 mb-3">Button style</h3>
+			<label class="block text-sm font-medium text-gray-700 mb-3">
+				Button Style
+			</label>
 			<div class="grid grid-cols-3 gap-3">
 				{#each recipes as recipeId}
 					{@const isSelected = currentRecipeId === recipeId}
 					{@const displayStyle = displayStyles[recipeId] || {}}
 					<button
+						type="button"
 						on:click={() => selectRecipe(recipeId)}
-						class="group relative rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'}"
+						class="group relative rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] {isSelected ? 'ring-2 ring-[#00aa4f]' : 'hover:ring-2 hover:ring-gray-300'}"
 					>
 						<!-- Preview Container -->
 						<div
-							class="aspect-square p-3 flex items-center justify-center relative border {isSelected ? 'border-blue-500' : 'border-gray-200'} bg-white overflow-hidden"
-							style="background: {previewBackground}; background-size: cover; background-position: center;"
+							class="h-20 p-2 flex items-center justify-center relative border border-gray-200 overflow-hidden"
+							style="background-color: #dbdde0;"
 						>
 							<div
-								class="w-full h-8 transition-all flex items-center justify-center {shapeClass} relative z-10"
+								class="w-full transition-all flex items-center justify-center relative"
 								style="
-									background: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : displayStyle.backgroundColor};
+									background-color: {displayStyle.backgroundImage !== 'none' ? 'transparent' : displayStyle.backgroundColor};
+									background-image: {displayStyle.backgroundImage !== 'none' ? displayStyle.backgroundImage : 'none'};
 									color: {displayStyle.color};
 									border: {displayStyle.border};
 									box-shadow: {displayStyle.boxShadow || 'none'};
 									backdrop-filter: {displayStyle.backdropFilter || 'none'};
 									-webkit-backdrop-filter: {displayStyle.backdropFilter || 'none'};
+									border-radius: {blockBorderRadius}px;
+									padding: 12px 16px;
 								"
 							>
 								<span class="text-xs font-semibold">Button</span>
@@ -260,25 +230,28 @@
 						</div>
 						
 						<!-- Name Label -->
-						<div class="py-2 px-2 {isSelected ? 'bg-blue-50 border-t border-blue-200' : 'bg-gray-50 border-t border-gray-200'}">
-							<p class="text-xs font-semibold {isSelected ? 'text-blue-700' : 'text-gray-700'} truncate text-center">
+						<div class="py-1.5 px-2 border-t border-gray-200 {isSelected ? 'bg-[#e6f7ed]' : 'bg-gray-50'}">
+							<p class="text-xs font-semibold {isSelected ? 'text-[#00aa4f]' : 'text-gray-700'} truncate text-center">
 								{getBlockStyleRecipeName(recipeId)}
 							</p>
 						</div>
 					</button>
 				{/each}
 			</div>
+			<p class="text-xs text-gray-500 mt-2">Button color and visual effect style</p>
 		</div>
 
-		<!-- Corners - Button Presets -->
+		<!-- Block Border Radius -->
 		<div>
-			<h3 class="text-sm font-medium text-gray-900 mb-3">Corners</h3>
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Block Border Radius
+			</label>
 			<div class="grid grid-cols-6 gap-2">
 				<button
 					type="button"
 					on:click={() => updateAppearance('block.borderRadius', 0)}
 					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 0
-						? 'border-blue-500 bg-blue-50 text-blue-600'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">None</div>
@@ -288,37 +261,37 @@
 					type="button"
 					on:click={() => updateAppearance('block.borderRadius', 4)}
 					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 4
-						? 'border-blue-500 bg-blue-50 text-blue-600'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
-					<div class="font-semibold">SM</div>
+					<div class="font-semibold">Small</div>
 					<div class="text-[10px] opacity-60">4px</div>
 				</button>
 				<button
 					type="button"
 					on:click={() => updateAppearance('block.borderRadius', 8)}
 					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 8
-						? 'border-blue-500 bg-blue-50 text-blue-600'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
-					<div class="font-semibold">MD</div>
+					<div class="font-semibold">Medium</div>
 					<div class="text-[10px] opacity-60">8px</div>
 				</button>
 				<button
 					type="button"
 					on:click={() => updateAppearance('block.borderRadius', 12)}
 					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 12
-						? 'border-blue-500 bg-blue-50 text-blue-600'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
-					<div class="font-semibold">LG</div>
+					<div class="font-semibold">Large</div>
 					<div class="text-[10px] opacity-60">12px</div>
 				</button>
 				<button
 					type="button"
 					on:click={() => updateAppearance('block.borderRadius', 16)}
 					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 16
-						? 'border-blue-500 bg-blue-50 text-blue-600'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">XL</div>
@@ -328,105 +301,43 @@
 					type="button"
 					on:click={() => updateAppearance('block.borderRadius', 9999)}
 					class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {blockBorderRadius === 9999
-						? 'border-blue-500 bg-blue-50 text-blue-600'
+						? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
 						: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 				>
 					<div class="font-semibold">Full</div>
-					<div class="text-[10px] opacity-60">∞</div>
+					<div class="text-[10px] opacity-60">Pill</div>
 				</button>
 			</div>
-			<p class="text-xs text-gray-500 mt-2">Border radius for blocks/links</p>
+			<p class="text-xs text-gray-500 mt-1.5">Border radius style for blocks/links</p>
 		</div>
 
-		<!-- Shadows (hide when Neon is selected) -->
-		{#if currentRecipeId !== 'neon'}
-			<div>
-				<h3 class="text-sm font-medium text-gray-900 mb-3">Shadow Style</h3>
-				<div class="grid grid-cols-5 gap-2">
-					{#each shadowStyles as shadowId}
-						{@const isSelected = currentShadowStyleId === shadowId}
-						<button
-							on:click={() => selectShadow(shadowId)}
-							class="px-3 py-2 rounded-lg text-sm font-medium transition-all {isSelected ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
-						>
-							{getShadowStyleName(shadowId)}
-						</button>
-					{/each}
-				</div>
-				<p class="text-xs text-gray-500 mt-2">Shadow depth applied to buttons</p>
-			</div>
-		{/if}
-
-		<!-- Block Base Color -->
-		<div class="pt-6 border-t border-gray-100">
-			<div class="flex items-center justify-between mb-3">
-				<div>
-					<p class="text-sm font-medium text-gray-900">Block Color</p>
-					<p class="text-xs text-gray-500">Base color for all block styles</p>
-				</div>
-			</div>
-			<div class="flex items-center gap-3">
-				<div class="flex-1">
-					<div class="relative">
-						<input
-							type="color"
-							value={$appearance?.tokens?.blockBase || '#3b82f6'}
-							on:input={(e) => updateAppearance('tokens.blockBase', e.currentTarget.value)}
-							class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-						/>
-						<div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer">
-							<div 
-								class="w-10 h-10 rounded-lg border-2 border-white shadow-sm ring-1 ring-gray-200"
-								style="background-color: {$appearance?.tokens?.blockBase || '#3b82f6'};"
-							></div>
-							<div class="flex-1">
-								<p class="text-xs font-medium text-gray-500 uppercase">Block Base</p>
-								<p class="text-sm font-bold text-gray-900 font-mono">{$appearance?.tokens?.blockBase || '#3b82f6'}</p>
-							</div>
-						</div>
-					</div>
-				</div>
+		<!-- Shadow Style Selector -->
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-3">
+				Shadow Style {#if currentRecipeId === 'neon'}<span class="text-orange-600 text-xs">(disabled for Neon)</span>{/if}
+			</label>
+			<div class="grid grid-cols-6 gap-2">
+				{#each shadowStyles as shadowId}
+					{@const isSelected = currentShadowStyleId === shadowId}
+					{@const isDisabled = currentRecipeId === 'neon'}
+					<button
+						type="button"
+						on:click={() => selectShadow(shadowId)}
+						disabled={isDisabled}
+						class="px-3 py-2 rounded-lg text-sm font-medium transition-all {isDisabled ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-500' : isSelected ? 'bg-[#00aa4f] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+					>
+						{getShadowStyleName(shadowId)}
+					</button>
+				{/each}
 			</div>
 			<p class="text-xs text-gray-500 mt-2">
-				💡 Changing this color will update all block styles automatically
+				{#if currentRecipeId === 'neon'}
+					Neon style uses glow effect instead of shadow
+				{:else}
+					Shadow depth applied to buttons
+				{/if}
 			</p>
 		</div>
 
-		<!-- Shadow Color (only show when Hard or Brutal shadow is selected) -->
-		{#if currentShadowStyleId === 'hard' || currentShadowStyleId === 'brutal'}
-			<div class="pt-6 border-t border-gray-100">
-				<div class="flex items-center justify-between mb-3">
-					<div>
-						<p class="text-sm font-medium text-gray-900">Shadow Color</p>
-						<p class="text-xs text-gray-500">Color for hard shadow effect</p>
-					</div>
-				</div>
-				<div class="flex items-center gap-3">
-					<div class="flex-1">
-						<div class="relative">
-							<input
-								type="color"
-								value={$appearance?.tokens?.shadowColor || '#000000'}
-								on:input={(e) => updateAppearance('tokens.shadowColor', e.currentTarget.value)}
-								class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-							/>
-							<div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer">
-								<div 
-									class="w-10 h-10 rounded-lg border-2 border-white shadow-sm ring-1 ring-gray-200"
-									style="background-color: {$appearance?.tokens?.shadowColor || '#000000'};"
-								></div>
-								<div class="flex-1">
-									<p class="text-xs font-medium text-gray-500 uppercase">Shadow Color</p>
-									<p class="text-sm font-bold text-gray-900 font-mono">{$appearance?.tokens?.shadowColor || '#000000'}</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<p class="text-xs text-gray-500 mt-2">
-					🎨 Customize the shadow color for hard shadow
-				</p>
-			</div>
-		{/if}
 	</div>
 </section>
