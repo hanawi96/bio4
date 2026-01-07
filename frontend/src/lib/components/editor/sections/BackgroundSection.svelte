@@ -10,7 +10,7 @@
 	import BackgroundTypeSelector from './background/BackgroundTypeSelector.svelte';
 	import SolidColorPicker from './background/SolidColorPicker.svelte';
 	import GradientEditor from './background/GradientEditor.svelte';
-	import PatternEditor from './background/PatternEditor.svelte';
+	import PatternEditor from '$lib/components/shared/PatternEditor.svelte';
 	import ImageUploader from './background/ImageUploader.svelte';
 	import VideoUploader from './background/VideoUploader.svelte';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';

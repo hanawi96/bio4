@@ -41,6 +41,8 @@
 				return bgValue;
 			} else if (bgType === 'gradient') {
 				return bgValue;
+			} else if (bgType === 'pattern') {
+				return bgValue; // pattern CSS string
 			} else if (bgType === 'image') {
 				return `url('${bgValue}')`;
 			} else if (bgType === 'video') {
@@ -648,15 +650,17 @@
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
 					{!hasVideoInDraft && resolvedBackground 
-						? (resolvedBackground.includes('background:') && resolvedBackground.includes('background-size:')
+						? (bgType === 'pattern'
 							? resolvedBackground
-							: resolvedBackground.includes('background:') 
-								? resolvedBackground 
-								: resolvedBackground.includes('url(')
-									? 'background: transparent;'
-									: bgType === 'gradient' && bgAnimation?.enabled
+							: resolvedBackground.includes('background:') && resolvedBackground.includes('background-size:')
+								? resolvedBackground
+								: resolvedBackground.includes('background:') 
+									? resolvedBackground 
+									: resolvedBackground.includes('url(')
 										? 'background: transparent;'
-										: `background: ${resolvedBackground};`)
+										: bgType === 'gradient' && bgAnimation?.enabled
+											? 'background: transparent;'
+											: `background: ${resolvedBackground};`)
 						: !hasVideoInDraft ? 'background: #ffffff;' : 'background: transparent;'}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;

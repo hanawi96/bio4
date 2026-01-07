@@ -4,13 +4,14 @@
 	import ImageEditor from './background/ImageEditor.svelte';
 	import SolidColorEditor from './background/SolidColorEditor.svelte';
 	import GradientEditor from './background/GradientEditor.svelte';
+	import PatternEditor from '$lib/components/shared/PatternEditor.svelte';
 	import {
 		type BlurKey,
 		type BrightnessKey,
 		type GrayscaleKey
 	} from '$lib/appearance/effectsTokens';
 
-	export let bgType: 'solid' | 'gradient' | 'image' | 'video';
+	export let bgType: 'solid' | 'gradient' | 'image' | 'video' | 'pattern';
 	export let bgSolidColor: string;
 	export let bgGradientType: 'linear' | 'radial';
 	export let bgGradientFrom: string;
@@ -27,6 +28,11 @@
 	export let bgBrightness: BrightnessKey | number;
 	export let bgGrayscale: GrayscaleKey | number;
 	export let selectedHeaderPreset: string = 'no-cover'; // Add this prop
+	
+	// Pattern props
+	export let selectedPattern: string = 'dots';
+	export let patternColor: string = '#e5e7eb';
+	export let patternBgColor: string = '#ffffff';
 	
 	// Animated gradient props
 	export let bgAnimationEnabled: boolean = false;
@@ -51,7 +57,7 @@
 	<h2 class="text-lg font-semibold text-gray-900 mb-4">Page Background</h2>
 	
 	<!-- Background Type Tabs -->
-	<div class="grid grid-cols-4 gap-2 mb-4">
+	<div class="grid grid-cols-5 gap-2 mb-4">
 		<button
 			type="button"
 			on:click={() => bgType = 'solid'}
@@ -67,6 +73,15 @@
 			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
 		>
 			Gradient
+		</button>
+		<button
+			type="button"
+			on:click={() => bgType = 'pattern'}
+			disabled={isAvatarCover}
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'pattern' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
+		>
+			Pattern
 		</button>
 		<button
 			type="button"
@@ -118,6 +133,15 @@
 			bind:bgAnimationEnabled
 			bind:bgAnimationVariant
 			bind:bgAnimationSpeed
+		/>
+	{/if}
+
+	<!-- Pattern -->
+	{#if bgType === 'pattern'}
+		<PatternEditor
+			bind:selectedPattern
+			bind:patternColor
+			bind:patternBgColor
 		/>
 	{/if}
 

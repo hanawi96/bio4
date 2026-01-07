@@ -27,18 +27,13 @@
 		const bgValue = themeConfig?.background?.value;
 		
 		if (bgType && bgValue) {
-			if (bgType === 'solid') {
-				return bgValue; // hex color
-			} else if (bgType === 'gradient') {
-				return bgValue; // gradient CSS
-			} else if (bgType === 'image') {
-				return `url('${bgValue}')`; // wrap image URL
-			} else if (bgType === 'video') {
-				return '#000000'; // fallback for video
-			}
+			if (bgType === 'solid') return bgValue;
+			else if (bgType === 'gradient') return bgValue;
+			else if (bgType === 'pattern') return bgValue;
+			else if (bgType === 'image') return `url('${bgValue}')`;
+			else if (bgType === 'video') return '#000000';
 		}
 		
-		// Fallback
 		return tokens?.backgroundColor || '#ffffff';
 	})();
 	
@@ -471,16 +466,17 @@
 						on:timeupdate={handleVideoTimeUpdate}
 						style="filter: blur({bgBlur}px) brightness({bgBrightness / 100}) grayscale({bgGrayscale / 100});"
 					></video>
-				{:else}
-					<!-- Image or Color Background -->
+				{:else if isBackgroundImage}
+					<!-- Image Background (separate layer for filters) -->
+					<div 
+						class="absolute inset-0 z-0"
+						style="background-image: url('{backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur({bgBlur}px) brightness({bgBrightness / 100}) grayscale({bgGrayscale / 100});"
+					></div>
+				{:else if bgType === 'gradient' && bgAnimation?.enabled}
+					<!-- Animated Gradient Background -->
 					<div 
 						class="absolute inset-0 z-0 {animationClass}"
-						style="{isBackgroundImage 
-							? `background-image: url('${backgroundImageUrl}'); background-size: cover; background-position: center; filter: blur(${bgBlur}px) brightness(${bgBrightness / 100}) grayscale(${bgGrayscale / 100});`
-							: bgType === 'gradient' && bgAnimation?.enabled
-								? `background-image: ${backgroundValue}; background-size: 200% 200%;`
-								: `background: ${backgroundValue};`
-						}"
+						style="background-image: {backgroundValue}; background-size: 200% 200%;"
 					></div>
 				{/if}
 			{/key}
@@ -500,8 +496,37 @@
 
 			<!-- Content -->
 			<div 
-				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10 {animationClass}"
+				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
+					{(() => {
+						const hasVideo = !!backgroundVideoUrl;
+						const hasValue = !!backgroundValue;
+						
+						let result;
+						if (!hasVideo && hasValue) {
+							if (bgType === 'pattern') {
+								result = backgroundValue;
+								console.log('🎨 [ThemePreviewMockup] Content style: PATTERN', backgroundValue.substring(0, 100));
+							} else if (isBackgroundImage) {
+								result = 'background: transparent;';
+								console.log('🎨 [ThemePreviewMockup] Content style: IMAGE (transparent)');
+							} else if (bgType === 'gradient' && bgAnimation?.enabled) {
+								result = 'background: transparent;';
+								console.log('🎨 [ThemePreviewMockup] Content style: ANIMATED GRADIENT (transparent)');
+							} else {
+								result = `background: ${backgroundValue};`;
+								console.log('🎨 [ThemePreviewMockup] Content style: SOLID/STATIC', backgroundValue);
+							}
+						} else if (!hasVideo) {
+							result = 'background: #ffffff;';
+							console.log('🎨 [ThemePreviewMockup] Content style: FALLBACK WHITE');
+						} else {
+							result = 'background: transparent;';
+							console.log('🎨 [ThemePreviewMockup] Content style: VIDEO (transparent)');
+						}
+						
+						return result;
+					})()}
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 					max-width: {maxWidth}px;

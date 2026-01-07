@@ -12,6 +12,7 @@
 	}>();
 
 	function handlePatternSelect(patternId: string) {
+		selectedPattern = patternId;
 		dispatch('update', { patternId, inkColor: patternColor, bgColor: patternBgColor });
 	}
 

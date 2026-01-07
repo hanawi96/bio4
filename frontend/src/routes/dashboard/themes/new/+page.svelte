@@ -21,6 +21,7 @@
 	import type { ThemePreset } from '$lib/types';
 	import { RADIUS_TOKENS, BLOCK_GAP_PRESETS, type BlockGapPreset, type MaxWidthKey, type PagePaddingKey, type AvatarBorderWidthKey, type BorderWidthKey } from '$lib/appearance/spacingTokens';
 	import { type BlurKey, type BrightnessKey, type GrayscaleKey } from '$lib/appearance/effectsTokens';
+	import { getPatternStyle } from '$lib/utils/background/backgroundUtils';
 
 	// SvelteKit props
 	export let params: Record<string, string> = {};
@@ -117,7 +118,7 @@
 	let avatarGlowColor = '#3b82f6';
 	
 	// Background fields
-	let bgType: 'solid' | 'gradient' | 'image' | 'video' = 'solid';
+	let bgType: 'solid' | 'gradient' | 'image' | 'video' | 'pattern' = 'solid';
 	let bgSolidColor = '#ffffff';
 	let bgGradientType: 'linear' | 'radial' = 'linear';
 	let bgGradientFrom = '#667eea';
@@ -132,6 +133,11 @@
 	let bgBlur: BlurKey | number = 'none';
 	let bgBrightness: BrightnessKey | number = 'normal';
 	let bgGrayscale: GrayscaleKey | number = 'none';
+	
+	// Pattern fields
+	let selectedPattern = 'dots';
+	let patternColor = '#e5e7eb';
+	let patternBgColor = '#ffffff';
 	
 	// Animated gradient fields
 	let bgAnimationEnabled = false;
@@ -431,6 +437,14 @@
 						bgGradientMiddleEnabled = false;
 					}
 				}
+			} else if (bgType === 'pattern') {
+				// Load pattern metadata
+				const patternMeta = theme.config.background?.pattern;
+				if (patternMeta) {
+					selectedPattern = patternMeta.id || 'dots';
+					patternColor = patternMeta.inkColor || '#e5e7eb';
+					patternBgColor = patternMeta.bgColor || '#ffffff';
+				}
 			} else if (bgType === 'image') {
 				bgImageUrl = bgValueFromConfig;
 			} else if (bgType === 'video') {
@@ -634,6 +648,15 @@
 						bgValue = `radial-gradient(${shape} farthest-corner at ${position}, ${bgGradientFrom} 0%, ${bgGradientTo} 100%)`;
 					}
 				}
+			} else if (bgType === 'pattern') {
+				// Generate pattern CSS using imported function
+				bgValue = getPatternStyle(selectedPattern, patternColor, patternBgColor);
+				// Store pattern metadata
+				config.background.pattern = {
+					id: selectedPattern,
+					inkColor: patternColor,
+					bgColor: patternBgColor
+				};
 			} else if (bgType === 'image') {
 				bgValue = bgImageUrl || '';
 			} else if (bgType === 'video') {
@@ -699,7 +722,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 	
@@ -724,11 +747,15 @@
 			};
 			const titleFontSizePx = headingSizeMap[headingFontSize] || 20;
 			
-			const backgroundValue = bgType === 'solid' ? bgSolidColor : bgType === 'gradient' ? (
-				bgGradientType === 'linear' 
-					? (bgGradientMiddleEnabled ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})`)
-					: (bgGradientMiddleEnabled ? `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom}, ${bgGradientTo})`)
-			) : bgType === 'video' ? '#000000' : bgImageUrl ? `url('${bgImageUrl}')` : '#ffffff';
+			const backgroundValue = bgType === 'solid' ? bgSolidColor 
+				: bgType === 'gradient' ? (
+					bgGradientType === 'linear' 
+						? (bgGradientMiddleEnabled ? `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `linear-gradient(${bgGradientDirection}, ${bgGradientFrom}, ${bgGradientTo})`)
+						: (bgGradientMiddleEnabled ? `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom}, ${bgGradientMiddle}, ${bgGradientTo})` : `radial-gradient(${bgRadialShape} farthest-corner at ${bgRadialPosition}, ${bgGradientFrom}, ${bgGradientTo})`)
+				) : bgType === 'pattern' ? getPatternStyle(selectedPattern, patternColor, patternBgColor)
+				: bgType === 'video' ? '#000000' 
+				: bgType === 'image' && bgImageUrl ? `url('${bgImageUrl}')` 
+				: '#ffffff';
 			
 			previewAppearanceState.set({
 				headerPresetId: selectedHeaderPreset,
@@ -797,7 +824,9 @@
 		}
 
 		// Update meta fields
-		const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+		const timestamp = Date.now();
+		const baseKey = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+		const key = `${baseKey}-${timestamp}`;
 		config.meta = {
 			...config.meta,
 			id: `preset.${key}`,
@@ -1026,6 +1055,9 @@
 					bind:bgBlur
 					bind:bgBrightness
 					bind:bgGrayscale
+					bind:selectedPattern
+					bind:patternColor
+					bind:patternBgColor
 					bind:bgAnimationEnabled
 					bind:bgAnimationVariant
 					bind:bgAnimationSpeed
