@@ -273,6 +273,8 @@ export async function updateLink(
 		sort_order?: number;
 		is_active?: number;
 		animation?: string;
+		lock_type?: string;
+		lock_value?: string;
 	}
 ) {
 	const fields: string[] = [];
@@ -313,6 +315,14 @@ export async function updateLink(
 	if (data.animation !== undefined) {
 		fields.push('animation = ?');
 		values.push(data.animation);
+	}
+	if (data.lock_type !== undefined) {
+		fields.push('lock_type = ?');
+		values.push(data.lock_type);
+	}
+	if (data.lock_value !== undefined) {
+		fields.push('lock_value = ?');
+		values.push(data.lock_value);
 	}
 
 	if (fields.length === 0) return;

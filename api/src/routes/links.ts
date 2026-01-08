@@ -160,7 +160,9 @@ app.put('/:linkId', async (c) => {
 		icon_color: body.icon_color,
 		sort_order: body.sort_order,
 		is_active: body.is_active,
-		animation: body.animation
+		animation: body.animation,
+		lock_type: body.lock_type,
+		lock_value: body.lock_value
 	});
 
 	return c.json({ success: true });
@@ -183,6 +185,45 @@ app.delete('/:linkId', async (c) => {
 	// Delete link from database
 	await deleteLink(c.env.DB, linkId);
 	return c.json({ success: true });
+});
+
+// POST /links/:linkId/verify - Verify lock code/password
+app.post('/:linkId/verify', async (c) => {
+	const linkId = parseInt(c.req.param('linkId'));
+	const body = await c.req.json();
+	const { value } = body;
+
+	// Get link lock info
+	const link = await c.env.DB.prepare(
+		'SELECT lock_type, lock_value, url FROM links WHERE id = ?'
+	).bind(linkId).first() as { lock_type: string; lock_value: string | null; url: string } | null;
+
+	if (!link) {
+		return c.json({ success: false, error: 'Link not found' }, 404);
+	}
+
+	// No lock
+	if (link.lock_type === 'none' || !link.lock_value) {
+		return c.json({ success: true, url: link.url });
+	}
+
+	// Verify code (plain text comparison)
+	if (link.lock_type === 'code') {
+		if (value === link.lock_value) {
+			return c.json({ success: true, url: link.url });
+		}
+		return c.json({ success: false, error: 'Invalid code' }, 401);
+	}
+
+	// Verify password (plain text for now, will add bcrypt later)
+	if (link.lock_type === 'password') {
+		if (value === link.lock_value) {
+			return c.json({ success: true, url: link.url });
+		}
+		return c.json({ success: false, error: 'Invalid password' }, 401);
+	}
+
+	return c.json({ success: false, error: 'Invalid lock type' }, 400);
 });
 
 export default app;

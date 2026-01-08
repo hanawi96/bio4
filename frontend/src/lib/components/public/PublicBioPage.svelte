@@ -6,6 +6,74 @@
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
+	import LockModal from '$lib/components/modals/LockModal.svelte';
+	import { api } from '$lib/api.client';
+	import type { Link } from '$lib/types';
+
+	// Lock modal state
+	let lockModalOpen = false;
+	let currentLockedLink: Link | null = null;
+	let lockModalRef: LockModal;
+
+	// Session storage for verified links (in-memory for now)
+	let verifiedLinks = new Set<number>();
+
+	// Handle link click
+	function handleLinkClick(e: MouseEvent, link: Link) {
+		// Check if link has lock
+		if (link.lock_type && link.lock_type !== 'none' && link.lock_value) {
+			// Check if already verified in this session
+			if (!verifiedLinks.has(link.id)) {
+				e.preventDefault();
+				currentLockedLink = link;
+				lockModalOpen = true;
+				return;
+			}
+		}
+		
+		// No lock or already verified - let browser handle navigation
+	}
+
+	// Handle lock verification
+	async function handleVerifyLock(event: CustomEvent<{ value: string }>) {
+		if (!currentLockedLink) return;
+
+		lockModalRef.setVerifying(true);
+
+		try {
+			const result = await api.verifyLinkLock(currentLockedLink.id, event.detail.value);
+			
+			if (result.success && result.url) {
+				// Add to verified set
+				verifiedLinks.add(currentLockedLink.id);
+				
+				// Save link info before closing modal
+				const shouldOpenInNewTab = currentLockedLink.open_in_new_tab === 1;
+				const targetUrl = result.url;
+				
+				// Close modal
+				lockModalOpen = false;
+				currentLockedLink = null;
+				
+				// Redirect to URL
+				if (shouldOpenInNewTab) {
+					window.open(targetUrl, '_blank', 'noopener,noreferrer');
+				} else {
+					window.location.href = targetUrl;
+				}
+			} else {
+				// Show error
+				lockModalRef.setError(result.error || 'Sai code/password');
+			}
+		} catch (error: any) {
+			lockModalRef.setError(error.message || 'Có lỗi xảy ra');
+		}
+	}
+
+	function handleCloseLockModal() {
+		lockModalOpen = false;
+		currentLockedLink = null;
+	}
 
 	// Get resolved appearance
 	$: tokens = $publicAppearance?.tokens || {};
@@ -534,10 +602,12 @@
 					{@const borderRadius = blockConfig?.borderRadius ?? 12}
 					{@const justifyContent = textAlign === 'right' ? 'flex-end' : textAlign === 'center' ? 'center' : 'flex-start'}
 					{@const animationClass = link.animation && link.animation !== 'none' ? `link-animation-${link.animation}` : ''}
+					{@const hasLock = link.lock_type && link.lock_type !== 'none' && link.lock_value}
 					<a
 						href={link.url}
 						target={link.open_in_new_tab ? '_blank' : '_self'}
 						rel="noopener noreferrer"
+						on:click={(e) => handleLinkClick(e, link)}
 						class="block transition-all hover:scale-[1.02] hover:opacity-90 {animationClass}"
 						style="
 							background: {blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
@@ -555,6 +625,11 @@
 								<img src={iconUrl} alt="" class="{iconClasses}" />
 							{/if}
 							<span class="font-semibold flex-1" style="font-size: {linkFontSizePx}px; text-align: {textAlign};">{link.title}</span>
+							{#if hasLock}
+								<svg class="w-4 h-4 flex-shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+								</svg>
+							{/if}
 						</div>
 					</a>
 				{/each}
@@ -830,3 +905,13 @@
 		animation: link-tada 1.5s ease-in-out infinite;
 	}
 </style>
+
+<!-- Lock Modal -->
+<LockModal
+	bind:this={lockModalRef}
+	bind:isOpen={lockModalOpen}
+	lockType={currentLockedLink?.lock_type || 'code'}
+	linkTitle={currentLockedLink?.title || ''}
+	on:verify={handleVerifyLock}
+	on:close={handleCloseLockModal}
+/>

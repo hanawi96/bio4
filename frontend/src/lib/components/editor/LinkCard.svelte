@@ -10,13 +10,19 @@
 	const dispatch = createEventDispatcher();
 	let showMenu = false;
 	let showAnimationPanel = false;
+	let showLockPanel = false;
 	let menuButton: HTMLButtonElement;
 	let menuPosition = { top: 0, right: 0 };
 	
 	type AnimationType = 'none' | 'bounce' | 'jello' | 'wobble' | 'pulse' | 'shake' | 'tada';
+	type LockType = 'none' | 'code' | 'password';
 	
 	// Reactive: sync selectedAnimation with link.animation
 	$: selectedAnimation = (link.animation || 'none') as AnimationType;
+	
+	// Lock state
+	$: selectedLockType = (link.lock_type || 'none') as LockType;
+	let lockValue = link.lock_value || '';
 
 	// Computed icon URL and classes - Always use black color for management view
 	$: iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, '#000000');
@@ -40,12 +46,43 @@
 	function toggleAnimationPanel(e: MouseEvent) {
 		e.stopPropagation();
 		showAnimationPanel = !showAnimationPanel;
+		if (showAnimationPanel) showLockPanel = false; // Close lock panel
 	}
 
 	function selectAnimation(e: MouseEvent, animation: AnimationType) {
 		e.stopPropagation();
 		selectedAnimation = animation;
 		dispatch('updateAnimation', { linkId: link.id, animation });
+	}
+
+	function toggleLockPanel(e: MouseEvent) {
+		e.stopPropagation();
+		showLockPanel = !showLockPanel;
+		if (showLockPanel) showAnimationPanel = false; // Close animation panel
+	}
+
+	function selectLockType(e: MouseEvent, lockType: LockType) {
+		e.stopPropagation();
+		selectedLockType = lockType;
+		
+		if (lockType === 'none') {
+			lockValue = '';
+			dispatch('updateLock', { linkId: link.id, lock_type: 'none', lock_value: null });
+		}
+	}
+
+	function saveLockValue(e: MouseEvent) {
+		e.stopPropagation();
+		
+		if (selectedLockType !== 'none' && !lockValue.trim()) {
+			return; // Don't save empty value
+		}
+		
+		dispatch('updateLock', { 
+			linkId: link.id, 
+			lock_type: selectedLockType, 
+			lock_value: lockValue.trim() || null 
+		});
 	}
 
 	function handleMove(e: MouseEvent, direction: 'up' | 'down') {
@@ -212,13 +249,21 @@
 
 				<!-- Lock/Private -->
 				<button
-					on:click={(e) => { e.stopPropagation(); /* TODO: Toggle lock */ }}
-					class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+					on:click={toggleLockPanel}
+					class="p-1.5 rounded-lg transition-colors relative"
+					class:bg-red-100={showLockPanel}
+					class:text-red-600={showLockPanel}
+					class:text-gray-400={!showLockPanel}
+					class:hover:text-gray-600={!showLockPanel}
+					class:hover:bg-gray-100={!showLockPanel}
 					title="Lock link"
 				>
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
 					</svg>
+					{#if selectedLockType !== 'none'}
+						<span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-600 rounded-full"></span>
+					{/if}
 				</button>
 
 				<!-- Clicks Counter -->
@@ -471,6 +516,125 @@
 							class:text-gray-500={selectedAnimation !== 'tada'}
 						>TADA</span>
 				</button>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Lock Panel (Inline) -->
+	{#if showLockPanel}
+		<div 
+			on:click={(e) => e.stopPropagation()}
+			class="w-full mt-4 border-t border-gray-200 pt-4 animate-scale-in"
+		>
+			<!-- Panel Header -->
+			<div class="flex items-center justify-between mb-4 px-1">
+				<h3 class="text-sm font-semibold text-gray-900">🔒 Lock this link</h3>
+				<button
+					on:click={toggleLockPanel}
+					class="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+					</svg>
+				</button>
+			</div>
+
+			<p class="text-xs text-gray-500 mb-4 px-1">Bảo vệ link của bạn với mã truy cập.</p>
+
+			<!-- Lock Options -->
+			<div class="space-y-3">
+				<!-- None -->
+				<label class="flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-colors"
+					class:border-red-500={selectedLockType === 'none'}
+					class:bg-red-50={selectedLockType === 'none'}
+					class:border-gray-200={selectedLockType !== 'none'}
+					class:hover:border-gray-300={selectedLockType !== 'none'}
+				>
+					<input 
+						type="radio" 
+						name="lock-type" 
+						value="none"
+						checked={selectedLockType === 'none'}
+						on:change={(e) => selectLockType(e, 'none')}
+						class="mt-0.5"
+					/>
+					<div class="flex-1">
+						<div class="font-semibold text-sm text-gray-900">None</div>
+						<div class="text-xs text-gray-500 mt-0.5">Không khóa</div>
+					</div>
+				</label>
+
+				<!-- Code -->
+				<label class="flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-colors"
+					class:border-red-500={selectedLockType === 'code'}
+					class:bg-red-50={selectedLockType === 'code'}
+					class:border-gray-200={selectedLockType !== 'code'}
+					class:hover:border-gray-300={selectedLockType !== 'code'}
+				>
+					<input 
+						type="radio" 
+						name="lock-type" 
+						value="code"
+						checked={selectedLockType === 'code'}
+						on:change={(e) => selectLockType(e, 'code')}
+						class="mt-0.5"
+					/>
+					<div class="flex-1">
+						<div class="font-semibold text-sm text-gray-900">Code</div>
+						<div class="text-xs text-gray-500 mt-0.5">Yêu cầu mã code</div>
+						{#if selectedLockType === 'code'}
+							<input
+								type="text"
+								bind:value={lockValue}
+								on:click={(e) => e.stopPropagation()}
+								placeholder="Nhập code (VD: SALE2024)"
+								class="w-full mt-2 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+							/>
+							<button
+								on:click={saveLockValue}
+								class="w-full mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+							>
+								Lưu
+							</button>
+						{/if}
+					</div>
+				</label>
+
+				<!-- Password -->
+				<label class="flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-colors"
+					class:border-red-500={selectedLockType === 'password'}
+					class:bg-red-50={selectedLockType === 'password'}
+					class:border-gray-200={selectedLockType !== 'password'}
+					class:hover:border-gray-300={selectedLockType !== 'password'}
+				>
+					<input 
+						type="radio" 
+						name="lock-type" 
+						value="password"
+						checked={selectedLockType === 'password'}
+						on:change={(e) => selectLockType(e, 'password')}
+						class="mt-0.5"
+					/>
+					<div class="flex-1">
+						<div class="font-semibold text-sm text-gray-900">Password</div>
+						<div class="text-xs text-gray-500 mt-0.5">Yêu cầu mật khẩu</div>
+						{#if selectedLockType === 'password'}
+							<input
+								type="password"
+								bind:value={lockValue}
+								on:click={(e) => e.stopPropagation()}
+								placeholder="Nhập password"
+								class="w-full mt-2 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+							/>
+							<button
+								on:click={saveLockValue}
+								class="w-full mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+							>
+								Lưu
+							</button>
+						{/if}
+					</div>
+				</label>
 			</div>
 		</div>
 	{/if}

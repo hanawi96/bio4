@@ -388,6 +388,28 @@
 		toast.success('Animation updated');
 	}
 
+	function handleUpdateLock(event: CustomEvent<any>) {
+		const { linkId, lock_type, lock_value } = event.detail;
+		
+		// Optimistic UI: Update link lock immediately
+		groups.update(g => g.map(group => 
+			group.id === groupId 
+				? { 
+					...group, 
+					links: group.links.map(link => 
+						link.id === linkId 
+							? { ...link, lock_type, lock_value }
+							: link
+					)
+				}
+				: group
+		));
+		
+		// Dispatch to parent for API update
+		dispatch('updateLink', { linkId, lock_type, lock_value });
+		toast.success('Lock updated');
+	}
+
 	function handleLayoutSelect(event: CustomEvent<string>) {
 		dispatch('updateLayout', event.detail);
 	}
@@ -602,6 +624,7 @@
 						on:delete={handleDelete}
 						on:move={handleMove}
 						on:updateAnimation={handleUpdateAnimation}
+						on:updateLock={handleUpdateLock}
 					/>
 				{/if}
 			{/each}

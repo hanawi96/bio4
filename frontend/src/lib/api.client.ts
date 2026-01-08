@@ -201,6 +201,19 @@ class ApiClient {
 		return res.json();
 	}
 
+	async verifyLinkLock(linkId: number, value: string): Promise<{ success: boolean; url?: string; error?: string }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/links/${linkId}/verify`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ value })
+		});
+		const data = await res.json();
+		if (!res.ok) {
+			return { success: false, error: data.error || 'Verification failed' };
+		}
+		return data;
+	}
+
 	// ============ BLOCKS ============
 
 	async getBlocks(username: string): Promise<{ blocks: Block[] }> {

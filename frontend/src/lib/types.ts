@@ -51,6 +51,8 @@ export interface Link {
 	is_active: number;
 	open_in_new_tab?: number; // 0 = same tab, 1 = new tab
 	animation?: 'none' | 'bounce' | 'jello' | 'wobble' | 'pulse' | 'shake' | 'tada';
+	lock_type?: 'none' | 'code' | 'password';
+	lock_value?: string | null;
 }
 
 export interface Block {
