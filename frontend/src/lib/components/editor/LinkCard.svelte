@@ -170,7 +170,13 @@
 	function removeSchedule(e: MouseEvent) {
 		e.stopPropagation();
 		dispatch('updateSchedule', { linkId: link.id, scheduled_at: null });
-		showSchedulePanel = false;
+		// Không đóng panel, để user có thể đặt countdown mới ngay
+		// showSchedulePanel = false;
+		
+		// Reset form về thời gian tối thiểu
+		const min = getMinDateTime();
+		scheduleDate = min.date;
+		scheduleTime = min.time;
 	}
 
 	function saveSchedule(e: MouseEvent) {
@@ -763,63 +769,87 @@
 
 			<p class="text-xs text-gray-500 mb-4 px-1">Đặt thời gian để link được kích hoạt</p>
 
-			<!-- Date & Time Pickers -->
-			<div class="space-y-3 px-1">
-				<!-- Date Picker -->
-				<div>
-					<label class="block text-xs font-medium text-gray-700 mb-1">Ngày</label>
-					<input
-						type="date"
-						bind:value={scheduleDate}
-						on:click={(e) => e.stopPropagation()}
-						min={getMinDateTime().date}
-						class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-					/>
-				</div>
-				
-				<!-- Time Picker -->
-				<div>
-					<label class="block text-xs font-medium text-gray-700 mb-1">Giờ</label>
-					<input
-						type="time"
-						bind:value={scheduleTime}
-						on:click={(e) => e.stopPropagation()}
-						class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-					/>
-				</div>
-				
-				<!-- Preview Countdown -->
-				{#if previewCountdown}
-					<div class="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-						<div class="text-xs text-blue-600 font-medium">⏰ Link sẽ active sau:</div>
-						<div class="text-sm font-bold text-blue-700 mt-1">{previewCountdown}</div>
+			{#if isCountdownActive}
+				<!-- Countdown đang chạy - Hiển thị compact -->
+				<div class="space-y-3 px-1">
+					<!-- Compact Info Card -->
+					<div class="p-3 bg-gradient-to-br from-blue-50 to-green-50 border border-blue-200 rounded-lg">
+						<div class="flex items-start justify-between gap-3">
+							<div class="flex-1 min-w-0">
+								<div class="text-xs text-gray-600 mb-1">Link sẽ active vào:</div>
+								<div class="text-sm font-bold text-gray-900 truncate">
+									{new Date(link.scheduled_at).toLocaleString('vi-VN', { 
+										day: '2-digit',
+										month: '2-digit',
+										year: 'numeric',
+										hour: '2-digit', 
+										minute: '2-digit'
+									})}
+								</div>
+							</div>
+							<div class="text-right flex-shrink-0">
+								<div class="text-xs text-green-600 mb-1">Còn lại:</div>
+								<div class="text-base font-bold text-green-700">{previewCountdown}</div>
+							</div>
+						</div>
 					</div>
-				{/if}
-				
-				<!-- Error Message -->
-				{#if scheduleError}
-					<div class="text-xs text-red-500">{scheduleError}</div>
-				{/if}
-				
-				<!-- Action Buttons -->
-				<div class="flex gap-2">
+					
+					<!-- Remove Button -->
+					<button
+						on:click={removeSchedule}
+						class="w-full px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+					>
+						Xóa Countdown
+					</button>
+				</div>
+			{:else}
+				<!-- Chưa có countdown - Form compact -->
+				<div class="space-y-3 px-1">
+					<!-- Date & Time in one row -->
+					<div class="grid grid-cols-2 gap-2">
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-1">Ngày</label>
+							<input
+								type="date"
+								bind:value={scheduleDate}
+								on:click={(e) => e.stopPropagation()}
+								min={getMinDateTime().date}
+								class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							/>
+						</div>
+						<div>
+							<label class="block text-xs font-medium text-gray-700 mb-1">Giờ</label>
+							<input
+								type="time"
+								bind:value={scheduleTime}
+								on:click={(e) => e.stopPropagation()}
+								class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							/>
+						</div>
+					</div>
+					
+					<!-- Preview Countdown - Compact -->
+					{#if previewCountdown}
+						<div class="p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+							<span class="text-xs text-blue-600 font-medium">Link sẽ active sau:</span>
+							<span class="text-sm font-bold text-blue-700">{previewCountdown}</span>
+						</div>
+					{/if}
+					
+					<!-- Error Message -->
+					{#if scheduleError}
+						<div class="text-xs text-red-500">{scheduleError}</div>
+					{/if}
+					
+					<!-- Save Button -->
 					<button
 						on:click={saveSchedule}
-						class="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+						class="w-full px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
 					>
 						Lưu
 					</button>
-					
-					{#if isCountdownActive}
-						<button
-							on:click={removeSchedule}
-							class="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-						>
-							Xóa
-						</button>
-					{/if}
 				</div>
-			</div>
+			{/if}
 		</div>
 	{/if}
 </button>
