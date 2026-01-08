@@ -137,16 +137,33 @@
 	};
 
 	// Cover
-	$: coverImageUrl = header?.coverImageUrl;
-	$: coverHeight = header?.coverHeight || 120;
+	$: coverHeight = (() => {
+		const heights = { sm: 120, md: 160, lg: 200 };
+		return header?.coverHeight ? heights[header.coverHeight] : 160;
+	})();
 	$: isAvatarCover = header?.preset === 'avatar-cover';
 	$: avatarOverlapOffset = avatarSize / 2;
 	
 	$: coverStyle = (() => {
-		if (!coverImageUrl) {
-			return `background: linear-gradient(135deg, ${tokens?.primaryColor || '#3b82f6'} 0%, ${tokens?.primaryColor || '#3b82f6'}dd 100%);`;
+		if (!header?.hasCover) return '';
+		
+		// If avatar-cover preset, use avatar as cover
+		if (isAvatarCover && $page?.avatar_url) {
+			return `background: url('${$page.avatar_url}') center/cover;`;
 		}
-		return `background: url('${coverImageUrl}') center/cover no-repeat;`;
+		
+		// Get coverValue from header (already merged with overrides)
+		const coverValue = header?.coverValue;
+		
+		if (!coverValue) {
+			return 'background: linear-gradient(135deg, #667eea, #764ba2);';
+		}
+		
+		if (coverValue.startsWith('http') || coverValue.startsWith('/')) {
+			return `background: url('${coverValue}') center/cover;`;
+		}
+		
+		return `background: ${coverValue};`;
 	})();
 
 	// Social icons
@@ -257,7 +274,7 @@
 				<!-- Cover Image/Gradient -->
 				<div 
 					class="w-full relative"
-					style="{coverStyle} height: {coverHeight}px; border-radius: 0;"
+					style="{coverStyle} height: {coverHeight}px; border-radius: 5px;"
 				>
 					<!-- Text overlay for avatar-cover -->
 					{#if isAvatarCover}
@@ -289,7 +306,7 @@
 								style="
 									width: {avatarWidth}px;
 									height: {avatarHeight}px;
-									border: {avatarBorderWidth}px solid {header.avatarBorderColor || '#ffffff'};
+									{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
 									border-radius: {getAvatarBorderRadius(header.avatarShape)};
 									box-shadow: {avatarGlow};
 								"
@@ -301,7 +318,7 @@
 									width: {avatarWidth}px;
 									height: {avatarHeight}px;
 									background: {tokens?.primaryColor || '#3b82f6'};
-									border: {avatarBorderWidth}px solid {header.avatarBorderColor || '#ffffff'};
+									{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
 									border-radius: {getAvatarBorderRadius(header.avatarShape)};
 									font-size: {avatarSize / 2.5}px;
 									box-shadow: {avatarGlow};
@@ -316,7 +333,7 @@
 			
 			<!-- Content below cover -->
 			{#if !isAvatarCover}
-				<div class="text-center" style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px;">
+				<div style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign || 'center'};">
 					<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">
 						{$page?.title || 'Your Name'}
 					</h1>
@@ -336,28 +353,28 @@
 			{/if}
 		{:else}
 			<!-- No Cover - Center Layout -->
-			<div class="text-center">
+			<div style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
 				{#if $page?.avatar_url}
 					<img 
 						src={$page.avatar_url} 
 						alt="Avatar" 
-						class="object-cover mx-auto mb-2"
+						class="object-cover mb-2"
 						style="
 							width: {avatarWidth}px;
 							height: {avatarHeight}px;
-							border: {avatarBorderWidth}px solid {header?.avatarBorderColor || '#ffffff'};
+							{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
 							border-radius: {getAvatarBorderRadius(header?.avatarShape)};
 							box-shadow: {avatarGlow};
 						"
 					/>
 				{:else}
 					<div 
-						class="flex items-center justify-center text-white font-bold mx-auto mb-2"
+						class="flex items-center justify-center text-white font-bold mb-2"
 						style="
 							width: {avatarWidth}px;
 							height: {avatarHeight}px;
 							background: {tokens?.primaryColor || '#3b82f6'};
-							border: {avatarBorderWidth}px solid {header?.avatarBorderColor || '#ffffff'};
+							{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
 							border-radius: {getAvatarBorderRadius(header?.avatarShape)};
 							font-size: {avatarSize / 2.5}px;
 							box-shadow: {avatarGlow};
