@@ -16,24 +16,24 @@
 	});
 
 	// Debounced search
-	let searchTimeout: any;
-	$: {
+	let searchTimeout: ReturnType<typeof setTimeout>;
+	
+	function handleSearch(query: string) {
 		clearTimeout(searchTimeout);
-		if (searchQuery.trim()) {
-			searchTimeout = setTimeout(async () => {
-				loading = true;
-				gifs = await searchGifs(searchQuery, 24);
-				loading = false;
-			}, 400);
-		} else {
-			// Show trending when search is empty
-			searchTimeout = setTimeout(async () => {
-				loading = true;
-				gifs = await getTrendingGifs(24);
-				loading = false;
-			}, 100);
+		
+		if (!query.trim()) {
+			// Don't reload trending - keep current results
+			return;
 		}
+		
+		searchTimeout = setTimeout(async () => {
+			loading = true;
+			gifs = await searchGifs(query, 24);
+			loading = false;
+		}, 400);
 	}
+	
+	$: handleSearch(searchQuery);
 
 	function selectGif(gif: GiphyGif) {
 		selectedGif = gif;

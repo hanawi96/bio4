@@ -51,13 +51,3 @@ export async function getTrendingGifs(limit = 20): Promise<GiphyGif[]> {
 		return [];
 	}
 }
-
-export function getGifUrl(giphyId: string, size: 'small' | 'medium' | 'large' = 'medium'): string {
-	// Use Giphy's media CDN
-	const sizeMap = {
-		small: '100w',
-		medium: '200w',
-		large: 'giphy'
-	};
-	return `https://i.giphy.com/media/${giphyId}/${sizeMap[size]}.gif`;
-}
