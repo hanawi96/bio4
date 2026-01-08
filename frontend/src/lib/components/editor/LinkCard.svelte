@@ -20,9 +20,9 @@
 	// Reactive: sync selectedAnimation with link.animation
 	$: selectedAnimation = (link.animation || 'none') as AnimationType;
 	
-	// Lock state
+	// Lock state - sync with link data
 	$: selectedLockType = (link.lock_type || 'none') as LockType;
-	let lockValue = link.lock_value || '';
+	$: lockValue = link.lock_value || '';
 
 	// Computed icon URL and classes - Always use black color for management view
 	$: iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, '#000000');
