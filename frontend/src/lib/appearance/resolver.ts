@@ -108,6 +108,10 @@ function expandThemeTokens(config: any): ThemeTokens {
 	const layout = config.page?.layout || {};
 	const schemaVersion = config.meta?.schemaVersion || 1;
 
+	console.log('[expandThemeTokens] Schema version:', schemaVersion);
+	console.log('[expandThemeTokens] tokens.bg:', tokens.bg);
+	console.log('[expandThemeTokens] semantic.color.surface.page:', semantic.color?.surface?.page);
+
 	let backgroundColor: string;
 	let text: string;
 	let primary: string;
@@ -119,6 +123,7 @@ function expandThemeTokens(config: any): ThemeTokens {
 	// Schema v2: Use semantic tokens
 	if (schemaVersion === 2) {
 		backgroundColor = resolveSemanticToken(semantic.color?.surface?.page, config) || '#ffffff';
+		console.log('[expandThemeTokens] v2 backgroundColor:', backgroundColor);
 		text = resolveSemanticToken(semantic.color?.text?.default, config) || '#000000';
 		primary = resolveSemanticToken(semantic.color?.primary, config) || '#3b82f6';
 		surface = resolveSemanticToken(semantic.color?.surface?.card, config) || '#fafafa';
@@ -129,6 +134,7 @@ function expandThemeTokens(config: any): ThemeTokens {
 	} else {
 		// Schema v1: Use flat tokens (legacy)
 		backgroundColor = bgTokenToCSS(tokens.bg);
+		console.log('[expandThemeTokens] v1 backgroundColor:', backgroundColor);
 		text = tokens.text || '#000000';
 		primary = tokens.primary || '#3b82f6';
 		surface = tokens.surface || '#fafafa';
@@ -152,7 +158,7 @@ function expandThemeTokens(config: any): ThemeTokens {
 		? (resolveSemanticToken(semantic.color?.shadow?.default, config) || '#000000')
 		: (tokens.shadowColor || '#000000');
 
-	return {
+	const result = {
 		bg: schemaVersion === 2
 			? { type: 'color', value: backgroundColor }
 			: tokens.bg || { type: 'color', value: '#ffffff' },
@@ -174,15 +180,24 @@ function expandThemeTokens(config: any): ThemeTokens {
 		primaryColor: primary,
 		spacing: layout.pagePadding || 16
 	};
+	
+	console.log('[expandThemeTokens] Final tokens.backgroundColor:', result.backgroundColor);
+	
+	return result;
 }
 
 // Deep merge overrides into config
 function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 	const config = JSON.parse(JSON.stringify(baseConfig));
 
+	console.log('[applyOverrides] Input overrides:', overrides);
+	console.log('[applyOverrides] Base config schema:', config.meta?.schemaVersion);
+
 	Object.entries(overrides).forEach(([key, value]) => {
 		// Map old keys to new structure
 		if (key === 'backgroundColor') {
+			console.log('[applyOverrides] Processing backgroundColor:', value);
+			
 			// Check if it's a pattern (starts with "background:")
 			if (typeof value === 'string' && value.startsWith('background:')) {
 				// Pattern format - store as-is in tokens.bg
@@ -198,6 +213,26 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 			} else {
 				config.tokens.bg = { type: 'color', value };
 			}
+			
+			console.log('[applyOverrides] Set tokens.bg:', config.tokens.bg);
+			
+			// IMPORTANT: Also update semantic.color.surface.page for schema v2 themes
+			const schemaVersion = config.meta?.schemaVersion || 1;
+			if (schemaVersion === 2) {
+				if (!config.semantic) config.semantic = {};
+				if (!config.semantic.color) config.semantic.color = {};
+				if (!config.semantic.color.surface) config.semantic.color.surface = {};
+				config.semantic.color.surface.page = value;
+				console.log('[applyOverrides] Set semantic.color.surface.page:', value);
+			}
+			
+			// CRITICAL: Also update background.value for PublicBioPage
+			if (!config.background) config.background = {};
+			config.background.type = value.includes('gradient') ? 'gradient' : 'solid';
+			config.background.value = value;
+			console.log('[applyOverrides] Set background.type:', config.background.type);
+			console.log('[applyOverrides] Set background.value:', config.background.value);
+			
 			return;
 		}
 		if (key === 'backgroundVideo') {
@@ -506,15 +541,16 @@ export function resolveAppearance(
 	};
 
 	const result = {
-		theme: theme || {
-			id: 0,
-			key: 'custom',
+		theme: {
+			id: theme?.id || 0,
+			key: theme?.key || 'custom',
 			name: themeName,
-			config: themeConfig
+			config: themeConfig  // Always use themeConfig (with overrides applied)
 		},
 		tokens,
 		header: { 
 			...(headerPresetsMap[headerPresetId] || headerPresetsMap['no-cover'] || HEADER_PRESETS['no-cover']), 
+			preset: headerPresetId,  // Add preset ID for easy checking (e.g., isAvatarCover)
 			// Merge theme defaults (avatarSize, avatarShape, etc.)
 			...(themeConfig.page?.defaults ? {
 				avatarSize: themeConfig.page.defaults.avatarSize,

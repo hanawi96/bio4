@@ -19,15 +19,26 @@
 	$: bgAnimation = $publicAppearance?.theme?.config?.background?.animation;
 	$: particles = $publicAppearance?.theme?.config?.background?.particles;
 	
+	$: {
+		console.log('[PublicBioPage background] bgType:', bgType);
+		console.log('[PublicBioPage background] bgValue:', bgValue);
+		console.log('[PublicBioPage background] tokens.backgroundColor:', tokens?.backgroundColor);
+	}
+	
 	$: resolvedBackground = (() => {
 		if (bgType && bgValue) {
-			if (bgType === 'solid') return bgValue;
+			if (bgType === 'solid') {
+				console.log('[PublicBioPage resolvedBackground] Returning solid bgValue:', bgValue);
+				return bgValue;
+			}
 			if (bgType === 'gradient') return bgValue;
 			if (bgType === 'pattern') return bgValue;
 			if (bgType === 'image') return `url('${bgValue}')`;
 			if (bgType === 'video') return '#000000';
 		}
-		return tokens?.backgroundColor || '#ffffff';
+		const fallback = tokens?.backgroundColor || '#ffffff';
+		console.log('[PublicBioPage resolvedBackground] Using fallback:', fallback);
+		return fallback;
 	})();
 
 	// Background filters - match PhoneMockup format
@@ -142,6 +153,10 @@
 		return header?.coverHeight ? heights[header.coverHeight] : 160;
 	})();
 	$: isAvatarCover = header?.preset === 'avatar-cover';
+	$: {
+		console.log('[PublicBioPage isAvatarCover] header?.preset:', header?.preset);
+		console.log('[PublicBioPage isAvatarCover] isAvatarCover:', isAvatarCover);
+	}
 	$: avatarOverlapOffset = avatarSize / 2;
 	
 	$: coverStyle = (() => {
@@ -178,6 +193,74 @@
 	$: avatarGlow = header?.avatarGlowEnabled
 		? `0 0 30px ${header?.avatarGlowColor || tokens?.primaryColor || '#3b82f6'}80`
 		: 'none';
+
+	// Convert background color to rgba gradient colors for mask (for avatar-cover)
+	$: maskGradientColors = (() => {
+		if (!isAvatarCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
+		
+		console.log('[PublicBioPage maskGradientColors] isAvatarCover:', isAvatarCover);
+		console.log('[PublicBioPage maskGradientColors] tokens?.backgroundColor:', tokens?.backgroundColor);
+		console.log('[PublicBioPage maskGradientColors] resolvedBackground:', resolvedBackground);
+		console.log('[PublicBioPage maskGradientColors] config.tokens.bg:', $publicAppearance?.theme?.config?.tokens?.bg);
+		
+		// Get background color - try multiple sources in priority order
+		let bgColor: string | null = null;
+		
+		// Priority 1: Check if resolvedBackground is a simple solid color
+		if (resolvedBackground && resolvedBackground.match(/^#[0-9a-fA-F]{6}$/)) {
+			bgColor = resolvedBackground;
+			console.log('[PublicBioPage maskGradientColors] Using resolvedBackground:', bgColor);
+		}
+		// Priority 2: Try tokens.backgroundColor
+		else if (tokens?.backgroundColor && (tokens.backgroundColor.match(/^#[0-9a-fA-F]{6}$/) || tokens.backgroundColor.startsWith('rgb'))) {
+			bgColor = tokens.backgroundColor;
+			console.log('[PublicBioPage maskGradientColors] Using tokens.backgroundColor:', bgColor);
+		}
+		// Priority 3: Check config.tokens.bg.value (after overrides applied)
+		else {
+			const bgToken = $publicAppearance?.theme?.config?.tokens?.bg;
+			if (bgToken?.value && typeof bgToken.value === 'string') {
+				if (bgToken.value.match(/^#[0-9a-fA-F]{6}$/)) {
+					bgColor = bgToken.value;
+					console.log('[PublicBioPage maskGradientColors] Using config.tokens.bg.value:', bgColor);
+				}
+			}
+		}
+		
+		// Fallback to white if still no valid color
+		if (!bgColor) {
+			bgColor = '#ffffff';
+			console.log('[PublicBioPage maskGradientColors] Using fallback white');
+		}
+		
+		let r = 255, g = 255, b = 255; // Default to white
+		
+		// Parse hex color (#RRGGBB)
+		if (bgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			r = parseInt(bgColor.slice(1, 3), 16);
+			g = parseInt(bgColor.slice(3, 5), 16);
+			b = parseInt(bgColor.slice(5, 7), 16);
+		}
+		// Parse rgb/rgba
+		else if (bgColor.startsWith('rgb')) {
+			const match = bgColor.match(/\d+/g);
+			if (match && match.length >= 3) {
+				r = parseInt(match[0]);
+				g = parseInt(match[1]);
+				b = parseInt(match[2]);
+			}
+		}
+		
+		const result = {
+			solid: `rgba(${r}, ${g}, ${b}, 1)`,
+			dark: `rgba(${r}, ${g}, ${b}, 0.8)`,
+			medium: `rgba(${r}, ${g}, ${b}, 0.4)`
+		};
+		
+		console.log('[PublicBioPage maskGradientColors] Final result:', result);
+		
+		return result;
+	})();
 
 	// Icon thumbnail color
 	$: iconThumbnailColor = (() => {
@@ -278,8 +361,13 @@
 				>
 					<!-- Text overlay for avatar-cover -->
 					{#if isAvatarCover}
+						<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 						<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
-						<div class="absolute bottom-4 left-0 right-0 text-center px-4">
+						<!-- Layer 2: Bottom fade mask - extend 2px below to prevent gap -->
+						<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
+						
+						<!-- Text overlay on avatar cover - z-20 to float above gradient mask -->
+						<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
 							<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">
 								{$page?.title || 'Your Name'}
 							</h1>

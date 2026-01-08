@@ -19,6 +19,10 @@ export const publicAppearance = derived<[typeof page, typeof theme], ResolvedApp
 		try {
 			// Parse PUBLISHED appearance state (not draft)
 			const appearanceState = JSON.parse($page.published_appearance || '{}');
+			
+			console.log('[publicAppearance store] published_appearance:', $page.published_appearance);
+			console.log('[publicAppearance store] appearanceState:', appearanceState);
+			console.log('[publicAppearance store] theme from API:', $theme);
 
 			// Use theme from API response (already resolved by backend)
 			// Wrap it in Theme format if needed
@@ -29,8 +33,13 @@ export const publicAppearance = derived<[typeof page, typeof theme], ResolvedApp
 				config: $theme as any // Cast to avoid type mismatch between two ThemeConfig types
 			} : FALLBACK_THEME;
 
+			console.log('[publicAppearance store] themeData.config.meta:', themeData.config?.meta);
+
 			// Resolve final appearance
 			const resolved = resolveAppearance(themeData, appearanceState);
+
+			console.log('[publicAppearance store] resolved.tokens.backgroundColor:', resolved.tokens.backgroundColor);
+			console.log('[publicAppearance store] resolved.theme.config.tokens.bg:', resolved.theme.config?.tokens?.bg);
 
 			return resolved;
 		} catch (e) {
