@@ -633,6 +633,12 @@
 					class="absolute inset-0 z-0 {animationClass}"
 					style="background-image: {resolvedBackground}; background-size: 200% 200%;"
 				></div>
+			{:else if resolvedBackground}
+				<!-- Solid/Pattern/Static Gradient Background - separate layer for particles to work -->
+				<div 
+					class="absolute inset-0 z-0"
+					style="{bgType === 'pattern' ? resolvedBackground : `background: ${resolvedBackground};`}"
+				></div>
 			{/if}
 			
 			<!-- Particles Layer -->
@@ -652,20 +658,7 @@
 			<div 
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
-					{(() => {
-						const hasVideo = hasVideoInDraft;
-						const hasValue = !!resolvedBackground;
-						const isImage = resolvedBackground?.includes('url(');
-						const isAnimatedGradient = bgType === 'gradient' && bgAnimation?.enabled;
-						
-						if (!hasVideo && hasValue) {
-							if (bgType === 'pattern') return resolvedBackground;
-							if (isImage) return 'background: transparent;';
-							if (isAnimatedGradient) return 'background: transparent;';
-							return `background: ${resolvedBackground};`;
-						}
-						return hasVideo ? 'background: transparent;' : 'background: #ffffff;';
-					})()}
+					background: transparent;
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 				"

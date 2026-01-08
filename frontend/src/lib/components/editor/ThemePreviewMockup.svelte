@@ -522,6 +522,12 @@
 						class="absolute inset-0 z-0 {animationClass}"
 						style="background-image: {backgroundValue}; background-size: 200% 200%;"
 					></div>
+				{:else}
+					<!-- Solid/Pattern/Static Gradient Background - separate layer for particles to work -->
+					<div 
+						class="absolute inset-0 z-0"
+						style="{bgType === 'pattern' ? backgroundValue : `background: ${backgroundValue};`}"
+					></div>
 				{/if}
 			{/key}
 			
@@ -542,39 +548,7 @@
 			<div 
 				class="w-full h-full overflow-y-auto scrollbar-hide phone-content relative z-10"
 				style="
-					{(() => {
-						const hasVideo = !!backgroundVideoUrl;
-						const hasValue = !!backgroundValue;
-						
-						console.log('🖼️ [Render] hasVideo:', hasVideo, 'hasValue:', hasValue, 'bgType:', bgType);
-						console.log('🖼️ [Render] backgroundValue:', backgroundValue?.substring(0, 100));
-						
-						let result;
-						if (!hasVideo && hasValue) {
-							if (bgType === 'pattern') {
-								result = backgroundValue;
-								console.log('🎨 [ThemePreviewMockup] Content style: PATTERN', backgroundValue.substring(0, 100));
-							} else if (isBackgroundImage) {
-								result = 'background: transparent;';
-								console.log('🎨 [ThemePreviewMockup] Content style: IMAGE (transparent)');
-							} else if (bgType === 'gradient' && bgAnimation?.enabled) {
-								result = 'background: transparent;';
-								console.log('🎨 [ThemePreviewMockup] Content style: ANIMATED GRADIENT (transparent)');
-							} else {
-								result = `background: ${backgroundValue};`;
-								console.log('🎨 [ThemePreviewMockup] Content style: SOLID/STATIC', backgroundValue);
-							}
-						} else if (!hasVideo) {
-							result = 'background: #ffffff;';
-							console.log('🎨 [ThemePreviewMockup] Content style: FALLBACK WHITE');
-						} else {
-							result = 'background: transparent;';
-							console.log('🎨 [ThemePreviewMockup] Content style: VIDEO (transparent)');
-						}
-						
-						console.log('🖼️ [Render] Final result:', result?.substring(0, 100));
-						return result;
-					})()}
+					background: transparent;
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 					max-width: {maxWidth}px;

@@ -149,6 +149,10 @@
 
 	// Cover
 	$: coverHeight = (() => {
+		// For avatar-cover, use maxWidth to maintain 1:1 aspect ratio (same as PhoneMockup)
+		if (isAvatarCover) {
+			return maxWidth;
+		}
 		const heights = { sm: 120, md: 160, lg: 200 };
 		return header?.coverHeight ? heights[header.coverHeight] : 160;
 	})();
@@ -302,20 +306,9 @@
 	style="
 		font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
 		color: {tokens?.textColor || '#000000'};
-		{(() => {
-			const isImage = bgType === 'image';
-			const isAnimatedGradient = bgType === 'gradient' && bgAnimation?.enabled;
-			const isPattern = bgType === 'pattern';
-			
-			// Solid, static gradient render directly on container
-			if (!isImage && !isAnimatedGradient && !isPattern) {
-				return `background: ${resolvedBackground};`;
-			}
-			return '';
-		})()}
 	"
 >
-	<!-- Background Layer (for image, animated gradient, pattern) -->
+	<!-- Background Layer (always separate for particles to work) -->
 	{#if bgType === 'image' && bgValue}
 		<div 
 			class="fixed inset-0 z-0"
@@ -333,6 +326,12 @@
 		<div 
 			class="fixed inset-0 z-0"
 			style="{resolvedBackground}"
+		></div>
+	{:else}
+		<!-- Solid/Static Gradient Background - separate layer for particles to work -->
+		<div 
+			class="fixed inset-0 z-0"
+			style="background: {resolvedBackground};"
 		></div>
 	{/if}
 
@@ -357,7 +356,7 @@
 				<!-- Cover Image/Gradient -->
 				<div 
 					class="w-full relative"
-					style="{coverStyle} height: {coverHeight}px; border-radius: 5px;"
+					style="{coverStyle} height: {coverHeight}px; {isAvatarCover ? '' : 'border-radius: 5px;'}"
 				>
 					<!-- Text overlay for avatar-cover -->
 					{#if isAvatarCover}
