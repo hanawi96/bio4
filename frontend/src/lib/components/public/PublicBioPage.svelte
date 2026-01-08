@@ -5,6 +5,7 @@
 	import { resolvePagePadding, resolveAvatarBorderWidth, resolveSocialIconSize } from '$lib/appearance/spacingTokens';
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
+	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 
 	// Get resolved appearance
 	$: tokens = $publicAppearance?.tokens || {};
@@ -39,10 +40,30 @@
 	})();
 
 	// Animation class for gradient
+	$: bgGradientDirection = (() => {
+		const themeConfig = $publicAppearance?.theme?.config;
+		const bgValue = themeConfig?.background?.value;
+		if (bgType === 'gradient' && bgValue) {
+			const match = bgValue.match(/(\d+)deg/);
+			return match ? match[1] : '135';
+		}
+		return '135';
+	})();
+	
 	$: animationClass = (() => {
 		if (bgType !== 'gradient' || !bgAnimation?.enabled) return '';
 		const variant = bgAnimation.variant || 'rotating';
 		const speed = bgAnimation.speed || 'medium';
+		
+		// For flowing variant, choose animation based on direction
+		if (variant === 'flowing') {
+			const deg = parseInt(bgGradientDirection);
+			const flowingVariant = 
+				(deg === 90 || deg === 270) ? 'horizontal' :
+				(deg === 0 || deg === 180) ? 'vertical' : 'diagonal';
+			return `gradient-flowing-${flowingVariant} gradient-speed-${speed}`;
+		}
+		
 		return `gradient-${variant} gradient-speed-${speed}`;
 	})();
 
@@ -213,6 +234,19 @@
 			class="fixed inset-0 z-0"
 			style="{resolvedBackground}"
 		></div>
+	{/if}
+
+	<!-- Particles Layer -->
+	{#if particles?.enabled}
+		<ParticlesLayer
+			count={particles.count || 20}
+			size={particles.size || 'medium'}
+			color={particles.color || '#ffffff'}
+			speed={particles.speed || 'medium'}
+			variant={particles.variant || 'floating'}
+			blur={particles.blur || 'medium'}
+			opacity={particles.opacity ?? 60}
+		/>
 	{/if}
 
 	<!-- Content -->
@@ -496,22 +530,106 @@
 				</div>
 			{/if}
 		{/if}
+
+		<!-- Footer -->
+		<div class="mt-8 mb-6 text-center">
+			<p class="text-xs" style="color: {tokens?.mutedTextColor || '#71717a'};">Made with Bio Link</p>
+		</div>
 	</div>
 </div>
 
 <style>
-	/* Gradient animations */
+	/* Animated Gradient Keyframes - Multiple directions */
+	
+	/* Horizontal animations (for 90deg, 270deg) */
+	@keyframes gradient-flowing-horizontal {
+		0% {
+			background-position: -200% 0%;
+		}
+		100% {
+			background-position: 200% 0%;
+		}
+	}
+	
+	/* Vertical animations (for 0deg, 180deg) */
+	@keyframes gradient-flowing-vertical {
+		0% {
+			background-position: 0% -200%;
+		}
+		100% {
+			background-position: 0% 200%;
+		}
+	}
+	
+	/* Diagonal animations (for 45deg, 135deg, 225deg, 315deg) */
+	@keyframes gradient-flowing-diagonal {
+		0% {
+			background-position: -200% -200%;
+		}
+		100% {
+			background-position: 200% 200%;
+		}
+	}
+	
+	/* Rotating animation - works for all directions */
 	@keyframes gradient-rotating {
-		0% { background-position: 0% 50%; }
-		50% { background-position: 100% 50%; }
-		100% { background-position: 0% 50%; }
+		0% {
+			background-position: 0% 0%;
+		}
+		25% {
+			background-position: 100% 0%;
+		}
+		50% {
+			background-position: 100% 100%;
+		}
+		75% {
+			background-position: 0% 100%;
+		}
+		100% {
+			background-position: 0% 0%;
+		}
 	}
-	
+
+	@keyframes gradient-pulsing {
+		0%, 100% {
+			filter: brightness(1) saturate(1);
+		}
+		50% {
+			filter: brightness(1.3) saturate(1.5);
+		}
+	}
+
+	/* Animation Classes - Apply to background layer */
 	.gradient-rotating {
-		animation: gradient-rotating var(--speed, 10s) ease infinite;
+		animation: gradient-rotating ease infinite;
 	}
-	
-	.gradient-speed-slow { --speed: 20s; }
-	.gradient-speed-medium { --speed: 10s; }
-	.gradient-speed-fast { --speed: 5s; }
+
+	.gradient-flowing-horizontal {
+		animation: gradient-flowing-horizontal linear infinite;
+	}
+
+	.gradient-flowing-vertical {
+		animation: gradient-flowing-vertical linear infinite;
+	}
+
+	.gradient-flowing-diagonal {
+		animation: gradient-flowing-diagonal linear infinite;
+	}
+
+	.gradient-pulsing {
+		animation: gradient-pulsing ease-in-out infinite;
+	}
+
+	/* Speed Classes */
+	.gradient-speed-slow {
+		animation-duration: 8s;
+	}
+
+	.gradient-speed-medium {
+		animation-duration: 4s;
+	}
+
+	.gradient-speed-fast {
+		animation-duration: 2s;
+	}
 </style>
