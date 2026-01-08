@@ -3,6 +3,7 @@
 	import { api } from '$lib/api.client';
 	import { loadEditorData, groups } from '$lib/stores/page';
 	import { appearance } from '$lib/stores/appearance';
+	import { toast } from '$lib/stores/toast';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 
 	export let params = {};
@@ -486,6 +487,9 @@
 		try {
 			await api.deleteLink(linkId);
 			
+			// Show success toast
+			toast.success('Link deleted');
+			
 			// Reload data silently
 			const data = await api.getEditorData(username);
 			loadEditorData(data);
@@ -500,7 +504,7 @@
 			if (deletedLink) {
 				currentLinks = [...currentLinks, deletedLink].sort((a, b) => a.sort_order - b.sort_order);
 			}
-			error = e.message || 'Failed to delete link';
+			toast.error(e.message || 'Failed to delete link');
 		}
 	}
 

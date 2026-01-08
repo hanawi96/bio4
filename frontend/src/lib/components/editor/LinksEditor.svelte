@@ -3,6 +3,7 @@
 	import { appearance } from '$lib/stores/appearance';
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { groups } from '$lib/stores/page';
+	import { toast } from '$lib/stores/toast';
 	import LinkCard from './LinkCard.svelte';
 	import LinkForm from './LinkForm.svelte';
 	import LayoutSelector from './LayoutSelector.svelte';
@@ -295,7 +296,7 @@
 				finalIconType = 'image';
 				finalIconData = result.url;
 			} catch (error: any) {
-				alert(error.message || 'Failed to upload icon');
+				toast.error(error.message || 'Failed to upload icon');
 				uploading = false;
 				return;
 			}
@@ -317,9 +318,11 @@
 
 		if (isEditMode && editingLink) {
 			dispatch('updateLink', { linkId: editingLink.id, ...payload });
+			toast.success('Link updated');
 			cancelEdit();
 		} else {
 			dispatch('addLink', payload);
+			toast.success('Link added');
 			showAddForm = false;
 		}
 
