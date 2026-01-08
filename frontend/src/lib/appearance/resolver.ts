@@ -540,6 +540,29 @@ export function resolveAppearance(
 		)
 	};
 
+	// Build header with proper priority: preset < theme defaults < user overrides
+	// Only merge defined values from theme defaults to avoid overwriting with undefined
+	const baseHeader = headerPresetsMap[headerPresetId] || headerPresetsMap['no-cover'] || HEADER_PRESETS['no-cover'];
+	const themeDefaults = themeConfig.page?.defaults || {};
+	const headerWithDefaults = { ...baseHeader, preset: headerPresetId };
+	
+	// Merge theme defaults - only if defined
+	if (themeDefaults.avatarSize !== undefined) headerWithDefaults.avatarSize = themeDefaults.avatarSize;
+	if (themeDefaults.avatarShape !== undefined) headerWithDefaults.avatarShape = themeDefaults.avatarShape;
+	if (themeDefaults.avatarBorderColor !== undefined) headerWithDefaults.avatarBorderColor = themeDefaults.avatarBorderColor;
+	if (themeDefaults.avatarBorderWidth !== undefined) headerWithDefaults.avatarBorderWidth = themeDefaults.avatarBorderWidth;
+	if (themeDefaults.socialIconPosition !== undefined) headerWithDefaults.socialIconPosition = themeDefaults.socialIconPosition;
+	if (themeDefaults.socialIconColor !== undefined) headerWithDefaults.socialIconColor = themeDefaults.socialIconColor;
+	if (themeDefaults.socialIconSize !== undefined) headerWithDefaults.socialIconSize = themeDefaults.socialIconSize;
+	if (themeDefaults.socialIconsEnabled !== undefined) headerWithDefaults.socialIconsEnabled = themeDefaults.socialIconsEnabled;
+	if (themeDefaults.titleGlow?.enabled !== undefined) headerWithDefaults.titleGlowEnabled = themeDefaults.titleGlow.enabled;
+	if (themeDefaults.titleGlow?.color !== undefined) headerWithDefaults.titleGlowColor = themeDefaults.titleGlow.color;
+	if (themeDefaults.avatarGlow?.enabled !== undefined) headerWithDefaults.avatarGlowEnabled = themeDefaults.avatarGlow.enabled;
+	if (themeDefaults.avatarGlow?.color !== undefined) headerWithDefaults.avatarGlowColor = themeDefaults.avatarGlow.color;
+	
+	// Merge user overrides - these always take priority
+	const finalHeader = { ...headerWithDefaults, ...headerOverrides };
+
 	const result = {
 		theme: {
 			id: theme?.id || 0,
@@ -548,31 +571,17 @@ export function resolveAppearance(
 			config: themeConfig  // Always use themeConfig (with overrides applied)
 		},
 		tokens,
-		header: { 
-			...(headerPresetsMap[headerPresetId] || headerPresetsMap['no-cover'] || HEADER_PRESETS['no-cover']), 
-			preset: headerPresetId,  // Add preset ID for easy checking (e.g., isAvatarCover)
-			// Merge theme defaults (avatarSize, avatarShape, etc.)
-			...(themeConfig.page?.defaults ? {
-				avatarSize: themeConfig.page.defaults.avatarSize,
-				avatarShape: themeConfig.page.defaults.avatarShape,
-				avatarBorderColor: themeConfig.page.defaults.avatarBorderColor,
-				avatarBorderWidth: themeConfig.page.defaults.avatarBorderWidth,
-				socialIconPosition: themeConfig.page.defaults.socialIconPosition,
-				socialIconColor: themeConfig.page.defaults.socialIconColor,
-				socialIconSize: themeConfig.page.defaults.socialIconSize,
-				socialIconsEnabled: themeConfig.page.defaults.socialIconsEnabled,
-				titleGlowEnabled: themeConfig.page.defaults.titleGlow?.enabled,
-				titleGlowColor: themeConfig.page.defaults.titleGlow?.color,
-				avatarGlowEnabled: themeConfig.page.defaults.avatarGlow?.enabled,
-				avatarGlowColor: themeConfig.page.defaults.avatarGlow?.color,
-			} : {}),
-			// User overrides have highest priority
-			...headerOverrides 
-		},
+		header: finalHeader,
 		page: pageLayout,
 		block: blockConfig,
 		blockStyle
 	};
+	
+	console.log('[resolveAppearance] headerPresetId:', headerPresetId);
+	console.log('[resolveAppearance] Base preset avatarShape:', baseHeader.avatarShape);
+	console.log('[resolveAppearance] Theme defaults avatarShape:', themeDefaults.avatarShape);
+	console.log('[resolveAppearance] Header overrides:', headerOverrides);
+	console.log('[resolveAppearance] Final header.avatarShape:', result.header.avatarShape);
 	
 	return result;
 }

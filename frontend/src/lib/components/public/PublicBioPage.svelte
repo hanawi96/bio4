@@ -19,16 +19,9 @@
 	$: bgAnimation = $publicAppearance?.theme?.config?.background?.animation;
 	$: particles = $publicAppearance?.theme?.config?.background?.particles;
 	
-	$: {
-		console.log('[PublicBioPage background] bgType:', bgType);
-		console.log('[PublicBioPage background] bgValue:', bgValue);
-		console.log('[PublicBioPage background] tokens.backgroundColor:', tokens?.backgroundColor);
-	}
-	
 	$: resolvedBackground = (() => {
 		if (bgType && bgValue) {
 			if (bgType === 'solid') {
-				console.log('[PublicBioPage resolvedBackground] Returning solid bgValue:', bgValue);
 				return bgValue;
 			}
 			if (bgType === 'gradient') return bgValue;
@@ -37,7 +30,6 @@
 			if (bgType === 'video') return '#000000';
 		}
 		const fallback = tokens?.backgroundColor || '#ffffff';
-		console.log('[PublicBioPage resolvedBackground] Using fallback:', fallback);
 		return fallback;
 	})();
 
@@ -157,10 +149,6 @@
 		return header?.coverHeight ? heights[header.coverHeight] : 160;
 	})();
 	$: isAvatarCover = header?.preset === 'avatar-cover';
-	$: {
-		console.log('[PublicBioPage isAvatarCover] header?.preset:', header?.preset);
-		console.log('[PublicBioPage isAvatarCover] isAvatarCover:', isAvatarCover);
-	}
 	$: avatarOverlapOffset = avatarSize / 2;
 	
 	$: coverStyle = (() => {
@@ -204,8 +192,6 @@
 		
 		console.log('[PublicBioPage maskGradientColors] isAvatarCover:', isAvatarCover);
 		console.log('[PublicBioPage maskGradientColors] tokens?.backgroundColor:', tokens?.backgroundColor);
-		console.log('[PublicBioPage maskGradientColors] resolvedBackground:', resolvedBackground);
-		console.log('[PublicBioPage maskGradientColors] config.tokens.bg:', $publicAppearance?.theme?.config?.tokens?.bg);
 		
 		// Get background color - try multiple sources in priority order
 		let bgColor: string | null = null;
@@ -213,12 +199,10 @@
 		// Priority 1: Check if resolvedBackground is a simple solid color
 		if (resolvedBackground && resolvedBackground.match(/^#[0-9a-fA-F]{6}$/)) {
 			bgColor = resolvedBackground;
-			console.log('[PublicBioPage maskGradientColors] Using resolvedBackground:', bgColor);
 		}
 		// Priority 2: Try tokens.backgroundColor
 		else if (tokens?.backgroundColor && (tokens.backgroundColor.match(/^#[0-9a-fA-F]{6}$/) || tokens.backgroundColor.startsWith('rgb'))) {
 			bgColor = tokens.backgroundColor;
-			console.log('[PublicBioPage maskGradientColors] Using tokens.backgroundColor:', bgColor);
 		}
 		// Priority 3: Check config.tokens.bg.value (after overrides applied)
 		else {
@@ -226,7 +210,6 @@
 			if (bgToken?.value && typeof bgToken.value === 'string') {
 				if (bgToken.value.match(/^#[0-9a-fA-F]{6}$/)) {
 					bgColor = bgToken.value;
-					console.log('[PublicBioPage maskGradientColors] Using config.tokens.bg.value:', bgColor);
 				}
 			}
 		}
@@ -234,7 +217,6 @@
 		// Fallback to white if still no valid color
 		if (!bgColor) {
 			bgColor = '#ffffff';
-			console.log('[PublicBioPage maskGradientColors] Using fallback white');
 		}
 		
 		let r = 255, g = 255, b = 255; // Default to white
@@ -260,8 +242,6 @@
 			dark: `rgba(${r}, ${g}, ${b}, 0.8)`,
 			medium: `rgba(${r}, ${g}, ${b}, 0.4)`
 		};
-		
-		console.log('[PublicBioPage maskGradientColors] Final result:', result);
 		
 		return result;
 	})();

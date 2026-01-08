@@ -20,10 +20,8 @@
 	$: backgroundValue = (() => {
 		// Priority 1: Check overrides
 		const override = $previewAppearanceState.overrides?.['backgroundColor'];
-		console.log('🎨 [backgroundValue] override:', override);
 		
 		if (override) {
-			console.log('✅ [backgroundValue] Using override');
 			return override;
 		}
 		
@@ -31,8 +29,6 @@
 		const themeConfig = $previewAppearance?.theme?.config;
 		const bgType = themeConfig?.background?.type;
 		const bgValue = themeConfig?.background?.value;
-		
-		console.log('🎨 [backgroundValue] theme config - type:', bgType, 'value:', bgValue?.substring(0, 50));
 		
 		if (bgType && bgValue) {
 			if (bgType === 'solid') return bgValue;
@@ -43,7 +39,6 @@
 		}
 		
 		const fallback = tokens?.backgroundColor || '#ffffff';
-		console.log('⚠️ [backgroundValue] Using fallback:', fallback);
 		return fallback;
 	})();
 	
@@ -70,30 +65,24 @@
 	$: bgType = (() => {
 		// Priority 1: Detect from override backgroundColor
 		const override = $previewAppearanceState.overrides?.['backgroundColor'];
-		console.log('🔍 [bgType Detection] override:', override);
 		
 		if (override) {
 			if (override.startsWith('background:')) {
-				console.log('✅ [bgType Detection] Detected PATTERN from override');
 				return 'pattern';
 			}
 			if (override.startsWith('linear-gradient') || override.startsWith('radial-gradient')) {
-				console.log('✅ [bgType Detection] Detected GRADIENT from override');
 				return 'gradient';
 			}
 			if (override.startsWith('url(')) {
-				console.log('✅ [bgType Detection] Detected IMAGE from override');
 				return 'image';
 			}
 			if (override.match(/^#[0-9a-fA-F]{6}$/)) {
-				console.log('✅ [bgType Detection] Detected SOLID from override');
 				return 'solid';
 			}
 		}
 		
 		// Priority 2: From theme config
 		const configType = $previewAppearance?.theme?.config?.background?.type || 'solid';
-		console.log('✅ [bgType Detection] Using theme config:', configType);
 		return configType;
 	})();
 	
@@ -175,7 +164,7 @@
 	// Resolve avatar border width from preset or number
 	$: avatarBorderWidth = resolveAvatarBorderWidth(header?.avatarBorderWidth);
 
-	// Avatar size mapping
+	// Avatar size mapping - standard sizes (same as PublicBioPage)
 	const avatarSizes = { xs: 80, sm: 96, md: 112, lg: 128, xl: 144, '2xl': 160, '3xl': 176, full: 0 };
 	$: avatarSize = header ? avatarSizes[header.avatarSize] : 112;
 	$: isFullSizeAvatar = header?.avatarSize === 'full';
@@ -225,9 +214,9 @@
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
 	$: coverHeight = (() => {
-		// For avatar-cover, use 280px (phone width) to maintain 1:1 aspect ratio
+		// For avatar-cover, use 350px (phone width) to maintain 1:1 aspect ratio
 		if (isAvatarCover) {
-			return 280;
+			return 350;
 		}
 		return header?.coverHeight ? coverHeights[header.coverHeight] : 160;
 	})();
@@ -492,10 +481,10 @@
 
 </script>
 
-<!-- Phone Frame -->
-<div class="relative scale-125">
-	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
-		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
+<!-- Phone Frame - Larger size for better visibility -->
+<div class="relative">
+	<div class="w-[350px] h-[725px] bg-gray-900 rounded-[50px] p-2.5 shadow-2xl">
+		<div class="w-full h-full rounded-[45px] overflow-hidden relative">
 			<!-- Background Layer (with filters) -->
 			{#key backgroundValue}
 				{#if backgroundVideoUrl}

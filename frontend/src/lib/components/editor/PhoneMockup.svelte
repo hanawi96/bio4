@@ -224,7 +224,7 @@
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
 
-	// Avatar size mapping
+	// Avatar size mapping - standard sizes (same as PublicBioPage)
 	const avatarSizes = { xs: 80, sm: 96, md: 112, lg: 128, xl: 144, '2xl': 160, '3xl': 176, full: 0 };
 	$: avatarSize = header ? avatarSizes[header.avatarSize] : 112;
 	$: isFullSizeAvatar = header?.avatarSize === 'full';
@@ -274,9 +274,9 @@
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
 	$: coverHeight = (() => {
-		// For avatar-cover, use 280px (phone width) to maintain 1:1 aspect ratio
+		// For avatar-cover, use 350px (phone width) to maintain 1:1 aspect ratio
 		if (isAvatarCover) {
-			return 280;
+			return 350;
 		}
 		return header?.coverHeight ? coverHeights[header.coverHeight] : 160;
 	})();
@@ -602,10 +602,10 @@
 	}
 </script>
 
-<!-- Phone Frame -->
-<div class="relative scale-125">
-	<div class="w-[280px] h-[580px] bg-gray-900 rounded-[40px] p-2 shadow-2xl">
-		<div class="w-full h-full rounded-[36px] overflow-hidden relative">
+<!-- Phone Frame - Larger size for better visibility -->
+<div class="relative">
+	<div class="w-[350px] h-[725px] bg-gray-900 rounded-[50px] p-2.5 shadow-2xl">
+		<div class="w-full h-full rounded-[45px] overflow-hidden relative">
 			<!-- Background Video (always rendered when hasVideoInDraft) -->
 			{#if hasVideoInDraft}
 				<video 
@@ -910,7 +910,7 @@
 					<!-- Links - với negative margin và gradient mask cho avatar-cover -->
 					<div 
 						class="relative"
-						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -60px; padding-top: 80px;` : 'margin-top: 24px;'}"
+						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -80px; padding-top: 100px;` : 'margin-top: 24px;'}"
 					>
 						<!-- Gradient mask - nối liền với overlay trên avatar -->
 						{#if isAvatarCover}
