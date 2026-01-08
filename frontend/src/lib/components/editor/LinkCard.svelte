@@ -14,7 +14,9 @@
 	let menuPosition = { top: 0, right: 0 };
 	
 	type AnimationType = 'none' | 'bounce' | 'jello' | 'wobble' | 'pulse' | 'shake' | 'tada';
-	let selectedAnimation: AnimationType = link.animation || 'none';
+	
+	// Reactive: sync selectedAnimation with link.animation
+	$: selectedAnimation = (link.animation || 'none') as AnimationType;
 
 	// Computed icon URL and classes - Always use black color for management view
 	$: iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, '#000000');
@@ -369,7 +371,7 @@
 						class:hover:border-gray-300={selectedAnimation !== 'bounce'}
 					>
 						<div class="w-12 h-12 flex items-center justify-center mb-2">
-							<div class="w-8 h-2 bg-gray-400 rounded-full animate-bounce-preview"></div>
+							<div class="w-10 h-3 bg-gray-400 rounded-full animate-bounce-preview"></div>
 						</div>
 						<span class="text-[10px] font-bold uppercase"
 							class:text-purple-600={selectedAnimation === 'bounce'}
@@ -387,7 +389,7 @@
 						class:hover:border-gray-300={selectedAnimation !== 'jello'}
 					>
 						<div class="w-12 h-12 flex items-center justify-center mb-2">
-							<div class="w-8 h-2 bg-gray-400 rounded-full"></div>
+							<div class="w-10 h-3 bg-gray-400 rounded-full animate-jello-preview"></div>
 						</div>
 						<span class="text-[10px] font-bold uppercase"
 							class:text-purple-600={selectedAnimation === 'jello'}
@@ -405,7 +407,7 @@
 						class:hover:border-gray-300={selectedAnimation !== 'wobble'}
 					>
 						<div class="w-12 h-12 flex items-center justify-center mb-2">
-							<div class="w-8 h-2 bg-gray-400 rounded-full"></div>
+							<div class="w-10 h-3 bg-gray-400 rounded-full animate-wobble-preview"></div>
 						</div>
 						<span class="text-[10px] font-bold uppercase"
 							class:text-purple-600={selectedAnimation === 'wobble'}
@@ -423,7 +425,7 @@
 						class:hover:border-gray-300={selectedAnimation !== 'pulse'}
 					>
 						<div class="w-12 h-12 flex items-center justify-center mb-2">
-							<div class="w-8 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+							<div class="w-10 h-3 bg-gray-400 rounded-full animate-pulse-preview"></div>
 						</div>
 						<span class="text-[10px] font-bold uppercase"
 							class:text-purple-600={selectedAnimation === 'pulse'}
@@ -441,7 +443,7 @@
 						class:hover:border-gray-300={selectedAnimation !== 'shake'}
 					>
 						<div class="w-12 h-12 flex items-center justify-center mb-2">
-							<div class="w-8 h-2 bg-gray-400 rounded-full"></div>
+							<div class="w-10 h-3 bg-gray-400 rounded-full animate-shake-preview"></div>
 						</div>
 						<span class="text-[10px] font-bold uppercase"
 							class:text-purple-600={selectedAnimation === 'shake'}
@@ -459,7 +461,7 @@
 						class:hover:border-gray-300={selectedAnimation !== 'tada'}
 					>
 						<div class="w-12 h-12 flex items-center justify-center mb-2">
-							<div class="w-6 h-6 bg-gray-900 rounded"></div>
+							<div class="w-10 h-3 bg-gray-400 rounded-full animate-tada-preview"></div>
 						</div>
 						<span class="text-[10px] font-bold uppercase"
 							class:text-purple-600={selectedAnimation === 'tada'}
@@ -498,5 +500,103 @@
 
 	.animate-bounce-preview {
 		animation: bounce-preview 1s ease-in-out infinite;
+	}
+
+	@keyframes jello-preview {
+		0%, 100% {
+			transform: skewX(0deg) skewY(0deg);
+		}
+		30% {
+			transform: skewX(15deg) skewY(3deg);
+		}
+		40% {
+			transform: skewX(-10deg) skewY(-3deg);
+		}
+		50% {
+			transform: skewX(10deg) skewY(2deg);
+		}
+		65% {
+			transform: skewX(-5deg) skewY(-2deg);
+		}
+		75% {
+			transform: skewX(3deg) skewY(1deg);
+		}
+	}
+
+	.animate-jello-preview {
+		animation: jello-preview 1.5s ease-in-out infinite;
+	}
+
+	@keyframes wobble-preview {
+		0%, 100% {
+			transform: translateX(0) rotate(0deg);
+		}
+		15% {
+			transform: translateX(-4px) rotate(-3deg);
+		}
+		30% {
+			transform: translateX(3px) rotate(2deg);
+		}
+		45% {
+			transform: translateX(-3px) rotate(-2deg);
+		}
+		60% {
+			transform: translateX(2px) rotate(1deg);
+		}
+		75% {
+			transform: translateX(-1px) rotate(-1deg);
+		}
+	}
+
+	.animate-wobble-preview {
+		animation: wobble-preview 1.5s ease-in-out infinite;
+	}
+
+	@keyframes pulse-preview {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.15);
+		}
+	}
+
+	.animate-pulse-preview {
+		animation: pulse-preview 1.5s ease-in-out infinite;
+	}
+
+	@keyframes shake-preview {
+		0%, 100% {
+			transform: translateX(0);
+		}
+		10%, 30%, 50%, 70%, 90% {
+			transform: translateX(-3px);
+		}
+		20%, 40%, 60%, 80% {
+			transform: translateX(3px);
+		}
+	}
+
+	.animate-shake-preview {
+		animation: shake-preview 1.5s ease-in-out infinite;
+	}
+
+	@keyframes tada-preview {
+		0%, 100% {
+			transform: scale(1) rotate(0deg);
+		}
+		10%, 20% {
+			transform: scale(0.95) rotate(-2deg);
+		}
+		30%, 50%, 70%, 90% {
+			transform: scale(1.05) rotate(2deg);
+		}
+		40%, 60%, 80% {
+			transform: scale(1.05) rotate(-2deg);
+		}
+	}
+
+	.animate-tada-preview {
+		animation: tada-preview 1.5s ease-in-out infinite;
 	}
 </style>

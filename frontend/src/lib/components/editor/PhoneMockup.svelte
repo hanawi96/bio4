@@ -1511,7 +1511,7 @@
 	}
 
 	.link-animation-shake {
-		animation: link-shake 0.8s ease-in-out infinite;
+		animation: link-shake 1.5s ease-in-out infinite;
 	}
 
 	.link-animation-tada {
