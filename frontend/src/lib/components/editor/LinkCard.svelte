@@ -63,14 +63,13 @@
 	
 	// Initialize schedule date/time when opening panel
 	$: if (showSchedulePanel) {
-		// If countdown is still active, load existing schedule
-		if (isCountdownActive) {
-			const { date, time } = fromUTCISOString(link.scheduled_at!);
+		if (isCountdownActive && link.scheduled_at) {
+			// Load existing schedule if countdown is active
+			const { date, time } = fromUTCISOString(link.scheduled_at);
 			scheduleDate = date;
 			scheduleTime = time;
-		} 
-		// If countdown expired or no schedule, initialize with min datetime
-		else if (!scheduleDate || !scheduleTime) {
+		} else if (!isCountdownActive && !scheduleDate && !scheduleTime) {
+			// Initialize with min datetime only if form is empty and no active countdown
 			const min = getMinDateTime();
 			scheduleDate = min.date;
 			scheduleTime = min.time;
@@ -157,26 +156,18 @@
 			showAnimationPanel = false;
 			showLockPanel = false;
 			scheduleError = '';
-			
-			// If countdown expired, clear old values and initialize with new min datetime
-			if (link.scheduled_at && !isCountdownActive) {
-				const min = getMinDateTime();
-				scheduleDate = min.date;
-				scheduleTime = min.time;
-			}
 		}
 	}
 
 	function removeSchedule(e: MouseEvent) {
 		e.stopPropagation();
 		dispatch('updateSchedule', { linkId: link.id, scheduled_at: null });
-		// Không đóng panel, để user có thể đặt countdown mới ngay
-		// showSchedulePanel = false;
 		
-		// Reset form về thời gian tối thiểu
+		// Reset form và clear error
 		const min = getMinDateTime();
 		scheduleDate = min.date;
 		scheduleTime = min.time;
+		scheduleError = '';
 	}
 
 	function saveSchedule(e: MouseEvent) {
@@ -193,7 +184,8 @@
 			return;
 		}
 		
-		// Convert to UTC ISO string
+		// Clear error và convert to UTC ISO string
+		scheduleError = '';
 		const utcISO = toUTCISOString(scheduleDate, scheduleTime);
 		dispatch('updateSchedule', { linkId: link.id, scheduled_at: utcISO });
 	}
