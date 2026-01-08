@@ -21,6 +21,12 @@
 
 	const dispatch = createEventDispatcher();
 
+	// Get iconThumbnailColor from theme
+	$: iconThumbnailColor = (() => {
+		const themeConfig = $appearance?.theme?.config;
+		return themeConfig?.semantic?.color?.icon?.thumbnail || $appearance?.tokens?.textColor || '#000000';
+	})();
+
 	type TabType = 'links' | 'layouts';
 	let activeTab: TabType = 'links';
 
@@ -523,6 +529,7 @@
 				bind:iconData
 				bind:iconColor
 				{uploading}
+				{iconThumbnailColor}
 				isEditMode={false}
 				on:fileChange={handleFileChange}
 				on:iconChange={handleIconChange}
@@ -552,6 +559,7 @@
 						bind:iconData
 						bind:iconColor
 						{uploading}
+						{iconThumbnailColor}
 						isEditMode={true}
 						on:fileChange={handleFileChange}
 						on:iconChange={handleIconChange}

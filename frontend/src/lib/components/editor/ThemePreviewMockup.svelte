@@ -457,6 +457,12 @@
 	// Get socialIconColor from overrides or default
 	$: socialIconColor = $previewAppearanceState.overrides?.['page.socialIconColor'] || tokens?.textColor || '#000000';
 	
+	// Get iconThumbnailColor from theme config or default
+	$: iconThumbnailColor = (() => {
+		const themeConfig = $previewAppearance?.theme?.config;
+		return themeConfig?.semantic?.color?.icon?.thumbnail || tokens?.textColor || '#000000';
+	})();
+	
 	// Get socialIconSize from overrides or default with resolver
 	$: socialIconSizePx = (() => {
 		const override = $previewAppearanceState.overrides?.['page.socialIconSize'];
@@ -752,7 +758,7 @@
 							<div style="display: grid; grid-template-columns: repeat({gridConfig.columns}, 1fr); gap: {gridGap}px;">
 								{#each realLinks as link}
 									{@const headline = link.title.split(' - ')[0]}
-									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
+									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, iconThumbnailColor)}
 									{@const iconClasses = getIconClasses(link.icon_type || 'none', 'grid', 'w-full')}
 									{@const hasImage = !!linkIconUrl}
 									{@const showImageOnly = hasImage && !gridConfig.imagePadding && !gridConfig.showLabels}
@@ -802,7 +808,7 @@
 									{@const parts = link.title.split(' - ')}
 									{@const headline = parts[0]}
 									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
-									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
+									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, iconThumbnailColor)}
 									{@const iconClasses = getIconClasses(link.icon_type || 'none', 'card', 'flex-shrink-0')}
 									{@const position = cardConfig.imagePosition === 'alternate' 
 										? (index % 2 === 0 ? 'left' : 'right')
@@ -863,7 +869,7 @@
 									{@const parts = link.title.split(' - ')}
 									{@const headline = parts[0]}
 									{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
-									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || null)}
+									{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, iconThumbnailColor)}
 									{@const iconClassesTop = getIconClasses(link.icon_type || 'none', 'list-top', `w-10 h-10 ${listIconShapeClass}`)}
 									{@const iconClassesLeft = getIconClasses(link.icon_type || 'none', 'list-left', `w-8 h-8 flex-shrink-0 ${listIconShapeClass}`)}
 									

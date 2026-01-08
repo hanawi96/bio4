@@ -5,6 +5,7 @@
 	export let mutedTextColor: string;
 	export let blockTextColor: string;
 	export let shadowColor: string;
+	export let iconThumbnailColor: string;
 </script>
 
 <section class="card-ios p-6">
@@ -147,6 +148,29 @@
 				/>
 			</div>
 			<p class="text-xs text-gray-500 mt-1">Shadow color for brutal block style</p>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-gray-700 mb-2">Icon Thumbnail Color</label>
+			<div class="flex items-center gap-3">
+				<div class="relative flex-shrink-0">
+					<input
+						type="color"
+						bind:value={iconThumbnailColor}
+						class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+					/>
+					<div 
+						class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
+						style="background-color: {iconThumbnailColor};"
+					></div>
+				</div>
+				<input
+					type="text"
+					bind:value={iconThumbnailColor}
+					class="flex-1 input-ios font-mono text-sm"
+					placeholder="#000000"
+				/>
+			</div>
+			<p class="text-xs text-gray-500 mt-1">Default color for link icon thumbnails</p>
 		</div>
 	</div>
 </section>

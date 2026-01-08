@@ -106,6 +106,7 @@
 	let mutedTextColor = '#71717a';
 	let blockTextColor = '#ffffff';
 	let shadowColor = '#000000';
+	let iconThumbnailColor = '#000000';
 	let pageBgColor = '#fafafa';
 	
 	// Typography fields
@@ -369,6 +370,7 @@
 		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
 		blockTextColor = resolveRef(theme.config.semantic?.color?.block?.text) || '#ffffff';
 		shadowColor = resolveRef(theme.config.semantic?.color?.shadow?.default) || '#000000';
+		iconThumbnailColor = resolveRef(theme.config.semantic?.color?.icon?.thumbnail) || textColor;
 		pageBgColor = resolveRef(theme.config.semantic?.color?.surface?.page) || '#fafafa';
 		
 		// Load title glow settings (after primaryColor is loaded)
@@ -607,6 +609,10 @@
 			if (!config.semantic.color.shadow) config.semantic.color.shadow = {};
 			config.semantic.color.shadow.default = shadowColor;
 			
+			// Update icon thumbnail color
+			if (!config.semantic.color.icon) config.semantic.color.icon = {};
+			config.semantic.color.icon.thumbnail = iconThumbnailColor;
+			
 			// Update typography - fontFamily and font sizes
 			if (!config.semantic.typography) config.semantic.typography = {};
 			if (!config.semantic.typography.heading) config.semantic.typography.heading = {};
@@ -723,7 +729,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || iconThumbnailColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 	
@@ -1019,6 +1025,7 @@
 					bind:mutedTextColor
 					bind:blockTextColor
 					bind:shadowColor
+					bind:iconThumbnailColor
 				/>
 
 				<!-- Header Style -->

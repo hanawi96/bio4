@@ -78,6 +78,7 @@
 	let mutedTextColor = '#71717a';
 	let blockTextColor = '#ffffff';
 	let shadowColor = '#000000';
+	let iconThumbnailColor = '#000000';
 	let pageBgColor = '#fafafa';
 	
 	let headingFontSize: 'lg' | 'xl' | '2xl' = '2xl';
@@ -308,6 +309,7 @@
 		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
 		blockTextColor = resolveRef(theme.config.semantic?.color?.block?.text) || '#ffffff';
 		shadowColor = resolveRef(theme.config.semantic?.color?.shadow?.default) || '#000000';
+		iconThumbnailColor = resolveRef(theme.config.semantic?.color?.icon?.thumbnail) || textColor;
 		pageBgColor = resolveRef(theme.config.semantic?.color?.surface?.page) || '#fafafa';
 		
 		// Load title glow settings (after primaryColor is loaded)
@@ -508,6 +510,10 @@
 			if (!config.semantic.color.shadow) config.semantic.color.shadow = {};
 			config.semantic.color.shadow.default = shadowColor;
 			
+			// Update icon thumbnail color
+			if (!config.semantic.color.icon) config.semantic.color.icon = {};
+			config.semantic.color.icon.thumbnail = iconThumbnailColor;
+			
 			if (!config.semantic.typography) config.semantic.typography = {};
 			if (!config.semantic.typography.heading) config.semantic.typography.heading = {};
 			config.semantic.typography.heading.fontFamily = headingFontFamily || fontFamily;
@@ -601,7 +607,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || iconThumbnailColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 
@@ -875,7 +881,7 @@
 					{:else}
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
-							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor />
+							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor bind:iconThumbnailColor />
 							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:socialIconSize bind:socialIconsEnabled bind:avatarGlowEnabled bind:avatarGlowColor bind:titleGlowEnabled bind:titleGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
 							<ThemeBackground 
 								bind:bgType 

@@ -13,6 +13,7 @@
 	export let iconColor: string | null = null;
 	export let uploading = false;
 	export let isEditMode = false;
+	export let iconThumbnailColor: string = '#000000'; // Default icon color from theme
 
 	const dispatch = createEventDispatcher();
 
@@ -306,7 +307,7 @@
 <!-- Icon Picker Modal -->
 {#if showIconPickerModal}
 	<IconPickerModal
-		initialColor={iconColor}
+		initialColor={iconColor || iconThumbnailColor}
 		on:select={handleIconSelect}
 		on:back={handleIconPickerBack}
 		on:cancel={() => showIconPickerModal = false}

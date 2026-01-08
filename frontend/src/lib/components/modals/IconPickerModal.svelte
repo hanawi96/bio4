@@ -212,7 +212,12 @@
 					</div>
 					
 					<div class="flex-1">
-						<span class="text-sm font-medium text-gray-700 block mb-2">Icon Color:</span>
+						<div class="flex items-center justify-between mb-2">
+							<span class="text-sm font-medium text-gray-700">Icon Color:</span>
+							{#if selectedColor === initialColor && initialColor}
+								<span class="text-xs text-gray-500 italic">Theme default</span>
+							{/if}
+						</div>
 						<div class="flex items-center gap-2">
 							<!-- Custom Color Picker -->
 							<button
