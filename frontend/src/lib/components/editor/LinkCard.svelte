@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { createEventDispatcher, onDestroy } from 'svelte';
+	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import type { Link } from '$lib/types';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
-	import { toUTCISOString, fromUTCISOString, getMinDateTime, isValidSchedule, formatCountdown } from '$lib/utils/dateUtils';
+	import { toUTCISOString, fromUTCISOString, getMinDateTime, isValidSchedule, formatCountdown, isFuture } from '$lib/utils/dateUtils';
 
 	export let link: Link;
 	export let isFirst = false;
@@ -15,6 +15,35 @@
 	let showSchedulePanel = false;
 	let menuButton: HTMLButtonElement;
 	let menuPosition = { top: 0, right: 0 };
+	
+	// Reactive check for countdown badge
+	let now = Date.now();
+	let checkInterval: number | null = null;
+	let isCountdownActive = false;
+	
+	// Start/stop interval based on whether countdown is active
+	$: {
+		const hasActiveCountdown = link.scheduled_at && isFuture(link.scheduled_at) && now >= 0;
+		
+		if (hasActiveCountdown && !checkInterval) {
+			checkInterval = window.setInterval(() => {
+				now = Date.now();
+			}, 1000);
+		} else if (!hasActiveCountdown && checkInterval) {
+			clearInterval(checkInterval);
+			checkInterval = null;
+		}
+	}
+	
+	// Cleanup on destroy
+	onDestroy(() => {
+		if (checkInterval) {
+			clearInterval(checkInterval);
+		}
+	});
+	
+	// Reactive: Check if countdown is active
+	$: isCountdownActive = link.scheduled_at && isFuture(link.scheduled_at) && now > 0;
 	
 	type AnimationType = 'none' | 'bounce' | 'jello' | 'wobble' | 'pulse' | 'shake' | 'tada';
 	type LockType = 'none' | 'code' | 'password';
@@ -30,24 +59,26 @@
 	let scheduleDate = '';
 	let scheduleTime = '';
 	let scheduleError = '';
+	let previewCountdown = ''; // Declare variable first
 	
 	// Initialize schedule date/time when opening panel
 	$: if (showSchedulePanel) {
-		if (link.scheduled_at) {
-			// Load existing schedule
-			const { date, time } = fromUTCISOString(link.scheduled_at);
+		// If countdown is still active, load existing schedule
+		if (isCountdownActive) {
+			const { date, time } = fromUTCISOString(link.scheduled_at!);
 			scheduleDate = date;
 			scheduleTime = time;
-		} else if (!scheduleDate || !scheduleTime) {
-			// Initialize with min datetime for new schedule
+		} 
+		// If countdown expired or no schedule, initialize with min datetime
+		else if (!scheduleDate || !scheduleTime) {
 			const min = getMinDateTime();
 			scheduleDate = min.date;
 			scheduleTime = min.time;
 		}
 	}
 	
-	// Preview countdown
-	$: previewCountdown = scheduleDate && scheduleTime && isValidSchedule(scheduleDate, scheduleTime)
+	// Preview countdown - update every second via 'now'
+	$: previewCountdown = scheduleDate && scheduleTime && isValidSchedule(scheduleDate, scheduleTime) && now > 0
 		? formatCountdown(toUTCISOString(scheduleDate, scheduleTime))
 		: '';
 
@@ -126,6 +157,13 @@
 			showAnimationPanel = false;
 			showLockPanel = false;
 			scheduleError = '';
+			
+			// If countdown expired, clear old values and initialize with new min datetime
+			if (link.scheduled_at && !isCountdownActive) {
+				const min = getMinDateTime();
+				scheduleDate = min.date;
+				scheduleTime = min.time;
+			}
 		}
 	}
 
@@ -307,8 +345,8 @@
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
 					</svg>
-					{#if link.scheduled_at}
-						<span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
+					{#if isCountdownActive}
+						<span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full animate-pulse-badge"></span>
 					{/if}
 				</button>
 
@@ -772,7 +810,7 @@
 						Lưu
 					</button>
 					
-					{#if link.scheduled_at}
+					{#if isCountdownActive}
 						<button
 							on:click={removeSchedule}
 							class="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
@@ -800,6 +838,19 @@
 
 	.animate-scale-in {
 		animation: scale-in 0.15s ease-out;
+	}
+
+	@keyframes pulse-badge {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
+	}
+
+	.animate-pulse-badge {
+		animation: pulse-badge 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
 
 	@keyframes bounce-preview {
