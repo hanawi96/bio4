@@ -4,9 +4,10 @@ compatibility_date = "2023-12-01"
 
 [vars]
 R2_PUBLIC_URL = "https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev"
+JWT_SECRET = "dev-secret-key-change-in-production-12345678"
 
 [env.production]
-vars = { R2_PUBLIC_URL = "https://pub-35e639ff2ac9486c871668c1077e74ae.r2.dev" }
+vars = { R2_PUBLIC_URL = "https://pub-35e639ff2ac9486c871668c1077e74ae.r2.dev", JWT_SECRET = "production-secret-key-change-this-to-random-string" }
 
 [env.production.r2_buckets]
 binding = "STORAGE"

@@ -2,9 +2,12 @@
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
 	import { loadEditorData, page as pageStore, groups } from '$lib/stores/page';
+	import { authStore } from '$lib/stores/auth';
+	import { getBaseDomain } from '$lib/constants';
 
 	export let params = {};
-	const username = 'demo';
+	$: username = $authStore.user?.username || $pageStore?.username || 'demo';
+	$: baseDomain = getBaseDomain();
 	let loading = true;
 	let error = '';
 	let retrying = false;
@@ -151,7 +154,7 @@
 								<h3 class="text-xl font-semibold text-gray-900">{$pageStore?.title || 'Your Name'}</h3>
 								<p class="text-gray-500 mt-1">{$pageStore?.bio || 'Add a bio to tell people about yourself'}</p>
 								<div class="flex items-center gap-2 mt-3">
-									<span class="text-sm text-blue-600">biolink.com/{$pageStore?.username}</span>
+									<span class="text-sm text-blue-600">{baseDomain}/{$pageStore?.username}</span>
 									<button class="text-gray-400 hover:text-gray-600">
 										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -242,7 +245,7 @@
 					<h3 class="font-semibold mb-2">Share Your Page</h3>
 					<p class="text-sm text-blue-100 mb-4">Copy your link and share it everywhere!</p>
 					<div class="bg-white/20 backdrop-blur rounded-lg p-3 flex items-center gap-2">
-						<span class="text-sm flex-1 truncate">biolink.com/{$pageStore?.username}</span>
+						<span class="text-sm flex-1 truncate">{baseDomain}/{$pageStore?.username}</span>
 						<button class="px-3 py-1 bg-white text-blue-600 text-xs font-medium rounded hover:bg-blue-50 transition">
 							Copy
 						</button>

@@ -9,6 +9,7 @@ import linksRoutes from './routes/links';
 import blocksRoutes from './routes/blocks';
 import themesRoutes from './routes/themes';
 import headerPresetsRoutes from './routes/header-presets';
+import authRoutes from './routes/auth';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -40,6 +41,7 @@ app.use('*', cors({
 }));
 
 // Routes
+app.route('/auth', authRoutes);
 app.route('/bio', bioRoutes);
 app.route('/editor', editorRoutes);
 app.route('/upload', uploadRoutes);

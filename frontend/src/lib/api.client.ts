@@ -1,11 +1,26 @@
 import { API_BASE_URL } from './constants';
 import type { EditorData, ThemePreset, BioPage, LinkGroup, Link, Block } from './types';
+import { authStore } from './stores/auth';
 
 class ApiClient {
 	private baseUrl: string;
 
 	constructor(baseUrl: string) {
 		this.baseUrl = baseUrl;
+	}
+
+	// Get auth headers
+	private getAuthHeaders(): HeadersInit {
+		const token = authStore.getToken();
+		const headers: HeadersInit = {
+			'Content-Type': 'application/json'
+		};
+		
+		if (token) {
+			headers['Authorization'] = `Bearer ${token}`;
+		}
+		
+		return headers;
 	}
 
 	// Retry helper for development (handles API restart)
@@ -29,6 +44,52 @@ class ApiClient {
 			}
 		}
 		throw new Error('Max retries reached');
+	}
+
+	// ============ AUTH ============
+
+	async register(data: {
+		email: string;
+		password: string;
+		username: string;
+		display_name?: string;
+	}): Promise<{ message: string; token: string; user: any }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/auth/register`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(data)
+		});
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Registration failed');
+		}
+		return res.json();
+	}
+
+	async login(data: {
+		email: string;
+		password: string;
+	}): Promise<{ message: string; token: string; user: any }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/auth/login`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(data)
+		});
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Login failed');
+		}
+		return res.json();
+	}
+
+	async getMe(): Promise<{ user: any }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/auth/me`, {
+			headers: this.getAuthHeaders()
+		});
+		if (!res.ok) {
+			throw new Error('Failed to get user info');
+		}
+		return res.json();
 	}
 
 	// ============ BIO (Public) ============

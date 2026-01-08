@@ -4,6 +4,8 @@
 	import { loadEditorData, groups } from '$lib/stores/page';
 	import { appearance } from '$lib/stores/appearance';
 	import { toast } from '$lib/stores/toast';
+	import { authStore } from '$lib/stores/auth';
+	import { getBaseDomain, getBioUrl } from '$lib/constants';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 
 	export let params = {};
@@ -14,7 +16,9 @@
 	import BlockCard from '$lib/components/editor/BlockCard.svelte';
 	import type { Link } from '$lib/types';
 
-	const username = 'demo';
+	$: username = $authStore.user?.username || 'demo';
+	$: bioUrl = getBioUrl(username);
+	$: baseDomain = getBaseDomain();
 	let loading = true;
 	let error = '';
 	
@@ -23,9 +27,6 @@
 		const themeConfig = $appearance?.theme?.config;
 		return themeConfig?.page?.defaults?.linkGroupLayout || 'list';
 	})();
-
-	// Bio URL
-	$: bioUrl = `https://biolink.com/${username}`;
 
 	// Copy link function
 	async function copyLink() {
@@ -734,7 +735,7 @@
 								<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
 								</svg>
-								<span class="text-sm font-medium text-gray-900 truncate">biolink.com/{username}</span>
+								<span class="text-sm font-medium text-gray-900 truncate">{baseDomain}/{username}</span>
 							</div>
 
 							<!-- Copy Button -->

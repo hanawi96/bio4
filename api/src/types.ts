@@ -5,6 +5,7 @@ export type Bindings = {
 	DB: D1Database;
 	STORAGE: R2Bucket;
 	R2_PUBLIC_URL: string;
+	JWT_SECRET: string;
 };
 
 // Database types

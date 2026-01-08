@@ -2,10 +2,11 @@
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
 	import { loadEditorData, page as pageStore } from '$lib/stores/page';
+	import { authStore } from '$lib/stores/auth';
 
 	export let params = {};
 
-	const username = 'demo';
+	$: username = $authStore.user?.username || 'demo';
 	let loading = true;
 	let error = '';
 	let saving = false;

@@ -5,6 +5,9 @@
 	import { loadHeaderPresets } from '$lib/stores/headerPresets';
 	import { publishChanges, saveStatus } from '$lib/stores/autosave';
 	import { themeEditor } from '$lib/stores/themeEditor';
+	import { authStore } from '$lib/stores/auth';
+	import { goto } from '$app/navigation';
+	import AuthGuard from '$lib/components/AuthGuard.svelte';
 	
 	// Suppress params warning
 	export let params = {};
@@ -81,6 +84,11 @@
 		$themeEditor.handleReset?.();
 	}
 
+	function handleLogout() {
+		authStore.logout();
+		goto('/login');
+	}
+
 	// Button text based on status
 	$: buttonText = publishing ? 'Publishing...' : $saveStatus === 'saving' ? 'Saving...' : 'Publish';
 	$: buttonDisabled = publishing || $saveStatus === 'saving';
@@ -92,6 +100,7 @@
 	$: themeButtonText = $themeEditor.saving ? 'Saving...' : $themeEditor.mode === 'create' ? 'Create Theme' : 'Save Changes';
 </script>
 
+<AuthGuard>
 <div class="min-h-screen bg-gray-50 flex">
 	<!-- Left Sidebar -->
 	<aside class="{sidebarCollapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 fixed h-full transition-all duration-300 overflow-hidden">
@@ -235,16 +244,31 @@
 						<span class="text-gray-500">👤</span>
 					</div>
 					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-gray-900 truncate">Demo User</p>
-						<p class="text-xs text-gray-500 truncate">demo@example.com</p>
+						<p class="text-sm font-medium text-gray-900 truncate">{$authStore.user?.display_name || $authStore.user?.email || 'User'}</p>
+						<p class="text-xs text-gray-500 truncate">{$authStore.user?.email || ''}</p>
 					</div>
+					<button
+						on:click={handleLogout}
+						class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+						title="Logout"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+						</svg>
+					</button>
 				</div>
 			</div>
 		{:else}
 			<div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white flex justify-center">
-				<div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-					<span class="text-gray-500">👤</span>
-				</div>
+				<button
+					on:click={handleLogout}
+					class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors"
+					title="Logout"
+				>
+					<svg class="w-4 h-4 text-gray-500 hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+					</svg>
+				</button>
 			</div>
 		{/if}
 	</aside>
@@ -369,3 +393,4 @@
 		</main>
 	</div>
 </div>
+</AuthGuard>

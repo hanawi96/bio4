@@ -6,6 +6,8 @@
 	import { appearanceState, resetToThemeDefault, hasCustomizations } from '$lib/stores/appearanceManager';
 	import { appearance } from '$lib/stores/appearance';
 	import { themes } from '$lib/stores/themes';
+	import { authStore } from '$lib/stores/auth';
+	import { getBaseDomain, getBioUrl } from '$lib/constants';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
 	import ThemeSection from '$lib/components/editor/sections/ThemeSection.svelte';
 	import HeaderSection from '$lib/components/editor/sections/HeaderSection.svelte';
@@ -19,7 +21,9 @@
 
 	export let params = {};
 
-	const username = 'demo';
+	$: username = $authStore.user?.username || 'demo';
+	$: bioUrl = getBioUrl(username);
+	$: baseDomain = getBaseDomain();
 	let loading = true;
 	let error = '';
 	let activeSection = 'theme';
@@ -31,7 +35,6 @@
 	let resetting = false;
 
 	$: themeName = $appearance?.theme?.name || 'Default';
-	$: bioUrl = `https://biolink.com/${username}`;
 
 	async function handleResetConfirm() {
 		resetting = true;
@@ -316,7 +319,7 @@
 								<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
 								</svg>
-								<span class="text-sm font-medium text-gray-900 truncate">biolink.com/{username}</span>
+								<span class="text-sm font-medium text-gray-900 truncate">{baseDomain}/{username}</span>
 							</div>
 
 							<!-- Copy Button -->
