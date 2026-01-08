@@ -346,7 +346,7 @@
 	}
 
 	async function handleUpdateLink(event: CustomEvent<any>) {
-		const { linkId, title, url, icon_type, icon_data, icon_color, animation, lock_type, lock_value } = event.detail;
+		const { linkId, title, url, icon_type, icon_data, icon_color, animation, lock_type, lock_value, scheduled_at } = event.detail;
 
 		// Store old link for revert
 		const oldLink = currentLinks.find(link => link.id === linkId);
@@ -363,7 +363,8 @@
 					...(icon_color !== undefined && { icon_color }),
 					...(animation !== undefined && { animation }),
 					...(lock_type !== undefined && { lock_type }),
-					...(lock_value !== undefined && { lock_value })
+					...(lock_value !== undefined && { lock_value }),
+					...(scheduled_at !== undefined && { scheduled_at })
 				}
 				: link
 		);
@@ -386,6 +387,7 @@
 			if (animation !== undefined) payload.animation = animation;
 			if (lock_type !== undefined) payload.lock_type = lock_type;
 			if (lock_value !== undefined) payload.lock_value = lock_value;
+			if (scheduled_at !== undefined) payload.scheduled_at = scheduled_at;
 			
 			await api.updateLink(linkId, payload);
 

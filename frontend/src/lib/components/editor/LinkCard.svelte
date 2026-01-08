@@ -2,6 +2,7 @@
 	import { createEventDispatcher, onDestroy } from 'svelte';
 	import type { Link } from '$lib/types';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
+	import { toUTCISOString, fromUTCISOString, getMinDateTime, isValidSchedule, formatCountdown } from '$lib/utils/dateUtils';
 
 	export let link: Link;
 	export let isFirst = false;
@@ -11,6 +12,7 @@
 	let showMenu = false;
 	let showAnimationPanel = false;
 	let showLockPanel = false;
+	let showSchedulePanel = false;
 	let menuButton: HTMLButtonElement;
 	let menuPosition = { top: 0, right: 0 };
 	
@@ -24,9 +26,35 @@
 	$: selectedLockType = (link.lock_type || 'none') as LockType;
 	$: lockValue = link.lock_value || '';
 
+	// Schedule state
+	let scheduleDate = '';
+	let scheduleTime = '';
+	let scheduleError = '';
+	
+	// Initialize schedule date/time when opening panel
+	$: if (showSchedulePanel) {
+		if (link.scheduled_at) {
+			// Load existing schedule
+			const { date, time } = fromUTCISOString(link.scheduled_at);
+			scheduleDate = date;
+			scheduleTime = time;
+		} else if (!scheduleDate || !scheduleTime) {
+			// Initialize with min datetime for new schedule
+			const min = getMinDateTime();
+			scheduleDate = min.date;
+			scheduleTime = min.time;
+		}
+	}
+	
+	// Preview countdown
+	$: previewCountdown = scheduleDate && scheduleTime && isValidSchedule(scheduleDate, scheduleTime)
+		? formatCountdown(toUTCISOString(scheduleDate, scheduleTime))
+		: '';
+
 	// Computed icon URL and classes - Always use black color for management view
 	$: iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, '#000000');
 	$: iconClasses = getIconClasses(link.icon_type || 'none', 'list-left', 'w-8 h-8 rounded-lg');
+
 
 	function handleToggle(e: MouseEvent) {
 		e.stopPropagation();
@@ -46,7 +74,10 @@
 	function toggleAnimationPanel(e: MouseEvent) {
 		e.stopPropagation();
 		showAnimationPanel = !showAnimationPanel;
-		if (showAnimationPanel) showLockPanel = false; // Close lock panel
+		if (showAnimationPanel) {
+			showLockPanel = false;
+			showSchedulePanel = false;
+		}
 	}
 
 	function selectAnimation(e: MouseEvent, animation: AnimationType) {
@@ -58,7 +89,10 @@
 	function toggleLockPanel(e: MouseEvent) {
 		e.stopPropagation();
 		showLockPanel = !showLockPanel;
-		if (showLockPanel) showAnimationPanel = false; // Close animation panel
+		if (showLockPanel) {
+			showAnimationPanel = false;
+			showSchedulePanel = false;
+		}
 	}
 
 	function selectLockType(e: MouseEvent, lockType: LockType) {
@@ -83,6 +117,41 @@
 			lock_type: selectedLockType, 
 			lock_value: lockValue.trim() || null 
 		});
+	}
+
+	function toggleSchedulePanel(e: MouseEvent) {
+		e.stopPropagation();
+		showSchedulePanel = !showSchedulePanel;
+		if (showSchedulePanel) {
+			showAnimationPanel = false;
+			showLockPanel = false;
+			scheduleError = '';
+		}
+	}
+
+	function removeSchedule(e: MouseEvent) {
+		e.stopPropagation();
+		dispatch('updateSchedule', { linkId: link.id, scheduled_at: null });
+		showSchedulePanel = false;
+	}
+
+	function saveSchedule(e: MouseEvent) {
+		e.stopPropagation();
+		
+		// Validate
+		if (!scheduleDate || !scheduleTime) {
+			scheduleError = 'Vui lòng chọn cả ngày và giờ';
+			return;
+		}
+		
+		if (!isValidSchedule(scheduleDate, scheduleTime)) {
+			scheduleError = 'Thời gian phải ở tương lai';
+			return;
+		}
+		
+		// Convert to UTC ISO string
+		const utcISO = toUTCISOString(scheduleDate, scheduleTime);
+		dispatch('updateSchedule', { linkId: link.id, scheduled_at: utcISO });
 	}
 
 	function handleMove(e: MouseEvent, direction: 'up' | 'down') {
@@ -224,27 +293,23 @@
 					</svg>
 				</button>
 
-				<!-- Highlight/Featured -->
+				<!-- Countdown Timer -->
 				<button
-					on:click={(e) => { e.stopPropagation(); /* TODO: Toggle highlight */ }}
-					class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-					title="Highlight link"
+					on:click={toggleSchedulePanel}
+					class="p-1.5 rounded-lg transition-colors relative"
+					class:bg-blue-100={showSchedulePanel}
+					class:text-blue-600={showSchedulePanel}
+					class:text-gray-400={!showSchedulePanel}
+					class:hover:text-gray-600={!showSchedulePanel}
+					class:hover:bg-gray-100={!showSchedulePanel}
+					title="Add countdown timer"
 				>
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
 					</svg>
-				</button>
-
-				<!-- Schedule -->
-				<button
-					on:click={(e) => { e.stopPropagation(); /* TODO: Schedule link */ }}
-					class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-					title="Schedule link"
-				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-						<path stroke-linecap="round" stroke-linejoin="round" d="M12 12.75v3.75m0 0-1.5-1.5m1.5 1.5 1.5-1.5" opacity="0.5" />
-					</svg>
+					{#if link.scheduled_at}
+						<span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
+					{/if}
 				</button>
 
 				<!-- Lock/Private -->
@@ -635,6 +700,87 @@
 						{/if}
 					</div>
 				</label>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Schedule Panel (Inline) -->
+	{#if showSchedulePanel}
+		<div 
+			on:click={(e) => e.stopPropagation()}
+			class="w-full mt-4 border-t border-gray-200 pt-4 animate-scale-in"
+		>
+			<!-- Panel Header -->
+			<div class="flex items-center justify-between mb-4 px-1">
+				<h3 class="text-sm font-semibold text-gray-900">⏱️ Countdown Timer</h3>
+				<button
+					on:click={toggleSchedulePanel}
+					class="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+					</svg>
+				</button>
+			</div>
+
+			<p class="text-xs text-gray-500 mb-4 px-1">Đặt thời gian để link được kích hoạt</p>
+
+			<!-- Date & Time Pickers -->
+			<div class="space-y-3 px-1">
+				<!-- Date Picker -->
+				<div>
+					<label class="block text-xs font-medium text-gray-700 mb-1">Ngày</label>
+					<input
+						type="date"
+						bind:value={scheduleDate}
+						on:click={(e) => e.stopPropagation()}
+						min={getMinDateTime().date}
+						class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+				</div>
+				
+				<!-- Time Picker -->
+				<div>
+					<label class="block text-xs font-medium text-gray-700 mb-1">Giờ</label>
+					<input
+						type="time"
+						bind:value={scheduleTime}
+						on:click={(e) => e.stopPropagation()}
+						class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					/>
+				</div>
+				
+				<!-- Preview Countdown -->
+				{#if previewCountdown}
+					<div class="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+						<div class="text-xs text-blue-600 font-medium">⏰ Link sẽ active sau:</div>
+						<div class="text-sm font-bold text-blue-700 mt-1">{previewCountdown}</div>
+					</div>
+				{/if}
+				
+				<!-- Error Message -->
+				{#if scheduleError}
+					<div class="text-xs text-red-500">{scheduleError}</div>
+				{/if}
+				
+				<!-- Action Buttons -->
+				<div class="flex gap-2">
+					<button
+						on:click={saveSchedule}
+						class="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+					>
+						Lưu
+					</button>
+					
+					{#if link.scheduled_at}
+						<button
+							on:click={removeSchedule}
+							class="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+						>
+							Xóa
+						</button>
+					{/if}
+				</div>
 			</div>
 		</div>
 	{/if}

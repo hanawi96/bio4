@@ -9,6 +9,8 @@
 	import LockModal from '$lib/components/modals/LockModal.svelte';
 	import { api } from '$lib/api.client';
 	import type { Link } from '$lib/types';
+	import { isFuture, formatCountdownWithLabels } from '$lib/utils/dateUtils';
+	import { onDestroy, onMount } from 'svelte';
 
 	// Lock modal state
 	let lockModalOpen = false;
@@ -18,8 +20,63 @@
 	// Session storage for verified links (in-memory for now)
 	let verifiedLinks = new Set<number>();
 
+	// Countdown state
+	let countdowns: Record<number, string> = {};
+	let countdownInterval: number | null = null;
+	
+	// Track which links are still scheduled (reactive)
+	let scheduledLinkIds = new Set<number>();
+	
+	// Update countdowns every second
+	function updateCountdowns() {
+		const newCountdowns: Record<number, string> = {};
+		const newScheduledIds = new Set<number>();
+		
+		$groups.forEach(group => {
+			group.links.forEach(link => {
+				if (link.scheduled_at && isFuture(link.scheduled_at)) {
+					const formatted = formatCountdownWithLabels(link.scheduled_at);
+					newCountdowns[link.id] = formatted.display;
+					newScheduledIds.add(link.id);
+				}
+			});
+		});
+		
+		countdowns = newCountdowns;
+		scheduledLinkIds = newScheduledIds;
+	}
+	
+	// Start countdown interval when component mounts (client-side only)
+	onMount(() => {
+		if ($groups.length > 0) {
+			updateCountdowns();
+			countdownInterval = window.setInterval(updateCountdowns, 1000);
+		}
+		
+		// Return cleanup function
+		return () => {
+			if (countdownInterval) {
+				clearInterval(countdownInterval);
+				countdownInterval = null;
+			}
+		};
+	});
+	
+	// Also cleanup on destroy
+	onDestroy(() => {
+		if (countdownInterval) {
+			clearInterval(countdownInterval);
+		}
+	});
+
 	// Handle link click
 	function handleLinkClick(e: MouseEvent, link: Link) {
+		// Check if link is scheduled and not yet active
+		if (link.scheduled_at && isFuture(link.scheduled_at)) {
+			e.preventDefault();
+			return; // Link is not yet active
+		}
+		
 		// Check if link has lock
 		if (link.lock_type && link.lock_type !== 'none' && link.lock_value) {
 			// Check if already verified in this session
@@ -603,12 +660,19 @@
 					{@const justifyContent = textAlign === 'right' ? 'flex-end' : textAlign === 'center' ? 'center' : 'flex-start'}
 					{@const animationClass = link.animation && link.animation !== 'none' ? `link-animation-${link.animation}` : ''}
 					{@const hasLock = link.lock_type && link.lock_type !== 'none' && link.lock_value}
+					{@const isScheduled = scheduledLinkIds.has(link.id)}
+					{@const countdown = isScheduled ? countdowns[link.id] : null}
+					
 					<a
 						href={link.url}
 						target={link.open_in_new_tab ? '_blank' : '_self'}
 						rel="noopener noreferrer"
 						on:click={(e) => handleLinkClick(e, link)}
-						class="block transition-all hover:scale-[1.02] hover:opacity-90 {animationClass}"
+						class="block transition-all {animationClass}"
+						class:opacity-60={isScheduled}
+						class:cursor-not-allowed={isScheduled}
+						class:hover:scale-[1.02]={!isScheduled}
+						class:hover:opacity-90={!isScheduled}
 						style="
 							background: {blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 							color: {blockStyle?.text || '#ffffff'};
@@ -618,19 +682,37 @@
 							box-shadow: {blockStyle?.shadow || 'none'};
 							{blockStyle?.blur ? `backdrop-filter: blur(${blockStyle.blur}px); -webkit-backdrop-filter: blur(${blockStyle.blur}px);` : ''}
 							text-align: {textAlign};
+							{isScheduled ? 'pointer-events: none;' : ''}
 						"
 					>
-						<div class="flex items-center gap-3" style="justify-content: {justifyContent};">
-							{#if iconUrl}
-								<img src={iconUrl} alt="" class="{iconClasses}" />
-							{/if}
-							<span class="font-semibold flex-1" style="font-size: {linkFontSizePx}px; text-align: {textAlign};">{link.title}</span>
-							{#if hasLock}
-								<svg class="w-4 h-4 flex-shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-								</svg>
-							{/if}
-						</div>
+						{#if isScheduled}
+							<!-- Scheduled Link - Show Countdown -->
+							<div class="flex flex-col items-center gap-2">
+								<div class="flex items-center gap-2 opacity-80">
+									<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+									</svg>
+									<span class="font-semibold" style="font-size: {linkFontSizePx}px;">{link.title}</span>
+								</div>
+								<div class="text-sm opacity-90">
+									<span class="font-medium">Available in: </span>
+									<span class="font-mono font-bold">{countdown || 'Loading...'}</span>
+								</div>
+							</div>
+						{:else}
+							<!-- Active Link - Normal Display -->
+							<div class="flex items-center gap-3" style="justify-content: {justifyContent};">
+								{#if iconUrl}
+									<img src={iconUrl} alt="" class="{iconClasses}" />
+								{/if}
+								<span class="font-semibold flex-1" style="font-size: {linkFontSizePx}px; text-align: {textAlign};">{link.title}</span>
+								{#if hasLock}
+									<svg class="w-4 h-4 flex-shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+									</svg>
+								{/if}
+							</div>
+						{/if}
 					</a>
 				{/each}
 			{/each}

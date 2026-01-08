@@ -53,6 +53,7 @@ export interface Link {
 	animation?: 'none' | 'bounce' | 'jello' | 'wobble' | 'pulse' | 'shake' | 'tada';
 	lock_type?: 'none' | 'code' | 'password';
 	lock_value?: string | null;
+	scheduled_at?: string | null; // ISO 8601 datetime string in UTC
 }
 
 export interface Block {

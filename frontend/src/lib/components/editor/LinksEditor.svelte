@@ -410,6 +410,33 @@
 		toast.success('Lock updated');
 	}
 
+	function handleUpdateSchedule(event: CustomEvent<any>) {
+		const { linkId, scheduled_at } = event.detail;
+		
+		// Optimistic UI: Update link schedule immediately
+		groups.update(g => g.map(group => 
+			group.id === groupId 
+				? { 
+					...group, 
+					links: group.links.map(link => 
+						link.id === linkId 
+							? { ...link, scheduled_at }
+							: link
+					)
+				}
+				: group
+		));
+		
+		// Dispatch to parent for API update
+		dispatch('updateLink', { linkId, scheduled_at });
+		
+		if (scheduled_at) {
+			toast.success('Link scheduled');
+		} else {
+			toast.success('Schedule removed');
+		}
+	}
+
 	function handleLayoutSelect(event: CustomEvent<string>) {
 		dispatch('updateLayout', event.detail);
 	}
@@ -625,6 +652,7 @@
 						on:move={handleMove}
 						on:updateAnimation={handleUpdateAnimation}
 						on:updateLock={handleUpdateLock}
+						on:updateSchedule={handleUpdateSchedule}
 					/>
 				{/if}
 			{/each}

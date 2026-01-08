@@ -136,6 +136,21 @@ app.put('/:linkId', async (c) => {
 	const linkId = parseInt(c.req.param('linkId'));
 	const body = await c.req.json();
 
+	// Validate scheduled_at if provided
+	if (body.scheduled_at !== undefined && body.scheduled_at !== null) {
+		// Check if it's a valid ISO 8601 datetime string
+		const scheduledDate = new Date(body.scheduled_at);
+		if (isNaN(scheduledDate.getTime())) {
+			return c.json({ error: 'Invalid scheduled_at format. Must be ISO 8601 datetime string.' }, 400);
+		}
+		
+		// Check if it's in the future
+		const now = new Date();
+		if (scheduledDate <= now) {
+			return c.json({ error: 'scheduled_at must be in the future.' }, 400);
+		}
+	}
+
 	// Get old link to check if icon changed
 	const oldLink = await c.env.DB.prepare(
 		'SELECT icon_type, icon_data FROM links WHERE id = ?'
@@ -162,7 +177,8 @@ app.put('/:linkId', async (c) => {
 		is_active: body.is_active,
 		animation: body.animation,
 		lock_type: body.lock_type,
-		lock_value: body.lock_value
+		lock_value: body.lock_value,
+		scheduled_at: body.scheduled_at
 	});
 
 	return c.json({ success: true });

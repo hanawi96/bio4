@@ -275,6 +275,7 @@ export async function updateLink(
 		animation?: string;
 		lock_type?: string;
 		lock_value?: string;
+		scheduled_at?: string;
 	}
 ) {
 	const fields: string[] = [];
@@ -323,6 +324,10 @@ export async function updateLink(
 	if (data.lock_value !== undefined) {
 		fields.push('lock_value = ?');
 		values.push(data.lock_value);
+	}
+	if (data.scheduled_at !== undefined) {
+		fields.push('scheduled_at = ?');
+		values.push(data.scheduled_at);
 	}
 
 	if (fields.length === 0) return;
