@@ -1,4 +1,4 @@
-export type IconType = 'none' | 'image' | 'iconify';
+export type IconType = 'none' | 'image' | 'iconify' | 'giphy';
 
 // Layout types for icon display
 export type IconLayout = 'list-left' | 'list-top' | 'grid' | 'card' | 'editor';
@@ -13,7 +13,7 @@ export interface IconDisplayConfig {
 export function getIconDisplayStyle(iconType: IconType, layout: IconLayout): IconDisplayConfig {
 	const isIconify = iconType === 'iconify';
 
-	// Image always uses object-cover, no padding
+	// Image and GIF always use object-cover, no padding
 	if (!isIconify) {
 		return { objectFit: 'cover', padding: '' };
 	}
@@ -59,6 +59,11 @@ export function getIconUrl(iconType: IconType, iconData: string | null, iconColo
 
 	if (iconType === 'image') {
 		return iconData; // Direct URL from R2
+	}
+
+	if (iconType === 'giphy') {
+		// Giphy ID to CDN URL
+		return `https://i.giphy.com/media/${iconData}/200w.gif`;
 	}
 
 	return null;

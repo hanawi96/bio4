@@ -3,6 +3,7 @@
 	import ImageCropModal from '../modals/ImageCropModal.svelte';
 	import ThumbnailSelectionModal from '../modals/ThumbnailSelectionModal.svelte';
 	import IconPickerModal from '../modals/IconPickerModal.svelte';
+	import GiphyPickerModal from '../modals/GiphyPickerModal.svelte';
 	import { getIconUrl, getIconClasses, ICON_COLOR_PRESETS, type IconType } from '$lib/utils/iconUtils';
 
 	export let headline = '';
@@ -21,6 +22,7 @@
 	let showCropModal = false;
 	let showThumbnailModal = false;
 	let showIconPickerModal = false;
+	let showGiphyPickerModal = false;
 	let showColorTooltip = false;
 	let tempImageUrl = '';
 	let colorDotButton: HTMLButtonElement;
@@ -37,13 +39,15 @@
 		showThumbnailModal = true;
 	}
 
-	function handleThumbnailSelect(event: CustomEvent<{ type: 'upload' | 'icon' }>) {
+	function handleThumbnailSelect(event: CustomEvent<{ type: 'upload' | 'icon' | 'gif' }>) {
 		showThumbnailModal = false;
 		
 		if (event.detail.type === 'upload') {
 			fileInput?.click();
-		} else {
+		} else if (event.detail.type === 'icon') {
 			showIconPickerModal = true;
+		} else if (event.detail.type === 'gif') {
+			showGiphyPickerModal = true;
 		}
 	}
 
@@ -62,6 +66,24 @@
 
 	function handleIconPickerBack() {
 		showIconPickerModal = false;
+		showThumbnailModal = true;
+	}
+
+	function handleGiphySelect(event: CustomEvent<{ iconType: string; iconData: string; iconColor: string | null }>) {
+		iconType = event.detail.iconType as IconType;
+		iconData = event.detail.iconData;
+		iconColor = event.detail.iconColor;
+		showGiphyPickerModal = false;
+		
+		dispatch('iconChange', { 
+			iconType: event.detail.iconType,
+			iconData: event.detail.iconData,
+			iconColor: event.detail.iconColor
+		});
+	}
+
+	function handleGiphyPickerBack() {
+		showGiphyPickerModal = false;
 		showThumbnailModal = true;
 	}
 
@@ -311,6 +333,15 @@
 		on:select={handleIconSelect}
 		on:back={handleIconPickerBack}
 		on:cancel={() => showIconPickerModal = false}
+	/>
+{/if}
+
+<!-- Giphy Picker Modal -->
+{#if showGiphyPickerModal}
+	<GiphyPickerModal
+		on:select={handleGiphySelect}
+		on:back={handleGiphyPickerBack}
+		on:cancel={() => showGiphyPickerModal = false}
 	/>
 {/if}
 
