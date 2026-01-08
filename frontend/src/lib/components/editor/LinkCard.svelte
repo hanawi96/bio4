@@ -323,7 +323,10 @@
 
 	<!-- Animation Panel (Inline) - Outside flex container -->
 	{#if showAnimationPanel}
-		<div class="w-full mt-4 border-t border-gray-200 pt-4 animate-scale-in">
+		<div 
+			on:click={(e) => e.stopPropagation()}
+			class="w-full mt-4 border-t border-gray-200 pt-4 animate-scale-in"
+		>
 			<!-- Panel Header -->
 			<div class="flex items-center justify-between mb-4 px-1">
 				<h3 class="text-sm font-semibold text-gray-900">Animate this link</h3>
