@@ -1,50 +1,37 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
 	import type { Toast } from '$lib/stores/toast';
 
 	export let toast: Toast;
 	export let onDismiss: () => void;
 
-	let progress = 100;
 	let isPaused = false;
-	let startTime: number;
-	let remainingTime: number;
-	let animationFrame: number;
+	let timeoutId: ReturnType<typeof setTimeout>;
 
 	onMount(() => {
-		startTime = Date.now();
-		remainingTime = toast.duration;
-		animate();
-
-		return () => {
-			if (animationFrame) cancelAnimationFrame(animationFrame);
-		};
+		startTimer();
 	});
 
-	function animate() {
-		if (isPaused) return;
+	onDestroy(() => {
+		if (timeoutId) clearTimeout(timeoutId);
+	});
 
-		const elapsed = Date.now() - startTime;
-		remainingTime = toast.duration - elapsed;
-		progress = (remainingTime / toast.duration) * 100;
-
-		if (remainingTime <= 0) {
-			onDismiss();
-		} else {
-			animationFrame = requestAnimationFrame(animate);
-		}
+	function startTimer() {
+		if (timeoutId) clearTimeout(timeoutId);
+		timeoutId = setTimeout(() => {
+			if (!isPaused) onDismiss();
+		}, toast.duration);
 	}
 
 	function handleMouseEnter() {
 		isPaused = true;
-		if (animationFrame) cancelAnimationFrame(animationFrame);
+		if (timeoutId) clearTimeout(timeoutId);
 	}
 
 	function handleMouseLeave() {
 		isPaused = false;
-		startTime = Date.now();
-		animate();
+		startTimer();
 	}
 
 	function handleAction() {
@@ -100,7 +87,7 @@
 <div
 	role={toast.type === 'error' || toast.type === 'warning' ? 'alert' : 'status'}
 	aria-live={toast.type === 'error' || toast.type === 'warning' ? 'assertive' : 'polite'}
-	class="toast-item relative w-full max-w-sm {colorScheme.bg} border {colorScheme.border} rounded-xl shadow-lg overflow-hidden"
+	class="toast-item pointer-events-auto relative w-full max-w-sm {colorScheme.bg} border {colorScheme.border} rounded-xl shadow-lg overflow-hidden"
 	on:mouseenter={handleMouseEnter}
 	on:mouseleave={handleMouseLeave}
 	in:fly={{ y: 20, duration: 200 }}
@@ -144,11 +131,12 @@
 		</button>
 	</div>
 
-	<!-- Progress Bar -->
-	<div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-200/50">
+	<!-- Progress Bar with CSS Animation -->
+	<div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-200/50 overflow-hidden">
 		<div
-			class="{colorScheme.progress} h-full transition-all duration-100 ease-linear"
-			style="width: {progress}%"
+			class="{colorScheme.progress} h-full progress-bar"
+			class:paused={isPaused}
+			style="--duration: {toast.duration}ms"
 		/>
 	</div>
 </div>
@@ -157,5 +145,24 @@
 	.toast-item {
 		backdrop-filter: blur(8px);
 		-webkit-backdrop-filter: blur(8px);
+	}
+
+	.progress-bar {
+		width: 100%;
+		transform-origin: left;
+		animation: shrink var(--duration) linear forwards;
+	}
+
+	.progress-bar.paused {
+		animation-play-state: paused;
+	}
+
+	@keyframes shrink {
+		from {
+			transform: scaleX(1);
+		}
+		to {
+			transform: scaleX(0);
+		}
 	}
 </style>

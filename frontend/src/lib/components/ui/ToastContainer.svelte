@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { toast } from '$lib/stores/toast';
 	import Toast from './Toast.svelte';
-
-	function handleDismiss(id: string) {
-		toast.dismiss(id);
-	}
 </script>
 
 <!-- Toast Container - Bottom Right -->
@@ -13,8 +9,6 @@
 	style="max-width: calc(100vw - 3rem);"
 >
 	{#each $toast as toastItem (toastItem.id)}
-		<div class="pointer-events-auto">
-			<Toast toast={toastItem} onDismiss={() => handleDismiss(toastItem.id)} />
-		</div>
+		<Toast toast={toastItem} onDismiss={() => toast.dismiss(toastItem.id)} />
 	{/each}
 </div>
