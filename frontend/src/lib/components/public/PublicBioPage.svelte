@@ -533,11 +533,12 @@
 					{@const paddingY = blockConfig?.padding?.y ?? 12}
 					{@const borderRadius = blockConfig?.borderRadius ?? 12}
 					{@const justifyContent = textAlign === 'right' ? 'flex-end' : textAlign === 'center' ? 'center' : 'flex-start'}
+					{@const animationClass = link.animation && link.animation !== 'none' ? `link-animation-${link.animation}` : ''}
 					<a
 						href={link.url}
 						target={link.open_in_new_tab ? '_blank' : '_self'}
 						rel="noopener noreferrer"
-						class="block transition-all hover:scale-[1.02] hover:opacity-90"
+						class="block transition-all hover:scale-[1.02] hover:opacity-90 {animationClass}"
 						style="
 							background: {blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 							color: {blockStyle?.text || '#ffffff'};
@@ -715,5 +716,117 @@
 
 	.gradient-speed-fast {
 		animation-duration: 2s;
+	}
+
+	/* Link Animation Classes */
+	@keyframes link-bounce {
+		0%, 100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-10px);
+		}
+	}
+
+	@keyframes link-jello {
+		0%, 100% {
+			transform: skewX(0deg) skewY(0deg);
+		}
+		30% {
+			transform: skewX(25deg) skewY(5deg);
+		}
+		40% {
+			transform: skewX(-15deg) skewY(-5deg);
+		}
+		50% {
+			transform: skewX(15deg) skewY(3deg);
+		}
+		65% {
+			transform: skewX(-5deg) skewY(-3deg);
+		}
+		75% {
+			transform: skewX(5deg) skewY(2deg);
+		}
+	}
+
+	@keyframes link-wobble {
+		0%, 100% {
+			transform: translateX(0) rotate(0deg);
+		}
+		15% {
+			transform: translateX(-10px) rotate(-5deg);
+		}
+		30% {
+			transform: translateX(8px) rotate(3deg);
+		}
+		45% {
+			transform: translateX(-8px) rotate(-3deg);
+		}
+		60% {
+			transform: translateX(5px) rotate(2deg);
+		}
+		75% {
+			transform: translateX(-3px) rotate(-1deg);
+		}
+	}
+
+	@keyframes link-pulse {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.05);
+		}
+	}
+
+	@keyframes link-shake {
+		0%, 100% {
+			transform: translateX(0);
+		}
+		10%, 30%, 50%, 70%, 90% {
+			transform: translateX(-5px);
+		}
+		20%, 40%, 60%, 80% {
+			transform: translateX(5px);
+		}
+	}
+
+	@keyframes link-tada {
+		0%, 100% {
+			transform: scale(1) rotate(0deg);
+		}
+		10%, 20% {
+			transform: scale(0.9) rotate(-3deg);
+		}
+		30%, 50%, 70%, 90% {
+			transform: scale(1.1) rotate(3deg);
+		}
+		40%, 60%, 80% {
+			transform: scale(1.1) rotate(-3deg);
+		}
+	}
+
+	.link-animation-bounce {
+		animation: link-bounce 1s ease-in-out infinite;
+	}
+
+	.link-animation-jello {
+		animation: link-jello 1s ease-in-out infinite;
+	}
+
+	.link-animation-wobble {
+		animation: link-wobble 1s ease-in-out infinite;
+	}
+
+	.link-animation-pulse {
+		animation: link-pulse 1.5s ease-in-out infinite;
+	}
+
+	.link-animation-shake {
+		animation: link-shake 0.8s ease-in-out infinite;
+	}
+
+	.link-animation-tada {
+		animation: link-tada 1.5s ease-in-out infinite;
 	}
 </style>

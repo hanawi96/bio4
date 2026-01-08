@@ -346,21 +346,22 @@
 	}
 
 	async function handleUpdateLink(event: CustomEvent<any>) {
-		const { linkId, title, url, icon_type, icon_data, icon_color } = event.detail;
+		const { linkId, title, url, icon_type, icon_data, icon_color, animation } = event.detail;
 
 		// Store old link for revert
 		const oldLink = currentLinks.find(link => link.id === linkId);
 
-		// OPTIMISTIC UI: Update immediately
+		// OPTIMISTIC UI: Update immediately - only update fields that are defined
 		currentLinks = currentLinks.map(link =>
 			link.id === linkId
 				? { 
-					...link, 
-					title, 
-					url, 
-					icon_type: icon_type || link.icon_type, 
-					icon_data: icon_data !== undefined ? icon_data : link.icon_data,
-					icon_color: icon_color !== undefined ? icon_color : link.icon_color
+					...link,
+					...(title !== undefined && { title }),
+					...(url !== undefined && { url }),
+					...(icon_type !== undefined && { icon_type }),
+					...(icon_data !== undefined && { icon_data }),
+					...(icon_color !== undefined && { icon_color }),
+					...(animation !== undefined && { animation })
 				}
 				: link
 		);
@@ -374,13 +375,15 @@
 
 		// Update in background
 		try {
-			await api.updateLink(linkId, {
-				title,
-				url,
-				icon_type: icon_type || 'none',
-				icon_data: icon_data || null,
-				icon_color: icon_color || null
-			});
+			const payload: any = {};
+			if (title !== undefined) payload.title = title;
+			if (url !== undefined) payload.url = url;
+			if (icon_type !== undefined) payload.icon_type = icon_type || 'none';
+			if (icon_data !== undefined) payload.icon_data = icon_data || null;
+			if (icon_color !== undefined) payload.icon_color = icon_color || null;
+			if (animation !== undefined) payload.animation = animation;
+			
+			await api.updateLink(linkId, payload);
 
 			// Update store silently in background
 			const data = await api.getEditorData(username);

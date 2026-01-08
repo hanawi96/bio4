@@ -50,6 +50,7 @@ export interface Link {
 	sort_order: number;
 	is_active: number;
 	open_in_new_tab?: number; // 0 = same tab, 1 = new tab
+	animation?: 'none' | 'bounce' | 'jello' | 'wobble' | 'pulse' | 'shake' | 'tada';
 }
 
 export interface Block {

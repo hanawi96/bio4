@@ -272,6 +272,7 @@ export async function updateLink(
 		icon_color?: string;
 		sort_order?: number;
 		is_active?: number;
+		animation?: string;
 	}
 ) {
 	const fields: string[] = [];
@@ -308,6 +309,10 @@ export async function updateLink(
 	if (data.is_active !== undefined) {
 		fields.push('is_active = ?');
 		values.push(data.is_active);
+	}
+	if (data.animation !== undefined) {
+		fields.push('animation = ?');
+		values.push(data.animation);
 	}
 
 	if (fields.length === 0) return;

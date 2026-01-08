@@ -218,7 +218,7 @@
 		showAddForm = false;
 		editingLink = link;
 		
-		const parts = link.title.split(' - ');
+		const parts = (link.title || '').split(' - ');
 		linkHeadline = parts[0];
 		linkSubtitle = parts.length > 1 ? parts.slice(1).join(' - ') : '';
 		linkUrl = link.url;
@@ -364,6 +364,28 @@
 			index1: currentIndex,
 			index2: targetIndex
 		});
+	}
+
+	function handleUpdateAnimation(event: CustomEvent<any>) {
+		const { linkId, animation } = event.detail;
+		
+		// Optimistic UI: Update link animation immediately
+		groups.update(g => g.map(group => 
+			group.id === groupId 
+				? { 
+					...group, 
+					links: group.links.map(link => 
+						link.id === linkId 
+							? { ...link, animation }
+							: link
+					)
+				}
+				: group
+		));
+		
+		// Dispatch to parent for API update
+		dispatch('updateLink', { linkId, animation });
+		toast.success('Animation updated');
 	}
 
 	function handleLayoutSelect(event: CustomEvent<string>) {
@@ -579,6 +601,7 @@
 						on:toggleNewTab={handleToggleNewTab}
 						on:delete={handleDelete}
 						on:move={handleMove}
+						on:updateAnimation={handleUpdateAnimation}
 					/>
 				{/if}
 			{/each}

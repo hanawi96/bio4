@@ -159,7 +159,8 @@ app.put('/:linkId', async (c) => {
 		icon_data: body.icon_data,
 		icon_color: body.icon_color,
 		sort_order: body.sort_order,
-		is_active: body.is_active
+		is_active: body.is_active,
+		animation: body.animation
 	});
 
 	return c.json({ success: true });

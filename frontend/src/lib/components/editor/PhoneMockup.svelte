@@ -929,15 +929,16 @@
 									<div class="overflow-x-auto scrollbar-hide -mx-4 px-4">
 										<div class="flex gap-3" style="width: max-content;">
 											{#each groupLinks as link}
-												{@const parts = link.title.split(' - ')}
+												{@const parts = (link.title || '').split(' - ')}
 												{@const headline = parts[0]}
 												{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
+												{@const animationClass = link.animation && link.animation !== 'none' ? `link-animation-${link.animation}` : ''}
 												
 												<a
 													href={link.url}
 													target="_blank"
 													rel="noopener"
-													class="link-button block flex-shrink-0 font-medium transition-transform hover:scale-[1.02]"
+													class="link-button block flex-shrink-0 font-medium transition-transform hover:scale-[1.02] {animationClass}"
 													style="
 														width: 200px;
 														background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
@@ -995,7 +996,7 @@
 									{@const imageBorderRadius = config.imagePadding ? blockBorderRadius : `${Math.max(0, blockRadiusNum - 4)}px`}
 									
 									<div class="grid" style="grid-template-columns: repeat({config.columns}, minmax(0, 1fr)); gap: {blockGap}px;">										{#each groupLinks as link}
-											{@const headline = link.title.split(' - ')[0]}
+											{@const headline = (link.title || '').split(' - ')[0]}
 											{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, link.icon_color || iconThumbnailColor)}
 											{@const hasImage = !!linkIconUrl}
 											{@const showImageOnly = hasImage && !config.imagePadding && !config.showLabels}
@@ -1005,12 +1006,13 @@
 													? `${blockBorderRadius} ${blockBorderRadius} 0 0` 
 													: blockBorderRadius}
 											{@const iconClasses = getIconClasses(link.icon_type || 'none', 'grid', `w-full ${aspectClass}`)}
+											{@const animationClass = link.animation && link.animation !== 'none' ? `link-animation-${link.animation}` : ''}
 											
 											<a
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block font-medium transition-transform hover:scale-[1.02] {config.imagePadding || config.showLabels ? '' : 'overflow-hidden'}"
+												class="link-button block font-medium transition-transform hover:scale-[1.02] {config.imagePadding || config.showLabels ? '' : 'overflow-hidden'} {animationClass}"
 												style="
 													background: {showImageOnly ? 'transparent' : ($appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6')};
 													color: {$appearance?.blockStyle?.text || 'white'};
@@ -1065,7 +1067,7 @@
 									
 									<div class="flex flex-col" style="gap: {blockGap}px;">
 										{#each groupLinks as link, index}
-											{@const parts = link.title.split(' - ')}
+											{@const parts = (link.title || '').split(' - ')}
 											{@const headline = parts[0]}
 											{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
 											{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, link.icon_color || iconThumbnailColor)}
@@ -1078,12 +1080,13 @@
 												: position === 'right'
 													? `0 ${blockBorderRadius} ${blockBorderRadius} 0`
 													: `${blockBorderRadius} 0 0 ${blockBorderRadius}`}
+											{@const animationClass = link.animation && link.animation !== 'none' ? `link-animation-${link.animation}` : ''}
 											
 											<a
 												href={link.url}
 												target="_blank"
 												rel="noopener"
-												class="link-button block w-full font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'}"
+												class="link-button block w-full font-medium transition-transform hover:scale-[1.02] {config.imagePadding ? '' : 'overflow-hidden'} {animationClass}"
 												style="
 													background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 													color: {$appearance?.blockStyle?.text || 'white'};
@@ -1145,18 +1148,19 @@
 									)}
 									
 									{#each groupLinks as link}
-										{@const parts = link.title.split(' - ')}
+										{@const parts = (link.title || '').split(' - ')}
 										{@const headline = parts[0]}
 										{@const subtitle = parts.length > 1 ? parts.slice(1).join(' - ') : null}
 										{@const linkIconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || null, link.icon_color || iconThumbnailColor)}
 										{@const iconClassesTop = getIconClasses(link.icon_type || 'none', 'list-top', `w-10 h-10 ${iconShapeClass}`)}
 										{@const iconClassesLeft = getIconClasses(link.icon_type || 'none', 'list-left', `w-8 h-8 flex-shrink-0 ${iconShapeClass}`)}
+										{@const animationClass = link.animation && link.animation !== 'none' ? `link-animation-${link.animation}` : ''}
 										
 										<a
 											href={link.url}
 											target="_blank"
 											rel="noopener"
-											class="link-button block w-full font-medium transition-transform hover:scale-[1.02]"
+											class="link-button block w-full font-medium transition-transform hover:scale-[1.02] {animationClass}"
 											style="
 												background: {$appearance?.blockStyle?.fill || tokens?.primaryColor || '#3b82f6'};
 												color: {$appearance?.blockStyle?.text || 'white'};
@@ -1400,5 +1404,117 @@
 
 	.gradient-speed-fast {
 		animation-duration: 2s;
+	}
+
+	/* Link Animation Classes */
+	@keyframes link-bounce {
+		0%, 100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-10px);
+		}
+	}
+
+	@keyframes link-jello {
+		0%, 100% {
+			transform: skewX(0deg) skewY(0deg);
+		}
+		30% {
+			transform: skewX(25deg) skewY(5deg);
+		}
+		40% {
+			transform: skewX(-15deg) skewY(-5deg);
+		}
+		50% {
+			transform: skewX(15deg) skewY(3deg);
+		}
+		65% {
+			transform: skewX(-5deg) skewY(-3deg);
+		}
+		75% {
+			transform: skewX(5deg) skewY(2deg);
+		}
+	}
+
+	@keyframes link-wobble {
+		0%, 100% {
+			transform: translateX(0) rotate(0deg);
+		}
+		15% {
+			transform: translateX(-10px) rotate(-5deg);
+		}
+		30% {
+			transform: translateX(8px) rotate(3deg);
+		}
+		45% {
+			transform: translateX(-8px) rotate(-3deg);
+		}
+		60% {
+			transform: translateX(5px) rotate(2deg);
+		}
+		75% {
+			transform: translateX(-3px) rotate(-1deg);
+		}
+	}
+
+	@keyframes link-pulse {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.05);
+		}
+	}
+
+	@keyframes link-shake {
+		0%, 100% {
+			transform: translateX(0);
+		}
+		10%, 30%, 50%, 70%, 90% {
+			transform: translateX(-5px);
+		}
+		20%, 40%, 60%, 80% {
+			transform: translateX(5px);
+		}
+	}
+
+	@keyframes link-tada {
+		0%, 100% {
+			transform: scale(1) rotate(0deg);
+		}
+		10%, 20% {
+			transform: scale(0.9) rotate(-3deg);
+		}
+		30%, 50%, 70%, 90% {
+			transform: scale(1.1) rotate(3deg);
+		}
+		40%, 60%, 80% {
+			transform: scale(1.1) rotate(-3deg);
+		}
+	}
+
+	.link-animation-bounce {
+		animation: link-bounce 1s ease-in-out infinite;
+	}
+
+	.link-animation-jello {
+		animation: link-jello 1s ease-in-out infinite;
+	}
+
+	.link-animation-wobble {
+		animation: link-wobble 1s ease-in-out infinite;
+	}
+
+	.link-animation-pulse {
+		animation: link-pulse 1.5s ease-in-out infinite;
+	}
+
+	.link-animation-shake {
+		animation: link-shake 0.8s ease-in-out infinite;
+	}
+
+	.link-animation-tada {
+		animation: link-tada 1.5s ease-in-out infinite;
 	}
 </style>
