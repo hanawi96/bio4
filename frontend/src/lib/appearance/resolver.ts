@@ -513,7 +513,26 @@ export function resolveAppearance(
 			config: themeConfig
 		},
 		tokens,
-		header: { ...(headerPresetsMap[headerPresetId] || headerPresetsMap['no-cover'] || HEADER_PRESETS['no-cover']), ...headerOverrides },
+		header: { 
+			...(headerPresetsMap[headerPresetId] || headerPresetsMap['no-cover'] || HEADER_PRESETS['no-cover']), 
+			// Merge theme defaults (avatarSize, avatarShape, etc.)
+			...(themeConfig.page?.defaults ? {
+				avatarSize: themeConfig.page.defaults.avatarSize,
+				avatarShape: themeConfig.page.defaults.avatarShape,
+				avatarBorderColor: themeConfig.page.defaults.avatarBorderColor,
+				avatarBorderWidth: themeConfig.page.defaults.avatarBorderWidth,
+				socialIconPosition: themeConfig.page.defaults.socialIconPosition,
+				socialIconColor: themeConfig.page.defaults.socialIconColor,
+				socialIconSize: themeConfig.page.defaults.socialIconSize,
+				socialIconsEnabled: themeConfig.page.defaults.socialIconsEnabled,
+				titleGlowEnabled: themeConfig.page.defaults.titleGlow?.enabled,
+				titleGlowColor: themeConfig.page.defaults.titleGlow?.color,
+				avatarGlowEnabled: themeConfig.page.defaults.avatarGlow?.enabled,
+				avatarGlowColor: themeConfig.page.defaults.avatarGlow?.color,
+			} : {}),
+			// User overrides have highest priority
+			...headerOverrides 
+		},
 		page: pageLayout,
 		block: blockConfig,
 		blockStyle

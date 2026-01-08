@@ -445,8 +445,12 @@ export async function getFullPageData(db: D1Database, username: string, useDraft
 	if (appearanceData.customTheme) {
 		// User has customized theme
 		theme = appearanceData.customTheme;
+	} else if (appearanceData.themeKey) {
+		// NEW FORMAT: Load from preset using themeKey
+		const preset = await getThemePresetByKey(db, appearanceData.themeKey);
+		theme = preset ? JSON.parse(preset.config) : null;
 	} else if (appearanceData.themePresetKey) {
-		// Load from preset
+		// OLD FORMAT: Load from preset using themePresetKey (backward compatibility)
 		const preset = await getThemePresetByKey(db, appearanceData.themePresetKey);
 		theme = preset ? JSON.parse(preset.config) : null;
 	}

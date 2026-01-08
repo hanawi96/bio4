@@ -1,6 +1,6 @@
 <script lang="ts">
-	import BioPreview from '$lib/components/preview/BioPreview.svelte';
 	import { loadEditorData } from '$lib/stores/page';
+	import PublicBioPage from '$lib/components/public/PublicBioPage.svelte';
 	import type { PageData } from './$types';
 	
 	export let params = {};
@@ -12,4 +12,4 @@
 	}
 </script>
 
-<BioPreview />
+<PublicBioPage />

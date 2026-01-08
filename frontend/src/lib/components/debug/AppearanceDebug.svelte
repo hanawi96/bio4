@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { appearance } from '$lib/stores/appearance';
 	import { page } from '$lib/stores/page';
+	import { browser } from '$app/environment';
 	
 	let expanded = false;
 	let selectedTab: 'theme' | 'tokens' | 'header' | 'block' = 'theme';
 	
 	// Get computed styles from actual DOM elements
 	function getComputedValue(selector: string, property: string): string {
-		if (typeof window === 'undefined') return 'N/A';
+		if (!browser) return 'N/A';
 		const element = document.querySelector(selector);
 		if (!element) return 'Not found';
 		return window.getComputedStyle(element).getPropertyValue(property);
@@ -114,7 +115,7 @@
 		return 'rounded';
 	}
 	
-	$: headerChecks = $appearance ? [
+	$: headerChecks = (browser && $appearance) ? [
 		{
 			name: 'Has Cover',
 			expected: $appearance.header.hasCover ? 'Yes' : 'No',
@@ -181,6 +182,7 @@
 	$: totalCount = allChecks.length;
 </script>
 
+{#if browser}
 <!-- Compact Debug Panel -->
 {#if !expanded}
 	<button
@@ -325,4 +327,6 @@
 			Theme: {$page?.theme_preset_key || 'none'} • Updates in real-time
 		</div>
 	</div>
+{/if}
+
 {/if}
