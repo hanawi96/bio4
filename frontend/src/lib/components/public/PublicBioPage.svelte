@@ -291,8 +291,8 @@
 	
 	// Avatar - use same sizes as PhoneMockup
 	$: avatarSize = (() => {
-		const sizes = { xs: 80, sm: 96, md: 112, lg: 128, xl: 144, '2xl': 160, '3xl': 176 };
-		return sizes[header?.avatarSize || 'md'] || 112;
+		const sizes = { xs: 112, sm: 128, md: 144, lg: 160, xl: 176, '2xl': 192, '3xl': 208 };
+		return sizes[header?.avatarSize || 'md'] || 144;
 	})();
 	
 	// Avatar dimensions - handle oval shape

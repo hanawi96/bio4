@@ -231,8 +231,8 @@
 	$: mutedColor = typography.mutedColor;
 
 	// Avatar size mapping - standard sizes (same as PublicBioPage)
-	const avatarSizes = { xs: 80, sm: 96, md: 112, lg: 128, xl: 144, '2xl': 160, '3xl': 176, full: 0 };
-	$: avatarSize = header ? avatarSizes[header.avatarSize] : 112;
+	const avatarSizes = { xs: 112, sm: 128, md: 144, lg: 160, xl: 176, '2xl': 192, '3xl': 208, full: 0 };
+	$: avatarSize = header ? avatarSizes[header.avatarSize] : 144;
 	$: isFullSizeAvatar = header?.avatarSize === 'full';
 	
 	// Smart aspect ratio calculation for full size avatars
@@ -671,6 +671,8 @@
 					background: transparent;
 					color: {tokens?.textColor || '#000000'};
 					font-family: {tokens?.fontFamily || 'Inter'}, sans-serif;
+					max-width: {$appearance?.page?.maxWidth || 480}px;
+					margin: 0 auto;
 				"
 			>
 				<!-- Share & Subscribe Buttons -->
@@ -721,39 +723,31 @@
 					<!-- Loading State -->
 					<div class="w-full h-full flex items-center justify-center">
 						<div class="flex flex-col items-center gap-3">
-							<div class="animate-spin w-8 h-8 border-2 border-gray-300 rounded-full" style="border-top-color: #00aa4f;"></div>
-							<p class="text-xs text-gray-500">Loading preview...</p>
+							<div class="animate-spin w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full"></div>
+							<p class="text-xs" style="color: {mutedColor || '#71717a'};">Loading preview...</p>
 						</div>
 					</div>
 				{:else}
-				<div class="pt-10 pb-8" style="padding-left: {pagePadding}px; padding-right: {pagePadding}px;">
+				<div class="pt-10 pb-8" style="padding-left: {pagePadding}px; padding-right: {pagePadding}px; text-align: {$appearance?.page?.textAlign || 'center'};">
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
-						<div class="relative -mx-4 -mt-10 mb-3 header-cover">
+						<div class="relative -mt-10 {isAvatarCover ? 'mb-0' : 'mb-3'} header-cover" style="margin-left: -{pagePadding}px; margin-right: -{pagePadding}px;">
 							<!-- Cover Image/Gradient with text overlay for avatar-cover -->
 							<div 
 								class="w-full relative"
 								style="{coverStyle} height: {coverHeight}px;"
 							>
-								<!-- Double gradient overlay for avatar-cover -->
 								{#if isAvatarCover}
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
-									<!-- Layer 2: Bottom fade mask - extend 2px below to prevent gap -->
-									<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
+									<!-- Layer 2: Bottom fade mask - covers 50% of cover height for smooth transition -->
+									<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 175px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
 									
-									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
+									<!-- Text overlay on avatar cover -->
 									<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
 										<h1 class="font-bold drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">{$page?.title || 'Your Name'}</h1>
 										{#if header.showBio && $page?.bio}
-											<p 
-												class="bio-text mt-2 drop-shadow-md"
-												style="
-													font-size: {bioFontSizePx}px;
-													color: {mutedColor};
-													line-height: 1.5;
-												"
-											>
+											<p class="bio-text mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; line-height: 1.5; color: {mutedColor};">
 												{$page.bio}
 											</p>
 										{/if}
@@ -918,19 +912,11 @@
 						{/if}
 					{/if}
 
-					<!-- Links - với negative margin và gradient mask cho avatar-cover -->
+					<!-- Links - với negative margin cho avatar-cover -->
 					<div 
 						class="relative"
 						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -80px; padding-top: 100px;` : 'margin-top: 24px;'}"
 					>
-						<!-- Gradient mask - nối liền với overlay trên avatar -->
-						{#if isAvatarCover}
-							<div 
-								class="absolute pointer-events-none z-10 -mx-4"
-								style="left: 0; right: 0; top: -24px; height: 60px; background: linear-gradient(to bottom, transparent 0%, {resolvedBackground || '#ffffff'} 100%);"
-							></div>
-						{/if}
-						
 						{#each $groups.filter(g => (g.is_visible ?? 1) === 1) as group}
 							{@const groupLinks = group.links.filter(l => l.is_active === 1)}
 							{@const effectiveLayoutType = group.layout_type || defaultLinkGroupLayout}

@@ -94,6 +94,10 @@ export function buildPreviewAppearance(
 	const borderWidth = resolveBorderWidth(config.page?.defaults?.borderWidth);
 	const blockTextColor = resolveRef(semantic?.color?.block?.text, config) || '#ffffff';
 	const shadowColor = resolveRef(semantic?.color?.shadow?.default, config) || '#000000';
+	
+	// Typography colors - textColor is heading, mutedTextColor is muted
+	const headingColor = textColor;
+	const mutedColor = mutedTextColor;
 
 	// Build block style from preset
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;
@@ -205,6 +209,10 @@ export function buildPreviewAppearance(
 		},
 		block: {
 			borderRadius: 12
+		},
+		typography: {
+			headingColor,
+			mutedColor
 		}
 	};
 }

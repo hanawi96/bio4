@@ -1,13 +1,13 @@
 {
   "meta": {
-    "id": "preset.theme-1",
-    "name": "Theme 1",
+    "id": "preset.test",
+    "name": "Test",
     "schemaVersion": 2,
     "version": "2.2.0",
     "author": "system",
     "description": "",
-    "tier": "free",
-    "category": "minimal"
+    "tier": "pro",
+    "category": "dark"
   },
   "tokens": {
     "color": {
@@ -42,18 +42,18 @@
     },
     "typography": {
       "fontFamily": {
-        "sans": "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+        "sans": "Poppins, sans-serif"
       }
     }
   },
   "semantic": {
     "color": {
-      "primary": "#3b82f6",
+      "primary": "#002aff",
       "primaryHover": "ref:tokens.color.blue.600",
       "secondary": "ref:tokens.color.gray.500",
       "text": {
-        "default": "#ffffff",
-        "muted": "#ffffff",
+        "default": "#13fb3a",
+        "muted": "#00f5a3",
         "subtle": "ref:tokens.color.gray.400",
         "invert": "ref:tokens.color.white"
       },
@@ -64,45 +64,71 @@
         "overlay": "ref:tokens.color.overlay.50"
       },
       "border": {
-        "default": "#e4e4e7",
+        "default": "#ffffff",
         "subtle": "ref:tokens.color.gray.100",
         "strong": "ref:tokens.color.gray.300"
       },
       "block": {
-        "text": "#ffffff"
+        "text": "#2ca058"
       },
       "shadow": {
-        "default": "#000000"
+        "default": "#ffffff"
+      },
+      "icon": {
+        "thumbnail": "#db0000"
       }
     },
     "typography": {
       "heading": {
-        "fontFamily": "ref:tokens.typography.fontFamily.sans"
+        "fontFamily": "Poppins, sans-serif",
+        "fontSize": "ref:tokens.typography.fontSize.2xl"
+      },
+      "link": {
+        "fontSize": "ref:tokens.typography.fontSize.xs"
+      },
+      "bio": {
+        "fontSize": "ref:tokens.typography.fontSize.xs"
+      },
+      "subtitle": {
+        "fontSize": "ref:tokens.typography.fontSize.xs"
       }
     }
   },
   "page": {
     "layout": {
-      "maxWidth": "sm",
+      "maxWidth": "md",
       "pagePadding": "default",
-      "blockGap": "default",
+      "blockGap": "compact",
       "textAlign": "center",
-      "blockPadding": "default"
+      "blockPadding": "tight"
     },
     "defaults": {
-      "headerPresetId": "no-cover",
-      "blockStylePreset": "glass",
+      "headerPresetId": "with-cover",
+      "avatarSize": "md",
+      "avatarShape": "circle",
+      "blockStylePreset": "outline",
       "linkStyle": "soft",
       "linkGroupLayout": "list",
-      "linkIconShape": "rounded",
-      "socialIconPosition": "footer",
+      "linkIconShape": "circle",
+      "socialIconPosition": "header",
       "socialIconColor": "#ffffff",
+      "socialIconSize": "xs",
+      "socialIconsEnabled": true,
       "gradientPreset": "diagonal-dark",
       "avatarBorderColor": "#ffffff",
       "avatarBorderWidth": "default",
-      "shadowStyle": "none",
+      "shadowStyle": "medium",
       "blockOpacity": 100,
-      "borderWidth": "default",
+      "borderRadius": "sm",
+      "borderWidth": "thin",
+      "titleGlow": {
+        "enabled": false,
+        "color": "#ff0000"
+      },
+      "avatarGlow": {
+        "enabled": false,
+        "color": "#ff0000"
+      },
       "linkGroupConfig": {
         "list": {
           "iconPosition": "left",
@@ -122,8 +148,7 @@
           "showSubtitle": true,
           "imagePadding": false
         }
-      },
-      "borderRadius": "lg"
+      }
     }
   },
   "background": {
@@ -134,6 +159,21 @@
       "grayscale": "none"
     },
     "type": "gradient",
-    "value": "linear-gradient(135deg, #6b46c1 0%, #ed64a6 100%)"
+    "value": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "animation": {
+      "enabled": true,
+      "variant": "rotating",
+      "speed": "medium"
+    },
+    "particles": {
+      "enabled": true,
+      "count": 20,
+      "size": "medium",
+      "color": "#ffffff",
+      "speed": "medium",
+      "variant": "floating",
+      "blur": "medium",
+      "opacity": 60
+    }
   }
 }

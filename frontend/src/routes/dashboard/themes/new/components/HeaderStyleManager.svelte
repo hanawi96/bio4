@@ -314,7 +314,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">XS</div>
-						<div class="text-[10px] opacity-60 mt-0.5">80px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">112px</div>
 					</button>
 					<button
 						type="button"
@@ -324,7 +324,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">SM</div>
-						<div class="text-[10px] opacity-60 mt-0.5">96px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">128px</div>
 					</button>
 					<button
 						type="button"
@@ -334,7 +334,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">MD</div>
-						<div class="text-[10px] opacity-60 mt-0.5">112px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">144px</div>
 					</button>
 					<button
 						type="button"
@@ -344,7 +344,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">LG</div>
-						<div class="text-[10px] opacity-60 mt-0.5">128px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">160px</div>
 					</button>
 					<button
 						type="button"
@@ -354,7 +354,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">XL</div>
-						<div class="text-[10px] opacity-60 mt-0.5">144px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">176px</div>
 					</button>
 					<button
 						type="button"
@@ -364,7 +364,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">2XL</div>
-						<div class="text-[10px] opacity-60 mt-0.5">160px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">192px</div>
 					</button>
 					<button
 						type="button"
@@ -374,7 +374,7 @@
 							: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
 					>
 						<div class="font-semibold">3XL</div>
-						<div class="text-[10px] opacity-60 mt-0.5">176px</div>
+						<div class="text-[10px] opacity-60 mt-0.5">208px</div>
 					</button>
 					<button
 						type="button"

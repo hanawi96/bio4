@@ -9,7 +9,7 @@
  * Fine-grained scale for precise typography control
  */
 export const FONT_SIZE_TOKENS = {
-    xs: 12,
+    xs: 14,
     '13': 13,
     sm: 14,
     '15': 15,

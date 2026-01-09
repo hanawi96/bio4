@@ -112,8 +112,33 @@
 		return acc;
 	}, {} as Record<BlockStylePresetId, any>);
 
-	// Get border-radius from preset or override
-	$: blockBorderRadius = $appearanceState.overrides?.['block.borderRadius'] ?? $appearance?.block?.borderRadius ?? 12;
+	// Get border-radius from preset or override (normalize to number)
+	$: blockBorderRadius = (() => {
+		const override = $appearanceState.overrides?.['block.borderRadius'];
+		if (override !== undefined) {
+			// Override is already a number from UI
+			return typeof override === 'number' ? override : 12;
+		}
+		
+		// Get from appearance (could be string token or number)
+		const themeValue = $appearance?.block?.borderRadius;
+		if (themeValue === undefined) return 12;
+		
+		// Normalize string tokens to numbers (match Theme Editor)
+		if (typeof themeValue === 'string') {
+			const tokenMap: Record<string, number> = {
+				'none': 0,
+				'sm': 4,
+				'md': 8,
+				'lg': 12,
+				'xl': 16,
+				'full': 9999
+			};
+			return tokenMap[themeValue] ?? 12;
+		}
+		
+		return themeValue;
+	})();
 
 	function selectShadow(shadowId: ShadowStylePreset) {
 		updateAppearance('block.shadow', shadowId);

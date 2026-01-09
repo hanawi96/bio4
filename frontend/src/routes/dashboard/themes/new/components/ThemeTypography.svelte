@@ -42,18 +42,21 @@
 	}
 	
 	// Font size options - 5 options for better UX
-	// Common options for bio and subtitle (12-18px range)
+	// Common options for bio and subtitle (14-20px range)
 	const commonFontSizeOptions = [
-		{ value: 'xs' as const, label: 'XS', size: FONT_SIZE_TOKENS.xs },
-		{ value: 'sm' as const, label: 'SM', size: FONT_SIZE_TOKENS.sm },
-		{ value: 'base' as const, label: 'MD', size: FONT_SIZE_TOKENS.base },
-		{ value: 'lg' as const, label: 'LG', size: FONT_SIZE_TOKENS.lg }
+		{ value: 'xs' as const, label: 'XS', size: 14 },
+		{ value: 'base' as const, label: 'SM', size: 16 },
+		{ value: 'lg' as const, label: 'MD', size: 18 },
+		{ value: 'xl' as const, label: 'LG', size: 20 }
 	];
 	
-	// Link font size options (12-20px range)
+	// Link font size options (14-20px range)
 	const linkFontSizeOptions = [
-		...commonFontSizeOptions,
-		{ value: 'xl' as const, label: 'XL', size: FONT_SIZE_TOKENS.xl }
+		{ value: 'xs' as const, label: 'XS', size: 14 },
+		{ value: 'sm' as const, label: 'SM', size: 14 },
+		{ value: 'base' as const, label: 'MD', size: 16 },
+		{ value: 'lg' as const, label: 'LG', size: 18 },
+		{ value: 'xl' as const, label: 'XL', size: 20 }
 	];
 	
 	// Heading font size options (18-24px range)

@@ -26,8 +26,8 @@
 		: 'default';
 
 	function selectSpacing(level: typeof spacingLevels[0]) {
-		// Save as px value (Appearance page saves px, Theme Editor saves semantic key)
-		updateAppearance('page.blockGap', level.spacing);
+		// Save as semantic key to match theme format
+		updateAppearance('page.blockGap', level.id);
 	}
 </script>
 

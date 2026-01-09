@@ -66,16 +66,10 @@ export const isCustom = derived([appearanceState, themes], ([$state, $themes]) =
 // ============================================
 
 export const hasCustomizations = derived([appearanceState, themes], ([$state, $themes]) => {
-    const hasOverrides = Object.keys($state.overrides || {}).length > 0;
-
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
-    const theme = themesMap[$state.presetKey || 'minimal'];
-    const themeDefaults = theme?.config?.defaults;
-
-    const headerChanged = themeDefaults && $state.headerPresetId &&
-        $state.headerPresetId !== themeDefaults.headerPreset;
-
-    return hasOverrides || headerChanged;
+    
+    // Use isCustomTheme which now does deep comparison
+    return isCustomTheme(themesMap, $state);
 });
 
 // ============================================
@@ -174,11 +168,18 @@ export async function changeThemePreset(presetKey: string) {
 // ============================================
 
 export async function changeHeaderPreset(headerPresetId: string) {
+    console.log('[changeHeaderPreset] Called with:', headerPresetId);
+    
     const currentState = get(appearanceState);
     const $themes = get(themes);
     const themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
 
-    const newState = setHeaderPresetHelper(currentState, headerPresetId);
+    console.log('[changeHeaderPreset] Current state before change:', currentState);
+
+    const newState = setHeaderPresetHelper(themesMap, currentState, headerPresetId);
+    
+    console.log('[changeHeaderPreset] New state after change:', newState);
+    
     const oldFormat = migrateNewToOld(themesMap, newState);
 
     page.update(p => {
@@ -193,6 +194,7 @@ export async function changeHeaderPreset(headerPresetId: string) {
         await api.saveDraft(username, {
             draft_appearance: JSON.stringify(oldFormat)
         });
+        console.log('[changeHeaderPreset] Saved successfully');
     } catch (e) {
         console.error('[appearanceManager] Failed to change header preset:', e);
     }
@@ -220,11 +222,9 @@ export async function resetToThemeDefault() {
 
     // Reset to theme defaults (clear overrides AND reset preset IDs)
     const theme = themesMap[currentState.presetKey || 'minimal'];
-    const newState: AppearanceState = {
-        presetKey: currentState.presetKey || 'minimal',
-        headerPresetId: theme?.defaultHeaderPresetId || theme?.config?.defaults?.headerPreset || 'no-cover',
-        overrides: {} // Clear all overrides
-    };
+    
+    // Use resetToPreset helper which has consistent logic
+    const newState = resetToPreset(themesMap, currentState.presetKey || 'minimal');
 
     const oldFormat = migrateNewToOld(themesMap, newState);
 
