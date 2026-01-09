@@ -3,6 +3,10 @@
 	import type { Link } from '$lib/types';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 	import { toUTCISOString, fromUTCISOString, getMinDateTime, isValidSchedule, formatCountdown, isFuture } from '$lib/utils/dateUtils';
+	import ThumbnailSelectionModal from '$lib/components/modals/ThumbnailSelectionModal.svelte';
+	import IconPickerModal from '$lib/components/modals/IconPickerModal.svelte';
+	import GiphyPickerModal from '$lib/components/modals/GiphyPickerModal.svelte';
+	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 
 	export let link: Link;
 	export let isFirst = false;
@@ -13,6 +17,12 @@
 	let showAnimationPanel = false;
 	let showLockPanel = false;
 	let showSchedulePanel = false;
+	let showThumbnailModal = false;
+	let showIconPickerModal = false;
+	let showGiphyPickerModal = false;
+	let showCropModal = false;
+	let fileInput: HTMLInputElement;
+	let tempImageUrl = '';
 	let menuButton: HTMLButtonElement;
 	let menuPosition = { top: 0, right: 0 };
 	
@@ -37,8 +47,17 @@
 	
 	// Cleanup on destroy
 	onDestroy(() => {
+		// Cleanup countdown interval
 		if (checkInterval) {
 			clearInterval(checkInterval);
+		}
+		
+		// Cleanup click outside listener
+		window.removeEventListener('click', handleClickOutside);
+		
+		// Cleanup temp image URL to prevent memory leak
+		if (tempImageUrl) {
+			URL.revokeObjectURL(tempImageUrl);
 		}
 	});
 	
@@ -214,6 +233,90 @@
 		dispatch('toggleNewTab', { linkId: link.id, openInNewTab: newValue });
 	}
 
+	function handleThumbnailSelect(event: CustomEvent<{ type: string }>) {
+		showThumbnailModal = false;
+		
+		if (event.detail.type === 'upload') {
+			fileInput?.click();
+		} else if (event.detail.type === 'icon') {
+			showIconPickerModal = true;
+		} else if (event.detail.type === 'gif') {
+			showGiphyPickerModal = true;
+		}
+	}
+
+	function handleThumbnailCancel() {
+		showThumbnailModal = false;
+	}
+
+	function handleFileChange(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (!file) return;
+
+		if (!file.type.startsWith('image/')) {
+			alert('Please select an image file');
+			return;
+		}
+
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Image size must be less than 5MB');
+			return;
+		}
+
+		tempImageUrl = URL.createObjectURL(file);
+		showCropModal = true;
+	}
+
+	function handleCropAccept(event: CustomEvent<Blob>) {
+		const croppedBlob = event.detail;
+		
+		if (tempImageUrl) {
+			URL.revokeObjectURL(tempImageUrl);
+			tempImageUrl = '';
+		}
+
+		const croppedFile = new File([croppedBlob], 'icon.jpg', { type: 'image/jpeg' });
+		
+		// Dispatch to parent to handle upload
+		dispatch('uploadIcon', { linkId: link.id, file: croppedFile });
+		showCropModal = false;
+	}
+
+	function handleCropCancel() {
+		if (tempImageUrl) {
+			URL.revokeObjectURL(tempImageUrl);
+			tempImageUrl = '';
+		}
+		if (fileInput) fileInput.value = '';
+		showCropModal = false;
+	}
+
+	function handleIconOrGiphySelect(event: CustomEvent<{ iconType: string; iconData: string; iconColor: string | null }>, source: 'icon' | 'giphy') {
+		if (source === 'icon') {
+			showIconPickerModal = false;
+		} else {
+			showGiphyPickerModal = false;
+		}
+		
+		dispatch('updateIcon', { 
+			linkId: link.id,
+			iconType: event.detail.iconType,
+			iconData: event.detail.iconData,
+			iconColor: event.detail.iconColor
+		});
+	}
+
+	function handleIconPickerBack() {
+		showIconPickerModal = false;
+		showThumbnailModal = true;
+	}
+
+	function handleGiphyPickerBack() {
+		showGiphyPickerModal = false;
+		showThumbnailModal = true;
+	}
+
 	// Close menu when clicking outside
 	function handleClickOutside(event: MouseEvent) {
 		if (!showMenu || !menuButton) return;
@@ -234,11 +337,6 @@
 			window.removeEventListener('click', handleClickOutside);
 		}
 	}
-
-	// Cleanup on component destroy
-	onDestroy(() => {
-		window.removeEventListener('click', handleClickOutside);
-	});
 </script>
 
 <button 
@@ -309,7 +407,7 @@
 
 				<!-- Thumbnail -->
 				<button
-					on:click={(e) => { e.stopPropagation(); /* TODO: Upload thumbnail */ }}
+					on:click={(e) => { e.stopPropagation(); showThumbnailModal = true; }}
 					class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
 					title="Add thumbnail"
 				>
@@ -834,6 +932,55 @@
 		</div>
 	{/if}
 </button>
+
+<!-- Thumbnail Selection Modal -->
+{#if showThumbnailModal}
+	<ThumbnailSelectionModal
+		on:select={handleThumbnailSelect}
+		on:cancel={handleThumbnailCancel}
+	/>
+{/if}
+
+<!-- Hidden File Input -->
+<input
+	type="file"
+	bind:this={fileInput}
+	on:change={handleFileChange}
+	accept="image/*"
+	class="hidden"
+/>
+
+<!-- Image Crop Modal -->
+{#if showCropModal && tempImageUrl}
+	<ImageCropModal
+		imageUrl={tempImageUrl}
+		aspectRatio={1}
+		title="Crop Link Icon"
+		outputWidth={512}
+		outputHeight={512}
+		on:accept={handleCropAccept}
+		on:cancel={handleCropCancel}
+	/>
+{/if}
+
+<!-- Icon Picker Modal -->
+{#if showIconPickerModal}
+	<IconPickerModal
+		initialColor={link.icon_color || '#000000'}
+		on:select={(e) => handleIconOrGiphySelect(e, 'icon')}
+		on:back={handleIconPickerBack}
+		on:cancel={() => showIconPickerModal = false}
+	/>
+{/if}
+
+<!-- Giphy Picker Modal -->
+{#if showGiphyPickerModal}
+	<GiphyPickerModal
+		on:select={(e) => handleIconOrGiphySelect(e, 'giphy')}
+		on:back={handleGiphyPickerBack}
+		on:cancel={() => showGiphyPickerModal = false}
+	/>
+{/if}
 
 <style>
 	@keyframes scale-in {

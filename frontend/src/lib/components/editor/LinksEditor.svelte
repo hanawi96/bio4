@@ -437,6 +437,57 @@
 		}
 	}
 
+	function handleUpdateIcon(event: CustomEvent<any>) {
+		const { linkId, iconType, iconData, iconColor } = event.detail;
+		
+		// Optimistic UI: Update link icon immediately
+		groups.update(g => g.map(group => 
+			group.id === groupId 
+				? { 
+					...group, 
+					links: group.links.map(link => 
+						link.id === linkId 
+							? { ...link, icon_type: iconType, icon_data: iconData, icon_color: iconColor }
+							: link
+					)
+				}
+				: group
+		));
+		
+		// Dispatch to parent for API update
+		dispatch('updateLink', { linkId, icon_type: iconType, icon_data: iconData, icon_color: iconColor });
+		toast.success('Thumbnail updated');
+	}
+
+	async function handleUploadIcon(event: CustomEvent<any>) {
+		const { linkId, file } = event.detail;
+		
+		try {
+			// Upload file to API (không cần linkId, API chỉ upload và trả về URL)
+			const response = await api.uploadLinkIcon(file);
+			
+			// Update link with uploaded icon URL
+			groups.update(g => g.map(group => 
+				group.id === groupId 
+					? { 
+						...group, 
+						links: group.links.map(link => 
+							link.id === linkId 
+								? { ...link, icon_type: 'image', icon_data: response.url, icon_color: null }
+								: link
+						)
+					}
+					: group
+			));
+			
+			// Dispatch to parent for API update
+			dispatch('updateLink', { linkId, icon_type: 'image', icon_data: response.url, icon_color: null });
+			toast.success('Thumbnail uploaded');
+		} catch (error: any) {
+			toast.error(error.message || 'Failed to upload thumbnail');
+		}
+	}
+
 	function handleLayoutSelect(event: CustomEvent<string>) {
 		dispatch('updateLayout', event.detail);
 	}
@@ -653,6 +704,8 @@
 						on:updateAnimation={handleUpdateAnimation}
 						on:updateLock={handleUpdateLock}
 						on:updateSchedule={handleUpdateSchedule}
+						on:updateIcon={handleUpdateIcon}
+						on:uploadIcon={handleUploadIcon}
 					/>
 				{/if}
 			{/each}
