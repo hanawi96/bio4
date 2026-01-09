@@ -38,25 +38,16 @@ function bgTokenToCss(bgToken: any): string {
 // ============================================
 
 function getDefaultHeaderPresetId(theme: Theme | undefined): string {
-    if (!theme) {
-        console.log('[getDefaultHeaderPresetId] No theme provided, returning no-cover');
-        return 'no-cover';
-    }
+    if (!theme) return 'no-cover';
     
-    // Priority 1: Root level defaultHeaderPresetId
-    if (theme.defaultHeaderPresetId) {
-        console.log('[getDefaultHeaderPresetId] Found root level:', theme.defaultHeaderPresetId);
-        return theme.defaultHeaderPresetId;
-    }
+    // Priority 1: Root level
+    if (theme.defaultHeaderPresetId) return theme.defaultHeaderPresetId;
     
-    // Priority 2: Config page defaults headerPresetId
+    // Priority 2: Config nested
     if (theme.config?.page?.defaults?.headerPresetId) {
-        console.log('[getDefaultHeaderPresetId] Found nested config:', theme.config.page.defaults.headerPresetId);
         return theme.config.page.defaults.headerPresetId;
     }
     
-    // Fallback
-    console.log('[getDefaultHeaderPresetId] No default found, returning no-cover');
     return 'no-cover';
 }
 
@@ -90,45 +81,30 @@ export function getPresetValue(
         // Header preset ID from theme default
         return getDefaultHeaderPresetId(preset);
     } else if (path.startsWith('block.')) {
-        // Block value - stylePreset comes from theme config
         const blockKey = path.replace('block.', '');
-        
-        console.log('[getPresetValue] Block path:', { blockKey, presetKey });
         
         if (blockKey === 'stylePreset') {
             return preset.config.page?.defaults?.blockStylePreset || 'solid';
         }
-        
-        // Block colors
         if (blockKey === 'color') {
             return preset.config?.semantic?.color?.primary;
         }
         if (blockKey === 'textColor') {
             return preset.config?.semantic?.color?.block?.text;
         }
-        
-        // Other block properties from theme config (stored in page.defaults, not tokens.block)
-        // Provide fallback values if theme doesn't specify
         if (blockKey === 'borderRadius') {
-            const value = preset.config?.page?.defaults?.borderRadius ?? 12; // Default 12px
-            console.log('[getPresetValue] borderRadius from theme:', value);
-            return value;
+            return preset.config?.page?.defaults?.borderRadius ?? 12;
         }
         if (blockKey === 'padding') {
-            const value = preset.config?.page?.defaults?.padding;
-            console.log('[getPresetValue] padding from theme:', value);
-            return value;
+            return preset.config?.page?.defaults?.padding;
         }
         if (blockKey === 'borderWidth') {
-            const value = preset.config?.page?.defaults?.borderWidth ?? 1; // Default 1px
-            console.log('[getPresetValue] borderWidth from theme:', value);
-            return value;
+            return preset.config?.page?.defaults?.borderWidth ?? 1;
         }
         if (blockKey === 'shadow') {
             return preset.config?.page?.defaults?.shadowStyle;
         }
         
-        console.log('[getPresetValue] Block property not found:', blockKey);
         return undefined;
     } else if (path.startsWith('page.')) {
         // Page-level settings from theme config
@@ -249,49 +225,27 @@ export function getPresetValue(
 // NORMALIZE HELPERS: Convert to canonical form
 // ============================================
 
-// BorderRadius token mapping (match Theme Editor)
-const BORDER_RADIUS_TOKENS: Record<string, number> = {
-    'none': 0,
-    'sm': 4,
-    'md': 8,
-    'lg': 12,
-    'xl': 16,
-    'full': 9999
-};
+// Import centralized tokens instead of duplicating
+import { 
+    RADIUS_TOKENS, 
+    BLOCK_GAP_PRESETS
+} from './spacingTokens';
 
-// BlockGap token mapping
-const BLOCK_GAP_TOKENS: Record<string, number> = {
-    'compact': 8,
-    'default': 16,
-    'spacious': 24
-};
+import {
+    BLUR_PRESETS,
+    BRIGHTNESS_PRESETS,
+    GRAYSCALE_PRESETS
+} from './effectsTokens';
 
-// Blur token mapping
-const BLUR_TOKENS: Record<string, number> = {
-    'none': 0,
-    'subtle': 10,
-    'medium': 20,
-    'strong': 35,
-    'extreme': 60
-};
-
-// Brightness token mapping
-const BRIGHTNESS_TOKENS: Record<string, number> = {
-    'darkest': 50,
-    'dark': 75,
-    'normal': 100,
-    'bright': 125,
-    'brightest': 150
-};
-
-// Grayscale token mapping
-const GRAYSCALE_TOKENS: Record<string, number> = {
-    'none': 0,
-    'subtle': 25,
-    'medium': 50,
-    'strong': 75,
-    'full': 100
-};
+// Unified token lookup for all numeric values
+const TOKEN_MAPS = {
+    ...RADIUS_TOKENS,
+    ...BLOCK_GAP_PRESETS,
+    ...BLUR_PRESETS,
+    ...BRIGHTNESS_PRESETS,
+    ...GRAYSCALE_PRESETS,
+    ...FONT_SIZE_TOKENS
+} as const;
 
 function normalizeColor(value: any): string | null {
     if (!value || typeof value !== 'string') return null;
@@ -315,67 +269,31 @@ function normalizeColor(value: any): string | null {
 }
 
 function normalizeGradient(value: string): { type: string; angle: number; colors: string[] } | null {
-    if (!value || typeof value !== 'string') return null;
-    if (!value.includes('gradient')) return null;
+    if (!value || typeof value !== 'string' || !value.includes('gradient')) return null;
     
     const isRadial = value.includes('radial-gradient');
-    
-    // Extract colors (support #hex, #shorthand, rgb, rgba)
     const colorRegex = /#[0-9a-fA-F]{3,6}|rgba?\([^)]+\)/gi;
     const colors = value.match(colorRegex);
     if (!colors || colors.length < 2) return null;
     
-    // Normalize colors
     const normalizedColors = colors.map(c => normalizeColor(c) || c);
     
-    // Extract angle for linear gradients
-    let angle = 135; // default
+    let angle = 135;
     if (!isRadial) {
         const angleMatch = value.match(/(\d+)deg/);
-        if (angleMatch) {
-            angle = parseInt(angleMatch[1]);
-        }
+        if (angleMatch) angle = parseInt(angleMatch[1]);
     }
     
-    return {
-        type: isRadial ? 'radial' : 'linear',
-        angle,
-        colors: normalizedColors
-    };
+    return { type: isRadial ? 'radial' : 'linear', angle, colors: normalizedColors };
 }
 
 function normalizeNumber(value: any): number | null {
     if (typeof value === 'number') return value;
     if (!value) return null;
     
-    // BorderRadius token: "sm" → 8
-    if (typeof value === 'string' && value in BORDER_RADIUS_TOKENS) {
-        return BORDER_RADIUS_TOKENS[value];
-    }
-    
-    // BlockGap token: "compact" → 8
-    if (typeof value === 'string' && value in BLOCK_GAP_TOKENS) {
-        return BLOCK_GAP_TOKENS[value];
-    }
-    
-    // Blur token: "none" → 0
-    if (typeof value === 'string' && value in BLUR_TOKENS) {
-        return BLUR_TOKENS[value];
-    }
-    
-    // Brightness token: "normal" → 100
-    if (typeof value === 'string' && value in BRIGHTNESS_TOKENS) {
-        return BRIGHTNESS_TOKENS[value];
-    }
-    
-    // Grayscale token: "none" → 0
-    if (typeof value === 'string' && value in GRAYSCALE_TOKENS) {
-        return GRAYSCALE_TOKENS[value];
-    }
-    
-    // FontSize token: "xl" → 20
-    if (typeof value === 'string' && value in FONT_SIZE_TOKENS) {
-        return FONT_SIZE_TOKENS[value as keyof typeof FONT_SIZE_TOKENS];
+    // Token lookup (unified)
+    if (typeof value === 'string' && value in TOKEN_MAPS) {
+        return TOKEN_MAPS[value as keyof typeof TOKEN_MAPS];
     }
     
     // Token ref: "ref:tokens.typography.fontSize.xl" → 20
@@ -386,30 +304,20 @@ function normalizeNumber(value: any): number | null {
         }
     }
     
-    // CSS value: "20px" → 20, or string number: "20" → 20
+    // CSS value or string number: "20px" → 20, "20" → 20
     if (typeof value === 'string') {
-        const cleaned = value.replace('px', '').trim();
-        const num = parseFloat(cleaned);
+        const num = parseFloat(value.replace('px', '').trim());
         return isNaN(num) ? null : num;
     }
     
     return null;
 }
 
-// ============================================
-// HELPER: Normalize value for comparison
-// ============================================
-
 function normalizeFontFamily(value: any): string | null {
     if (!value || typeof value !== 'string') return null;
     
-    // Extract first font name only (before first comma)
-    // "Inter, system-ui, sans-serif" → "inter"
-    // "Poppins, sans-serif" → "poppins"
-    const firstFont = value.split(',')[0].trim().toLowerCase();
-    
-    // Remove quotes if present
-    return firstFont.replace(/['"]/g, '');
+    // Extract first font name only: "Inter, system-ui, sans-serif" → "inter"
+    return value.split(',')[0].trim().toLowerCase().replace(/['"]/g, '');
 }
 
 function normalizeValue(value: any): any {
@@ -476,60 +384,27 @@ export function setAppearance(
     path: string,
     value: any
 ): AppearanceState {
-    console.log('[setAppearance] Called with:', { path, value });
-    
-    const presetValue = getPresetValue(
-        themesMap,
-        state.presetKey,
-        path,
-        state.headerPresetId
-    );
-    
-    console.log('[setAppearance] Preset value:', presetValue);
-    console.log('[setAppearance] Normalized user value:', normalizeValue(value));
-    console.log('[setAppearance] Normalized preset value:', normalizeValue(presetValue));
-    console.log('[setAppearance] Values equal?', deepEqual(value, presetValue));
-    
+    const presetValue = getPresetValue(themesMap, state.presetKey, path, state.headerPresetId);
     const newOverrides = { ...state.overrides };
 
-    // If value is null/undefined, remove from overrides
-    if (value === null || value === undefined) {
-        console.log('[setAppearance] Value is null/undefined, removing override');
-        delete newOverrides[path];
-    } else if (deepEqual(value, presetValue)) {
-        // Value matches preset → Remove from overrides
-        console.log('[setAppearance] Value matches preset, removing override');
+    // Remove override if value matches preset or is null
+    if (value === null || value === undefined || deepEqual(value, presetValue)) {
         delete newOverrides[path];
     } else {
-        // Value differs from preset → Save to overrides
-        console.log('[setAppearance] Value differs from preset, saving override');
         newOverrides[path] = value;
     }
 
-    console.log('[setAppearance] Before cleanup, overrides:', newOverrides);
-
-    // Clean up: Remove any other overrides that now match preset values
-    // This handles cases where theme changed and old overrides now match new theme
+    // Cleanup: Remove overrides that match preset values
     Object.keys(newOverrides).forEach(key => {
-        const keyPresetValue = getPresetValue(themesMap, state.presetKey, key, state.headerPresetId);
-        const matches = deepEqual(newOverrides[key], keyPresetValue);
-        
-        if (key !== path) { // Only log for other keys to reduce noise
-            console.log('[setAppearance] Cleanup check:', { key, value: newOverrides[key], presetValue: keyPresetValue, matches });
-        }
-        
-        if (matches) {
-            console.log('[setAppearance] Cleanup: removing matching override:', key);
-            delete newOverrides[key];
+        if (key !== path) {
+            const keyPresetValue = getPresetValue(themesMap, state.presetKey, key, state.headerPresetId);
+            if (deepEqual(newOverrides[key], keyPresetValue)) {
+                delete newOverrides[key];
+            }
         }
     });
 
-    console.log('[setAppearance] Final overrides:', newOverrides);
-
-    return {
-        ...state,
-        overrides: newOverrides
-    };
+    return { ...state, overrides: newOverrides };
 }
 
 // ============================================
@@ -537,47 +412,19 @@ export function setAppearance(
 // ============================================
 
 export function isCustomTheme(themesMap: Record<string, Theme>, state: AppearanceState): boolean {
-    console.log('[isCustomTheme] Checking customization...');
-    console.log('[isCustomTheme] State:', { 
-        presetKey: state.presetKey, 
-        headerPresetId: state.headerPresetId,
-        overridesCount: Object.keys(state.overrides).length,
-        overrides: state.overrides
-    });
-    
-    // Check 1: Check if any override actually differs from theme default
+    // Check if any override differs from theme default
     const hasRealOverrides = Object.entries(state.overrides).some(([path, value]) => {
         const presetValue = getPresetValue(themesMap, state.presetKey, path, state.headerPresetId);
-        const isDifferent = !deepEqual(value, presetValue);
-        if (isDifferent) {
-            console.log('[isCustomTheme] Override differs:', { path, value, presetValue });
-        }
-        return isDifferent;
+        return !deepEqual(value, presetValue);
     });
     
-    console.log('[isCustomTheme] Has real overrides:', hasRealOverrides);
+    if (hasRealOverrides) return true;
     
-    if (hasRealOverrides) {
-        return true;
-    }
-    
-    // Check 2: Header preset different from theme default
+    // Check if header preset differs from theme default
     const preset = themesMap[state.presetKey];
     const defaultHeaderId = getDefaultHeaderPresetId(preset);
-    const headerDifferent = state.headerPresetId && state.headerPresetId !== defaultHeaderId;
     
-    console.log('[isCustomTheme] Header check:', {
-        currentHeaderId: state.headerPresetId,
-        defaultHeaderId,
-        isDifferent: headerDifferent
-    });
-    
-    if (headerDifferent) {
-        return true;
-    }
-    
-    console.log('[isCustomTheme] Result: NOT custom');
-    return false;
+    return !!(state.headerPresetId && state.headerPresetId !== defaultHeaderId);
 }
 
 // ============================================
@@ -621,61 +468,36 @@ export function setHeaderPreset(
     state: AppearanceState,
     headerPresetId: string
 ): AppearanceState {
-    console.log('[setHeaderPreset] Changing header preset to:', headerPresetId);
-    console.log('[setHeaderPreset] Current state:', state);
-    
     const preset = themesMap[state.presetKey];
     const defaultHeaderId = getDefaultHeaderPresetId(preset);
     const isReturningToDefault = headerPresetId === defaultHeaderId;
     
-    // Remove all header.* overrides when changing preset
+    // Remove all header.* overrides
     const newOverrides: Record<string, any> = {};
     Object.entries(state.overrides).forEach(([path, value]) => {
         if (!path.startsWith('header.')) {
             newOverrides[path] = value;
-        } else {
-            console.log('[setHeaderPreset] Removing header override:', path);
         }
     });
 
-    const newState = {
-        ...state,
-        headerPresetId,
-        overrides: newOverrides
-    };
+    const newState = { ...state, headerPresetId, overrides: newOverrides };
 
-    console.log('[setHeaderPreset] Before cleanup, overrides:', newState.overrides);
-
-    // Clean up: Remove any remaining overrides that match new preset values
+    // Cleanup: Remove overrides matching new preset
     Object.keys(newState.overrides).forEach(key => {
         const presetValue = getPresetValue(themesMap, newState.presetKey, key, headerPresetId);
-        const currentValue = newState.overrides[key];
-        const matches = deepEqual(currentValue, presetValue);
-        
-        console.log('[setHeaderPreset] Checking override:', { 
-            key, 
-            currentValue, 
-            presetValue, 
-            matches 
-        });
-        
-        if (matches) {
-            console.log('[setHeaderPreset] Removing matching override:', key);
+        if (deepEqual(newState.overrides[key], presetValue)) {
             delete newState.overrides[key];
         }
     });
     
-    // Special cleanup: If returning to default header and only backgroundColor override remains,
-    // remove it too (likely leftover from previous customization)
+    // Special cleanup for orphaned backgroundColor
     if (isReturningToDefault) {
         const remainingKeys = Object.keys(newState.overrides);
         if (remainingKeys.length === 1 && remainingKeys[0] === 'backgroundColor') {
-            console.log('[setHeaderPreset] Removing orphaned backgroundColor override when returning to default');
             delete newState.overrides.backgroundColor;
         }
     }
 
-    console.log('[setHeaderPreset] Final state:', newState);
     return newState;
 }
 

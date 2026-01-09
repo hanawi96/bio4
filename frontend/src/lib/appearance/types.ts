@@ -14,20 +14,25 @@ export interface ThemeConfigToken {
 }
 
 export interface ThemeConfigTokens {
-	bg: ThemeConfigToken;
-	text: string;
-	primary: string;
-	surface: string;
-	border: string;
-	blockBase: string;
+	bg?: ThemeConfigToken;
+	text?: string;
+	primary?: string;
+	surface?: string;
+	border?: string;
+	blockBase?: string;
 	shadowColor?: string; // Shadow color for brutal style (optional, default: #000000)
-	fontFamily: string;
+	fontFamily?: string;
+	color?: Record<string, any>; // Color tokens
+	typography?: {
+		fontFamily?: Record<string, string>;
+		fontSize?: Record<string, number>;
+	};
 }
 
 export interface ThemeConfigDefaults {
-	headerPreset: string;
-	blockPreset: string;
-	blockStylePreset: BlockStylePresetId;
+	headerPreset?: string;
+	blockPreset?: string;
+	blockStylePreset?: BlockStylePresetId;
 	blockShadow?: string; // Optional default shadow for blocks
 }
 
@@ -36,12 +41,66 @@ export interface ThemeConfigPageLayout {
 	pagePadding: number | string; // Support both preset keys (e.g., 'default') and numbers
 	blockGap: number | string; // Support both preset keys (e.g., 'default') and numbers
 	textAlign: 'left' | 'center' | 'right';
+	blockPadding?: string | { x: number; y: number };
 }
 
 export interface ThemeConfigPage {
-	mode: 'light' | 'dark';
+	mode?: 'light' | 'dark';
 	layout: ThemeConfigPageLayout;
 	defaults?: Record<string, any>; // Theme-specific defaults (avatarBorderWidth, blockStylePreset, etc.)
+}
+
+export interface ThemeConfigSemantic {
+	color?: {
+		primary?: string;
+		primaryHover?: string;
+		secondary?: string;
+		text?: {
+			default?: string;
+			muted?: string;
+			subtle?: string;
+			invert?: string;
+		};
+		surface?: Record<string, string>;
+		border?: Record<string, string>;
+		block?: {
+			text?: string;
+		};
+		shadow?: Record<string, string>;
+		icon?: Record<string, string>;
+	};
+	typography?: {
+		heading?: {
+			fontFamily?: string;
+			fontSize?: string | number;
+		};
+		link?: {
+			fontSize?: string | number;
+		};
+		bio?: {
+			fontSize?: string | number;
+		};
+		subtitle?: {
+			fontSize?: string | number;
+		};
+	};
+}
+
+export interface ThemeConfigBackground {
+	type?: 'solid' | 'gradient' | 'image' | 'video';
+	value?: string | { from: string; to: string; angle: number };
+	effects?: {
+		blur?: string | number;
+		overlayColor?: string;
+		brightness?: string | number;
+		grayscale?: string | number;
+	};
+	animation?: {
+		enabled?: boolean;
+		variant?: string;
+		speed?: string;
+	};
+	particles?: Record<string, any>;
 }
 
 export interface ThemeConfig {
@@ -52,8 +111,10 @@ export interface ThemeConfig {
 		version: string;
 	};
 	tokens: ThemeConfigTokens;
-	defaults: ThemeConfigDefaults;
+	defaults?: ThemeConfigDefaults;
 	page: ThemeConfigPage;
+	semantic?: ThemeConfigSemantic;
+	background?: ThemeConfigBackground;
 }
 
 export interface Theme {
