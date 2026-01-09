@@ -122,22 +122,14 @@
 	// Block Color & Text Color
 	$: blockColor = $appearanceState.overrides?.['block.color'] ?? $appearance?.theme?.config?.semantic?.color?.primary ?? '#00aa4f';
 	$: blockTextColor = $appearanceState.overrides?.['block.textColor'] ?? $appearance?.theme?.config?.semantic?.color?.block?.text ?? '#ffffff';
-	
-	$: {
-		console.log('[BlockStyleSection] $appearance?.theme?.config?.semantic?.color?.block?.text:', $appearance?.theme?.config?.semantic?.color?.block?.text);
-		console.log('[BlockStyleSection] $appearanceState.overrides["block.textColor"]:', $appearanceState.overrides?.['block.textColor']);
-		console.log('[BlockStyleSection] Final blockTextColor:', blockTextColor);
-	}
 
 	function updateBlockColor(event: Event) {
 		const value = validateAndNormalizeHexColor(event);
-		console.log('[BlockStyleSection] updateBlockColor:', value);
 		if (value) updateAppearance('block.color', value);
 	}
 
 	function updateBlockTextColor(event: Event) {
 		const value = validateAndNormalizeHexColor(event);
-		console.log('[BlockStyleSection] updateBlockTextColor:', value);
 		if (value) updateAppearance('block.textColor', value);
 	}
 </script>

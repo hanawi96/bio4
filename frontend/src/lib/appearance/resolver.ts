@@ -301,22 +301,15 @@ function resolveBlockStyle(
 	themeConfig?: any
 ): ResolvedBlockStyle {
 	const recipe = getBlockStyleRecipe(recipeId);
-
-	console.log('[resolveBlockStyle] recipeId:', recipeId);
-	console.log('[resolveBlockStyle] overrides:', overrides);
-	console.log('[resolveBlockStyle] recipe.fill:', recipe.fill);
-	console.log('[resolveBlockStyle] recipe.text:', recipe.text);
 	
 	// Resolve fill color - check for override first
 	let fill: string;
 	if (overrides?.color) {
 		// Use override color
 		fill = overrides.color;
-		console.log('[resolveBlockStyle] Using override color:', fill);
 	} else {
 		// Use recipe fill
 		fill = resolveToken(recipe.fill, tokens);
-		console.log('[resolveBlockStyle] Using recipe fill:', fill);
 	}
 	
 	// Handle gradient pattern
@@ -328,26 +321,22 @@ function resolveBlockStyle(
 		fill = gradient.css;
 	}
 
-	// Resolve text color - check for override first
+	// Resolve text color - Priority: override > theme config > recipe logic
 	let text: string;
 	if (overrides?.textColor) {
 		// Use override text color
 		text = overrides.textColor;
-		console.log('[resolveBlockStyle] Using override textColor:', text);
+	} else if (themeConfig?.semantic?.color?.block?.text) {
+		// Use theme config block text color
+		text = themeConfig.semantic.color.block.text;
 	} else if (recipe.text === 'auto') {
 		// IMPORTANT: If fill was overridden, calculate auto text color based on the OVERRIDDEN fill
 		// not the original recipe.fill token
 		const fillForAutoText = overrides?.color ? overrides.color : recipe.fill;
-		console.log('[resolveBlockStyle] Auto text - fillForAutoText:', fillForAutoText);
 		text = resolveAutoTextColor(fillForAutoText, tokens);
-		console.log('[resolveBlockStyle] Auto text result:', text);
 	} else {
 		text = resolveToken(recipe.text, tokens);
-		console.log('[resolveBlockStyle] Using recipe text:', text);
 	}
-	
-	console.log('[resolveBlockStyle] Final fill:', fill);
-	console.log('[resolveBlockStyle] Final text:', text);
 
 	// Resolve border (optional) - format as CSS border string
 	let border: string | undefined;
@@ -463,9 +452,6 @@ export function resolveAppearance(
 				.map(([key, value]) => [key.replace('block.', ''), value])
 		)
 		: (pageState.blockStyle?.overrides || {});
-	
-	console.log('[resolveAppearance] pageState.overrides:', pageState.overrides);
-	console.log('[resolveAppearance] blockOverrides:', blockOverrides);
 
 	// Build custom shadow if shadowStyle is 'custom'
 	const shadowStyle = themeConfig.page?.defaults?.shadowStyle;

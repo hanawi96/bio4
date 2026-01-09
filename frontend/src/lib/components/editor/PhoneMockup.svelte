@@ -229,13 +229,6 @@
 	$: typography = $appearance?.typography || { headingColor: '#18181b', mutedColor: '#71717a' };
 	$: headingColor = typography.headingColor;
 	$: mutedColor = typography.mutedColor;
-	
-	// Debug blockStyle
-	$: {
-		console.log('[PhoneMockup] $appearance?.blockStyle:', $appearance?.blockStyle);
-		console.log('[PhoneMockup] blockStyle.fill:', $appearance?.blockStyle?.fill);
-		console.log('[PhoneMockup] blockStyle.text:', $appearance?.blockStyle?.text);
-	}
 
 	// Avatar size mapping - standard sizes (same as PublicBioPage)
 	const avatarSizes = { xs: 80, sm: 96, md: 112, lg: 128, xl: 144, '2xl': 160, '3xl': 176, full: 0 };
