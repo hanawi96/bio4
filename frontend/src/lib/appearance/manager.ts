@@ -237,16 +237,6 @@ import {
     GRAYSCALE_PRESETS
 } from './effectsTokens';
 
-// Unified token lookup for all numeric values
-const TOKEN_MAPS = {
-    ...RADIUS_TOKENS,
-    ...BLOCK_GAP_PRESETS,
-    ...BLUR_PRESETS,
-    ...BRIGHTNESS_PRESETS,
-    ...GRAYSCALE_PRESETS,
-    ...FONT_SIZE_TOKENS
-} as const;
-
 function normalizeColor(value: any): string | null {
     if (!value || typeof value !== 'string') return null;
     
@@ -291,9 +281,33 @@ function normalizeNumber(value: any): number | null {
     if (typeof value === 'number') return value;
     if (!value) return null;
     
-    // Token lookup (unified)
-    if (typeof value === 'string' && value in TOKEN_MAPS) {
-        return TOKEN_MAPS[value as keyof typeof TOKEN_MAPS];
+    // Token lookup - check each map separately to avoid key conflicts
+    if (typeof value === 'string') {
+        // Check radius tokens (borderRadius)
+        if (value in RADIUS_TOKENS) {
+            return RADIUS_TOKENS[value as keyof typeof RADIUS_TOKENS];
+        }
+        
+        // Check spacing tokens (blockGap)
+        if (value in BLOCK_GAP_PRESETS) {
+            return BLOCK_GAP_PRESETS[value as keyof typeof BLOCK_GAP_PRESETS];
+        }
+        
+        // Check effect tokens (blur, brightness, grayscale)
+        if (value in BLUR_PRESETS) {
+            return BLUR_PRESETS[value as keyof typeof BLUR_PRESETS];
+        }
+        if (value in BRIGHTNESS_PRESETS) {
+            return BRIGHTNESS_PRESETS[value as keyof typeof BRIGHTNESS_PRESETS];
+        }
+        if (value in GRAYSCALE_PRESETS) {
+            return GRAYSCALE_PRESETS[value as keyof typeof GRAYSCALE_PRESETS];
+        }
+        
+        // Check font size tokens
+        if (value in FONT_SIZE_TOKENS) {
+            return FONT_SIZE_TOKENS[value as keyof typeof FONT_SIZE_TOKENS];
+        }
     }
     
     // Token ref: "ref:tokens.typography.fontSize.xl" → 20
