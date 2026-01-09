@@ -4,10 +4,7 @@
 	import { AVAILABLE_FONTS, findFont } from '$lib/appearance/fontConstants';
 	import { validateAndNormalizeHexColor } from '$lib/utils/colorUtils';
 
-	const fonts = [
-		{ name: 'Default', category: 'Theme Default', isDefault: true },
-		...AVAILABLE_FONTS
-	];
+	const fonts = AVAILABLE_FONTS;
 
 	let fontDropdownOpen = false;
 	let dropdownButton: HTMLElement;
@@ -31,14 +28,8 @@
 			return (override as string).split(',')[0].trim();
 		}
 		
-		// Priority 2: Theme config
-		if (themeFontFamily) {
-			const found = findFont(themeFontFamily);
-			if (found) return found.name;
-		}
-		
-		// Final fallback
-		return 'Default';
+		// Priority 2: Theme config - return first font name
+		return themeDefaultFontName;
 	})();
 
 	$: selectedFontObj = fonts.find(f => f.name === selectedFont) || fonts[0];
@@ -67,7 +58,8 @@
 	}
 
 	function selectFont(fontName: string) {
-		updateAppearance('tokens.fontFamily', fontName === 'Default' ? null : `${fontName}, sans-serif`);
+		const font = fonts.find(f => f.name === fontName);
+		updateAppearance('tokens.fontFamily', font ? `${fontName}, sans-serif` : null);
 		fontDropdownOpen = false;
 	}
 
@@ -99,14 +91,14 @@
 						<div class="flex items-center gap-3">
 							<div 
 								class="text-2xl font-bold text-gray-900"
-								style="font-family: {selectedFont === 'Default' ? themeDefaultFontName : `'${selectedFont}'`}, sans-serif;"
+								style="font-family: '{selectedFont}', sans-serif;"
 							>
 								Aa
 							</div>
 							<div>
 								<div class="text-sm font-medium text-gray-900">{selectedFont}</div>
 								<div class="text-xs text-gray-500">
-									{selectedFontObj.isDefault ? themeDefaultFontName : selectedFontObj.category}
+									{selectedFontObj.category}
 								</div>
 							</div>
 						</div>
@@ -132,14 +124,14 @@
 								>
 									<div 
 										class="text-2xl font-bold {selectedFont === font.name ? 'text-blue-600' : 'text-gray-900'}"
-										style="font-family: {font.isDefault ? themeDefaultFontName : `'${font.name}'`}, sans-serif;"
+										style="font-family: '{font.name}', sans-serif;"
 									>
 										Aa
 									</div>
 									<div class="flex-1 text-left">
 										<div class="text-sm font-medium text-gray-900">{font.name}</div>
 										<div class="text-xs text-gray-500">
-											{font.isDefault ? themeDefaultFontName : font.category}
+											{font.category}
 										</div>
 									</div>
 									{#if selectedFont === font.name}
@@ -156,7 +148,7 @@
 			<!-- Font Preview -->
 			<div 
 				class="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200"
-				style="font-family: {selectedFont === 'Default' ? themeDefaultFontName : `'${selectedFont}'`}, sans-serif;"
+				style="font-family: '{selectedFont}', sans-serif;"
 			>
 				<div class="text-2xl font-bold text-gray-900 mb-1">The quick brown fox</div>
 				<div class="text-sm text-gray-600">jumps over the lazy dog</div>

@@ -40,13 +40,10 @@
 	$: isDefaultCover = coverImageUrl === DEFAULT_COVER_IMAGE;
 	$: showCoverOptions = selectedPreset?.hasCover && selectedPresetId !== 'avatar-cover';
 
-	// Title Font options - include all available fonts plus Default option
+	// Title Font options - all available fonts (no Default option)
 	import { AVAILABLE_FONTS } from '$lib/appearance/fontConstants';
 	
-	const titleFonts = [
-		{ name: 'Default', category: 'Theme Default', isDefault: true },
-		...AVAILABLE_FONTS
-	];
+	const titleFonts = AVAILABLE_FONTS;
 
 
 
@@ -76,8 +73,8 @@
 			}
 		}
 		
-		// Final fallback
-		return 'Default';
+		// Final fallback - use theme default font
+		return themeDefaultFontName;
 	})();
 
 	$: selectedTitleFontObj = titleFonts.find(f => f.name === selectedTitleFont) || titleFonts[0];
@@ -104,12 +101,8 @@
 	})();
 
 	function selectTitleFont(fontName: string) {
-		if (fontName === 'Default') {
-			updateAppearance('header.titleFontFamily', null);
-		} else {
-			const font = titleFonts.find(f => f.name === fontName);
-			updateAppearance('header.titleFontFamily', font ? `${fontName}, sans-serif` : null);
-		}
+		const font = titleFonts.find(f => f.name === fontName);
+		updateAppearance('header.titleFontFamily', font ? `${fontName}, sans-serif` : null);
 		titleFontDropdownOpen = false;
 	}
 
@@ -491,14 +484,14 @@
 								<div class="flex items-center gap-2.5">
 									<div 
 										class="text-xl font-bold text-gray-900"
-										style="font-family: {selectedTitleFont === 'Default' ? themeDefaultFontName : `'${selectedTitleFont}'`}, sans-serif;"
+										style="font-family: '{selectedTitleFont}', sans-serif;"
 									>
 										Aa
 									</div>
 									<div>
 										<div class="text-xs font-medium text-gray-900">{selectedTitleFont}</div>
 										<div class="text-[10px] text-gray-500">
-											{selectedTitleFontObj.isDefault ? themeDefaultFontName : selectedTitleFontObj.category}
+											{selectedTitleFontObj.category}
 										</div>
 									</div>
 								</div>
@@ -524,14 +517,14 @@
 										>
 											<div 
 												class="text-xl font-bold {selectedTitleFont === font.name ? 'text-blue-600' : 'text-gray-900'}"
-												style="font-family: {font.isDefault ? themeDefaultFontName : `'${font.name}'`}, sans-serif;"
+												style="font-family: '{font.name}', sans-serif;"
 											>
 												Aa
 											</div>
 											<div class="flex-1 text-left">
 												<div class="text-xs font-medium text-gray-900">{font.name}</div>
 												<div class="text-[10px] text-gray-500">
-													{font.isDefault ? themeDefaultFontName : font.category}
+													{font.category}
 												</div>
 											</div>
 											{#if selectedTitleFont === font.name}

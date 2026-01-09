@@ -77,6 +77,12 @@ export function getPresetValue(
     if (path.startsWith('header.')) {
         // Header preset value
         const headerKey = path.replace('header.', '');
+        
+        // Special case: titleFontFamily comes from theme config, not header preset
+        if (headerKey === 'titleFontFamily') {
+            return preset.config?.semantic?.typography?.heading?.fontFamily;
+        }
+        
         const currentHeaderId = headerPresetId || getDefaultHeaderPresetId(preset);
         const headerPreset = HEADER_PRESETS[currentHeaderId];
         return headerPreset?.[headerKey as keyof typeof headerPreset];
@@ -394,6 +400,18 @@ function normalizeNumber(value: any): number | null {
 // HELPER: Normalize value for comparison
 // ============================================
 
+function normalizeFontFamily(value: any): string | null {
+    if (!value || typeof value !== 'string') return null;
+    
+    // Extract first font name only (before first comma)
+    // "Inter, system-ui, sans-serif" → "inter"
+    // "Poppins, sans-serif" → "poppins"
+    const firstFont = value.split(',')[0].trim().toLowerCase();
+    
+    // Remove quotes if present
+    return firstFont.replace(/['"]/g, '');
+}
+
 function normalizeValue(value: any): any {
     if (value === null || value === undefined) return value;
     
@@ -405,6 +423,11 @@ function normalizeValue(value: any): any {
     // Try color
     if (typeof value === 'string' && (value.startsWith('#') || value.startsWith('rgb'))) {
         return normalizeColor(value);
+    }
+    
+    // Try font family (contains comma or ends with serif/sans-serif)
+    if (typeof value === 'string' && (value.includes(',') || value.includes('serif'))) {
+        return normalizeFontFamily(value);
     }
     
     // Try number (fontSize, borderRadius, spacing, etc)
@@ -463,6 +486,8 @@ export function setAppearance(
     );
     
     console.log('[setAppearance] Preset value:', presetValue);
+    console.log('[setAppearance] Normalized user value:', normalizeValue(value));
+    console.log('[setAppearance] Normalized preset value:', normalizeValue(presetValue));
     console.log('[setAppearance] Values equal?', deepEqual(value, presetValue));
     
     const newOverrides = { ...state.overrides };
