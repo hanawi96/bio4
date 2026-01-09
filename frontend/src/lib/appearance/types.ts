@@ -195,6 +195,10 @@ export interface ResolvedAppearance {
 		borderWidth: number;
 	};
 	blockStyle: ResolvedBlockStyle; // Resolved block style with actual colors
+	typography: {
+		headingColor: string;
+		mutedColor: string;
+	};
 }
 
 // Resolved Block Style - Recipe resolved with theme tokens

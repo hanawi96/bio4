@@ -165,24 +165,35 @@ export function setAppearance(
     path: string,
     value: any
 ): AppearanceState {
+    console.log('[setAppearance] path:', path);
+    console.log('[setAppearance] value:', value);
+    console.log('[setAppearance] current state.overrides:', state.overrides);
+    
     const presetValue = getPresetValue(
         themesMap,
         state.presetKey,
         path,
         state.headerPresetId
     );
+    console.log('[setAppearance] presetValue:', presetValue);
+    
     const newOverrides = { ...state.overrides };
 
     // If value is null/undefined, remove from overrides
     if (value === null || value === undefined) {
         delete newOverrides[path];
+        console.log('[setAppearance] Removing override (value is null/undefined)');
     } else if (deepEqual(value, presetValue)) {
         // Value matches preset → Remove from overrides
         delete newOverrides[path];
+        console.log('[setAppearance] Removing override (matches preset)');
     } else {
         // Value differs from preset → Save to overrides
         newOverrides[path] = value;
+        console.log('[setAppearance] Saving override');
     }
+    
+    console.log('[setAppearance] newOverrides:', newOverrides);
 
     return {
         ...state,

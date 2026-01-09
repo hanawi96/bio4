@@ -2,6 +2,7 @@
 	import { appearanceState, updateAppearance } from '$lib/stores/appearanceManager';
 	import { appearance } from '$lib/stores/appearance';
 	import { AVAILABLE_FONTS, findFont } from '$lib/appearance/fontConstants';
+	import { validateAndNormalizeHexColor } from '$lib/utils/colorUtils';
 
 	const fonts = [
 		{ name: 'Default', category: 'Theme Default', isDefault: true },
@@ -45,6 +46,25 @@
 	$: currentTextColor = ($appearanceState.overrides?.['tokens.text'] as string) 
 		|| $appearance?.tokens?.text 
 		|| '#000000';
+
+	// Typography Colors
+	$: headingColor = $appearanceState.overrides?.['typography.headingColor'] 
+		?? $appearance?.theme?.config?.semantic?.color?.text?.default 
+		?? '#18181b';
+	
+	$: mutedTextColor = $appearanceState.overrides?.['typography.mutedColor'] 
+		?? $appearance?.theme?.config?.semantic?.color?.text?.muted 
+		?? '#71717a';
+
+	function updateHeadingColor(event: Event) {
+		const value = validateAndNormalizeHexColor(event);
+		if (value) updateAppearance('typography.headingColor', value);
+	}
+
+	function updateMutedColor(event: Event) {
+		const value = validateAndNormalizeHexColor(event);
+		if (value) updateAppearance('typography.mutedColor', value);
+	}
 
 	function selectFont(fontName: string) {
 		updateAppearance('tokens.fontFamily', fontName === 'Default' ? null : `${fontName}, sans-serif`);
@@ -176,5 +196,88 @@
 				<span>Ensure good contrast with background</span>
 			</p>
 		</div>
+
+		<!-- Typography Colors -->
+		<div>
+			<h3 class="text-base font-semibold text-gray-900 mb-4">Typography Colors</h3>
+			
+			<div class="space-y-4">
+				<!-- Heading Color -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">
+						Heading Color
+					</label>
+					<div class="flex items-center gap-3">
+						<div class="relative">
+							<input
+								type="color"
+								value={headingColor}
+								on:input={updateHeadingColor}
+								class="color-picker-round w-12 h-12 rounded-full border-2 border-gray-200 cursor-pointer"
+							/>
+						</div>
+						<div class="flex-1">
+							<input
+								type="text"
+								value={headingColor}
+								on:input={updateHeadingColor}
+								class="w-full px-3 py-2 text-sm font-mono border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00aa4f] focus:border-transparent"
+								placeholder="#18181b"
+							/>
+						</div>
+					</div>
+					<p class="text-xs text-gray-500 mt-1.5">
+						Color for name/title and headings
+					</p>
+				</div>
+
+				<!-- Muted Text Color -->
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-2">
+						Muted Text Color
+					</label>
+					<div class="flex items-center gap-3">
+						<div class="relative">
+							<input
+								type="color"
+								value={mutedTextColor}
+								on:input={updateMutedColor}
+								class="color-picker-round w-12 h-12 rounded-full border-2 border-gray-200 cursor-pointer"
+							/>
+						</div>
+						<div class="flex-1">
+							<input
+								type="text"
+								value={mutedTextColor}
+								on:input={updateMutedColor}
+								class="w-full px-3 py-2 text-sm font-mono border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00aa4f] focus:border-transparent"
+								placeholder="#71717a"
+							/>
+						</div>
+					</div>
+					<p class="text-xs text-gray-500 mt-1.5">
+						Color for bio and secondary text
+					</p>
+				</div>
+			</div>
+		</div>
 	</div>
 </section>
+
+<style>
+	/* Make color picker inner swatch circular */
+	.color-picker-round::-webkit-color-swatch-wrapper {
+		padding: 0;
+		border-radius: 50%;
+	}
+	
+	.color-picker-round::-webkit-color-swatch {
+		border: none;
+		border-radius: 50%;
+	}
+	
+	.color-picker-round::-moz-color-swatch {
+		border: none;
+		border-radius: 50%;
+	}
+</style>

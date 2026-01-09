@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
-	import { loadEditorData, groups } from '$lib/stores/page';
+	import { loadEditorData, groups, page } from '$lib/stores/page';
 	import { appearance } from '$lib/stores/appearance';
 	import { toast } from '$lib/stores/toast';
 	import { authStore } from '$lib/stores/auth';
 	import { getBaseDomain, getBioUrl } from '$lib/constants';
 	import PhoneMockup from '$lib/components/editor/PhoneMockup.svelte';
+	import QRCodeModal from '$lib/components/modals/QRCodeModal.svelte';
 
 	export let params = {};
 	import AddBlockModal from '$lib/components/modals/AddBlockModal.svelte';
@@ -21,6 +22,7 @@
 	$: baseDomain = getBaseDomain();
 	let loading = true;
 	let error = '';
+	let showQRModal = false;
 	
 	// Get default linkGroupLayout from theme
 	$: defaultLinkGroupLayout = (() => {
@@ -770,7 +772,10 @@
 							</button>
 
 							<!-- Share Button -->
-							<button class="px-4 h-[38px] flex items-center justify-center text-white text-sm font-semibold rounded-lg transition-colors bg-[#00aa4f] hover:bg-[#008f42] leading-none">
+							<button 
+								on:click={() => showQRModal = true}
+								class="px-4 h-[38px] flex items-center justify-center text-white text-sm font-semibold rounded-lg transition-colors bg-[#00aa4f] hover:bg-[#008f42] leading-none"
+							>
 								SHARE
 							</button>
 						</div>
@@ -792,3 +797,13 @@
 <AddBlockModal bind:this={addBlockModal} on:select={handleBlockTypeSelect} />
 <RenameGroupModal bind:this={renameGroupModal} on:rename={handleRenameSubmit} />
 <DeleteGroupModal bind:this={deleteGroupModal} on:confirm={handleDeleteConfirm} />
+
+<!-- QR Code Modal -->
+{#if showQRModal}
+	<QRCodeModal
+		{bioUrl}
+		{username}
+		avatarUrl={$page?.avatar_url || null}
+		on:close={() => showQRModal = false}
+	/>
+{/if}

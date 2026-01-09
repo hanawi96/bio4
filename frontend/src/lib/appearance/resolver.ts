@@ -108,10 +108,6 @@ function expandThemeTokens(config: any): ThemeTokens {
 	const layout = config.page?.layout || {};
 	const schemaVersion = config.meta?.schemaVersion || 1;
 
-	console.log('[expandThemeTokens] Schema version:', schemaVersion);
-	console.log('[expandThemeTokens] tokens.bg:', tokens.bg);
-	console.log('[expandThemeTokens] semantic.color.surface.page:', semantic.color?.surface?.page);
-
 	let backgroundColor: string;
 	let text: string;
 	let primary: string;
@@ -123,7 +119,6 @@ function expandThemeTokens(config: any): ThemeTokens {
 	// Schema v2: Use semantic tokens
 	if (schemaVersion === 2) {
 		backgroundColor = resolveSemanticToken(semantic.color?.surface?.page, config) || '#ffffff';
-		console.log('[expandThemeTokens] v2 backgroundColor:', backgroundColor);
 		text = resolveSemanticToken(semantic.color?.text?.default, config) || '#000000';
 		primary = resolveSemanticToken(semantic.color?.primary, config) || '#3b82f6';
 		surface = resolveSemanticToken(semantic.color?.surface?.card, config) || '#fafafa';
@@ -134,7 +129,6 @@ function expandThemeTokens(config: any): ThemeTokens {
 	} else {
 		// Schema v1: Use flat tokens (legacy)
 		backgroundColor = bgTokenToCSS(tokens.bg);
-		console.log('[expandThemeTokens] v1 backgroundColor:', backgroundColor);
 		text = tokens.text || '#000000';
 		primary = tokens.primary || '#3b82f6';
 		surface = tokens.surface || '#fafafa';
@@ -181,8 +175,6 @@ function expandThemeTokens(config: any): ThemeTokens {
 		spacing: layout.pagePadding || 16
 	};
 	
-	console.log('[expandThemeTokens] Final tokens.backgroundColor:', result.backgroundColor);
-	
 	return result;
 }
 
@@ -190,14 +182,9 @@ function expandThemeTokens(config: any): ThemeTokens {
 function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 	const config = JSON.parse(JSON.stringify(baseConfig));
 
-	console.log('[applyOverrides] Input overrides:', overrides);
-	console.log('[applyOverrides] Base config schema:', config.meta?.schemaVersion);
-
 	Object.entries(overrides).forEach(([key, value]) => {
 		// Map old keys to new structure
 		if (key === 'backgroundColor') {
-			console.log('[applyOverrides] Processing backgroundColor:', value);
-			
 			// Check if it's a pattern (starts with "background:")
 			if (typeof value === 'string' && value.startsWith('background:')) {
 				// Pattern format - store as-is in tokens.bg
@@ -214,8 +201,6 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 				config.tokens.bg = { type: 'color', value };
 			}
 			
-			console.log('[applyOverrides] Set tokens.bg:', config.tokens.bg);
-			
 			// IMPORTANT: Also update semantic.color.surface.page for schema v2 themes
 			const schemaVersion = config.meta?.schemaVersion || 1;
 			if (schemaVersion === 2) {
@@ -223,15 +208,12 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 				if (!config.semantic.color) config.semantic.color = {};
 				if (!config.semantic.color.surface) config.semantic.color.surface = {};
 				config.semantic.color.surface.page = value;
-				console.log('[applyOverrides] Set semantic.color.surface.page:', value);
 			}
 			
 			// CRITICAL: Also update background.value for PublicBioPage
 			if (!config.background) config.background = {};
 			config.background.type = value.includes('gradient') ? 'gradient' : 'solid';
 			config.background.value = value;
-			console.log('[applyOverrides] Set background.type:', config.background.type);
-			console.log('[applyOverrides] Set background.value:', config.background.value);
 			
 			return;
 		}
@@ -320,8 +302,22 @@ function resolveBlockStyle(
 ): ResolvedBlockStyle {
 	const recipe = getBlockStyleRecipe(recipeId);
 
-	// Resolve fill color
-	let fill = resolveToken(recipe.fill, tokens);
+	console.log('[resolveBlockStyle] recipeId:', recipeId);
+	console.log('[resolveBlockStyle] overrides:', overrides);
+	console.log('[resolveBlockStyle] recipe.fill:', recipe.fill);
+	console.log('[resolveBlockStyle] recipe.text:', recipe.text);
+	
+	// Resolve fill color - check for override first
+	let fill: string;
+	if (overrides?.color) {
+		// Use override color
+		fill = overrides.color;
+		console.log('[resolveBlockStyle] Using override color:', fill);
+	} else {
+		// Use recipe fill
+		fill = resolveToken(recipe.fill, tokens);
+		console.log('[resolveBlockStyle] Using recipe fill:', fill);
+	}
 	
 	// Handle gradient pattern
 	if (fill.startsWith('gradient:')) {
@@ -332,13 +328,26 @@ function resolveBlockStyle(
 		fill = gradient.css;
 	}
 
-	// Resolve text color
+	// Resolve text color - check for override first
 	let text: string;
-	if (recipe.text === 'auto') {
-		text = resolveAutoTextColor(recipe.fill, tokens);
+	if (overrides?.textColor) {
+		// Use override text color
+		text = overrides.textColor;
+		console.log('[resolveBlockStyle] Using override textColor:', text);
+	} else if (recipe.text === 'auto') {
+		// IMPORTANT: If fill was overridden, calculate auto text color based on the OVERRIDDEN fill
+		// not the original recipe.fill token
+		const fillForAutoText = overrides?.color ? overrides.color : recipe.fill;
+		console.log('[resolveBlockStyle] Auto text - fillForAutoText:', fillForAutoText);
+		text = resolveAutoTextColor(fillForAutoText, tokens);
+		console.log('[resolveBlockStyle] Auto text result:', text);
 	} else {
 		text = resolveToken(recipe.text, tokens);
+		console.log('[resolveBlockStyle] Using recipe text:', text);
 	}
+	
+	console.log('[resolveBlockStyle] Final fill:', fill);
+	console.log('[resolveBlockStyle] Final text:', text);
 
 	// Resolve border (optional) - format as CSS border string
 	let border: string | undefined;
@@ -454,6 +463,9 @@ export function resolveAppearance(
 				.map(([key, value]) => [key.replace('block.', ''), value])
 		)
 		: (pageState.blockStyle?.overrides || {});
+	
+	console.log('[resolveAppearance] pageState.overrides:', pageState.overrides);
+	console.log('[resolveAppearance] blockOverrides:', blockOverrides);
 
 	// Build custom shadow if shadowStyle is 'custom'
 	const shadowStyle = themeConfig.page?.defaults?.shadowStyle;
@@ -574,14 +586,17 @@ export function resolveAppearance(
 		header: finalHeader,
 		page: pageLayout,
 		block: blockConfig,
-		blockStyle
+		blockStyle,
+		typography: {
+			headingColor: (pageState.overrides?.['typography.headingColor'] as string)
+				?? themeConfig.semantic?.color?.text?.default
+				?? tokens.text
+				?? '#18181b',
+			mutedColor: (pageState.overrides?.['typography.mutedColor'] as string)
+				?? themeConfig.semantic?.color?.text?.muted
+				?? '#71717a'
+		}
 	};
-	
-	console.log('[resolveAppearance] headerPresetId:', headerPresetId);
-	console.log('[resolveAppearance] Base preset avatarShape:', baseHeader.avatarShape);
-	console.log('[resolveAppearance] Theme defaults avatarShape:', themeDefaults.avatarShape);
-	console.log('[resolveAppearance] Header overrides:', headerOverrides);
-	console.log('[resolveAppearance] Final header.avatarShape:', result.header.avatarShape);
 	
 	return result;
 }

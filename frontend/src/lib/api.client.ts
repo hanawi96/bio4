@@ -448,7 +448,36 @@ class ApiClient {
 		return res.json();
 	}
 	
-	// ============ PUBLISH CLEANUP ============
+	// ============ SUBSCRIBE ============
+
+	async subscribe(username: string, email: string): Promise<{ success: boolean; message: string }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/subscribe/${username}`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email })
+		});
+		
+		const data = await res.json();
+		
+		if (!res.ok) {
+			throw new Error(data.error || 'Failed to subscribe');
+		}
+		
+		return data;
+	}
+
+	async getSubscribers(username: string): Promise<{ subscribers: any[]; total: number }> {
+		const res = await this.fetchWithRetry(`${this.baseUrl}/subscribers/${username}`, {
+			headers: this.getAuthHeaders()
+		});
+		
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Failed to load subscribers');
+		}
+		
+		return res.json();
+	}
 }
 
 export const api = new ApiClient(API_BASE_URL);

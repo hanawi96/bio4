@@ -9,6 +9,7 @@
 	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
+	import { toast } from '$lib/stores/toast';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 	import { onMount } from 'svelte';
 
@@ -223,6 +224,18 @@
 
 	// Subscribe to derived store - auto updates on any change!
 	$: tokens = $appearance?.tokens;
+	
+	// Typography colors from appearance
+	$: typography = $appearance?.typography || { headingColor: '#18181b', mutedColor: '#71717a' };
+	$: headingColor = typography.headingColor;
+	$: mutedColor = typography.mutedColor;
+	
+	// Debug blockStyle
+	$: {
+		console.log('[PhoneMockup] $appearance?.blockStyle:', $appearance?.blockStyle);
+		console.log('[PhoneMockup] blockStyle.fill:', $appearance?.blockStyle?.fill);
+		console.log('[PhoneMockup] blockStyle.text:', $appearance?.blockStyle?.text);
+	}
 
 	// Avatar size mapping - standard sizes (same as PublicBioPage)
 	const avatarSizes = { xs: 80, sm: 96, md: 112, lg: 128, xl: 144, '2xl': 160, '3xl': 176, full: 0 };
@@ -590,12 +603,16 @@
 	async function handleSubscribe(event: CustomEvent<string>) {
 		subscribing = true;
 		try {
-			// TODO: Call API to subscribe
-			console.log('Subscribe email:', event.detail);
-			await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
+			const email = event.detail;
+			const username = $page?.username || 'demo';
+			
+			await api.subscribe(username, email);
+			
 			showSubscribeModal = false;
-		} catch (e) {
+			toast.success('Successfully subscribed! Thank you!');
+		} catch (e: any) {
 			console.error('Subscribe failed:', e);
+			toast.error(e.message || 'Failed to subscribe. Please try again.');
 		} finally {
 			subscribing = false;
 		}
@@ -734,12 +751,13 @@
 									
 									<!-- Text overlay on avatar cover - z-20 để nổi lên trên gradient mask -->
 									<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
-										<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
+										<h1 class="font-bold drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">{$page?.title || 'Your Name'}</h1>
 										{#if header.showBio && $page?.bio}
 											<p 
-												class="bio-text text-white/90 mt-2 drop-shadow-md"
+												class="bio-text mt-2 drop-shadow-md"
 												style="
 													font-size: {bioFontSizePx}px;
+													color: {mutedColor};
 													line-height: 1.5;
 												"
 											>
@@ -787,12 +805,12 @@
 						<!-- Content below cover (only for non-avatar-cover) -->
 						{#if !isAvatarCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign};">
-								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
+								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">{$page?.title || 'Your Name'}</h1>
 								{#if header.showBio && $page?.bio}
 									<p 
 										class="bio-text mt-1"
 										style="
-											color: {tokens?.mutedTextColor || '#71717a'};
+											color: {mutedColor};
 											font-size: {bioFontSizePx}px;
 											line-height: 1.5;
 											display: -webkit-box;											-webkit-box-orient: vertical;
@@ -834,12 +852,12 @@
 									{($page?.title || 'U').charAt(0).toUpperCase()}
 								</div>
 							{/if}
-							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$page?.title || 'Your Name'}</h1>
+							<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">{$page?.title || 'Your Name'}</h1>
 							{#if header?.showBio && $page?.bio}
 								<p 
 									class="bio-text mt-1"
 									style="
-										color: {tokens?.mutedTextColor || '#71717a'};
+										color: {mutedColor};
 										font-size: {bioFontSizePx}px;
 										line-height: 1.5;
 										display: -webkit-box;										-webkit-box-orient: vertical;

@@ -10,6 +10,8 @@ import blocksRoutes from './routes/blocks';
 import themesRoutes from './routes/themes';
 import headerPresetsRoutes from './routes/header-presets';
 import authRoutes from './routes/auth';
+import subscribeRoutes from './routes/subscribe';
+import subscribersRoutes from './routes/subscribers';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -49,6 +51,8 @@ app.route('/links', linksRoutes);
 app.route('/blocks', blocksRoutes);
 app.route('/themes', themesRoutes);
 app.route('/header-presets', headerPresetsRoutes);
+app.route('/subscribe', subscribeRoutes);
+app.route('/subscribers', subscribersRoutes);
 
 // Health check
 app.get('/', (c) => c.json({ 

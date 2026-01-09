@@ -440,3 +440,83 @@ export function getGradientPresetDescription(preset: GradientPreset): string {
 	};
 	return descriptions[preset];
 }
+
+/**
+ * Validate and normalize hex color input
+ * Handles both color picker and text input
+ * @param event - Input event from color picker or text input
+ * @returns Normalized hex color (6-digit) or null if invalid
+ */
+export function validateAndNormalizeHexColor(event: Event): string | null {
+	const input = event.target as HTMLInputElement;
+	let value = input.value;
+	
+	// Color picker always returns valid hex, text input needs validation
+	if (input.type === 'text') {
+		value = value.trim();
+		
+		// Ensure it starts with #
+		if (!value.startsWith('#')) {
+			value = '#' + value;
+		}
+		
+		// Validate hex format (3 or 6 digits)
+		if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value)) {
+			return null; // Invalid format
+		}
+		
+		// Convert 3-digit to 6-digit hex
+		if (value.length === 4) {
+			value = '#' + value[1] + value[1] + value[2] + value[2] + value[3] + value[3];
+		}
+	}
+	
+	return value;
+}
+
+/**
+ * Darken a hex color by a percentage
+ * @param hex - Hex color string (e.g., '#ff0000')
+ * @param percent - Percentage to darken (0-100)
+ * @returns Darkened hex color
+ */
+export function darkenColor(hex: string, percent: number): string {
+	const num = parseInt(hex.replace('#', ''), 16);
+	const r = Math.max(0, ((num >> 16) & 0xff) * (1 - percent / 100));
+	const g = Math.max(0, ((num >> 8) & 0xff) * (1 - percent / 100));
+	const b = Math.max(0, (num & 0xff) * (1 - percent / 100));
+	return '#' + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1);
+}
+
+/**
+ * Apply opacity to a color (hex or gradient)
+ * @param color - Color string (hex or gradient CSS)
+ * @param opacity - Opacity percentage (0-100)
+ * @returns Color with opacity applied
+ */
+export function applyOpacity(color: string, opacity: number): string {
+	const alpha = opacity / 100;
+	
+	// Handle gradient strings
+	if (color.includes('gradient')) {
+		// Replace all hex colors in gradient with rgba
+		return color.replace(/#([0-9a-fA-F]{6})/g, (match, hex) => {
+			const r = parseInt(hex.substring(0, 2), 16);
+			const g = parseInt(hex.substring(2, 4), 16);
+			const b = parseInt(hex.substring(4, 6), 16);
+			return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+		});
+	}
+	
+	// Handle hex color
+	if (color.startsWith('#')) {
+		const hex = color.replace('#', '');
+		const r = parseInt(hex.substring(0, 2), 16);
+		const g = parseInt(hex.substring(2, 4), 16);
+		const b = parseInt(hex.substring(4, 6), 16);
+		return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+	}
+	
+	// Return as-is if format not recognized
+	return color;
+}

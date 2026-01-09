@@ -5,15 +5,59 @@
 
 	const dispatch = createEventDispatcher();
 	let email = '';
+	let error = '';
+
+	// Email validation regex (same as backend)
+	const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+	function validateEmail(value: string): string {
+		if (!value) {
+			return 'Email is required';
+		}
+		
+		const trimmed = value.trim();
+		
+		if (!EMAIL_REGEX.test(trimmed)) {
+			return 'Please enter a valid email address';
+		}
+		
+		// Check for common typos
+		if (trimmed.endsWith('.con') || trimmed.endsWith('.cmo')) {
+			return 'Did you mean .com?';
+		}
+		
+		return '';
+	}
+
+	function handleInput() {
+		// Clear error on input
+		if (error) {
+			error = '';
+		}
+	}
+
+	function handleBlur() {
+		// Validate on blur
+		if (email) {
+			error = validateEmail(email);
+		}
+	}
 
 	function handleSubmit() {
-		if (!email || !email.includes('@')) return;
-		dispatch('submit', email);
+		const validationError = validateEmail(email);
+		
+		if (validationError) {
+			error = validationError;
+			return;
+		}
+		
+		dispatch('submit', email.trim().toLowerCase());
 	}
 
 	function handleCancel() {
 		dispatch('cancel');
 	}
+
 </script>
 
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -40,11 +84,20 @@
 				<input
 					type="email"
 					bind:value={email}
+					on:input={handleInput}
+					on:blur={handleBlur}
 					placeholder="your@email.com"
-					required
 					disabled={loading}
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+					class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors {error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'}"
 				/>
+				{#if error}
+					<p class="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+						<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+						</svg>
+						{error}
+					</p>
+				{/if}
 			</label>
 			<p class="text-xs text-gray-500 mt-2">We'll never share your email with anyone else.</p>
 		</form>
@@ -62,8 +115,8 @@
 			<button
 				type="submit"
 				on:click={handleSubmit}
-				disabled={loading || !email}
-				class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+				disabled={loading || !email || !!error}
+				class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
 			>
 				{#if loading}
 					<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>

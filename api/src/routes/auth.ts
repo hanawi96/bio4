@@ -98,7 +98,10 @@ auth.post('/login', async (c) => {
 		return c.json({
 			message: 'Đăng nhập thành công',
 			token,
-			user: formatUser(user)
+			user: {
+				...formatUser(user),
+				username: user.username
+			}
 		});
 		
 	} catch (error: any) {

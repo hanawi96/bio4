@@ -7,10 +7,12 @@
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 	import LockModal from '$lib/components/modals/LockModal.svelte';
+	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 	import { api } from '$lib/api.client';
 	import type { Link } from '$lib/types';
 	import { isFuture, formatCountdownWithLabels } from '$lib/utils/dateUtils';
 	import { onDestroy, onMount } from 'svelte';
+	import { toast } from '$lib/stores/toast';
 
 	// Lock modal state
 	let lockModalOpen = false;
@@ -132,11 +134,57 @@
 		currentLockedLink = null;
 	}
 
+	// Subscribe modal state
+	let showSubscribeModal = false;
+	let subscribing = false;
+
+	// Share functionality
+	$: bioUrl = `https://biolink.com/${$page?.username || ''}`;
+	$: showShareButton = ($publicAppearance?.theme?.config?.page?.defaults?.showShareButton as boolean) ?? true;
+
+	async function handleShare() {
+		try {
+			await navigator.clipboard.writeText(bioUrl);
+			toast.success('Link copied to clipboard!');
+		} catch (e) {
+			const input = document.createElement('input');
+			input.value = bioUrl;
+			document.body.appendChild(input);
+			input.select();
+			document.execCommand('copy');
+			document.body.removeChild(input);
+			toast.success('Link copied to clipboard!');
+		}
+	}
+
+	async function handleSubscribe(event: CustomEvent<string>) {
+		subscribing = true;
+		try {
+			const email = event.detail;
+			const username = $page?.username || '';
+			
+			await api.subscribe(username, email);
+			
+			showSubscribeModal = false;
+			toast.success('Successfully subscribed! Thank you!');
+		} catch (e: any) {
+			console.error('Subscribe failed:', e);
+			toast.error(e.message || 'Failed to subscribe. Please try again.');
+		} finally {
+			subscribing = false;
+		}
+	}
+
 	// Get resolved appearance
 	$: tokens = $publicAppearance?.tokens || {};
 	$: header = $publicAppearance?.header || {};
 	$: blockStyle = $publicAppearance?.blockStyle || {};
 	$: blockConfig = $publicAppearance?.block || {};
+	$: typography = $publicAppearance?.typography || { headingColor: '#18181b', mutedColor: '#71717a' };
+	
+	// Typography colors
+	$: headingColor = typography.headingColor;
+	$: mutedColor = typography.mutedColor;
 	
 	// Background
 	$: bgType = $publicAppearance?.theme?.config?.background?.type;
@@ -303,6 +351,9 @@
 	$: socialIconPosition = header?.socialIconPosition || 'header';
 	$: socialIconColor = header?.socialIconColor || tokens?.mutedTextColor || '#71717a';
 	
+	// Page settings
+	$: showSubscribeButton = ($publicAppearance?.theme?.config?.page?.defaults?.showSubscribeButton as boolean) ?? true;
+	
 	// Glow effects
 	$: titleGlow = header?.titleGlowEnabled 
 		? `0 0 20px ${header?.titleGlowColor || tokens?.primaryColor || '#3b82f6'}80`
@@ -314,9 +365,6 @@
 	// Convert background color to rgba gradient colors for mask (for avatar-cover)
 	$: maskGradientColors = (() => {
 		if (!isAvatarCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
-		
-		console.log('[PublicBioPage maskGradientColors] isAvatarCover:', isAvatarCover);
-		console.log('[PublicBioPage maskGradientColors] tokens?.backgroundColor:', tokens?.backgroundColor);
 		
 		// Get background color - try multiple sources in priority order
 		let bgColor: string | null = null;
@@ -455,6 +503,50 @@
 
 	<!-- Content -->
 	<div class="relative z-10 mx-auto" style="max-width: {maxWidth}px; padding: {pagePadding}px; text-align: {textAlign};">
+		<!-- Share & Subscribe Buttons (Floating) -->
+		{#if showShareButton || showSubscribeButton}
+			<div class="fixed top-4 left-0 right-0 z-50 flex items-center justify-between px-4" style="max-width: {maxWidth}px; margin: 0 auto;">
+				<!-- Subscribe Button (Left) -->
+				{#if showSubscribeButton}
+					<button
+						on:click={() => showSubscribeModal = true}
+						class="h-8 px-3 rounded-full flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 shadow-lg"
+						style="
+							background: rgba(255, 255, 255, 0.95);
+							backdrop-filter: blur(12px);
+							-webkit-backdrop-filter: blur(12px);
+						"
+						title="Subscribe"
+					>
+						<svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+						</svg>
+						<span class="text-xs font-medium text-gray-700">Subscribe</span>
+					</button>
+				{:else}
+					<div></div>
+				{/if}
+
+				<!-- Share Button (Right) -->
+				{#if showShareButton}
+					<button
+						on:click={handleShare}
+						class="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-lg"
+						style="
+							background: rgba(255, 255, 255, 0.95);
+							backdrop-filter: blur(12px);
+							-webkit-backdrop-filter: blur(12px);
+						"
+						title="Share"
+					>
+						<svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+						</svg>
+					</button>
+				{/if}
+			</div>
+		{/if}
+
 		<!-- Header with Cover -->
 		{#if header?.hasCover}
 			<div class="relative -mx-4 mb-6">
@@ -472,13 +564,13 @@
 						
 						<!-- Text overlay on avatar cover - z-20 to float above gradient mask -->
 						<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
-							<h1 class="font-bold text-white drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">
+							<h1 class="font-bold drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">
 								{$page?.title || 'Your Name'}
 							</h1>
 							{#if header.showBio && $page?.bio}
 								<p 
-									class="text-white/90 mt-2 drop-shadow-md"
-									style="font-size: {bioFontSizePx}px; line-height: 1.5;"
+									class="mt-2 drop-shadow-md"
+									style="font-size: {bioFontSizePx}px; line-height: 1.5; color: {mutedColor};"
 								>
 									{$page.bio}
 								</p>
@@ -526,14 +618,14 @@
 			<!-- Content below cover -->
 			{#if !isAvatarCover}
 				<div style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign || 'center'};">
-					<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">
+					<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">
 						{$page?.title || 'Your Name'}
 					</h1>
 					{#if header.showBio && $page?.bio}
 						<p 
 							class="mt-1"
 							style="
-								color: {tokens?.mutedTextColor || '#71717a'};
+								color: {mutedColor};
 								font-size: {bioFontSizePx}px;
 								line-height: 1.5;
 							"
@@ -575,14 +667,14 @@
 						{($page?.title || 'U').charAt(0).toUpperCase()}
 					</div>
 				{/if}
-				<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">
+				<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">
 					{$page?.title || 'Your Name'}
 				</h1>
 				{#if header?.showBio && $page?.bio}
 					<p 
 						class="mt-1"
 						style="
-							color: {tokens?.mutedTextColor || '#71717a'};
+							color: {mutedColor};
 							font-size: {bioFontSizePx}px;
 							line-height: 1.5;
 						"
@@ -997,3 +1089,12 @@
 	on:verify={handleVerifyLock}
 	on:close={handleCloseLockModal}
 />
+
+<!-- Subscribe Modal -->
+{#if showSubscribeModal}
+	<SubscribeModal
+		loading={subscribing}
+		on:submit={handleSubscribe}
+		on:cancel={() => showSubscribeModal = false}
+	/>
+{/if}

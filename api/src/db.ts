@@ -444,6 +444,46 @@ export async function deleteAsset(db: D1Database, assetId: number) {
 	await db.prepare('DELETE FROM assets WHERE id = ?').bind(assetId).run();
 }
 
+// ============ SUBSCRIBERS ============
+
+export async function createSubscriber(
+	db: D1Database,
+	pageId: number,
+	email: string,
+	ipAddress?: string
+) {
+	try {
+		const result = await db
+			.prepare(
+				'INSERT INTO subscribers (page_id, email, ip_address) VALUES (?, ?, ?)'
+			)
+			.bind(pageId, email, ipAddress || null)
+			.run();
+		return result.meta.last_row_id;
+	} catch (error: any) {
+		// Check if it's a unique constraint violation
+		if (error.message?.includes('UNIQUE constraint failed')) {
+			throw new Error('EMAIL_ALREADY_SUBSCRIBED');
+		}
+		throw error;
+	}
+}
+
+export async function getSubscribersByPageId(db: D1Database, pageId: number) {
+	return db
+		.prepare('SELECT * FROM subscribers WHERE page_id = ? ORDER BY created_at DESC')
+		.bind(pageId)
+		.all();
+}
+
+export async function getSubscriberCount(db: D1Database, pageId: number): Promise<number> {
+	const result = await db
+		.prepare('SELECT COUNT(*) as count FROM subscribers WHERE page_id = ?')
+		.bind(pageId)
+		.first<{ count: number }>();
+	return result?.count || 0;
+}
+
 // ============ FULL PAGE DATA (for editor & public) ============
 
 export async function getFullPageData(db: D1Database, username: string, useDraft = false) {
