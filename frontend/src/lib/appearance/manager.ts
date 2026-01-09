@@ -147,7 +147,7 @@ export function getPresetValue(
             return preset.config?.page?.defaults?.textAlign;
         }
         if (pageKey === 'blockGap') {
-            return preset.config?.page?.defaults?.blockGap;
+            return preset.config?.page?.layout?.blockGap;
         }
         if (pageKey === 'pagePadding') {
             return preset.config?.page?.defaults?.pagePadding;
