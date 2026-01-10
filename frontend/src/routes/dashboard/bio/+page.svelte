@@ -64,7 +64,7 @@
 	
 	// Image block state
 	let currentBlockId: number | null = null;
-	let currentBlockLayout: 'column' | 'carousel' = 'column';
+	let currentBlockLayout: 'column' | 'carousel' | 'slideshow' | 'marquee' = 'column';
 	let currentBlockContent: ImageBlockContent | null = null;
 	let isCreatingBlock = false;
 
@@ -354,7 +354,11 @@
 			}
 		} else if (blockType === 'image') {
 			// Handle image block
-			const blockLayout = layout === 'column' ? 'column' : 'carousel';
+			const blockLayout: 'column' | 'carousel' | 'slideshow' | 'marquee' = 
+				layout === 'column' ? 'column' : 
+				layout === 'carousel' ? 'carousel' : 
+				layout === 'slideshow' ? 'slideshow' :
+				'marquee';
 			
 			// OPTIMISTIC UI: Show editor immediately
 			currentBlockId = null;
@@ -368,7 +372,14 @@
 					autoplay: false,
 					interval: 3,
 					showDots: true,
-					showArrows: true
+					showArrows: true,
+					transition: 'fade',
+					showThumbnails: true,
+					thumbnailPosition: 'bottom',
+					direction: 'left',
+					speed: 'medium',
+					pauseOnHover: true,
+					imageHeight: 120
 				}
 			};
 			viewMode = 'edit-image-block';
