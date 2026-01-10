@@ -813,31 +813,8 @@
 						<h3 class="text-sm font-semibold text-gray-900">Images ({images.length})</h3>
 						
 						{#each images as image, index (image.id)}
-							<div class="card-ios p-4 flex items-start gap-4">
-								<img
-									src={image.url}
-									alt={image.alt || ''}
-									class="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-								/>
-								
-								<div class="flex-1 min-w-0 space-y-2">
-									<input
-										type="text"
-										value={image.caption || ''}
-										on:input={(e) => updateCaption(image.id, e.currentTarget.value)}
-										placeholder="Add caption (optional)"
-										class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-									/>
-									<input
-										type="url"
-										value={image.link || ''}
-										on:input={(e) => updateLink(image.id, e.currentTarget.value)}
-										placeholder="Add link (optional)"
-										class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-									/>
-									<p class="text-xs text-gray-500 truncate">{image.url.split('/').pop()}</p>
-								</div>
-								
+							<div class="card-ios p-4 flex items-center gap-4">
+								<!-- Move Buttons -->
 								<div class="flex flex-col gap-1">
 									<button
 										on:click={() => moveImage(image.id, 'up')}
@@ -859,16 +836,41 @@
 											<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
 										</svg>
 									</button>
-									<button
-										on:click={() => deleteImage(image.id)}
-										class="p-1.5 text-red-400 hover:text-red-600 rounded-lg"
-										title="Delete"
-									>
-										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-										</svg>
-									</button>
 								</div>
+								
+								<img
+									src={image.url}
+									alt={image.alt || ''}
+									class="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+								/>
+								
+								<div class="flex-1 min-w-0 space-y-2">
+									<input
+										type="text"
+										value={image.caption || ''}
+										on:input={(e) => updateCaption(image.id, e.currentTarget.value)}
+										placeholder="Add caption (optional)"
+										class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+									/>
+									<input
+										type="url"
+										value={image.link || ''}
+										on:input={(e) => updateLink(image.id, e.currentTarget.value)}
+										placeholder="Add link (optional)"
+										class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+									/>
+								</div>
+								
+								<!-- Delete Button -->
+								<button
+									on:click={() => deleteImage(image.id)}
+									class="p-1.5 text-red-400 hover:text-red-600 rounded-lg"
+									title="Delete"
+								>
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+								</button>
 							</div>
 						{/each}
 					</div>

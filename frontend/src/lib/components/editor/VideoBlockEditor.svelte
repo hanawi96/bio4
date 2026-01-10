@@ -545,25 +545,7 @@
 					<div class="space-y-3">
 						{#each videos as video, index (video.id)}
 							<div class="card-ios p-3 flex items-center gap-3">
-								<!-- Thumbnail -->
-								{#if video.thumbnail}
-									<img src={video.thumbnail} alt="" class="w-24 h-16 object-cover rounded-lg flex-shrink-0" />
-								{:else}
-									<div class="w-24 h-16 bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg flex-shrink-0 flex items-center justify-center">
-										<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-											<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-										</svg>
-									</div>
-								{/if}
-								
-								<!-- Info -->
-								<div class="flex-1 min-w-0">
-									<p class="text-sm font-semibold text-gray-900 truncate capitalize">{video.platform} Video</p>
-									<p class="text-xs text-gray-500 truncate mt-0.5">{video.url}</p>
-								</div>
-								
-								<!-- Actions -->
+								<!-- Move Buttons -->
 								<div class="flex flex-col gap-1">
 									<button
 										type="button"
@@ -587,17 +569,37 @@
 											<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
 										</svg>
 									</button>
-									<button
-										type="button"
-										on:click={() => handleRemoveVideo(video.id)}
-										class="p-1.5 text-red-400 hover:text-red-600 rounded-lg"
-										title="Delete"
-									>
-										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-										</svg>
-									</button>
 								</div>
+								
+								<!-- Thumbnail -->
+								{#if video.thumbnail}
+									<img src={video.thumbnail} alt="" class="w-24 h-16 object-cover rounded-lg flex-shrink-0" />
+								{:else}
+									<div class="w-24 h-16 bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg flex-shrink-0 flex items-center justify-center">
+										<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+											<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+										</svg>
+									</div>
+								{/if}
+								
+								<!-- Info -->
+								<div class="flex-1 min-w-0">
+									<p class="text-sm font-semibold text-gray-900 truncate capitalize">{video.platform} Video</p>
+									<p class="text-xs text-gray-500 truncate mt-0.5">{video.url}</p>
+								</div>
+								
+								<!-- Delete Button -->
+								<button
+									type="button"
+									on:click={() => handleRemoveVideo(video.id)}
+									class="p-1.5 text-red-400 hover:text-red-600 rounded-lg"
+									title="Delete"
+								>
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+								</button>
 							</div>
 						{/each}
 					</div>
