@@ -60,11 +60,17 @@ app.post('/', async (c) => {
 	}
 });
 
-// DELETE /upload/:storageKey - Delete image from R2
-app.delete('/:storageKey', async (c) => {
+// DELETE /upload/* - Delete image from R2 (supports nested paths like block-images/xxx.jpg)
+app.delete('/*', async (c) => {
 	try {
-		const storageKey = c.req.param('storageKey');
-		await c.env.STORAGE.delete(storageKey);
+		// Get the full path after /upload/
+		const fullPath = c.req.path.replace('/upload/', '');
+		
+		if (!fullPath) {
+			return c.json({ error: 'Storage key is required' }, 400);
+		}
+		
+		await c.env.STORAGE.delete(fullPath);
 		return c.json({ success: true });
 	} catch (error) {
 		console.error('Delete error:', error);

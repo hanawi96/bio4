@@ -60,7 +60,36 @@ app.put('/:blockId', async (c) => {
 // DELETE /blocks/:blockId - Delete block
 app.delete('/:blockId', async (c) => {
 	const blockId = parseInt(c.req.param('blockId'));
+	
+	// Get block data before deleting to clean up R2 storage
+	const block = await c.env.DB.prepare(
+		'SELECT type, content FROM blocks WHERE id = ?'
+	).bind(blockId).first() as { type: string; content: string } | null;
+	
+	// Delete block from database
 	await deleteBlock(c.env.DB, blockId);
+	
+	// Clean up R2 storage for image blocks
+	if (block && block.type === 'image') {
+		try {
+			const content = JSON.parse(block.content);
+			if (content.images && Array.isArray(content.images)) {
+				// Delete all images from R2 in parallel
+				const deletePromises = content.images.map((image: any) => {
+					if (image.storage_key) {
+						return c.env.STORAGE.delete(image.storage_key).catch((err: any) => {
+							console.error(`Failed to delete image ${image.storage_key}:`, err);
+						});
+					}
+				});
+				await Promise.all(deletePromises);
+			}
+		} catch (e) {
+			console.error('Failed to clean up R2 storage:', e);
+			// Don't fail the request if cleanup fails
+		}
+	}
+	
 	return c.json({ success: true });
 });
 
