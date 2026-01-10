@@ -384,7 +384,7 @@
 									class:bg-green-50={config.imageAspect === 'landscape'}
 									class:border-gray-200={config.imageAspect !== 'landscape'}
 								>
-									<div class="w-full h-5 bg-gray-400 rounded"></div>
+									<div class="w-12 h-7 bg-gray-400 rounded mx-auto"></div>
 									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'landscape'}>Landscape</span>
 								</button>
 							</div>
@@ -540,7 +540,7 @@
 									class:bg-green-50={config.imageAspect === 'landscape'}
 									class:border-gray-200={config.imageAspect !== 'landscape'}
 								>
-									<div class="w-full h-5 bg-gray-400 rounded"></div>
+									<div class="w-12 h-7 bg-gray-400 rounded mx-auto"></div>
 									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'landscape'}>Landscape</span>
 								</button>
 							</div>
@@ -555,28 +555,28 @@
 							<div class="grid grid-cols-2 gap-2">
 								<button
 									on:click={() => { config.direction = 'left'; notifyContentChange(); }}
-									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border-2 transition-all hover:border-green-400"
 									class:border-green-500={config.direction === 'left'}
 									class:bg-green-50={config.direction === 'left'}
 									class:border-gray-200={config.direction !== 'left'}
 								>
-									<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" class:text-green-600={config.direction === 'left'}>
 										<path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
 									</svg>
-									<span class="text-xs font-medium" class:text-green-600={config.direction === 'left'}>Left</span>
+									<span class="text-sm font-medium" class:text-green-600={config.direction === 'left'}>Left</span>
 								</button>
 								
 								<button
 									on:click={() => { config.direction = 'right'; notifyContentChange(); }}
-									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border-2 transition-all hover:border-green-400"
 									class:border-green-500={config.direction === 'right'}
 									class:bg-green-50={config.direction === 'right'}
 									class:border-gray-200={config.direction !== 'right'}
 								>
-									<svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" class:text-green-600={config.direction === 'right'}>
 										<path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
 									</svg>
-									<span class="text-xs font-medium" class:text-green-600={config.direction === 'right'}>Right</span>
+									<span class="text-sm font-medium" class:text-green-600={config.direction === 'right'}>Right</span>
 								</button>
 							</div>
 						</div>
@@ -587,35 +587,35 @@
 							<div class="grid grid-cols-3 gap-2">
 								<button
 									on:click={() => { config.speed = 'slow'; notifyContentChange(); }}
-									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class="py-2.5 px-3 rounded-lg border-2 transition-all hover:border-green-400 text-sm font-medium"
 									class:border-green-500={config.speed === 'slow'}
 									class:bg-green-50={config.speed === 'slow'}
+									class:text-green-600={config.speed === 'slow'}
 									class:border-gray-200={config.speed !== 'slow'}
 								>
-									<div class="text-2xl">🐢</div>
-									<span class="text-xs font-medium" class:text-green-600={config.speed === 'slow'}>Slow</span>
+									Slow
 								</button>
 								
 								<button
 									on:click={() => { config.speed = 'medium'; notifyContentChange(); }}
-									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class="py-2.5 px-3 rounded-lg border-2 transition-all hover:border-green-400 text-sm font-medium"
 									class:border-green-500={config.speed === 'medium'}
 									class:bg-green-50={config.speed === 'medium'}
+									class:text-green-600={config.speed === 'medium'}
 									class:border-gray-200={config.speed !== 'medium'}
 								>
-									<div class="text-2xl">🚶</div>
-									<span class="text-xs font-medium" class:text-green-600={config.speed === 'medium'}>Medium</span>
+									Medium
 								</button>
 								
 								<button
 									on:click={() => { config.speed = 'fast'; notifyContentChange(); }}
-									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class="py-2.5 px-3 rounded-lg border-2 transition-all hover:border-green-400 text-sm font-medium"
 									class:border-green-500={config.speed === 'fast'}
 									class:bg-green-50={config.speed === 'fast'}
+									class:text-green-600={config.speed === 'fast'}
 									class:border-gray-200={config.speed !== 'fast'}
 								>
-									<div class="text-2xl">🏃</div>
-									<span class="text-xs font-medium" class:text-green-600={config.speed === 'fast'}>Fast</span>
+									Fast
 								</button>
 							</div>
 						</div>
@@ -703,7 +703,7 @@
 									class:bg-green-50={config.imageAspect === 'landscape'}
 									class:border-gray-200={config.imageAspect !== 'landscape'}
 								>
-									<div class="w-full h-5 bg-gray-400 rounded"></div>
+									<div class="w-12 h-7 bg-gray-400 rounded mx-auto"></div>
 									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'landscape'}>Landscape</span>
 								</button>
 							</div>
