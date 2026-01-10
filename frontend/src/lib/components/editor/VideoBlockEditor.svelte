@@ -118,7 +118,7 @@
 </script>
 
 
-<div class="flex flex-col h-full bg-white">
+<div class="flex flex-col h-full bg-white rounded-xl shadow-sm border border-gray-200">
 	<!-- Header -->
 	<div class="px-6 py-4 border-b border-gray-200">
 		<div class="flex items-center gap-3 mb-4">
