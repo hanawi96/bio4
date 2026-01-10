@@ -35,7 +35,7 @@ app.post('/:username', async (c) => {
 
 	const blockId = await createBlock(c.env.DB, page.id, {
 		type: body.type,
-		content: body.content ? JSON.stringify(body.content) : '{}',
+		content: body.content ? (typeof body.content === 'string' ? body.content : JSON.stringify(body.content)) : '{}',
 		sort_order: body.sort_order
 	});
 
@@ -49,7 +49,7 @@ app.put('/:blockId', async (c) => {
 
 	await updateBlock(c.env.DB, blockId, {
 		type: body.type,
-		content: body.content ? JSON.stringify(body.content) : undefined,
+		content: body.content ? (typeof body.content === 'string' ? body.content : JSON.stringify(body.content)) : undefined,
 		sort_order: body.sort_order,
 		is_visible: body.is_visible
 	});

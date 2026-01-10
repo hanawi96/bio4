@@ -65,6 +65,37 @@ export interface Block {
 	is_visible: number;
 }
 
+// Image Block Types
+export interface ImageBlockContent {
+	layout: 'column' | 'carousel';
+	images: ImageBlockImage[];
+	config: ImageBlockConfig;
+	title?: string;
+	subtitle?: string;
+}
+
+export interface ImageBlockImage {
+	id: string;
+	url: string;
+	storage_key: string;
+	alt?: string;
+	caption?: string;
+	link?: string;
+	sort_order: number;
+}
+
+export interface ImageBlockConfig {
+	// Column layout
+	spacing?: 'compact' | 'comfortable' | 'spacious';
+	imageAspect?: 'auto' | 'square' | 'portrait' | 'landscape';
+	
+	// Carousel layout
+	autoplay?: boolean;
+	interval?: number; // milliseconds
+	showDots?: boolean;
+	showArrows?: boolean;
+}
+
 export interface ThemePreset {
 	id: number;
 	key: string;

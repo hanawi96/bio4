@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '$lib/api.client';
-	import { loadEditorData, groups, page } from '$lib/stores/page';
+	import { loadEditorData, groups, page, blocks } from '$lib/stores/page';
 	import { appearance } from '$lib/stores/appearance';
 	import { toast } from '$lib/stores/toast';
 	import { authStore } from '$lib/stores/auth';
@@ -15,7 +15,9 @@
 	import DeleteGroupModal from '$lib/components/modals/DeleteGroupModal.svelte';
 	import LinksEditor from '$lib/components/editor/LinksEditor.svelte';
 	import BlockCard from '$lib/components/editor/BlockCard.svelte';
-	import type { Link } from '$lib/types';
+	import ImageBlockCard from '$lib/components/editor/ImageBlockCard.svelte';
+	import ImageBlockEditor from '$lib/components/editor/ImageBlockEditor.svelte';
+	import type { Link, ImageBlockContent } from '$lib/types';
 
 	$: username = $authStore.user?.username || 'demo';
 	$: bioUrl = getBioUrl(username);
@@ -51,7 +53,7 @@
 	}
 
 	// View state
-	type ViewMode = 'list' | 'edit-links';
+	type ViewMode = 'list' | 'edit-links' | 'edit-image-block';
 	let viewMode: ViewMode = 'list';
 	let currentGroupId: number | null = null;
 	let currentGroupName: string = 'Links';
@@ -59,6 +61,12 @@
 	let currentLayoutType: 'list' | 'carousel' | 'grid' | 'cards' = 'list';
 	let currentLayoutConfig: string | null = null;
 	let isCreatingGroup = false; // Track group creation status
+	
+	// Image block state
+	let currentBlockId: number | null = null;
+	let currentBlockLayout: 'column' | 'carousel' = 'column';
+	let currentBlockContent: ImageBlockContent | null = null;
+	let isCreatingBlock = false;
 
 	// Reactive: Update currentLayoutConfig when groups store changes (e.g., theme reset)
 	$: if (currentGroupId && viewMode === 'edit-links') {
@@ -211,9 +219,96 @@
 			error = e.message || 'Failed to reorder groups';
 		}
 	}
+	
+	// ============ IMAGE BLOCK HANDLERS ============
+	
+	function handleEditBlock(blockId: number) {
+		const block = $blocks.find(b => b.id === blockId);
+		if (!block || block.type !== 'image') return;
+		
+		try {
+			const content = typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
+			currentBlockId = blockId;
+			currentBlockLayout = content.layout || 'column';
+			currentBlockContent = content;
+			viewMode = 'edit-image-block';
+		} catch (e) {
+			toast.error('Failed to load block content');
+		}
+	}
+	
+	async function handleDeleteBlock(blockId: number) {
+		if (!confirm('Are you sure you want to delete this image block?')) return;
+		
+		// OPTIMISTIC UI: Remove immediately
+		const deletedBlock = $blocks.find(b => b.id === blockId);
+		blocks.update(b => b.filter(block => block.id !== blockId));
+		
+		// Delete in background
+		try {
+			await api.deleteBlock(blockId);
+			toast.success('Block deleted');
+			
+			// Reload data silently
+			const data = await api.getEditorData(username);
+			loadEditorData(data);
+		} catch (e: any) {
+			// Restore on error
+			if (deletedBlock) {
+				blocks.update(b => [...b, deletedBlock].sort((a, b) => a.sort_order - b.sort_order));
+			}
+			toast.error(e.message || 'Failed to delete block');
+		}
+	}
+	
+	async function handleToggleBlockVisible(event: CustomEvent<any>) {
+		const { blockId, isVisible } = event.detail;
+		
+		// OPTIMISTIC UI: Update immediately
+		const oldBlocks = [...$blocks];
+		blocks.update(b => b.map(block => 
+			block.id === blockId ? { ...block, is_visible: isVisible } : block
+		));
+		
+		// Update in background
+		try {
+			await api.updateBlock(blockId, { is_visible: isVisible });
+		} catch (e: any) {
+			// Revert on error
+			blocks.set(oldBlocks);
+			toast.error(e.message || 'Failed to update block visibility');
+		}
+	}
+	
+	async function handleMoveBlock(blockId: number, direction: 'up' | 'down') {
+		const currentIndex = $blocks.findIndex(b => b.id === blockId);
+		if (currentIndex === -1) return;
+		
+		const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+		if (targetIndex < 0 || targetIndex >= $blocks.length) return;
+		
+		// OPTIMISTIC UI: Swap immediately
+		const newBlocks = [...$blocks];
+		[newBlocks[currentIndex], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[currentIndex]];
+		blocks.set(newBlocks);
+		
+		// Update sort_order in background
+		try {
+			await Promise.all([
+				api.updateBlock(newBlocks[currentIndex].id, { sort_order: currentIndex }),
+				api.updateBlock(newBlocks[targetIndex].id, { sort_order: targetIndex })
+			]);
+		} catch (e: any) {
+			// Revert on error
+			blocks.set($blocks);
+			toast.error(e.message || 'Failed to reorder blocks');
+		}
+	}
+
 
 	async function handleBlockTypeSelect(event: CustomEvent<{ type: string; layout: string }>) {
 		const { type: blockType, layout } = event.detail;
+		
 		if (blockType === 'link') {
 			// Generate unique group name
 			const groupName = generateUniqueGroupName();
@@ -256,6 +351,48 @@
 				viewMode = 'list';
 				currentGroupId = null;
 				isCreatingGroup = false;
+			}
+		} else if (blockType === 'image') {
+			// Handle image block
+			const blockLayout = layout === 'column' ? 'column' : 'carousel';
+			
+			// OPTIMISTIC UI: Show editor immediately
+			currentBlockId = null;
+			currentBlockLayout = blockLayout;
+			currentBlockContent = {
+				layout: blockLayout,
+				images: [],
+				config: {
+					spacing: 'comfortable',
+					imageAspect: 'square',
+					autoplay: false,
+					interval: 3,
+					showDots: true,
+					showArrows: true
+				}
+			};
+			viewMode = 'edit-image-block';
+			isCreatingBlock = true;
+			
+			// Create block in background
+			try {
+				const blockResult = await api.createBlock(username, {
+					type: 'image',
+					content: currentBlockContent,
+					sort_order: 0
+				});
+				
+				currentBlockId = blockResult.id;
+				isCreatingBlock = false;
+				
+				// Reload data silently
+				const data = await api.getEditorData(username);
+				loadEditorData(data);
+			} catch (e: any) {
+				error = e.message || 'Failed to create image block';
+				viewMode = 'list';
+				currentBlockId = null;
+				isCreatingBlock = false;
 			}
 		}
 	}
@@ -653,6 +790,94 @@
 			error = e.message || 'Failed to update layout config';
 		}
 	}
+	
+	// ============ IMAGE BLOCK HANDLERS ============
+	
+	function handleImageBlockBack() {
+		viewMode = 'list';
+		currentBlockId = null;
+	}
+	
+	// Handle content change (optimistic update)
+	function handleImageBlockContentChange(event: CustomEvent<{ content: ImageBlockContent }>) {
+		const { content } = event.detail;
+		
+		// Update local state immediately
+		currentBlockContent = content;
+		
+		// Update blocks store immediately for PhoneMockup preview
+		if (currentBlockId) {
+			blocks.update(b => b.map(block => 
+				block.id === currentBlockId 
+					? { ...block, content: JSON.stringify(content) }
+					: block
+			));
+			
+			// Save to API in background (debounced)
+			saveImageBlockDebounced(currentBlockId, content);
+		}
+	}
+	
+	// Debounced save to avoid too many API calls
+	let saveImageBlockTimeout: number | null = null;
+	function saveImageBlockDebounced(blockId: number, content: ImageBlockContent) {
+		if (saveImageBlockTimeout) {
+			clearTimeout(saveImageBlockTimeout);
+		}
+		
+		saveImageBlockTimeout = window.setTimeout(async () => {
+			try {
+				await api.updateBlock(blockId, {
+					content: JSON.stringify(content)
+				});
+			} catch (e: any) {
+				console.error('Failed to save block:', e);
+			}
+		}, 500); // Wait 500ms after last change
+	}
+	
+	async function handleImageBlockSave(event: CustomEvent<{ content: ImageBlockContent }>) {
+		const { content } = event.detail;
+		
+		if (!currentBlockId && !isCreatingBlock) return;
+		
+		// Wait for blockId if still creating
+		if (isCreatingBlock || currentBlockId === null) {
+			const maxWait = 5000;
+			const startTime = Date.now();
+			
+			while ((isCreatingBlock || currentBlockId === null) && Date.now() - startTime < maxWait) {
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+			
+			if (currentBlockId === null) {
+				toast.error('Failed to create block. Please try again.');
+				return;
+			}
+		}
+		
+		// Clear any pending debounced save
+		if (saveImageBlockTimeout) {
+			clearTimeout(saveImageBlockTimeout);
+			saveImageBlockTimeout = null;
+		}
+		
+		// Update block content
+		try {
+			await api.updateBlock(currentBlockId, {
+				content: JSON.stringify(content)
+			});
+			
+			// Update local state
+			currentBlockContent = content;
+			
+			// Reload data silently for preview
+			const data = await api.getEditorData(username);
+			loadEditorData(data);
+		} catch (e: any) {
+			toast.error(e.message || 'Failed to save block');
+		}
+	}
 </script>
 
 <div class="flex h-[calc(100vh-64px)]" style="background-color: #f6f1eb;">
@@ -682,7 +907,7 @@
 					</button>
 				</div>
 
-				{#if $groups.length === 0}
+				{#if $groups.length === 0 && $blocks.length === 0}
 					<div class="card-ios p-16 text-center">
 						<div class="icon-ios w-20 h-20 mx-auto mb-5">
 							<svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -710,6 +935,19 @@
 								on:rename={(e) => handleRenameGroup(e.detail)}
 							/>
 						{/each}
+						
+						{#each $blocks as block, index (block.id)}
+							<ImageBlockCard
+								{block}
+								isFirst={index === 0}
+								isLast={index === $blocks.length - 1}
+								on:click={(e) => handleEditBlock(e.detail)}
+								on:moveUp={(e) => handleMoveBlock(e.detail, 'up')}
+								on:moveDown={(e) => handleMoveBlock(e.detail, 'down')}
+								on:delete={(e) => handleDeleteBlock(e.detail)}
+								on:toggleVisible={handleToggleBlockVisible}
+							/>
+						{/each}
 					</div>
 				{/if}
 			{:else if viewMode === 'edit-links'}
@@ -729,6 +967,16 @@
 					on:moveLink={handleMoveLink}
 					on:updateLayout={handleUpdateLayout}
 					on:updateLayoutConfig={handleUpdateLayoutConfig}
+				/>
+			{:else if viewMode === 'edit-image-block'}
+				<!-- Image Block Editor View -->
+				<ImageBlockEditor
+					blockId={currentBlockId}
+					initialContent={currentBlockContent}
+					layout={currentBlockLayout}
+					on:back={handleImageBlockBack}
+					on:contentChange={handleImageBlockContentChange}
+					on:save={handleImageBlockSave}
 				/>
 			{/if}
 			</div>

@@ -330,6 +330,21 @@ class ApiClient {
 		return res.json();
 	}
 
+	async uploadBlockImage(file: File): Promise<{ url: string; storage_key: string }> {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const res = await fetch(`${this.baseUrl}/upload/block-image`, {
+			method: 'POST',
+			body: formData
+		});
+		if (!res.ok) {
+			const error = await res.json();
+			throw new Error(error.error || 'Failed to upload block image');
+		}
+		return res.json();
+	}
+
 	async uploadLinkIcon(file: File): Promise<{ url: string; storage_key: string }> {
 		const formData = new FormData();
 		formData.append('file', file);

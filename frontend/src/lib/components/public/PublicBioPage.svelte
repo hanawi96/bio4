@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { page, groups } from '$lib/stores/page';
+	import { page, groups, blocks } from '$lib/stores/page';
 	import { publicAppearance } from '$lib/stores/publicAppearance';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
+	import ImageBlockRenderer from './ImageBlockRenderer.svelte';
+	import type { ImageBlockContent } from '$lib/types';
 	import { resolvePagePadding, resolveAvatarBorderWidth, resolveSocialIconSize } from '$lib/appearance/spacingTokens';
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
@@ -807,6 +809,25 @@
 						{/if}
 					</a>
 				{/each}
+			{/each}
+			
+			<!-- Image Blocks -->
+			{#each $blocks.filter(b => b.is_visible === 1 && b.type === 'image') as block}
+				{@const content = (() => {
+					try {
+						return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
+					} catch {
+						return null;
+					}
+				})()}
+				{@const borderRadius = blockConfig?.borderRadius ?? 12}
+				{#if content}
+					<ImageBlockRenderer 
+						{content}
+						{blockStyle}
+						blockBorderRadius="{borderRadius}px"
+					/>
+				{/if}
 			{/each}
 		</div>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page, groups } from '$lib/stores/page';
+	import { page, groups, blocks } from '$lib/stores/page';
 	import { appearance } from '$lib/stores/appearance';
 	import { appearanceState } from '$lib/stores/appearanceManager';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
@@ -8,10 +8,12 @@
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
+	import ImageBlockRenderer from '$lib/components/public/ImageBlockRenderer.svelte';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
 	import { toast } from '$lib/stores/toast';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 	import { onMount } from 'svelte';
+	import type { ImageBlockContent } from '$lib/types';
 
 	// Preload default video on mount
 	const DEFAULT_VIDEO = '/presets/videos/14950008_1080_1920_60fps.mp4';
@@ -1215,9 +1217,27 @@
 							{/if}
 						{/each}
 						
-						{#if $groups.filter(g => (g.is_visible ?? 1) === 1).every(g => g.links.filter(l => l.is_active === 1).length === 0)}
+						<!-- Image Blocks -->
+						{#each $blocks.filter(b => b.is_visible === 1 && b.type === 'image') as block}
+							{@const content = (() => {
+								try {
+									return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
+								} catch {
+									return null;
+								}
+							})()}
+							{#if content}
+								<ImageBlockRenderer 
+									{content}
+									blockStyle={$appearance?.blockStyle}
+									{blockBorderRadius}
+								/>
+							{/if}
+						{/each}
+						
+						{#if $groups.filter(g => (g.is_visible ?? 1) === 1).every(g => g.links.filter(l => l.is_active === 1).length === 0) && $blocks.filter(b => b.is_visible === 1).length === 0}
 							<div class="text-center py-8 opacity-50">
-								<p class="text-sm">No links yet</p>
+								<p class="text-sm">No content yet</p>
 							</div>
 						{/if}
 					</div>
