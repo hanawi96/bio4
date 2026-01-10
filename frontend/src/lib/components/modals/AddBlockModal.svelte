@@ -138,12 +138,6 @@
 				badge: null
 			},
 			{
-				id: 'slideshow',
-				name: 'Slideshow',
-				description: 'Fullscreen presentation style',
-				badge: null
-			},
-			{
 				id: 'marquee',
 				name: 'Marquee',
 				description: 'Infinite scrolling strip',
@@ -445,18 +439,6 @@
 														<div class="w-32 h-32 bg-white rounded-xl shadow-sm flex-shrink-0"></div>
 														<div class="w-32 h-32 bg-white rounded-xl shadow-sm flex-shrink-0"></div>
 														<div class="w-32 h-32 bg-white rounded-xl shadow-sm flex-shrink-0 opacity-50"></div>
-													</div>
-												{:else if layout.id === 'slideshow'}
-													<div class="w-full relative">
-														<div class="w-full aspect-video bg-white rounded-xl shadow-lg"></div>
-														<div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-															<div class="w-6 h-1.5 bg-white rounded-full"></div>
-															<div class="w-1.5 h-1.5 bg-white/50 rounded-full"></div>
-															<div class="w-1.5 h-1.5 bg-white/50 rounded-full"></div>
-														</div>
-														<div class="absolute top-2 right-2 px-2 py-0.5 bg-black/60 text-white text-[10px] font-medium rounded">
-															1/3
-														</div>
 													</div>
 												{:else if layout.id === 'marquee'}
 													<div class="w-full overflow-hidden">

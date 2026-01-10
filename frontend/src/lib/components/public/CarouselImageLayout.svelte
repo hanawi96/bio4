@@ -9,30 +9,26 @@
 	let currentIndex = 0;
 	let autoplayInterval: number | null = null;
 	
+	function navigate(index: number) {
+		currentIndex = index;
+	}
+	
 	function nextSlide() {
-		currentIndex = (currentIndex + 1) % content.images.length;
+		navigate((currentIndex + 1) % content.images.length);
 	}
 	
 	function prevSlide() {
-		currentIndex = (currentIndex - 1 + content.images.length) % content.images.length;
-	}
-	
-	function goToSlide(index: number) {
-		currentIndex = index;
+		navigate((currentIndex - 1 + content.images.length) % content.images.length);
 	}
 	
 	onMount(() => {
 		if (content.config.autoplay && content.images.length > 1) {
-			autoplayInterval = window.setInterval(() => {
-				nextSlide();
-			}, (content.config.interval || 3) * 1000); // Convert seconds to milliseconds
+			autoplayInterval = window.setInterval(nextSlide, (content.config.interval || 3) * 1000);
 		}
 	});
 	
 	onDestroy(() => {
-		if (autoplayInterval) {
-			clearInterval(autoplayInterval);
-		}
+		if (autoplayInterval) clearInterval(autoplayInterval);
 	});
 </script>
 
@@ -112,12 +108,11 @@
 			</button>
 		{/if}
 		
-		<!-- Dots -->
 		{#if content.config.showDots && content.images.length > 1}
 			<div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
 				{#each content.images as _, index}
 					<button
-						on:click={() => goToSlide(index)}
+						on:click={() => navigate(index)}
 						class="w-2 h-2 rounded-full transition-all"
 						style="background: {index === currentIndex ? '#ffffff' : 'rgba(255,255,255,0.5)'};"
 						aria-label="Go to slide {index + 1}"

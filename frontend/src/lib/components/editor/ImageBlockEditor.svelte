@@ -6,7 +6,7 @@
 	
 	export let blockId: number | null = null;
 	export let initialContent: ImageBlockContent | null = null;
-	export let layout: 'column' | 'carousel' | 'slideshow' | 'marquee' = 'column';
+	export let layout: 'column' | 'carousel' | 'marquee' = 'column';
 	
 	const dispatch = createEventDispatcher();
 	
@@ -18,9 +18,6 @@
 		interval: 3,
 		showDots: true,
 		showArrows: true,
-		transition: 'fade',
-		showThumbnails: true,
-		thumbnailPosition: 'bottom',
 		direction: 'left',
 		speed: 'medium',
 		pauseOnHover: true,
@@ -215,8 +212,6 @@
 						Column Layout
 					{:else if layout === 'carousel'}
 						Carousel Layout
-					{:else if layout === 'slideshow'}
-						Slideshow Layout
 					{:else if layout === 'marquee'}
 						Marquee Layout
 					{/if}
@@ -231,10 +226,9 @@
 	
 	<!-- Content -->
 	<div class="flex-1 overflow-y-auto p-6">
-		<!-- Layout Switcher -->
 		<div class="mb-6">
 			<h3 class="text-sm font-semibold text-gray-900 mb-3">Layout Style</h3>
-			<div class="grid grid-cols-4 gap-3">
+			<div class="grid grid-cols-3 gap-3">
 				<button
 					on:click={() => { layout = 'column'; notifyContentChange(); }}
 					class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:border-green-400"
@@ -263,24 +257,6 @@
 						<div class="w-6 h-6 bg-gray-300 rounded flex-shrink-0"></div>
 					</div>
 					<span class="text-xs font-medium" class:text-green-600={layout === 'carousel'}>Carousel</span>
-				</button>
-				
-				<button
-					on:click={() => { layout = 'slideshow'; notifyContentChange(); }}
-					class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:border-green-400"
-					class:border-green-500={layout === 'slideshow'}
-					class:bg-green-50={layout === 'slideshow'}
-					class:border-gray-200={layout !== 'slideshow'}
-				>
-					<div class="relative w-full h-6">
-						<div class="absolute inset-0 bg-gray-400 rounded"></div>
-						<div class="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-0.5">
-							<div class="w-2 h-0.5 bg-white rounded-full"></div>
-							<div class="w-0.5 h-0.5 bg-white/50 rounded-full"></div>
-							<div class="w-0.5 h-0.5 bg-white/50 rounded-full"></div>
-						</div>
-					</div>
-					<span class="text-xs font-medium" class:text-green-600={layout === 'slideshow'}>Slideshow</span>
 				</button>
 				
 				<button
@@ -683,243 +659,6 @@
 									class:translate-x-0.5={!config.showArrows}
 								/>
 							</div>
-						</button>
-					</div>
-				{:else if layout === 'slideshow'}
-					<!-- Slideshow settings -->
-					<div class="space-y-4">
-						<!-- Transition Effect -->
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-3">Transition Effect</label>
-							<div class="grid grid-cols-3 gap-2">
-								<button
-									on:click={() => { config.transition = 'fade'; notifyContentChange(); }}
-									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
-									class:border-green-500={config.transition === 'fade'}
-									class:bg-green-50={config.transition === 'fade'}
-									class:border-gray-200={config.transition !== 'fade'}
-								>
-									<div class="w-8 h-8 bg-gradient-to-r from-gray-400 to-transparent rounded"></div>
-									<span class="text-xs font-medium" class:text-green-600={config.transition === 'fade'}>Fade</span>
-								</button>
-								
-								<button
-									on:click={() => { config.transition = 'slide'; notifyContentChange(); }}
-									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
-									class:border-green-500={config.transition === 'slide'}
-									class:bg-green-50={config.transition === 'slide'}
-									class:border-gray-200={config.transition !== 'slide'}
-								>
-									<div class="flex gap-0.5">
-										<div class="w-3 h-8 bg-gray-400 rounded"></div>
-										<div class="w-3 h-8 bg-gray-300 rounded"></div>
-									</div>
-									<span class="text-xs font-medium" class:text-green-600={config.transition === 'slide'}>Slide</span>
-								</button>
-								
-								<button
-									on:click={() => { config.transition = 'zoom'; notifyContentChange(); }}
-									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
-									class:border-green-500={config.transition === 'zoom'}
-									class:bg-green-50={config.transition === 'zoom'}
-									class:border-gray-200={config.transition !== 'zoom'}
-								>
-									<div class="relative w-8 h-8">
-										<div class="absolute inset-1 bg-gray-400 rounded"></div>
-										<div class="absolute inset-0 bg-gray-300 rounded"></div>
-									</div>
-									<span class="text-xs font-medium" class:text-green-600={config.transition === 'zoom'}>Zoom</span>
-								</button>
-							</div>
-						</div>
-						
-						<!-- Autoplay Toggle -->
-						<button
-							on:click={() => { config.autoplay = !config.autoplay; notifyContentChange(); }}
-							class="w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all hover:border-green-400"
-							class:border-green-500={config.autoplay}
-							class:bg-green-50={config.autoplay}
-							class:border-gray-200={!config.autoplay}
-						>
-							<div class="flex items-center gap-3">
-								<div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-									<svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
-									</svg>
-								</div>
-								<div class="text-left">
-									<p class="text-sm font-semibold text-gray-900">Autoplay</p>
-									<p class="text-xs text-gray-500">Auto-advance slides</p>
-								</div>
-							</div>
-							<div class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-								class:bg-green-500={config.autoplay}
-								class:bg-gray-300={!config.autoplay}
-							>
-								<span class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm"
-									class:translate-x-[22px]={config.autoplay}
-									class:translate-x-0.5={!config.autoplay}
-								/>
-							</div>
-						</button>
-						
-						<!-- Interval Slider -->
-						{#if config.autoplay}
-							<div class="p-4 bg-gray-50 rounded-lg">
-								<label class="block text-sm font-medium text-gray-700 mb-3">
-									Interval: {config.interval}s
-								</label>
-								<input
-									type="range"
-									bind:value={config.interval}
-									on:input={notifyContentChange}
-									min="1"
-									max="10"
-									step="1"
-									class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-500"
-								/>
-								<div class="flex justify-between text-xs text-gray-500 mt-1">
-									<span>1s</span>
-									<span>10s</span>
-								</div>
-							</div>
-						{/if}
-						
-						<!-- Show Arrows Toggle -->
-						<button
-							on:click={() => { config.showArrows = !config.showArrows; notifyContentChange(); }}
-							class="w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all hover:border-green-400"
-							class:border-green-500={config.showArrows}
-							class:bg-green-50={config.showArrows}
-							class:border-gray-200={!config.showArrows}
-						>
-							<div class="flex items-center gap-3">
-								<div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-									<svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-									</svg>
-								</div>
-								<div class="text-left">
-									<p class="text-sm font-semibold text-gray-900">Show Arrows</p>
-									<p class="text-xs text-gray-500">Navigation arrows</p>
-								</div>
-							</div>
-							<div class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-								class:bg-green-500={config.showArrows}
-								class:bg-gray-300={!config.showArrows}
-							>
-								<span class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm"
-									class:translate-x-[22px]={config.showArrows}
-									class:translate-x-0.5={!config.showArrows}
-								/>
-							</div>
-						</button>
-						
-						<!-- Show Dots Toggle -->
-						<button
-							on:click={() => { config.showDots = !config.showDots; notifyContentChange(); }}
-							class="w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all hover:border-green-400"
-							class:border-green-500={config.showDots}
-							class:bg-green-50={config.showDots}
-							class:border-gray-200={!config.showDots}
-						>
-							<div class="flex items-center gap-3">
-								<div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-									<div class="flex gap-1">
-										<div class="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-										<div class="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-										<div class="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-									</div>
-								</div>
-								<div class="text-left">
-									<p class="text-sm font-semibold text-gray-900">Show Dots</p>
-									<p class="text-xs text-gray-500">Navigation dots</p>
-								</div>
-							</div>
-							<div class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-								class:bg-green-500={config.showDots}
-								class:bg-gray-300={!config.showDots}
-							>
-								<span class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm"
-									class:translate-x-[22px]={config.showDots}
-									class:translate-x-0.5={!config.showDots}
-								/>
-							</div>
-						</button>
-						
-						<!-- Show Thumbnails Toggle -->
-						<button
-							on:click={() => { config.showThumbnails = !config.showThumbnails; notifyContentChange(); }}
-							class="w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all hover:border-green-400"
-							class:border-green-500={config.showThumbnails}
-							class:bg-green-50={config.showThumbnails}
-							class:border-gray-200={!config.showThumbnails}
-						>
-							<div class="flex items-center gap-3">
-								<div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-									<svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-									</svg>
-								</div>
-								<div class="text-left">
-									<p class="text-sm font-semibold text-gray-900">Show Thumbnails</p>
-									<p class="text-xs text-gray-500">Preview thumbnails</p>
-								</div>
-							</div>
-							<div class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-								class:bg-green-500={config.showThumbnails}
-								class:bg-gray-300={!config.showThumbnails}
-							>
-								<span class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm"
-									class:translate-x-[22px]={config.showThumbnails}
-									class:translate-x-0.5={!config.showThumbnails}
-								/>
-							</div>
-						</button>
-						
-						<!-- Thumbnail Position (only if thumbnails enabled) -->
-						{#if config.showThumbnails}
-							<div>
-								<label class="block text-sm font-medium text-gray-700 mb-3">Thumbnail Position</label>
-								<div class="grid grid-cols-2 gap-2">
-									<button
-										on:click={() => { config.thumbnailPosition = 'bottom'; notifyContentChange(); }}
-										class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
-										class:border-green-500={config.thumbnailPosition === 'bottom'}
-										class:bg-green-50={config.thumbnailPosition === 'bottom'}
-										class:border-gray-200={config.thumbnailPosition !== 'bottom'}
-									>
-										<div class="flex flex-col gap-1 w-full">
-											<div class="h-6 bg-gray-400 rounded"></div>
-											<div class="flex gap-1">
-												<div class="h-2 flex-1 bg-gray-300 rounded"></div>
-												<div class="h-2 flex-1 bg-gray-300 rounded"></div>
-												<div class="h-2 flex-1 bg-gray-300 rounded"></div>
-											</div>
-										</div>
-										<span class="text-xs font-medium" class:text-green-600={config.thumbnailPosition === 'bottom'}>Bottom</span>
-									</button>
-									
-									<button
-										on:click={() => { config.thumbnailPosition = 'right'; notifyContentChange(); }}
-										class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
-										class:border-green-500={config.thumbnailPosition === 'right'}
-										class:bg-green-50={config.thumbnailPosition === 'right'}
-										class:border-gray-200={config.thumbnailPosition !== 'right'}
-									>
-										<div class="flex gap-1 w-full">
-											<div class="flex-1 h-8 bg-gray-400 rounded"></div>
-											<div class="flex flex-col gap-0.5 w-3">
-												<div class="h-2 bg-gray-300 rounded"></div>
-												<div class="h-2 bg-gray-300 rounded"></div>
-												<div class="h-2 bg-gray-300 rounded"></div>
-											</div>
-										</div>
-										<span class="text-xs font-medium" class:text-green-600={config.thumbnailPosition === 'right'}>Right</span>
-									</button>
-								</div>
-							</div>
-						{/if}
 					</div>
 				{:else if layout === 'marquee'}
 					<!-- Marquee settings -->

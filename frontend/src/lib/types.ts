@@ -67,7 +67,7 @@ export interface Block {
 
 // Image Block Types
 export interface ImageBlockContent {
-	layout: 'column' | 'carousel' | 'slideshow' | 'marquee';
+	layout: 'column' | 'carousel' | 'marquee';
 	images: ImageBlockImage[];
 	config: ImageBlockConfig;
 	title?: string;
@@ -94,11 +94,6 @@ export interface ImageBlockConfig {
 	interval?: number; // seconds
 	showDots?: boolean;
 	showArrows?: boolean;
-	
-	// Slideshow layout
-	transition?: 'fade' | 'slide' | 'zoom';
-	showThumbnails?: boolean;
-	thumbnailPosition?: 'bottom' | 'right';
 	
 	// Marquee layout
 	direction?: 'left' | 'right';
