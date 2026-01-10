@@ -1,30 +1,24 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { ImageBlockContent } from '$lib/types';
+	import type { VideoBlockContent } from '$lib/types';
+	import { getVideoEmbedUrl } from '$lib/utils/videoUtils';
 	
-	export let content: ImageBlockContent;
-	export let blockStyle: any;
-	export let blockBorderRadius: string;
+	export let content: VideoBlockContent;
 	export let textColor: string = '#18181b';
 	export let mutedTextColor: string = '#71717a';
 	
 	const speedMap = { slow: 20, medium: 40, fast: 60 };
 	const GAP_WIDTH = 16;
 	
-	// Aspect ratio mapping
-	const aspectMap = {
-		square: 1,      // 1:1
-		portrait: 0.75, // 3:4
-		landscape: 1.5  // 16:9 ≈ 1.78, but we use 1.5 for better fit
-	};
-	
 	let speed = speedMap[content.config.speed || 'medium'];
 	let direction = content.config.direction || 'left';
 	let pauseOnHover = content.config.pauseOnHover ?? true;
-	let imageHeight = content.config.imageHeight || 120;
-	let aspectRatio = aspectMap[content.config.imageAspect || 'landscape'];
-	let imageWidth = imageHeight * aspectRatio;
-	let oneSetWidth = (imageWidth + GAP_WIDTH) * content.images.length;
+	let videoHeight = content.config.videoHeight || 300;
+	let aspectRatio = content.config.aspectRatio || '16/9';
+	
+	// Calculate width based on aspect ratio
+	let videoWidth = videoHeight * (aspectRatio === '16/9' ? 16/9 : aspectRatio === '9/16' ? 9/16 : aspectRatio === '4/3' ? 4/3 : 1);
+	let oneSetWidth = (videoWidth + GAP_WIDTH) * content.videos.length;
 	
 	let trackElement: HTMLDivElement;
 	let currentPosition = 0;
@@ -40,10 +34,10 @@
 		speed = newSpeed;
 		direction = newDirection;
 		pauseOnHover = content.config.pauseOnHover ?? true;
-		imageHeight = content.config.imageHeight || 120;
-		aspectRatio = aspectMap[content.config.imageAspect || 'landscape'];
-		imageWidth = imageHeight * aspectRatio;
-		oneSetWidth = (imageWidth + GAP_WIDTH) * content.images.length;
+		videoHeight = content.config.videoHeight || 300;
+		aspectRatio = content.config.aspectRatio || '16/9';
+		videoWidth = videoHeight * (aspectRatio === '16/9' ? 16/9 : aspectRatio === '9/16' ? 9/16 : aspectRatio === '4/3' ? 4/3 : 1);
+		oneSetWidth = (videoWidth + GAP_WIDTH) * content.videos.length;
 		
 		if (directionChanged && trackElement) {
 			currentPosition = direction === 'right' ? -oneSetWidth : 0;
@@ -72,7 +66,6 @@
 				
 				trackElement.style.transform = `translateX(${currentPosition}px)`;
 			} else if (isPaused) {
-				// Update lastTime while paused to prevent jump when resumed
 				lastTime = currentTime;
 			}
 			
@@ -101,8 +94,7 @@
 	{/if}
 	
 	<div 
-		class="overflow-hidden relative"
-		style="border-radius: {blockBorderRadius};"
+		class="overflow-hidden relative rounded-xl"
 		on:mouseenter={() => { if (pauseOnHover) isPaused = true; }}
 		on:mouseleave={() => { if (pauseOnHover) isPaused = false; }}
 	>
@@ -112,26 +104,19 @@
 			style="will-change: transform;"
 		>
 			{#each Array(2) as _}
-				{#each content.images as image}
+				{#each content.videos as video}
 					<div 
-						class="flex-shrink-0 overflow-hidden"
-						style="height: {imageHeight}px; width: {imageWidth}px; border-radius: {blockBorderRadius};"
+						class="flex-shrink-0 overflow-hidden rounded-xl"
+						style="height: {videoHeight}px; width: {videoWidth}px;"
 					>
-						{#if image.link}
-							<a href={image.link} target="_blank" rel="noopener noreferrer" class="block w-full h-full">
-								<img 
-									src={image.url} 
-									alt={image.caption || ''} 
-									class="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-								/>
-							</a>
-						{:else}
-							<img 
-								src={image.url} 
-								alt={image.caption || ''} 
-								class="w-full h-full object-cover"
-							/>
-						{/if}
+						<iframe
+							src={getVideoEmbedUrl(video.platform, video.videoId)}
+							title={video.title || 'Video'}
+							frameborder="0"
+							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+							allowfullscreen
+							class="w-full h-full"
+						></iframe>
 					</div>
 				{/each}
 			{/each}

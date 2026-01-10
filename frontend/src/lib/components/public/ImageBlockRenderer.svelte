@@ -7,12 +7,14 @@
 	export let content: ImageBlockContent;
 	export let blockStyle: any;
 	export let blockBorderRadius: string;
+	export let textColor: string = '#18181b';
+	export let mutedTextColor: string = '#71717a';
 </script>
 
 {#if content.layout === 'column'}
-	<ColumnImageLayout {content} {blockStyle} {blockBorderRadius} />
+	<ColumnImageLayout {content} {blockStyle} {blockBorderRadius} {textColor} {mutedTextColor} />
 {:else if content.layout === 'carousel'}
-	<CarouselImageLayout {content} {blockStyle} {blockBorderRadius} />
+	<CarouselImageLayout {content} {blockStyle} {blockBorderRadius} {textColor} {mutedTextColor} />
 {:else if content.layout === 'marquee'}
-	<MarqueeImageLayout {content} {blockStyle} {blockBorderRadius} />
+	<MarqueeImageLayout {content} {blockStyle} {blockBorderRadius} {textColor} {mutedTextColor} />
 {/if}

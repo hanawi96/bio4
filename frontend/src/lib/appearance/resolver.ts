@@ -573,6 +573,13 @@ export function resolveAppearance(
 		page: pageLayout,
 		block: blockConfig,
 		blockStyle,
+		textColor: (pageState.overrides?.['textColor'] as string)
+			?? themeConfig.semantic?.color?.text?.default
+			?? tokens.text
+			?? '#18181b',
+		mutedTextColor: (pageState.overrides?.['mutedTextColor'] as string)
+			?? themeConfig.semantic?.color?.text?.muted
+			?? '#71717a',
 		typography: {
 			headingColor: (pageState.overrides?.['typography.headingColor'] as string)
 				?? themeConfig.semantic?.color?.text?.default

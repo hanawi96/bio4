@@ -210,6 +210,8 @@ export function buildPreviewAppearance(
 		block: {
 			borderRadius: 12
 		},
+		textColor,
+		mutedTextColor,
 		typography: {
 			headingColor,
 			mutedColor

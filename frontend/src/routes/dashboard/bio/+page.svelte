@@ -17,7 +17,9 @@
 	import BlockCard from '$lib/components/editor/BlockCard.svelte';
 	import ImageBlockCard from '$lib/components/editor/ImageBlockCard.svelte';
 	import ImageBlockEditor from '$lib/components/editor/ImageBlockEditor.svelte';
-	import type { Link, ImageBlockContent } from '$lib/types';
+	import VideoBlockCard from '$lib/components/editor/VideoBlockCard.svelte';
+	import VideoBlockEditor from '$lib/components/editor/VideoBlockEditor.svelte';
+	import type { Link, ImageBlockContent, VideoBlockContent } from '$lib/types';
 
 	$: username = $authStore.user?.username || 'demo';
 	$: bioUrl = getBioUrl(username);
@@ -53,7 +55,7 @@
 	}
 
 	// View state
-	type ViewMode = 'list' | 'edit-links' | 'edit-image-block';
+	type ViewMode = 'list' | 'edit-links' | 'edit-image-block' | 'edit-video-block';
 	let viewMode: ViewMode = 'list';
 	let currentGroupId: number | null = null;
 	let currentGroupName: string = 'Links';
@@ -224,21 +226,29 @@
 	
 	function handleEditBlock(blockId: number) {
 		const block = $blocks.find(b => b.id === blockId);
-		if (!block || block.type !== 'image') return;
+		if (!block) return;
 		
 		try {
 			const content = typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
 			currentBlockId = blockId;
 			currentBlockLayout = content.layout || 'column';
 			currentBlockContent = content;
-			viewMode = 'edit-image-block';
+			
+			if (block.type === 'image') {
+				viewMode = 'edit-image-block';
+			} else if (block.type === 'video') {
+				viewMode = 'edit-video-block';
+			}
 		} catch (e) {
 			toast.error('Failed to load block content');
 		}
 	}
 	
 	async function handleDeleteBlock(blockId: number) {
-		if (!confirm('Are you sure you want to delete this image block?')) return;
+		const block = $blocks.find(b => b.id === blockId);
+		const blockType = block?.type || 'block';
+		
+		if (!confirm(`Are you sure you want to delete this ${blockType} block?`)) return;
 		
 		// OPTIMISTIC UI: Remove immediately
 		const deletedBlock = $blocks.find(b => b.id === blockId);
@@ -401,6 +411,55 @@
 				loadEditorData(data);
 			} catch (e: any) {
 				error = e.message || 'Failed to create image block';
+				viewMode = 'list';
+				currentBlockId = null;
+				isCreatingBlock = false;
+			}
+		} else if (blockType === 'video') {
+			// Handle video block
+			const blockLayout: 'column' | 'carousel' | 'marquee' = 
+				layout === 'column' ? 'column' : 
+				layout === 'carousel' ? 'carousel' : 
+				'marquee';
+			
+			// OPTIMISTIC UI: Show editor immediately
+			currentBlockId = null;
+			currentBlockLayout = blockLayout;
+			currentBlockContent = {
+				layout: blockLayout,
+				videos: [],
+				config: {
+					spacing: 'comfortable',
+					aspectRatio: '16/9',
+					autoplay: false,
+					interval: 3,
+					showDots: true,
+					showArrows: true,
+					direction: 'left',
+					speed: 'medium',
+					pauseOnHover: true,
+					videoHeight: 300
+				}
+			};
+			viewMode = 'edit-video-block';
+			isCreatingBlock = true;
+			
+			// Create block in background
+			try {
+				const blockResult = await api.createBlock(username, {
+					type: 'video',
+					content: currentBlockContent,
+					sort_order: 0
+				});
+				
+				currentBlockId = blockResult.id;
+				isCreatingBlock = false;
+				
+				// Reload data silently
+				const data = await api.getEditorData(username);
+				loadEditorData(data);
+			} catch (e: any) {
+				error = e.message || 'Failed to create video block';
 				viewMode = 'list';
 				currentBlockId = null;
 				isCreatingBlock = false;
@@ -889,6 +948,90 @@
 			toast.error(e.message || 'Failed to save block');
 		}
 	}
+
+	// ============ VIDEO BLOCK HANDLERS ============
+	
+	function handleVideoBlockBack() {
+		viewMode = 'list';
+		currentBlockId = null;
+		currentBlockContent = null;
+	}
+	
+	let saveVideoBlockTimeout: number | null = null;
+	
+	function handleVideoBlockContentChange(event: CustomEvent<{ content: VideoBlockContent }>) {
+		const { content } = event.detail;
+		currentBlockContent = content;
+		
+		// Update blocks store immediately for live preview
+		if (currentBlockId) {
+			blocks.update(currentBlocks => {
+				return currentBlocks.map(block => 
+					block.id === currentBlockId 
+						? { ...block, content: JSON.stringify(content) }
+						: block
+				);
+			});
+		}
+		
+		// Debounce auto-save
+		if (saveVideoBlockTimeout) clearTimeout(saveVideoBlockTimeout);
+		
+		saveVideoBlockTimeout = window.setTimeout(async () => {
+			if (!currentBlockId) return;
+			
+			try {
+				await api.updateBlock(currentBlockId, {
+					content: JSON.stringify(content)
+				});
+			} catch (e: any) {
+				console.error('Failed to save block:', e);
+			}
+		}, 500);
+	}
+	
+	async function handleVideoBlockSave(event: CustomEvent<{ content: VideoBlockContent }>) {
+		const { content } = event.detail;
+		
+		if (!currentBlockId && !isCreatingBlock) return;
+		
+		// Wait for blockId if still creating
+		if (isCreatingBlock || currentBlockId === null) {
+			const maxWait = 5000;
+			const startTime = Date.now();
+			
+			while ((isCreatingBlock || currentBlockId === null) && Date.now() - startTime < maxWait) {
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+			
+			if (currentBlockId === null) {
+				toast.error('Failed to create block. Please try again.');
+				return;
+			}
+		}
+		
+		// Clear any pending debounced save
+		if (saveVideoBlockTimeout) {
+			clearTimeout(saveVideoBlockTimeout);
+			saveVideoBlockTimeout = null;
+		}
+		
+		// Update block content
+		try {
+			await api.updateBlock(currentBlockId, {
+				content: JSON.stringify(content)
+			});
+			
+			// Update local state
+			currentBlockContent = content;
+			
+			// Reload data silently for preview
+			const data = await api.getEditorData(username);
+			loadEditorData(data);
+		} catch (e: any) {
+			toast.error(e.message || 'Failed to save block');
+		}
+	}
 </script>
 
 <div class="flex h-[calc(100vh-64px)]" style="background-color: #f6f1eb;">
@@ -948,16 +1091,29 @@
 						{/each}
 						
 						{#each $blocks as block, index (block.id)}
-							<ImageBlockCard
-								{block}
-								isFirst={index === 0}
-								isLast={index === $blocks.length - 1}
-								on:click={(e) => handleEditBlock(e.detail)}
-								on:moveUp={(e) => handleMoveBlock(e.detail, 'up')}
-								on:moveDown={(e) => handleMoveBlock(e.detail, 'down')}
-								on:delete={(e) => handleDeleteBlock(e.detail)}
-								on:toggleVisible={handleToggleBlockVisible}
-							/>
+							{#if block.type === 'image'}
+								<ImageBlockCard
+									{block}
+									isFirst={index === 0}
+									isLast={index === $blocks.length - 1}
+									on:click={(e) => handleEditBlock(e.detail)}
+									on:moveUp={(e) => handleMoveBlock(e.detail, 'up')}
+									on:moveDown={(e) => handleMoveBlock(e.detail, 'down')}
+									on:delete={(e) => handleDeleteBlock(e.detail)}
+									on:toggleVisible={handleToggleBlockVisible}
+								/>
+							{:else if block.type === 'video'}
+								<VideoBlockCard
+									{block}
+									isFirst={index === 0}
+									isLast={index === $blocks.length - 1}
+									on:click={(e) => handleEditBlock(e.detail)}
+									on:moveUp={(e) => handleMoveBlock(e.detail, 'up')}
+									on:moveDown={(e) => handleMoveBlock(e.detail, 'down')}
+									on:delete={(e) => handleDeleteBlock(e.detail)}
+									on:toggleVisible={handleToggleBlockVisible}
+								/>
+							{/if}
 						{/each}
 					</div>
 				{/if}
@@ -988,6 +1144,16 @@
 					on:back={handleImageBlockBack}
 					on:contentChange={handleImageBlockContentChange}
 					on:save={handleImageBlockSave}
+				/>
+			{:else if viewMode === 'edit-video-block'}
+				<!-- Video Block Editor View -->
+				<VideoBlockEditor
+					blockId={currentBlockId}
+					initialContent={currentBlockContent}
+					layout={currentBlockLayout}
+					on:back={handleVideoBlockBack}
+					on:contentChange={handleVideoBlockContentChange}
+					on:save={handleVideoBlockSave}
 				/>
 			{/if}
 			</div>

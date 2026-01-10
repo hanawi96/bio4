@@ -102,6 +102,43 @@ export interface ImageBlockConfig {
 	imageHeight?: number; // pixels (80-200)
 }
 
+// Video Block Types
+export interface VideoBlockContent {
+	layout: 'column' | 'carousel' | 'marquee';
+	videos: VideoBlockItem[];
+	config: VideoBlockConfig;
+	title?: string;
+	subtitle?: string;
+}
+
+export interface VideoBlockItem {
+	id: string;
+	url: string; // Original URL (YouTube, etc)
+	platform: 'youtube' | 'tiktok' | 'vimeo';
+	videoId: string; // Extracted video ID
+	title?: string;
+	thumbnail?: string;
+	sort_order: number;
+}
+
+export interface VideoBlockConfig {
+	// Column layout
+	spacing?: 'compact' | 'comfortable' | 'spacious';
+	aspectRatio?: '16/9' | '9/16' | '4/3' | '1/1';
+	
+	// Carousel layout
+	autoplay?: boolean;
+	interval?: number; // seconds
+	showDots?: boolean;
+	showArrows?: boolean;
+	
+	// Marquee layout
+	direction?: 'left' | 'right';
+	speed?: 'slow' | 'medium' | 'fast';
+	pauseOnHover?: boolean;
+	videoHeight?: number; // pixels (200-400)
+}
+
 export interface ThemePreset {
 	id: number;
 	key: string;

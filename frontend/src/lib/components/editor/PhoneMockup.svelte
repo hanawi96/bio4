@@ -9,6 +9,7 @@
 	import SubscribeModal from '$lib/components/modals/SubscribeModal.svelte';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
 	import ImageBlockRenderer from '$lib/components/public/ImageBlockRenderer.svelte';
+	import VideoBlockRenderer from '$lib/components/public/VideoBlockRenderer.svelte';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
 	import { toast } from '$lib/stores/toast';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
@@ -1231,6 +1232,26 @@
 									{content}
 									blockStyle={$appearance?.blockStyle}
 									{blockBorderRadius}
+									textColor={$appearance?.textColor || '#18181b'}
+									mutedTextColor={$appearance?.mutedTextColor || '#71717a'}
+								/>
+							{/if}
+						{/each}
+						
+						<!-- Video Blocks -->
+						{#each $blocks.filter(b => b.is_visible === 1 && b.type === 'video') as block}
+							{@const content = (() => {
+								try {
+									return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
+								} catch {
+									return null;
+								}
+							})()}
+							{#if content}
+								<VideoBlockRenderer 
+									{content}
+									textColor={$appearance?.textColor || '#18181b'}
+									mutedTextColor={$appearance?.mutedTextColor || '#71717a'}
 								/>
 							{/if}
 						{/each}

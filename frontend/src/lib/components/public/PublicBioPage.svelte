@@ -3,7 +3,8 @@
 	import { publicAppearance } from '$lib/stores/publicAppearance';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 	import ImageBlockRenderer from './ImageBlockRenderer.svelte';
-	import type { ImageBlockContent } from '$lib/types';
+	import VideoBlockRenderer from './VideoBlockRenderer.svelte';
+	import type { ImageBlockContent, VideoBlockContent } from '$lib/types';
 	import { resolvePagePadding, resolveAvatarBorderWidth, resolveSocialIconSize } from '$lib/appearance/spacingTokens';
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
@@ -826,6 +827,26 @@
 						{content}
 						{blockStyle}
 						blockBorderRadius="{borderRadius}px"
+						textColor={$publicAppearance?.textColor || '#18181b'}
+						mutedTextColor={$publicAppearance?.mutedTextColor || '#71717a'}
+					/>
+				{/if}
+			{/each}
+			
+			<!-- Video Blocks -->
+			{#each $blocks.filter(b => b.is_visible === 1 && b.type === 'video') as block}
+				{@const content = (() => {
+					try {
+						return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
+					} catch {
+						return null;
+					}
+				})()}
+				{#if content}
+					<VideoBlockRenderer 
+						{content}
+						textColor={$publicAppearance?.textColor || '#18181b'}
+						mutedTextColor={$publicAppearance?.mutedTextColor || '#71717a'}
 					/>
 				{/if}
 			{/each}

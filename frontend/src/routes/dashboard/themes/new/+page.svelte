@@ -18,7 +18,7 @@
 	import ThemeLinkGroupLayout from './components/ThemeLinkGroupLayout.svelte';
 	import ThemePageSettings from './components/ThemePageSettings.svelte';
 	import { previewAppearance, previewAppearanceState, previewPage, buildPreviewAppearance } from '$lib/stores/themePreview';
-	import { groups } from '$lib/stores/page';
+	import { groups, blocks } from '$lib/stores/page';
 	import type { ThemePreset } from '$lib/types';
 	import { RADIUS_TOKENS, BLOCK_GAP_PRESETS, type BlockGapPreset, type MaxWidthKey, type PagePaddingKey, type AvatarBorderWidthKey, type BorderWidthKey } from '$lib/appearance/spacingTokens';
 	import { type BlurKey, type BrightnessKey, type GrayscaleKey } from '$lib/appearance/effectsTokens';
@@ -186,6 +186,11 @@
 				// Load groups/links
 				if (editorData.groups) {
 					groups.set(editorData.groups);
+				}
+				
+				// Load blocks
+				if (editorData.blocks) {
+					blocks.set(editorData.blocks);
 				}
 			}
 			

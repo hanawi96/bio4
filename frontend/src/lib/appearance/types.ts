@@ -256,6 +256,8 @@ export interface ResolvedAppearance {
 		borderWidth: number;
 	};
 	blockStyle: ResolvedBlockStyle; // Resolved block style with actual colors
+	textColor: string; // Main text color (for headings, titles)
+	mutedTextColor: string; // Muted text color (for subtitles, descriptions)
 	typography: {
 		headingColor: string;
 		mutedColor: string;

@@ -955,6 +955,8 @@
 									{content}
 									blockStyle={$previewAppearance?.blockStyle}
 									{blockBorderRadius}
+									textColor={$previewAppearance?.textColor || '#18181b'}
+									mutedTextColor={$previewAppearance?.mutedTextColor || '#71717a'}
 								/>
 							{/if}
 						{/each}

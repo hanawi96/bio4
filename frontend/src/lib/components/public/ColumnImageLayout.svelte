@@ -4,6 +4,8 @@
 	export let content: ImageBlockContent;
 	export let blockStyle: any;
 	export let blockBorderRadius: string;
+	export let textColor: string = '#18181b';
+	export let mutedTextColor: string = '#71717a';
 	
 	const spacingMap = {
 		compact: 8,
@@ -26,10 +28,10 @@
 	{#if content.title || content.subtitle}
 		<div class="text-center px-2">
 			{#if content.title}
-				<h3 class="text-lg font-bold text-gray-900 mb-1">{content.title}</h3>
+				<h3 class="text-lg font-bold mb-1" style="color: {textColor};">{content.title}</h3>
 			{/if}
 			{#if content.subtitle}
-				<p class="text-sm text-gray-600">{content.subtitle}</p>
+				<p class="text-sm" style="color: {mutedTextColor};">{content.subtitle}</p>
 			{/if}
 		</div>
 	{/if}

@@ -147,10 +147,24 @@
 		],
 		video: [
 			{
-				id: 'embed',
-				name: 'Video Embed',
-				description: 'Embedded video player',
+				id: 'column',
+				name: 'Column',
+				description: 'Vertical stack of videos',
+				badge: 'Recommended',
+				badgeColor: 'bg-gray-100 text-gray-700'
+			},
+			{
+				id: 'carousel',
+				name: 'Carousel',
+				description: 'Horizontal swipeable videos',
 				badge: null
+			},
+			{
+				id: 'marquee',
+				name: 'Marquee',
+				description: 'Infinite scrolling videos',
+				badge: 'New',
+				badgeColor: 'bg-blue-100 text-blue-700'
 			}
 		],
 		divider: [
