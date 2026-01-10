@@ -9,11 +9,19 @@
 	const speedMap = { slow: 20, medium: 40, fast: 60 };
 	const GAP_WIDTH = 16;
 	
+	// Aspect ratio mapping
+	const aspectMap = {
+		square: 1,      // 1:1
+		portrait: 0.75, // 3:4
+		landscape: 1.5  // 16:9 ≈ 1.78, but we use 1.5 for better fit
+	};
+	
 	let speed = speedMap[content.config.speed || 'medium'];
 	let direction = content.config.direction || 'left';
 	let pauseOnHover = content.config.pauseOnHover ?? true;
 	let imageHeight = content.config.imageHeight || 120;
-	let imageWidth = imageHeight * 1.5;
+	let aspectRatio = aspectMap[content.config.imageAspect || 'landscape'];
+	let imageWidth = imageHeight * aspectRatio;
 	let oneSetWidth = (imageWidth + GAP_WIDTH) * content.images.length;
 	
 	let trackElement: HTMLDivElement;
@@ -31,7 +39,8 @@
 		direction = newDirection;
 		pauseOnHover = content.config.pauseOnHover ?? true;
 		imageHeight = content.config.imageHeight || 120;
-		imageWidth = imageHeight * 1.5;
+		aspectRatio = aspectMap[content.config.imageAspect || 'landscape'];
+		imageWidth = imageHeight * aspectRatio;
 		oneSetWidth = (imageWidth + GAP_WIDTH) * content.images.length;
 		
 		if (directionChanged && trackElement) {
@@ -60,6 +69,9 @@
 				}
 				
 				trackElement.style.transform = `translateX(${currentPosition}px)`;
+			} else if (isPaused) {
+				// Update lastTime while paused to prevent jump when resumed
+				lastTime = currentTime;
 			}
 			
 			animationFrameId = requestAnimationFrame(animate);

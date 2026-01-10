@@ -10,10 +10,13 @@
 	
 	const dispatch = createEventDispatcher();
 	
+	type TabType = 'images' | 'layout';
+	let activeTab: TabType = 'images';
+	
 	let images: ImageBlockImage[] = initialContent?.images || [];
 	let config: ImageBlockContent['config'] = initialContent?.config || {
 		spacing: 'comfortable',
-		imageAspect: 'square',
+		imageAspect: 'landscape',
 		autoplay: false,
 		interval: 3,
 		showDots: true,
@@ -195,8 +198,8 @@
 
 <div class="flex flex-col h-full bg-white">
 	<!-- Header -->
-	<div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-		<div class="flex items-center gap-3">
+	<div class="px-6 py-4 border-b border-gray-200">
+		<div class="flex items-center gap-3 mb-4">
 			<button
 				on:click={handleBack}
 				class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -206,29 +209,47 @@
 				</svg>
 			</button>
 			<div>
-				<h2 class="text-lg font-bold text-gray-900">Image Block</h2>
+				<h2 class="text-2xl font-bold text-gray-900">Image Block</h2>
 				<p class="text-sm text-gray-500">
-					{#if layout === 'column'}
-						Column Layout
-					{:else if layout === 'carousel'}
-						Carousel Layout
-					{:else if layout === 'marquee'}
-						Marquee Layout
-					{/if}
+					{images.length} {images.length === 1 ? 'image' : 'images'}
 				</p>
 			</div>
 		</div>
 		
-		<div class="text-sm text-gray-500">
-			{images.length} {images.length === 1 ? 'image' : 'images'}
+		<!-- Tabs -->
+		<div class="flex gap-6 border-b border-gray-200 -mb-px">
+			<button
+				on:click={() => activeTab = 'images'}
+				class="pb-3 px-1 font-medium text-sm transition-colors relative {activeTab === 'images' 
+					? 'text-gray-900' 
+					: 'text-gray-500 hover:text-gray-700'}"
+			>
+				Images
+				{#if activeTab === 'images'}
+					<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
+				{/if}
+			</button>
+			<button
+				on:click={() => activeTab = 'layout'}
+				class="pb-3 px-1 font-medium text-sm transition-colors relative {activeTab === 'layout' 
+					? 'text-gray-900' 
+					: 'text-gray-500 hover:text-gray-700'}"
+			>
+				Layout
+				{#if activeTab === 'layout'}
+					<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
+				{/if}
+			</button>
 		</div>
 	</div>
 	
 	<!-- Content -->
-	<div class="flex-1 overflow-y-auto p-6">
-		<div class="mb-6">
-			<h3 class="text-sm font-semibold text-gray-900 mb-3">Layout Style</h3>
-			<div class="grid grid-cols-3 gap-3">
+	<div class="flex-1 overflow-y-auto">
+		{#if activeTab === 'layout'}
+			<div class="p-6">
+				<div class="mb-6">
+					<h3 class="text-sm font-semibold text-gray-900 mb-3">Layout Style</h3>
+					<div class="grid grid-cols-3 gap-3">
 				<button
 					on:click={() => { layout = 'column'; notifyContentChange(); }}
 					class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all hover:border-green-400"
@@ -273,183 +294,8 @@
 						<div class="w-4 h-6 bg-gray-300 rounded flex-shrink-0"></div>
 					</div>
 					<span class="text-xs font-medium" class:text-green-600={layout === 'marquee'}>Marquee</span>
-				</button>
-			</div>
-		</div>
-		
-		<!-- Title & Subtitle Section -->
-		<div class="mb-6 space-y-4">
-			<h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
-				Add a headline
-				<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-					<circle cx="12" cy="12" r="10"></circle>
-					<path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-					<line x1="12" y1="17" x2="12.01" y2="17"></line>
-				</svg>
-			</h3>
-			
-			<!-- Title Input -->
-			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
-				<div class="relative">
-					<input
-						type="text"
-						bind:value={title}
-						on:input={notifyContentChange}
-						placeholder="Enter title..."
-						class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-					/>
-					<button
-						class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
-						title="Generate with AI"
-					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
-						</svg>
-					</button>
-				</div>
-			</div>
-			
-			<!-- Subtitle Input -->
-			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
-				<div class="relative">
-					<input
-						type="text"
-						bind:value={subtitle}
-						on:input={notifyContentChange}
-						placeholder="Enter subtitle..."
-						class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-					/>
-					<button
-						class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
-						title="Generate with AI"
-					>
-						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
-						</svg>
-					</button>
-				</div>
-			</div>
-		</div>
-		
-		<!-- Upload Zone -->
-		<div
-			class="border-2 border-dashed rounded-2xl p-8 text-center transition-colors mb-6"
-			class:border-green-500={dragOver}
-			class:bg-green-50={dragOver}
-			class:border-gray-300={!dragOver}
-			on:dragover={handleDragOver}
-			on:dragleave={handleDragLeave}
-			on:drop={handleDrop}
-		>
-			<input
-				bind:this={fileInput}
-				type="file"
-				accept="image/*"
-				multiple
-				on:change={handleFileSelect}
-				class="hidden"
-			/>
-			
-			{#if uploading}
-				<div class="flex flex-col items-center gap-3">
-					<div class="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-					<p class="text-sm font-medium text-gray-900">Uploading...</p>
-				</div>
-			{:else}
-				<svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-					<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-				</svg>
-				<p class="text-sm font-medium text-gray-900 mb-1">Drop images here or click to upload</p>
-				<p class="text-xs text-gray-500 mb-4">PNG, JPG, GIF up to 5MB each</p>
-				<button
-					on:click={() => fileInput.click()}
-					class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-				>
-					Choose Files
-				</button>
-			{/if}
-		</div>
-		
-		<!-- Image List -->
-		{#if images.length > 0}
-			<div class="space-y-3">
-				<h3 class="text-sm font-semibold text-gray-900">Images ({images.length})</h3>
-				
-				{#each images as image, index (image.id)}
-					<div class="card-ios p-4 flex items-start gap-4">
-						<!-- Preview -->
-						<img
-							src={image.url}
-							alt={image.alt || ''}
-							class="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-						/>
-						
-						<!-- Info -->
-						<div class="flex-1 min-w-0 space-y-2">
-							<input
-								type="text"
-								value={image.caption || ''}
-								on:input={(e) => updateCaption(image.id, e.currentTarget.value)}
-								placeholder="Add caption (optional)"
-								class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-							/>
-							<input
-								type="url"
-								value={image.link || ''}
-								on:input={(e) => updateLink(image.id, e.currentTarget.value)}
-								placeholder="Add link (optional)"
-								class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-							/>
-							<p class="text-xs text-gray-500 truncate">{image.url.split('/').pop()}</p>
-						</div>
-						
-						<!-- Actions -->
-						<div class="flex flex-col gap-1">
-							<button
-								on:click={() => moveImage(image.id, 'up')}
-								disabled={index === 0}
-								class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
-								title="Move up"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
-								</svg>
-							</button>
-							<button
-								on:click={() => moveImage(image.id, 'down')}
-								disabled={index === images.length - 1}
-								class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
-								title="Move down"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
-								</svg>
-							</button>
-							<button
-								on:click={() => deleteImage(image.id)}
-								class="p-1.5 text-red-400 hover:text-red-600 rounded-lg"
-								title="Delete"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-								</svg>
-							</button>
-						</div>
 					</div>
-				{/each}
-			</div>
-		{:else}
-			<div class="text-center py-8">
-				<p class="text-sm text-gray-500">No images yet. Upload some images to get started.</p>
-			</div>
-		{/if}
-		
-		<!-- Layout Config -->
-		{#if images.length > 0}
-			<div class="mt-6 pt-6 border-t border-gray-200">
-				<h3 class="text-sm font-semibold text-gray-900 mb-4">Layout Settings</h3>
+				</div>
 				
 				{#if layout === 'column'}
 					<!-- Column settings -->
@@ -659,6 +505,46 @@
 									class:translate-x-0.5={!config.showArrows}
 								/>
 							</div>
+						</button>
+						
+						<!-- Image Aspect Presets -->
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-3">Image Aspect</label>
+							<div class="grid grid-cols-3 gap-2">
+								<button
+									on:click={() => { config.imageAspect = 'square'; notifyContentChange(); }}
+									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class:border-green-500={config.imageAspect === 'square'}
+									class:bg-green-50={config.imageAspect === 'square'}
+									class:border-gray-200={config.imageAspect !== 'square'}
+								>
+									<div class="w-8 h-8 bg-gray-400 rounded mx-auto"></div>
+									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'square'}>Square</span>
+								</button>
+								
+								<button
+									on:click={() => { config.imageAspect = 'portrait'; notifyContentChange(); }}
+									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class:border-green-500={config.imageAspect === 'portrait'}
+									class:bg-green-50={config.imageAspect === 'portrait'}
+									class:border-gray-200={config.imageAspect !== 'portrait'}
+								>
+									<div class="w-6 h-8 bg-gray-400 rounded mx-auto"></div>
+									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'portrait'}>Portrait</span>
+								</button>
+								
+								<button
+									on:click={() => { config.imageAspect = 'landscape'; notifyContentChange(); }}
+									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class:border-green-500={config.imageAspect === 'landscape'}
+									class:bg-green-50={config.imageAspect === 'landscape'}
+									class:border-gray-200={config.imageAspect !== 'landscape'}
+								>
+									<div class="w-full h-5 bg-gray-400 rounded"></div>
+									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'landscape'}>Landscape</span>
+								</button>
+							</div>
+						</div>
 					</div>
 				{:else if layout === 'marquee'}
 					<!-- Marquee settings -->
@@ -783,6 +669,212 @@
 								/>
 							</div>
 						</button>
+						
+						<!-- Image Aspect Presets -->
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-3">Image Aspect</label>
+							<div class="grid grid-cols-3 gap-2">
+								<button
+									on:click={() => { config.imageAspect = 'square'; notifyContentChange(); }}
+									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class:border-green-500={config.imageAspect === 'square'}
+									class:bg-green-50={config.imageAspect === 'square'}
+									class:border-gray-200={config.imageAspect !== 'square'}
+								>
+									<div class="w-8 h-8 bg-gray-400 rounded mx-auto"></div>
+									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'square'}>Square</span>
+								</button>
+								
+								<button
+									on:click={() => { config.imageAspect = 'portrait'; notifyContentChange(); }}
+									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class:border-green-500={config.imageAspect === 'portrait'}
+									class:bg-green-50={config.imageAspect === 'portrait'}
+									class:border-gray-200={config.imageAspect !== 'portrait'}
+								>
+									<div class="w-6 h-8 bg-gray-400 rounded mx-auto"></div>
+									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'portrait'}>Portrait</span>
+								</button>
+								
+								<button
+									on:click={() => { config.imageAspect = 'landscape'; notifyContentChange(); }}
+									class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:border-green-400"
+									class:border-green-500={config.imageAspect === 'landscape'}
+									class:bg-green-50={config.imageAspect === 'landscape'}
+									class:border-gray-200={config.imageAspect !== 'landscape'}
+								>
+									<div class="w-full h-5 bg-gray-400 rounded"></div>
+									<span class="text-xs font-medium" class:text-green-600={config.imageAspect === 'landscape'}>Landscape</span>
+								</button>
+							</div>
+						</div>
+					</div>
+				{/if}
+			</div>
+		{:else}
+			<!-- Images Tab -->
+			<div class="p-6">
+				<!-- Title & Subtitle Section -->
+				<div class="mb-6 space-y-4">
+					<h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+						Add a headline
+						<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+							<circle cx="12" cy="12" r="10"></circle>
+							<path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+							<line x1="12" y1="17" x2="12.01" y2="17"></line>
+						</svg>
+					</h3>
+					
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+						<div class="relative">
+							<input
+								type="text"
+								bind:value={title}
+								on:input={notifyContentChange}
+								placeholder="Enter title..."
+								class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+							/>
+							<button
+								class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
+								title="Generate with AI"
+							>
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+								</svg>
+							</button>
+						</div>
+					</div>
+					
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+						<div class="relative">
+							<input
+								type="text"
+								bind:value={subtitle}
+								on:input={notifyContentChange}
+								placeholder="Enter subtitle..."
+								class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+							/>
+							<button
+								class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors"
+								title="Generate with AI"
+							>
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+								</svg>
+							</button>
+						</div>
+					</div>
+				</div>
+				
+				<!-- Upload Zone -->
+				<div
+					class="border-2 border-dashed rounded-2xl p-8 text-center transition-colors mb-6"
+					class:border-green-500={dragOver}
+					class:bg-green-50={dragOver}
+					class:border-gray-300={!dragOver}
+					on:dragover={handleDragOver}
+					on:dragleave={handleDragLeave}
+					on:drop={handleDrop}
+				>
+					<input
+						bind:this={fileInput}
+						type="file"
+						accept="image/*"
+						multiple
+						on:change={handleFileSelect}
+						class="hidden"
+					/>
+					
+					{#if uploading}
+						<div class="flex flex-col items-center gap-3">
+							<div class="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+							<p class="text-sm font-medium text-gray-900">Uploading...</p>
+						</div>
+					{:else}
+						<svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+						</svg>
+						<p class="text-sm font-medium text-gray-900 mb-1">Drop images here or click to upload</p>
+						<p class="text-xs text-gray-500 mb-4">PNG, JPG, GIF up to 5MB each</p>
+						<button
+							on:click={() => fileInput.click()}
+							class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+						>
+							Choose Files
+						</button>
+					{/if}
+				</div>
+				
+				<!-- Image List -->
+				{#if images.length > 0}
+					<div class="space-y-3">
+						<h3 class="text-sm font-semibold text-gray-900">Images ({images.length})</h3>
+						
+						{#each images as image, index (image.id)}
+							<div class="card-ios p-4 flex items-start gap-4">
+								<img
+									src={image.url}
+									alt={image.alt || ''}
+									class="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+								/>
+								
+								<div class="flex-1 min-w-0 space-y-2">
+									<input
+										type="text"
+										value={image.caption || ''}
+										on:input={(e) => updateCaption(image.id, e.currentTarget.value)}
+										placeholder="Add caption (optional)"
+										class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+									/>
+									<input
+										type="url"
+										value={image.link || ''}
+										on:input={(e) => updateLink(image.id, e.currentTarget.value)}
+										placeholder="Add link (optional)"
+										class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+									/>
+									<p class="text-xs text-gray-500 truncate">{image.url.split('/').pop()}</p>
+								</div>
+								
+								<div class="flex flex-col gap-1">
+									<button
+										on:click={() => moveImage(image.id, 'up')}
+										disabled={index === 0}
+										class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
+										title="Move up"
+									>
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
+										</svg>
+									</button>
+									<button
+										on:click={() => moveImage(image.id, 'down')}
+										disabled={index === images.length - 1}
+										class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
+										title="Move down"
+									>
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
+										</svg>
+									</button>
+									<button
+										on:click={() => deleteImage(image.id)}
+										class="p-1.5 text-red-400 hover:text-red-600 rounded-lg"
+										title="Delete"
+									>
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+										</svg>
+									</button>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<div class="text-center py-8">
+						<p class="text-sm text-gray-500">No images yet. Upload some images to get started.</p>
 					</div>
 				{/if}
 			</div>

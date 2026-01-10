@@ -6,6 +6,14 @@
 	export let blockStyle: any;
 	export let blockBorderRadius: string;
 	
+	const aspectMap = {
+		square: '1/1',
+		portrait: '3/4',
+		landscape: '16/9'
+	};
+	
+	$: aspectRatio = aspectMap[content.config.imageAspect || 'landscape'];
+	
 	let currentIndex = 0;
 	let autoplayInterval: number | null = null;
 	
@@ -48,7 +56,7 @@
 	<!-- Carousel -->
 	<div class="relative overflow-hidden" style="border-radius: {blockBorderRadius};">
 		<!-- Images -->
-		<div class="relative" style="aspect-ratio: 16/9;">
+		<div class="relative" style="aspect-ratio: {aspectRatio};">
 			{#each content.images as image, index}
 				<div 
 					class="absolute inset-0 transition-opacity duration-500"
