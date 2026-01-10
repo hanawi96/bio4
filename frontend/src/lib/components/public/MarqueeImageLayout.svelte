@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import type { ImageBlockContent } from '$lib/types';
 	
 	export let content: ImageBlockContent;
@@ -83,10 +83,6 @@
 		return () => {
 			if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		};
-	});
-	
-	onDestroy(() => {
-		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 	});
 </script>
 

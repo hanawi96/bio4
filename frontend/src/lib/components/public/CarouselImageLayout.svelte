@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import type { ImageBlockContent } from '$lib/types';
 	
 	export let content: ImageBlockContent;
@@ -33,10 +33,10 @@
 		if (content.config.autoplay && content.images.length > 1) {
 			autoplayInterval = window.setInterval(nextSlide, (content.config.interval || 3) * 1000);
 		}
-	});
-	
-	onDestroy(() => {
-		if (autoplayInterval) clearInterval(autoplayInterval);
+		
+		return () => {
+			if (autoplayInterval) clearInterval(autoplayInterval);
+		};
 	});
 </script>
 
