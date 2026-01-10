@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { previewPage, previewAppearance, previewAppearanceState } from '$lib/stores/themePreview';
-	import { groups } from '$lib/stores/page';
+	import { groups, blocks } from '$lib/stores/page';
 	import { HEADER_PRESETS } from '$lib/appearance/presets';
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
 	import { resolveMaxWidth, resolvePagePadding, resolveBlockGap, resolveAvatarBorderWidth, resolveSocialIconSize } from '$lib/appearance/spacingTokens';
 	import { resolveBlur, resolveBrightness, resolveGrayscale } from '$lib/appearance/effectsTokens';
 	import ParticlesLayer from '$lib/components/effects/ParticlesLayer.svelte';
+	import ImageBlockRenderer from '$lib/components/public/ImageBlockRenderer.svelte';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 
@@ -482,6 +483,44 @@
 		.filter(g => (g.is_visible ?? 1) === 1)
 		.flatMap(g => g.links.filter(l => l.is_active === 1))
 		.slice(0, 5); // Limit to 5 links for preview
+	
+	// Get real blocks or use empty array if no blocks
+	$: realBlocks = $blocks.filter(b => b.is_visible === 1 && b.type === 'image');
+	
+	// If no real image blocks, create a mock one for preview
+	$: mockImageBlock = realBlocks.length === 0 ? {
+		id: -1,
+		page_id: -1,
+		type: 'image',
+		sort_order: 999,
+		is_visible: 1,
+		content: JSON.stringify({
+			layout: 'column',
+			images: [
+				{
+					id: 'mock1',
+					url: 'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=800&q=80',
+					storage_key: 'mock',
+					sort_order: 0
+				},
+				{
+					id: 'mock2',
+					url: 'https://images.unsplash.com/photo-1682687221038-404cb8830901?w=800&q=80',
+					storage_key: 'mock',
+					sort_order: 1
+				}
+			],
+			config: {
+				spacing: 'comfortable',
+				imageAspect: 'landscape'
+			},
+			title: 'Image Gallery',
+			subtitle: 'Preview of image block'
+		})
+	} : null;
+	
+	// Combine real blocks with mock if needed
+	$: displayBlocks = realBlocks.length > 0 ? realBlocks : (mockImageBlock ? [mockImageBlock] : []);
 
 </script>
 
@@ -899,6 +938,26 @@
 								{/each}
 							</div>
 						{/if}
+						
+						<!-- Image Blocks -->
+						{#each displayBlocks as block}
+							{@const content = (() => {
+								try {
+									const parsed = typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
+									return parsed;
+								} catch (e) {
+									console.error('ThemePreviewMockup - Failed to parse image block:', e);
+									return null;
+								}
+							})()}
+							{#if content}
+								<ImageBlockRenderer 
+									{content}
+									blockStyle={$previewAppearance?.blockStyle}
+									{blockBorderRadius}
+								/>
+							{/if}
+						{/each}
 					</div>
 
 					<!-- Social Icons (Footer Position) -->
