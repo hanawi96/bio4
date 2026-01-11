@@ -5,20 +5,18 @@ compatibility_date = "2023-12-01"
 [vars]
 R2_PUBLIC_URL = "https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev"
 JWT_SECRET = "dev-secret-key-change-in-production-12345678"
+TURSO_DATABASE_URL = "libsql://bio-link-db-yendev96.aws-ap-northeast-1.turso.io"
+TURSO_AUTH_TOKEN = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjgxMTgxOTgsImlkIjoiNDU4NmMyOWEtOTFlZC00MDAxLWFkNTktZTkzZTM0YzMxOTdiIiwicmlkIjoiYzdlOGNmOGYtM2UwNS00MGExLWE3ODItYzg4YjM2OGZiMWJkIn0.kMOFYLR1jgdjlzYG8_w3YaFMBCDl6LT_tN4F94UbcXtd53EP6HmqMNLlmg7MEoWgADbJQ53tNtolKHwlb5b9Aw"
 
-[env.production]
-vars = { R2_PUBLIC_URL = "https://pub-35e639ff2ac9486c871668c1077e74ae.r2.dev", JWT_SECRET = "production-secret-key-change-this-to-random-string" }
+[env.production.vars]
+R2_PUBLIC_URL = "https://pub-35e639ff2ac9486c871668c1077e74ae.r2.dev"
+JWT_SECRET = "production-secret-key-change-this-to-random-string"
+TURSO_DATABASE_URL = "libsql://bio-link-db-yendev96.aws-ap-northeast-1.turso.io"
+TURSO_AUTH_TOKEN = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjgxMTgxOTgsImlkIjoiNDU4NmMyOWEtOTFlZC00MDAxLWFkNTktZTkzZTM0YzMxOTdiIiwicmlkIjoiYzdlOGNmOGYtM2UwNS00MGExLWE3ODItYzg4YjM2OGZiMWJkIn0.kMOFYLR1jgdjlzYG8_w3YaFMBCDl6LT_tN4F94UbcXtd53EP6HmqMNLlmg7MEoWgADbJQ53tNtolKHwlb5b9Aw"
 
 [env.production.r2_buckets]
 binding = "STORAGE"
 bucket_name = "bio-link-images"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "bio-link-db"
-database_id = "4932ed51-7d36-4999-a8fe-b7cb14531959"
-# Use same database for dev and production
-preview_database_id = "4932ed51-7d36-4999-a8fe-b7cb14531959"
 
 [[r2_buckets]]
 binding = "STORAGE"

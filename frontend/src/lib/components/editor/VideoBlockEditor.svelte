@@ -67,9 +67,7 @@
 			}
 			
 			// Fetch metadata (title, thumbnail) from platform
-			console.log('[VideoBlockEditor] Fetching metadata for:', parsed.platform, parsed.id);
-			const metadata = await fetchVideoMetadata(parsed.platform, parsed.id);
-			console.log('[VideoBlockEditor] Metadata fetched:', metadata);
+			const metadata = await fetchVideoMetadata(parsed.platform, parsed.id, videoUrl);
 			
 			// Use fetched thumbnail or fallback to generated one
 			const thumbnail = metadata.thumbnail || getVideoThumbnail(parsed.platform, parsed.id);
@@ -85,14 +83,12 @@
 				sort_order: videos.length
 			};
 			
-			console.log('[VideoBlockEditor] New video object:', newVideo);
-			
 			videos = [...videos, newVideo];
 			videoUrl = '';
 			toast.success('Video added');
 			notifyContentChange();
 		} catch (e) {
-			console.error('Failed to add video:', e);
+			console.error('[VideoBlockEditor] Failed to add video:', e);
 			toast.error('Failed to add video');
 		} finally {
 			adding = false;
@@ -567,7 +563,6 @@
 				{:else}
 					<div class="space-y-3">
 						{#each videos as video, index (video.id)}
-							{@const thumbnailUrl = video.thumbnail || (video.platform === 'youtube' && video.videoId ? `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg` : null)}
 							<div class="card-ios p-3 flex items-center gap-3">
 								<!-- Move Buttons -->
 								<div class="flex flex-col gap-1">
@@ -596,9 +591,9 @@
 								</div>
 								
 								<!-- Thumbnail -->
-								{#if thumbnailUrl}
+								{#if video.thumbnail}
 									<img 
-										src={thumbnailUrl} 
+										src={video.thumbnail} 
 										alt="" 
 										class="w-24 h-16 object-cover rounded-lg flex-shrink-0"
 										on:error={(e) => {
@@ -608,17 +603,23 @@
 										}}
 									/>
 									<div class="w-24 h-16 bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg flex-shrink-0 items-center justify-center hidden">
-										<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-											<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-										</svg>
+										<div class="text-center">
+											<svg class="w-6 h-6 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+												<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+												<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+											</svg>
+											<span class="text-[10px] text-gray-500 font-medium">{video.platform.toUpperCase()}</span>
+										</div>
 									</div>
 								{:else}
 									<div class="w-24 h-16 bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg flex-shrink-0 flex items-center justify-center">
-										<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-											<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-											<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-										</svg>
+										<div class="text-center">
+											<svg class="w-6 h-6 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+												<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+												<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+											</svg>
+											<span class="text-[10px] text-gray-500 font-medium">{video.platform.toUpperCase()}</span>
+										</div>
 									</div>
 								{/if}
 								

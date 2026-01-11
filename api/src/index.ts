@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { Bindings } from './types';
+import { createTursoClient, wrapTursoClient } from './turso';
 
 import bioRoutes from './routes/bio';
 import editorRoutes from './routes/editor';
@@ -14,6 +15,36 @@ import subscribeRoutes from './routes/subscribe';
 import subscribersRoutes from './routes/subscribers';
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+// Cache Turso client per environment
+let cachedClient: any = null;
+let cachedEnvKey: string = '';
+
+// Middleware to inject Turso client as DB
+app.use('*', async (c, next) => {
+	try {
+		// Create cache key from credentials
+		const envKey = `${c.env.TURSO_DATABASE_URL}:${c.env.TURSO_AUTH_TOKEN?.substring(0, 20)}`;
+		
+		// Reuse client if same environment
+		if (!cachedClient || cachedEnvKey !== envKey) {
+			console.log('[Turso] Creating new client...');
+			cachedClient = createTursoClient(c.env);
+			cachedEnvKey = envKey;
+		}
+		
+		const wrappedClient = wrapTursoClient(cachedClient) as any;
+		
+		// Set in both context and env for compatibility
+		c.set('DB', wrappedClient);
+		c.env.DB = wrappedClient; // Override env.DB to use Turso instead of D1
+		
+		await next();
+	} catch (error) {
+		console.error('[Turso] Middleware error:', error);
+		return c.json({ error: 'Database connection failed' }, 500);
+	}
+});
 
 // CORS middleware - Must be before routes
 app.use('*', cors({

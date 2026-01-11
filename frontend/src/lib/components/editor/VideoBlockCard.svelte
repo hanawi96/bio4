@@ -10,14 +10,38 @@
 	let showMenu = false;
 	let menuButton: HTMLButtonElement;
 
-	// Parse content to get video count
+	// Parse content to get video count and platform
 	let videoCount = 0;
+	let platform = 'youtube'; // default
 	try {
 		const content = typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
 		videoCount = content?.videos?.length || 0;
+		platform = content?.platform || 'youtube';
 	} catch (e) {
 		console.error('Failed to parse block content:', e);
 	}
+	
+	// Platform icon and color mapping
+	const platformConfig = {
+		youtube: { 
+			color: 'bg-red-500',
+			icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />`
+		},
+		tiktok: { 
+			color: 'bg-black',
+			icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M9 9a3 3 0 1 0 6 0 3 3 0 0 0-6 0ZM9 9V4.5M9 9a3 3 0 0 0 6 0m0 0V4.5m0 4.5a3 3 0 0 1 6 0v7.5" />`
+		},
+		instagram: { 
+			color: 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500',
+			icon: `<rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke-linecap="round" stroke-linejoin="round"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke-linecap="round" stroke-linejoin="round"/>`
+		},
+		vimeo: { 
+			color: 'bg-blue-500',
+			icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />`
+		}
+	};
+	
+	$: platformInfo = platformConfig[platform as keyof typeof platformConfig] || platformConfig.youtube;
 
 	function handleClick() {
 		dispatch('click', block.id);
@@ -112,10 +136,10 @@
 			</button>
 		</div>
 
-		<!-- Icon -->
-		<div class="icon-ios w-12 h-12 flex-shrink-0">
+		<!-- Platform Icon -->
+		<div class="w-12 h-12 rounded-2xl {platformInfo.color} flex items-center justify-center flex-shrink-0 shadow-sm">
 			<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-				<path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+				{@html platformInfo.icon}
 			</svg>
 		</div>
 
@@ -123,6 +147,8 @@
 		<div class="flex-1 min-w-0">
 			<p class="font-semibold text-gray-900 truncate tracking-tight">Video Block</p>
 			<div class="flex items-center gap-2 text-sm text-gray-500 mt-0.5">
+				<span class="font-medium capitalize">{platform}</span>
+				<span class="text-gray-400">•</span>
 				<span class="font-medium">{videoCount} {videoCount === 1 ? 'video' : 'videos'}</span>
 				{#if isVisible === 0}
 					<span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">Hidden</span>

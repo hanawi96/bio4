@@ -4,8 +4,9 @@
  */
 
 import type { Theme } from '$lib/appearance/types';
+import { API_BASE_URL } from '$lib/constants';
 
-const API_BASE = 'http://localhost:8787';
+const API_BASE = API_BASE_URL;
 
 /**
  * Fetch all themes from API

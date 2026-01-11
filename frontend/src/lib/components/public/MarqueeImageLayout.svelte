@@ -26,6 +26,18 @@
 	let imageWidth = imageHeight * aspectRatio;
 	let oneSetWidth = (imageWidth + GAP_WIDTH) * content.images.length;
 	
+	// Calculate how many copies we need for seamless loop
+	// We need enough copies to fill the viewport + 1 extra set for smooth transition
+	let numCopies = 3; // Default minimum
+	let containerWidth = 800; // Default estimate
+	
+	$: {
+		// Recalculate when dimensions change
+		if (oneSetWidth > 0) {
+			numCopies = Math.max(3, Math.ceil(containerWidth / oneSetWidth) + 2);
+		}
+	}
+	
 	let trackElement: HTMLDivElement;
 	let currentPosition = 0;
 	let animationFrameId: number;
@@ -54,6 +66,12 @@
 	$: if (content.config) updateFromConfig();
 	
 	onMount(() => {
+		// Get container width
+		if (trackElement?.parentElement) {
+			containerWidth = trackElement.parentElement.clientWidth;
+			numCopies = Math.max(3, Math.ceil(containerWidth / oneSetWidth) + 2);
+		}
+		
 		lastTime = performance.now();
 		
 		const animate = (currentTime: number) => {
@@ -82,8 +100,17 @@
 		if (direction === 'right') currentPosition = -oneSetWidth;
 		animationFrameId = requestAnimationFrame(animate);
 		
+		// Handle window resize
+		const handleResize = () => {
+			if (trackElement?.parentElement) {
+				containerWidth = trackElement.parentElement.clientWidth;
+			}
+		};
+		window.addEventListener('resize', handleResize);
+		
 		return () => {
 			if (animationFrameId) cancelAnimationFrame(animationFrameId);
+			window.removeEventListener('resize', handleResize);
 		};
 	});
 </script>
@@ -111,7 +138,7 @@
 			class="flex gap-4 py-3"
 			style="will-change: transform;"
 		>
-			{#each Array(2) as _}
+			{#each Array(numCopies) as _}
 				{#each content.images as image}
 					<div 
 						class="flex-shrink-0 overflow-hidden"

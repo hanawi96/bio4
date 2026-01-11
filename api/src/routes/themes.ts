@@ -111,7 +111,7 @@ app.post('/', async (c) => {
 
 		return c.json({
 			success: true,
-			id: result.meta.last_row_id,
+			id: Number(result.meta.last_row_id),
 			key
 		}, 201);
 	} catch (error: any) {

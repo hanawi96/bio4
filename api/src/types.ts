@@ -2,10 +2,12 @@
 
 // Cloudflare bindings
 export type Bindings = {
-	DB: D1Database;
+	DB: D1Database; // Keep type for compatibility, but will be Turso wrapped
 	STORAGE: R2Bucket;
 	R2_PUBLIC_URL: string;
 	JWT_SECRET: string;
+	TURSO_DATABASE_URL: string;
+	TURSO_AUTH_TOKEN: string;
 };
 
 // Database types

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { VideoBlockContent } from '$lib/types';
+	import type { VideoBlockContent, VideoBlockItem } from '$lib/types';
 	
 	export let content: VideoBlockContent;
 	export let textColor: string = '#18181b';
@@ -8,6 +8,18 @@
 	
 	const speedMap = { slow: 20, medium: 40, fast: 60 };
 	const GAP_WIDTH = 16;
+	
+	// Track which videos are playing
+	let playingVideos = new Set<string>();
+	
+	function toggleVideo(videoId: string) {
+		if (playingVideos.has(videoId)) {
+			playingVideos.delete(videoId);
+		} else {
+			playingVideos.add(videoId);
+		}
+		playingVideos = playingVideos; // Trigger reactivity
+	}
 	
 	let speed = speedMap[content.config.speed || 'medium'];
 	let direction = content.config.direction || 'left';
@@ -105,17 +117,50 @@
 			{#each Array(2) as _}
 				{#each content.videos as video}
 					<div 
-						class="flex-shrink-0 overflow-hidden rounded-xl"
+						class="flex-shrink-0 overflow-hidden rounded-xl relative"
 						style="height: {videoHeight}px; width: {videoWidth}px;"
 					>
-						<iframe
-							src={video.embedUrl}
-							title={video.title || 'Video'}
-							frameborder="0"
-							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-							allowfullscreen
-							class="w-full h-full"
-						></iframe>
+						{#if playingVideos.has(video.id)}
+							<!-- Show iframe when playing -->
+							<iframe
+								src={video.embedUrl}
+								title={video.title || 'Video'}
+								frameborder="0"
+								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+								allowfullscreen
+								class="w-full h-full"
+							></iframe>
+						{:else}
+							<!-- Show thumbnail -->
+							<button 
+								type="button"
+								on:click={() => toggleVideo(video.id)}
+								class="block w-full h-full relative group cursor-pointer"
+							>
+								{#if video.thumbnail}
+									<img 
+										src={video.thumbnail} 
+										alt={video.title || 'Video'} 
+										class="w-full h-full object-cover"
+									/>
+								{:else}
+									<div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+										<svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+											<path d="M8 5v14l11-7z"/>
+										</svg>
+									</div>
+								{/if}
+								
+								<!-- Play button overlay -->
+								<div class="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+									<div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+										<svg class="w-6 h-6 text-gray-900 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+											<path d="M8 5v14l11-7z"/>
+										</svg>
+									</div>
+								</div>
+							</button>
+						{/if}
 					</div>
 				{/each}
 			{/each}

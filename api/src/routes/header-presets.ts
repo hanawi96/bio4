@@ -3,32 +3,77 @@ import type { Bindings } from '../types';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+// Hardcoded header presets (no database needed)
+const HEADER_PRESETS = {
+	'no-cover': {
+		id: 'no-cover',
+		key: 'no-cover',
+		name: 'No Cover',
+		description: 'Simple header without cover image',
+		category: 'minimal',
+		tier: 'free',
+		config: {
+			hasCover: false,
+			avatarSize: 'lg',
+			avatarShape: 'circle',
+			avatarPosition: 'center',
+			contentAlign: 'center',
+			showBio: true,
+			spacing: 'comfortable'
+		},
+		sortOrder: 1
+	},
+	'with-cover': {
+		id: 'with-cover',
+		key: 'with-cover',
+		name: 'With Cover',
+		description: 'Header with cover image and overlapping avatar',
+		category: 'standard',
+		tier: 'free',
+		config: {
+			hasCover: true,
+			coverHeight: 'md',
+			coverType: 'image',
+			coverValue: '/presets/images/cover-demo.jpg',
+			avatarSize: 'lg',
+			avatarShape: 'circle',
+			avatarPosition: 'overlap',
+			avatarBorder: true,
+			avatarBorderColor: '#ffffff',
+			contentAlign: 'center',
+			showBio: true,
+			spacing: 'comfortable'
+		},
+		sortOrder: 2
+	},
+	'avatar-cover': {
+		id: 'avatar-cover',
+		key: 'avatar-cover',
+		name: 'Avatar Cover',
+		description: 'Full-screen avatar with text overlay',
+		category: 'creative',
+		tier: 'free',
+		config: {
+			hasCover: true,
+			coverHeight: 'lg',
+			coverType: 'image',
+			coverValue: '/presets/images/cover-demo.jpg',
+			avatarSize: 'sm',
+			avatarShape: 'circle',
+			avatarPosition: 'center',
+			avatarBorder: false,
+			contentAlign: 'center',
+			showBio: true,
+			spacing: 'comfortable'
+		},
+		sortOrder: 3
+	}
+};
+
 // Get all header presets
 app.get('/', async (c) => {
 	try {
-		const db = c.env.DB;
-		
-		const result = await db.prepare(`
-			SELECT id, key, name, description, category, tier,
-			       config, thumbnail_url, sort_order, created_at
-			FROM header_presets
-			WHERE is_active = 1
-			ORDER BY sort_order ASC, id ASC
-		`).all();
-		
-		const presets = result.results.map((row: any) => ({
-			id: row.id,
-			key: row.key,
-			name: row.name,
-			description: row.description,
-			category: row.category,
-			tier: row.tier,
-			config: JSON.parse(row.config),
-			thumbnailUrl: row.thumbnail_url,
-			sortOrder: row.sort_order,
-			createdAt: row.created_at
-		}));
-		
+		const presets = Object.values(HEADER_PRESETS);
 		return c.json({ presets });
 	} catch (error: any) {
 		console.error('Error fetching header presets:', error);
@@ -40,31 +85,11 @@ app.get('/', async (c) => {
 app.get('/:key', async (c) => {
 	try {
 		const key = c.req.param('key');
-		const db = c.env.DB;
+		const preset = HEADER_PRESETS[key as keyof typeof HEADER_PRESETS];
 		
-		const result = await db.prepare(`
-			SELECT id, key, name, description, category, tier,
-			       config, thumbnail_url, sort_order, created_at
-			FROM header_presets
-			WHERE key = ? AND is_active = 1
-		`).bind(key).first();
-		
-		if (!result) {
+		if (!preset) {
 			return c.json({ error: 'Header preset not found' }, 404);
 		}
-		
-		const preset = {
-			id: result.id,
-			key: result.key,
-			name: result.name,
-			description: result.description,
-			category: result.category,
-			tier: result.tier,
-			config: JSON.parse(result.config as string),
-			thumbnailUrl: result.thumbnail_url,
-			sortOrder: result.sort_order,
-			createdAt: result.created_at
-		};
 		
 		return c.json({ preset });
 	} catch (error: any) {

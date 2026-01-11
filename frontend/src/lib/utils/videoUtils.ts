@@ -58,7 +58,8 @@ export function parseVideoUrl(url: string, expectedPlatform?: VideoPlatform): Vi
 			embedUrl = `https://www.youtube.com/embed/${id}`;
 			break;
 		case 'tiktok':
-			embedUrl = `https://www.tiktok.com/embed/v2/${id}`;
+			// Add parameters to minimize TikTok UI (hide title, description, etc.)
+			embedUrl = `https://www.tiktok.com/embed/v2/${id}?autoplay=1&music_info=0&description=0`;
 			break;
 		case 'instagram':
 			embedUrl = `https://www.instagram.com/p/${id}/embed`;
@@ -100,11 +101,10 @@ export function getPlatformIcon(platform: VideoPlatform): string {
 /**
  * Fetch video metadata (title, thumbnail) from platform
  */
-export async function fetchVideoMetadata(platform: VideoPlatform, videoId: string): Promise<{ title?: string; thumbnail?: string }> {
+export async function fetchVideoMetadata(platform: VideoPlatform, videoId: string, videoUrl: string): Promise<{ title?: string; thumbnail?: string }> {
 	try {
 		switch (platform) {
 			case 'youtube': {
-				// Use YouTube oEmbed API (no API key needed)
 				const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
 				if (!response.ok) return {};
 				const data = await response.json();
@@ -114,7 +114,6 @@ export async function fetchVideoMetadata(platform: VideoPlatform, videoId: strin
 				};
 			}
 			case 'vimeo': {
-				// Use Vimeo oEmbed API
 				const response = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${videoId}`);
 				if (!response.ok) return {};
 				const data = await response.json();
@@ -123,15 +122,34 @@ export async function fetchVideoMetadata(platform: VideoPlatform, videoId: strin
 					thumbnail: data.thumbnail_url
 				};
 			}
-			case 'tiktok':
+			case 'tiktok': {
+				try {
+					const response = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(videoUrl)}`);
+					if (response.ok) {
+						const data = await response.json();
+						return {
+							title: data.title || 'TikTok Video',
+							thumbnail: data.thumbnail_url
+						};
+					}
+				} catch (e) {
+					// TikTok oEmbed failed, use fallback
+				}
+				return {
+					title: 'TikTok Video',
+					thumbnail: undefined
+				};
+			}
 			case 'instagram':
-				// These platforms don't have public oEmbed APIs
-				return {};
+				return {
+					title: 'Instagram Video',
+					thumbnail: undefined
+				};
 			default:
 				return {};
 		}
 	} catch (error) {
-		console.error('Failed to fetch video metadata:', error);
+		console.error('[videoUtils] Failed to fetch video metadata:', error);
 		return {};
 	}
 }
@@ -164,7 +182,8 @@ export function getVideoThumbnail(platform: VideoPlatform, videoId: string): str
 		case 'youtube':
 			return getYouTubeThumbnail(videoId, 'hq');
 		case 'tiktok':
-			// TikTok doesn't provide direct thumbnail URLs
+			// TikTok thumbnail pattern (may not always work due to CDN)
+			// Fallback will be handled in component
 			return '';
 		case 'instagram':
 			// Instagram doesn't provide direct thumbnail URLs
