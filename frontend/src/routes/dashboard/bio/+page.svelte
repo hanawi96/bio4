@@ -13,6 +13,7 @@
 	import AddBlockModal from '$lib/components/modals/AddBlockModal.svelte';
 	import RenameGroupModal from '$lib/components/modals/RenameGroupModal.svelte';
 	import DeleteGroupModal from '$lib/components/modals/DeleteGroupModal.svelte';
+	import ConfirmModal from '$lib/components/modals/ConfirmModal.svelte';
 	import LinksEditor from '$lib/components/editor/LinksEditor.svelte';
 	import BlockCard from '$lib/components/editor/BlockCard.svelte';
 	import ImageBlockCard from '$lib/components/editor/ImageBlockCard.svelte';
@@ -86,6 +87,18 @@
 	let deleteGroupModal: DeleteGroupModal;
 	let renamingGroupId: number | null = null;
 	let deletingGroupId: number | null = null;
+	
+	// Confirm modal state
+	let confirmModal: ConfirmModal;
+	let confirmModalConfig = {
+		title: '',
+		message: '',
+		confirmText: 'Confirm',
+		variant: 'danger' as 'danger' | 'warning' | 'info',
+		icon: 'warning' as 'trash' | 'warning' | 'info' | 'restore',
+		warningMessage: null as string | null,
+		onConfirm: () => {}
+	};
 
 	onMount(async () => {
 		try {
@@ -132,6 +145,9 @@
 		const deletedGroup = $groups.find(g => g.id === groupId);
 		groups.update(g => g.filter(group => group.id !== groupId));
 
+		// Show success toast immediately (optimistic)
+		toast.success('Group deleted');
+
 		// Delete in background
 		try {
 			await api.deleteGroup(groupId);
@@ -145,6 +161,7 @@
 				groups.update(g => [...g, deletedGroup].sort((a, b) => a.sort_order - b.sort_order));
 			}
 			error = e.message || 'Failed to delete group';
+			toast.error(e.message || 'Failed to delete group');
 		}
 	}
 
@@ -226,27 +243,39 @@
 		const block = $blocks.find(b => b.id === blockId);
 		const blockType = block?.type || 'block';
 		
-		if (!confirm(`Are you sure you want to delete this ${blockType} block?`)) return;
-		
-		// OPTIMISTIC UI: Remove immediately
-		const deletedBlock = $blocks.find(b => b.id === blockId);
-		blocks.update(b => b.filter(block => block.id !== blockId));
-		
-		// Delete in background
-		try {
-			await api.deleteBlock(blockId);
-			toast.success('Block deleted');
-			
-			// Reload data silently
-			const data = await api.getEditorData(username);
-			loadEditorData(data);
-		} catch (e: any) {
-			// Restore on error
-			if (deletedBlock) {
-				blocks.update(b => [...b, deletedBlock].sort((a, b) => a.sort_order - b.sort_order));
+		// Show confirm modal
+		confirmModalConfig = {
+			title: `Delete ${blockType.charAt(0).toUpperCase() + blockType.slice(1)} Block`,
+			message: `Are you sure you want to delete this <strong>${blockType} block</strong>?`,
+			confirmText: 'Delete Block',
+			variant: 'danger',
+			icon: 'trash',
+			warningMessage: 'All content in this block will be permanently deleted.',
+			onConfirm: async () => {
+				// OPTIMISTIC UI: Remove immediately
+				const deletedBlock = $blocks.find(b => b.id === blockId);
+				blocks.update(b => b.filter(block => block.id !== blockId));
+				
+				// Show success toast immediately (optimistic)
+				toast.success('Block deleted');
+				
+				// Delete in background
+				try {
+					await api.deleteBlock(blockId);
+					
+					// Reload data silently
+					const data = await api.getEditorData(username);
+					loadEditorData(data);
+				} catch (e: any) {
+					// Restore on error
+					if (deletedBlock) {
+						blocks.update(b => [...b, deletedBlock].sort((a, b) => a.sort_order - b.sort_order));
+					}
+					toast.error(e.message || 'Failed to delete block');
+				}
 			}
-			toast.error(e.message || 'Failed to delete block');
-		}
+		};
+		confirmModal.open();
 	}
 	
 	async function handleToggleBlockVisible(event: CustomEvent<any>) {
@@ -768,36 +797,47 @@
 
 	async function handleDeleteLink(event: CustomEvent<number>) {
 		const linkId = event.detail;
+		const link = currentLinks.find(l => l.id === linkId);
 		
-		if (!confirm('Are you sure you want to delete this link?')) return;
-
-		// OPTIMISTIC UI: Remove immediately
-		const deletedLink = currentLinks.find(link => link.id === linkId);
-		currentLinks = currentLinks.filter(link => link.id !== linkId);
-		
-		// Delete in background
-		try {
-			await api.deleteLink(linkId);
-			
-			// Show success toast
-			toast.success('Link deleted');
-			
-			// Reload data silently
-			const data = await api.getEditorData(username);
-			loadEditorData(data);
-			
-			// Update current links
-			const group = $groups.find(g => g.id === currentGroupId);
-			if (group) {
-				currentLinks = group.links || [];
+		// Show confirm modal
+		confirmModalConfig = {
+			title: 'Delete Link',
+			message: link ? `Are you sure you want to delete <strong>"${link.title}"</strong>?` : 'Are you sure you want to delete this link?',
+			confirmText: 'Delete Link',
+			variant: 'danger',
+			icon: 'trash',
+			warningMessage: null,
+			onConfirm: async () => {
+				// OPTIMISTIC UI: Remove immediately
+				const deletedLink = currentLinks.find(link => link.id === linkId);
+				currentLinks = currentLinks.filter(link => link.id !== linkId);
+				
+				// Show success toast immediately (optimistic)
+				toast.success('Link deleted');
+				
+				// Delete in background
+				try {
+					await api.deleteLink(linkId);
+					
+					// Reload data silently
+					const data = await api.getEditorData(username);
+					loadEditorData(data);
+					
+					// Update current links
+					const group = $groups.find(g => g.id === currentGroupId);
+					if (group) {
+						currentLinks = group.links || [];
+					}
+				} catch (e: any) {
+					// Restore on error
+					if (deletedLink) {
+						currentLinks = [...currentLinks, deletedLink].sort((a, b) => a.sort_order - b.sort_order);
+					}
+					toast.error(e.message || 'Failed to delete link');
+				}
 			}
-		} catch (e: any) {
-			// Restore on error
-			if (deletedLink) {
-				currentLinks = [...currentLinks, deletedLink].sort((a, b) => a.sort_order - b.sort_order);
-			}
-			toast.error(e.message || 'Failed to delete link');
-		}
+		};
+		confirmModal.open();
 	}
 
 	async function handleMoveLink(event: CustomEvent<any>) {
@@ -1402,6 +1442,16 @@
 <AddBlockModal bind:this={addBlockModal} on:select={handleBlockTypeSelect} />
 <RenameGroupModal bind:this={renameGroupModal} on:rename={handleRenameSubmit} />
 <DeleteGroupModal bind:this={deleteGroupModal} on:confirm={handleDeleteConfirm} />
+<ConfirmModal 
+	bind:this={confirmModal}
+	title={confirmModalConfig.title}
+	message={confirmModalConfig.message}
+	confirmText={confirmModalConfig.confirmText}
+	variant={confirmModalConfig.variant}
+	icon={confirmModalConfig.icon}
+	warningMessage={confirmModalConfig.warningMessage}
+	on:confirm={confirmModalConfig.onConfirm}
+/>
 
 <!-- QR Code Modal -->
 {#if showQRModal}

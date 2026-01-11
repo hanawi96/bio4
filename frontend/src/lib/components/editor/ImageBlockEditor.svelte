@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { api } from '$lib/api.client';
 	import { toast } from '$lib/stores/toast';
+	import ConfirmModal from '$lib/components/modals/ConfirmModal.svelte';
 	import type { ImageBlockContent, ImageBlockImage } from '$lib/types';
 	
 	export let blockId: number | null = null;
@@ -32,6 +33,12 @@
 	let uploading = false;
 	let dragOver = false;
 	let fileInput: HTMLInputElement;
+	
+	// Confirm modal
+	let confirmModal: ConfirmModal;
+	let confirmModalConfig = {
+		onConfirm: () => {}
+	};
 	
 	// Helper: Build content object
 	function buildContent(): ImageBlockContent {
@@ -132,18 +139,26 @@
 		const image = images.find(img => img.id === imageId);
 		if (!image) return;
 		
-		// Remove from list
-		images = images.filter(img => img.id !== imageId);
-		
-		// Notify parent immediately
-		notifyContentChange();
-		
-		// Delete from storage (background)
-		try {
-			await api.deleteImage(image.storage_key);
-		} catch (error) {
-			console.error('Failed to delete image from storage:', error);
-		}
+		// Show confirm modal
+		confirmModalConfig = {
+			onConfirm: async () => {
+				// Remove from list
+				images = images.filter(img => img.id !== imageId);
+				
+				// Notify parent immediately
+				notifyContentChange();
+				
+				// Delete from storage (background)
+				try {
+					await api.deleteImage(image.storage_key);
+					toast.success('Image deleted');
+				} catch (error) {
+					console.error('Failed to delete image from storage:', error);
+					toast.error('Failed to delete image from storage');
+				}
+			}
+		};
+		confirmModal.open();
 	}
 	
 	// Reorder images
@@ -883,3 +898,15 @@
 		{/if}
 	</div>
 </div>
+
+<!-- Confirm Modal -->
+<ConfirmModal 
+	bind:this={confirmModal}
+	title="Delete Image"
+	message="Are you sure you want to delete this image?"
+	confirmText="Delete Image"
+	variant="danger"
+	icon="trash"
+	warningMessage="This image will be permanently deleted from storage."
+	on:confirm={confirmModalConfig.onConfirm}
+/>

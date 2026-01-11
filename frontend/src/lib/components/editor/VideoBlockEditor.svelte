@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { toast } from '$lib/stores/toast';
+	import ConfirmModal from '$lib/components/modals/ConfirmModal.svelte';
 	import type { VideoBlockContent, VideoBlockItem } from '$lib/types';
 	import { parseVideoUrl, validatePlatformUrl, getPlatformName, getValidationError, getVideoThumbnail, fetchVideoMetadata, type VideoPlatform } from '$lib/utils/videoUtils';
 	
@@ -35,6 +36,12 @@
 	
 	let videoUrl = '';
 	let adding = false;
+	
+	// Confirm modal
+	let confirmModal: ConfirmModal;
+	let confirmModalConfig = {
+		onConfirm: () => {}
+	};
 	
 	function buildContent(): VideoBlockContent {
 		return { platform, layout, videos, config, title, subtitle };
@@ -96,9 +103,17 @@
 	}
 	
 	function handleRemoveVideo(videoId: string) {
-		videos = videos.filter(v => v.id !== videoId);
-		notifyContentChange();
-		toast.success('Video removed');
+		const video = videos.find(v => v.id === videoId);
+		
+		// Show confirm modal
+		confirmModalConfig = {
+			onConfirm: () => {
+				videos = videos.filter(v => v.id !== videoId);
+				notifyContentChange();
+				toast.success('Video removed');
+			}
+		};
+		confirmModal.open();
 	}
 	
 	function moveVideo(videoId: string, direction: 'up' | 'down') {
@@ -650,3 +665,15 @@
 		{/if}
 	</div>
 </div>
+
+<!-- Confirm Modal -->
+<ConfirmModal 
+	bind:this={confirmModal}
+	title="Remove Video"
+	message="Are you sure you want to remove this video?"
+	confirmText="Remove Video"
+	variant="danger"
+	icon="trash"
+	warningMessage={null}
+	on:confirm={confirmModalConfig.onConfirm}
+/>
