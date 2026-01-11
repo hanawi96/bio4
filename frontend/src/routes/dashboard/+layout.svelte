@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
+	import { page as bioPage } from '$lib/stores/page';
 	import { themes } from '$lib/stores/themes';
 	import { loadHeaderPresets } from '$lib/stores/headerPresets';
 	import { publishChanges, saveStatus } from '$lib/stores/autosave';
@@ -251,18 +252,26 @@
 
 		<!-- User Profile (Bottom) -->
 		{#if !sidebarCollapsed}
-			<div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-				<div class="flex items-center gap-3">
-					<div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-						<span class="text-gray-500">👤</span>
-					</div>
+			<div class="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-200 bg-white">
+				<div class="card-ios p-3 flex items-center gap-3">
+					{#if $bioPage?.avatar_url}
+						<img 
+							src={$bioPage.avatar_url} 
+							alt="Profile" 
+							class="avatar-ios avatar-ios-md object-cover"
+						/>
+					{:else}
+						<div class="avatar-ios avatar-ios-md bg-gradient-to-br from-[#00aa4f] to-[#008f42] flex items-center justify-center text-white font-semibold">
+							{($authStore.user?.display_name || $authStore.user?.email || 'U').charAt(0).toUpperCase()}
+						</div>
+					{/if}
 					<div class="flex-1 min-w-0">
-						<p class="text-sm font-medium text-gray-900 truncate">{$authStore.user?.display_name || $authStore.user?.email || 'User'}</p>
+						<p class="text-sm font-semibold text-gray-900 truncate">{$authStore.user?.display_name || $authStore.user?.email || 'User'}</p>
 						<p class="text-xs text-gray-500 truncate">{$authStore.user?.email || ''}</p>
 					</div>
 					<button
 						on:click={handleLogout}
-						class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+						class="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
 						title="Logout"
 					>
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,15 +282,34 @@
 			</div>
 		{:else}
 			<div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white flex justify-center">
-				<button
-					on:click={handleLogout}
-					class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors"
-					title="Logout"
-				>
-					<svg class="w-4 h-4 text-gray-500 hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-					</svg>
-				</button>
+				{#if $bioPage?.avatar_url}
+					<button
+						on:click={handleLogout}
+						class="relative avatar-ios avatar-ios-md hover:opacity-80 transition-opacity"
+						title="Logout"
+					>
+						<img 
+							src={$bioPage.avatar_url} 
+							alt="Profile" 
+							class="w-full h-full object-cover rounded-full"
+						/>
+						<div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+							<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+							</svg>
+						</div>
+					</button>
+				{:else}
+					<button
+						on:click={handleLogout}
+						class="avatar-ios avatar-ios-md bg-gradient-to-br from-[#00aa4f] to-[#008f42] flex items-center justify-center text-white hover:opacity-80 transition-opacity"
+						title="Logout"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+						</svg>
+					</button>
+				{/if}
 			</div>
 		{/if}
 	</aside>

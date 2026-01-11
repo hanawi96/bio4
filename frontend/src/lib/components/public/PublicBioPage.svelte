@@ -515,7 +515,10 @@
 	<div class="relative z-10 mx-auto" style="max-width: {maxWidth}px; padding: {pagePadding}px; text-align: {textAlign};">
 		<!-- Share & Subscribe Buttons (Floating) -->
 		{#if showShareButton || showSubscribeButton}
-			<div class="fixed top-4 left-0 right-0 z-50 flex items-center justify-between px-4" style="max-width: {maxWidth}px; margin: 0 auto;">
+			<div 
+				class="fixed left-0 right-0 z-50 flex items-center justify-between px-4 transition-all duration-300" 
+				style="max-width: {maxWidth}px; margin: 0 auto; top: {header?.hasCover ? '25px' : '16px'};"
+			>
 				<!-- Subscribe Button (Left) -->
 				{#if showSubscribeButton}
 					<button
