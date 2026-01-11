@@ -14,6 +14,10 @@
 	let textarea: HTMLTextAreaElement;
 	let showToolbar = false;
 	let toolbarPosition = { top: 0, left: 0 };
+	let showLinkModal = false;
+	let linkUrl = '';
+	let linkModalPosition = { top: 0, left: 0 };
+	let selectedTextForLink = { start: 0, end: 0, text: '' };
 	
 	function buildContent(): TextBlockContent {
 		return { text, textAlign };
@@ -90,6 +94,75 @@
 			textarea.focus();
 			textarea.setSelectionRange(start + prefix.length, end + prefix.length);
 		}, 0);
+	}
+	
+	function insertLink() {
+		if (!textarea) return;
+		
+		const start = textarea.selectionStart;
+		const end = textarea.selectionEnd;
+		const selectedText = text.substring(start, end);
+		
+		if (!selectedText) return;
+		
+		// Store selection info
+		selectedTextForLink = { start, end, text: selectedText };
+		
+		// Calculate modal position (centered)
+		const textareaRect = textarea.getBoundingClientRect();
+		linkModalPosition = {
+			top: Math.max(10, toolbarPosition.top + 50),
+			left: Math.max(0, (textareaRect.width / 2) - 150)
+		};
+		
+		// Show link modal
+		linkUrl = 'https://';
+		showToolbar = false;
+		showLinkModal = true;
+		
+		// Focus input after render
+		setTimeout(() => {
+			const input = document.getElementById('link-url-input');
+			if (input) {
+				(input as HTMLInputElement).focus();
+				(input as HTMLInputElement).select();
+			}
+		}, 50);
+	}
+	
+	function confirmLink() {
+		if (!linkUrl || !textarea) {
+			showLinkModal = false;
+			return;
+		}
+		
+		const before = text.substring(0, selectedTextForLink.start);
+		const after = text.substring(selectedTextForLink.end);
+		
+		text = before + `[${selectedTextForLink.text}](${linkUrl})` + after;
+		
+		showLinkModal = false;
+		linkUrl = '';
+		notifyContentChange();
+		
+		// Restore focus
+		setTimeout(() => textarea.focus(), 0);
+	}
+	
+	function cancelLink() {
+		showLinkModal = false;
+		linkUrl = '';
+		setTimeout(() => textarea.focus(), 0);
+	}
+	
+	function handleLinkKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			confirmLink();
+		} else if (e.key === 'Escape') {
+			e.preventDefault();
+			cancelLink();
+		}
 	}
 	
 	function insertHeading(level: number) {
@@ -177,7 +250,57 @@
 						<div class="w-px bg-gray-700"></div>
 						<button type="button" on:click={() => insertFormat('**', '**')} class="px-2 py-1 hover:bg-gray-700 rounded text-xs font-bold" title="Bold">B</button>
 						<button type="button" on:click={() => insertFormat('*', '*')} class="px-2 py-1 hover:bg-gray-700 rounded text-xs italic" title="Italic">I</button>
-						<button type="button" on:click={() => insertFormat('==', '==')} class="px-2 py-1 hover:bg-gray-700 rounded text-xs" title="Highlight">⬛</button>
+						<button type="button" on:click={() => insertFormat('==', '==')} class="px-2.5 py-1 hover:bg-gray-700 rounded text-xs font-bold bg-yellow-300 text-gray-900" title="Highlight">H</button>
+						<div class="w-px bg-gray-700"></div>
+						<button type="button" on:click={insertLink} class="px-2 py-1 hover:bg-gray-700 rounded text-xs" title="Insert Link">
+							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+							</svg>
+						</button>
+					</div>
+				{/if}
+				
+				<!-- Link Modal -->
+				{#if showLinkModal}
+					<div 
+						class="absolute z-20 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 w-80"
+						style="top: {linkModalPosition.top}px; left: {linkModalPosition.left}px;"
+					>
+						<div class="flex items-center gap-2 mb-3">
+							<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+							</svg>
+							<h4 class="text-sm font-semibold text-gray-900">Insert Link</h4>
+						</div>
+						
+						<div class="mb-3">
+							<label class="text-xs font-medium text-gray-600 mb-1.5 block">URL</label>
+							<input
+								id="link-url-input"
+								type="text"
+								bind:value={linkUrl}
+								on:keydown={handleLinkKeydown}
+								placeholder="https://example.com"
+								class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+							/>
+						</div>
+						
+						<div class="flex gap-2">
+							<button
+								type="button"
+								on:click={cancelLink}
+								class="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								on:click={confirmLink}
+								class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+							>
+								Insert
+							</button>
+						</div>
 					</div>
 				{/if}
 			</div>
