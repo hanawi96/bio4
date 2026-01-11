@@ -586,8 +586,8 @@
 						
 						<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 						<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
-						<!-- Layer 2: Bottom fade mask - extend 2px below to prevent gap -->
-						<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
+						<!-- Layer 2: Bottom fade mask -->
+						<div class="absolute left-0 right-0 pointer-events-none" style="bottom: 0px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
 						
 						<!-- Text overlay on video cover - z-20 to float above gradient mask -->
 						<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">

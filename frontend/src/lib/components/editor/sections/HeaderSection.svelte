@@ -23,19 +23,10 @@
 
 	// Get all header presets
 	const presets = Object.values(HEADER_PRESETS);
-	
-	// Debug: Log số lượng presets
-	console.log('Total presets:', presets.length, presets.map(p => p.id));
 
 	// Derived from store
 	$: selectedPresetId = $appearanceState.headerPresetId || 'no-cover';
 	$: selectedPreset = HEADER_PRESETS[selectedPresetId];
-	
-	// Debug log
-	$: console.log('HeaderSection - selectedPresetId:', selectedPresetId);
-	$: console.log('HeaderSection - showVideoCoverOptions:', showVideoCoverOptions);
-	$: console.log('HeaderSection - coverType:', coverType);
-	$: console.log('HeaderSection - coverValue:', coverValue);
 	
 	// Get cover value from store
 	$: coverValue = ($appearanceState.overrides['header.coverValue'] as string) 
@@ -134,11 +125,9 @@
 
 	// Select header preset
 	async function selectPreset(presetId: string) {
-		console.log('[HeaderSection] selectPreset called with:', presetId);
 		pendingSave = true;
 		try {
 			await changeHeaderPreset(presetId);
-			console.log('[HeaderSection] After changeHeaderPreset, selectedPresetId:', selectedPresetId);
 		} finally {
 			pendingSave = false;
 		}
@@ -354,16 +343,6 @@
 	</div>
 	
 	<div class="p-6">
-		<!-- Debug Panel -->
-		<div class="mb-4 p-4 bg-gray-100 rounded-lg text-xs space-y-1">
-			<p><strong>Debug Info:</strong></p>
-			<p>selectedPresetId: <strong>{selectedPresetId}</strong></p>
-			<p>showVideoCoverOptions: <strong>{showVideoCoverOptions}</strong></p>
-			<p>coverType: <strong>{coverType}</strong></p>
-			<p>Total presets: <strong>{presets.length}</strong></p>
-			<p>Preset IDs: {presets.map(p => p.id).join(', ')}</p>
-		</div>
-		
 		<!-- Header Presets Grid -->
 		<div class="grid grid-cols-4 gap-3">
 		{#each presets as preset}
@@ -576,14 +555,6 @@
 		{#if showVideoCoverOptions}
 			<div class="mt-6 pt-6 border-t border-gray-200">
 				<h3 class="text-sm font-semibold text-gray-900 mb-4">Cover Video</h3>
-				
-				<!-- Debug info -->
-				<div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-					<p>Debug: Video Cover Options Active</p>
-					<p>selectedPresetId: {selectedPresetId}</p>
-					<p>coverType: {coverType}</p>
-					<p>coverValue: {coverValue || '(empty)'}</p>
-				</div>
 
 				<div class="space-y-3">
 					{#if coverValue && coverType === 'video'}

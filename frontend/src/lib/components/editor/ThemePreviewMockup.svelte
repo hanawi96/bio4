@@ -230,22 +230,15 @@
 	}
 
 	$: coverStyle = (() => {
-		console.log('[ThemePreviewMockup] coverStyle - header:', header);
-		console.log('[ThemePreviewMockup] coverStyle - headerPresetId:', headerPresetId);
-		console.log('[ThemePreviewMockup] coverStyle - header.coverType:', header?.coverType);
-		console.log('[ThemePreviewMockup] coverStyle - header.coverValue:', header?.coverValue);
-		
 		if (!header?.hasCover) return '';
 		
 		// For video-cover preset, use black background (video element will overlay)
 		if (headerPresetId === 'video-cover' || header?.coverType === 'video') {
-			console.log('[ThemePreviewMockup] coverStyle - Using video cover, returning black background');
 			return 'background: #000000;';
 		}
 		
 		// For avatar-cover preset, use avatar as cover background
 		if (headerPresetId === 'avatar-cover' && $previewPage?.avatar_url) {
-			console.log('[ThemePreviewMockup] coverStyle - Using avatar cover:', $previewPage.avatar_url);
 			return `background: url('${$previewPage.avatar_url}') center/cover;`;
 		}
 		
@@ -260,16 +253,9 @@
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
 	$: isVideoCover = (headerPresetId === 'video-cover' || header?.coverType === 'video') && header?.coverValue;
 	
-	$: {
-		console.log('[ThemePreviewMockup] isVideoCover:', isVideoCover);
-		console.log('[ThemePreviewMockup] isVideoCover check - headerPresetId:', headerPresetId);
-		console.log('[ThemePreviewMockup] isVideoCover check - header?.coverType:', header?.coverType);
-		console.log('[ThemePreviewMockup] isVideoCover check - header?.coverValue:', header?.coverValue);
-	}
-	
 	// Convert background color to rgba gradient colors for mask (optimized - single parse)
 	$: maskGradientColors = (() => {
-		if (!isAvatarCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
+		if (!isAvatarCover && !isVideoCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
 		
 		let r = 0, g = 0, b = 0;
 		
@@ -662,9 +648,6 @@
 							>
 								{#if isVideoCover}
 									<!-- Video Cover - similar to avatar-cover but with video -->
-									{console.log('[ThemePreviewMockup] Rendering video cover block')}
-									{console.log('[ThemePreviewMockup] Video src:', header.coverValue)}
-									{console.log('[ThemePreviewMockup] Video poster:', header.coverVideoPoster)}
 									<video
 										src={header.coverValue}
 										poster={header.coverVideoPoster}
@@ -692,7 +675,6 @@
 									</div>
 								{:else if isAvatarCover}
 									<!-- Avatar Cover -->
-									{console.log('[ThemePreviewMockup] Rendering avatar cover block')}
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
 									<!-- Layer 2: Bottom fade mask - covers 50% of cover height for smooth transition -->
@@ -708,7 +690,6 @@
 									</div>
 								{:else}
 									<!-- Regular cover (image/gradient) -->
-									{console.log('[ThemePreviewMockup] Rendering regular cover')}
 								{/if}
 							</div>
 							
