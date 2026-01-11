@@ -86,16 +86,6 @@
 	let deleteGroupModal: DeleteGroupModal;
 	let renamingGroupId: number | null = null;
 	let deletingGroupId: number | null = null;
-	
-	// DEBUG PANEL
-	let debugLogs: Array<{time: string, action: string, data: any}> = [];
-	let showDebugPanel = true;
-	
-	function addDebugLog(action: string, data: any) {
-		const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
-		debugLogs = [...debugLogs, { time, action, data }];
-		if (debugLogs.length > 30) debugLogs = debugLogs.slice(-30);
-	}
 
 	onMount(async () => {
 		try {
@@ -278,9 +268,27 @@
 		}
 	}
 	
+	// Helper function to update store
+	function updateItemStore(item: { type: 'group' | 'block', data: any }) {
+		if (item.type === 'group') {
+			groups.update(g => g.map(group => 
+				group.id === item.data.id ? item.data : group
+			));
+		} else {
+			blocks.update(b => b.map(block => 
+				block.id === item.data.id ? item.data : block
+			));
+		}
+	}
+	
+	// Helper function to update item in DB
+	function updateItemDB(item: { type: 'group' | 'block', data: any }) {
+		return item.type === 'group' 
+			? api.updateGroup(item.data.id, { sort_order: item.data.sort_order })
+			: api.updateBlock(item.data.id, { sort_order: item.data.sort_order });
+	}
+	
 	async function handleMoveItem(itemId: number, itemType: 'group' | 'block', direction: 'up' | 'down') {
-		addDebugLog('MOVE_ITEM_START', { itemId, itemType, direction });
-		
 		// Get all items sorted
 		const allItems = [
 			...$groups.map(g => ({ type: 'group' as const, data: g, sort_order: g.sort_order })),
@@ -300,87 +308,27 @@
 		const currentItem = allItems[currentIndex];
 		const targetItem = allItems[targetIndex];
 		
-		addDebugLog('BEFORE_SWAP', {
-			current: { type: currentItem.type, id: currentItem.data.id, sort: currentItem.sort_order },
-			target: { type: targetItem.type, id: targetItem.data.id, sort: targetItem.sort_order }
-		});
-		
 		// Swap sort_order
 		const tempSort = currentItem.data.sort_order;
 		currentItem.data.sort_order = targetItem.data.sort_order;
 		targetItem.data.sort_order = tempSort;
 		
-		addDebugLog('AFTER_SWAP', {
-			current: { type: currentItem.type, id: currentItem.data.id, sort: currentItem.data.sort_order },
-			target: { type: targetItem.type, id: targetItem.data.id, sort: targetItem.data.sort_order }
-		});
-		
 		// Update stores
-		if (currentItem.type === 'group') {
-			groups.update(g => g.map(group => 
-				group.id === currentItem.data.id ? currentItem.data : group
-			));
-		} else {
-			blocks.update(b => b.map(block => 
-				block.id === currentItem.data.id ? currentItem.data : block
-			));
-		}
-		
-		if (targetItem.type === 'group') {
-			groups.update(g => g.map(group => 
-				group.id === targetItem.data.id ? targetItem.data : group
-			));
-		} else {
-			blocks.update(b => b.map(block => 
-				block.id === targetItem.data.id ? targetItem.data : block
-			));
-		}
-		
-		addDebugLog('STORES_UPDATED', { success: true });
+		updateItemStore(currentItem);
+		updateItemStore(targetItem);
 		
 		// Update DB
 		try {
-			const updates = [];
-			if (currentItem.type === 'group') {
-				updates.push(api.updateGroup(currentItem.data.id, { sort_order: currentItem.data.sort_order }));
-			} else {
-				updates.push(api.updateBlock(currentItem.data.id, { sort_order: currentItem.data.sort_order }));
-			}
-			
-			if (targetItem.type === 'group') {
-				updates.push(api.updateGroup(targetItem.data.id, { sort_order: targetItem.data.sort_order }));
-			} else {
-				updates.push(api.updateBlock(targetItem.data.id, { sort_order: targetItem.data.sort_order }));
-			}
-			
-			await Promise.all(updates);
-			addDebugLog('API_SUCCESS', { updated: [currentItem.data.id, targetItem.data.id] });
+			await Promise.all([
+				updateItemDB(currentItem),
+				updateItemDB(targetItem)
+			]);
 		} catch (e: any) {
-			addDebugLog('API_FAILED', { error: e.message });
-			// Revert
+			// Revert on error
 			currentItem.data.sort_order = targetItem.data.sort_order;
 			targetItem.data.sort_order = tempSort;
-			
-			if (currentItem.type === 'group') {
-				groups.update(g => g.map(group => 
-					group.id === currentItem.data.id ? currentItem.data : group
-				));
-			} else {
-				blocks.update(b => b.map(block => 
-					block.id === currentItem.data.id ? currentItem.data : block
-				));
-			}
-			
-			if (targetItem.type === 'group') {
-				groups.update(g => g.map(group => 
-					group.id === targetItem.data.id ? targetItem.data : group
-				));
-			} else {
-				blocks.update(b => b.map(block => 
-					block.id === targetItem.data.id ? targetItem.data : block
-				));
-			}
-			
+			updateItemStore(currentItem);
+			updateItemStore(targetItem);
 			toast.error(e.message || 'Failed to reorder');
 		}
 	}
@@ -1434,55 +1382,6 @@
 		</div>
 	</div>
 </div>
-
-<!-- DEBUG PANEL -->
-{#if showDebugPanel}
-	<div class="fixed bottom-4 right-4 w-96 max-h-96 bg-gray-900 text-white rounded-xl shadow-2xl overflow-hidden z-50">
-		<div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
-			<div class="flex items-center gap-2">
-				<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-				<span class="text-sm font-semibold">Debug Timeline</span>
-			</div>
-			<button on:click={() => showDebugPanel = false} class="text-gray-400 hover:text-white">
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-				</svg>
-			</button>
-		</div>
-		<div class="overflow-y-auto max-h-80 p-2 space-y-1 text-xs font-mono">
-			{#each debugLogs as log}
-				<div class="p-2 rounded bg-gray-800 border-l-2 {
-					log.action.includes('START') ? 'border-blue-500' :
-					log.action.includes('SWAP') ? 'border-yellow-500' :
-					log.action.includes('SUCCESS') ? 'border-green-500' :
-					log.action.includes('FAILED') ? 'border-red-500' :
-					'border-gray-600'
-				}">
-					<div class="flex items-center justify-between mb-1">
-						<span class="text-gray-400">{log.time}</span>
-						<span class="font-bold {
-							log.action.includes('START') ? 'text-blue-400' :
-							log.action.includes('SWAP') ? 'text-yellow-400' :
-							log.action.includes('SUCCESS') ? 'text-green-400' :
-							log.action.includes('FAILED') ? 'text-red-400' :
-							'text-gray-300'
-						}">{log.action}</span>
-					</div>
-					<pre class="text-gray-300 text-[10px] overflow-x-auto">{JSON.stringify(log.data, null, 2)}</pre>
-				</div>
-			{/each}
-		</div>
-	</div>
-{:else}
-	<button 
-		on:click={() => showDebugPanel = true}
-		class="fixed bottom-4 right-4 w-12 h-12 bg-gray-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-gray-800 z-50"
-	>
-		<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-		</svg>
-	</button>
-{/if}
 
 <!-- Modals -->
 <AddBlockModal bind:this={addBlockModal} on:select={handleBlockTypeSelect} />

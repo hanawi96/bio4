@@ -580,6 +580,12 @@
 		return `blur(${blur}px) brightness(${brightness / 100}) grayscale(${grayscale / 100})`;
 	})();
 
+	// Merge and sort all items (groups + blocks) by sort_order
+	$: allItems = [
+		...$groups.filter(g => (g.is_visible ?? 1) === 1).map(g => ({ type: 'group' as const, data: g, sort_order: g.sort_order })),
+		...$blocks.filter(b => b.is_visible === 1).map(b => ({ type: 'block' as const, data: b, sort_order: b.sort_order }))
+	].sort((a, b) => a.sort_order - b.sort_order);
+
 	// Subscribe modal
 	let showSubscribeModal = false;
 	let subscribing = false;
@@ -921,7 +927,9 @@
 						class="relative"
 						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -80px; padding-top: 100px;` : 'margin-top: 24px;'}"
 					>
-						{#each $groups.filter(g => (g.is_visible ?? 1) === 1) as group}
+						{#each allItems as item}
+						{#if item.type === 'group'}
+							{@const group = item.data}
 							{@const groupLinks = group.links.filter(l => l.is_active === 1)}
 							{@const effectiveLayoutType = group.layout_type || defaultLinkGroupLayout}
 							{#if groupLinks.length > 0}
@@ -1217,10 +1225,8 @@
 									{/each}
 								{/if}
 							{/if}
-						{/each}
-						
-						<!-- Blocks (sorted by sort_order) -->
-						{#each $blocks.filter(b => b.is_visible === 1).sort((a, b) => a.sort_order - b.sort_order) as block}
+						{:else if item.type === 'block'}
+							{@const block = item.data}
 							{@const content = (() => {
 								try {
 									return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
@@ -1250,9 +1256,10 @@
 									/>
 								{/if}
 							{/if}
+						{/if}
 						{/each}
 						
-						{#if $groups.filter(g => (g.is_visible ?? 1) === 1).every(g => g.links.filter(l => l.is_active === 1).length === 0) && $blocks.filter(b => b.is_visible === 1).length === 0}
+						{#if allItems.length === 0}
 							<div class="text-center py-8 opacity-50">
 								<p class="text-sm">No content yet</p>
 							</div>

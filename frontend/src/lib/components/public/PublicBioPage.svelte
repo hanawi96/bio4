@@ -744,9 +744,16 @@
 			{/if}
 		{/if}
 
-		<!-- Links -->
+		{@const allItems = [
+			...visibleGroups.map(g => ({ type: 'group', data: g, sort_order: g.sort_order })),
+			...$blocks.filter(b => b.is_visible === 1).map(b => ({ type: 'block', data: b, sort_order: b.sort_order }))
+		].sort((a, b) => a.sort_order - b.sort_order)}
+		
+		<!-- Links and Blocks (merged and sorted by sort_order) -->
 		<div class="flex flex-col" style="gap: {$publicAppearance?.page?.blockGap || 16}px; margin-top: 24px;">
-			{#each visibleGroups as group}
+			{#each allItems as item}
+			{#if item.type === 'group'}
+				{@const group = item.data}
 				{#each group.links.filter(l => l.is_active === 1) as link}
 					{@const iconUrl = getIconUrl(link.icon_type || 'none', link.icon_data || link.icon_url || null, link.icon_color || iconThumbnailColor)}
 					{@const iconClasses = getIconClasses(link.icon_type || 'none', 'list-left', `w-8 h-8 flex-shrink-0 ${iconShapeClass}`)}
@@ -811,10 +818,8 @@
 						{/if}
 					</a>
 				{/each}
-			{/each}
-			
-			<!-- Blocks (sorted by sort_order) -->
-			{#each $blocks.filter(b => b.is_visible === 1).sort((a, b) => a.sort_order - b.sort_order) as block}
+			{:else if item.type === 'block'}
+				{@const block = item.data}
 				{@const content = (() => {
 					try {
 						return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
@@ -845,6 +850,7 @@
 						/>
 					{/if}
 				{/if}
+			{/if}
 			{/each}
 		</div>
 
