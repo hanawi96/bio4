@@ -4,6 +4,7 @@
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 	import ImageBlockRenderer from './ImageBlockRenderer.svelte';
 	import VideoBlockRenderer from './VideoBlockRenderer.svelte';
+	import TextBlockRenderer from './TextBlockRenderer.svelte';
 	import type { ImageBlockContent, VideoBlockContent } from '$lib/types';
 	import { resolvePagePadding, resolveAvatarBorderWidth, resolveSocialIconSize } from '$lib/appearance/spacingTokens';
 	import { FONT_SIZE_TOKENS } from '$lib/appearance/typographyTokens';
@@ -847,6 +848,23 @@
 						{content}
 						textColor={$publicAppearance?.textColor || '#18181b'}
 						mutedTextColor={$publicAppearance?.mutedTextColor || '#71717a'}
+					/>
+				{/if}
+			{/each}
+			
+			<!-- Text Blocks -->
+			{#each $blocks.filter(b => b.is_visible === 1 && b.type === 'text') as block}
+				{@const content = (() => {
+					try {
+						return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
+					} catch {
+						return null;
+					}
+				})()}
+				{#if content}
+					<TextBlockRenderer 
+						{content}
+						textColor={$publicAppearance?.textColor || '#18181b'}
 					/>
 				{/if}
 			{/each}

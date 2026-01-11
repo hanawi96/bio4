@@ -139,6 +139,12 @@ export interface VideoBlockConfig {
 	videoHeight?: number; // pixels (200-400)
 }
 
+// Text Block Types
+export interface TextBlockContent {
+	text: string; // Markdown text
+	textAlign?: 'left' | 'center' | 'right';
+}
+
 export interface ThemePreset {
 	id: number;
 	key: string;

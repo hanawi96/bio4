@@ -19,7 +19,9 @@
 	import ImageBlockEditor from '$lib/components/editor/ImageBlockEditor.svelte';
 	import VideoBlockCard from '$lib/components/editor/VideoBlockCard.svelte';
 	import VideoBlockEditor from '$lib/components/editor/VideoBlockEditor.svelte';
-	import type { Link, ImageBlockContent, VideoBlockContent } from '$lib/types';
+	import TextBlockCard from '$lib/components/editor/TextBlockCard.svelte';
+	import TextBlockEditor from '$lib/components/editor/TextBlockEditor.svelte';
+	import type { Link, ImageBlockContent, VideoBlockContent, TextBlockContent } from '$lib/types';
 
 	$: username = $authStore.user?.username || 'demo';
 	$: bioUrl = getBioUrl(username);
@@ -55,7 +57,7 @@
 	}
 
 	// View state
-	type ViewMode = 'list' | 'edit-links' | 'edit-image-block' | 'edit-video-block';
+	type ViewMode = 'list' | 'edit-links' | 'edit-image-block' | 'edit-video-block' | 'edit-text-block';
 	let viewMode: ViewMode = 'list';
 	let currentGroupId: number | null = null;
 	let currentGroupName: string = 'Links';
@@ -238,6 +240,8 @@
 				viewMode = 'edit-image-block';
 			} else if (block.type === 'video') {
 				viewMode = 'edit-video-block';
+			} else if (block.type === 'text') {
+				viewMode = 'edit-text-block';
 			}
 		} catch (e) {
 			toast.error('Failed to load block content');
@@ -460,6 +464,37 @@
 				loadEditorData(data);
 			} catch (e: any) {
 				error = e.message || 'Failed to create video block';
+				viewMode = 'list';
+				currentBlockId = null;
+				isCreatingBlock = false;
+			}
+		} else if (blockType === 'text') {
+			// Handle text block
+			// OPTIMISTIC UI: Show editor immediately
+			currentBlockId = null;
+			currentBlockContent = {
+				text: '',
+				textAlign: 'center'
+			};
+			viewMode = 'edit-text-block';
+			isCreatingBlock = true;
+			
+			// Create block in background
+			try {
+				const blockResult = await api.createBlock(username, {
+					type: 'text',
+					content: currentBlockContent,
+					sort_order: 0
+				});
+				
+				currentBlockId = blockResult.id;
+				isCreatingBlock = false;
+				
+				// Reload data silently
+				const data = await api.getEditorData(username);
+				loadEditorData(data);
+			} catch (e: any) {
+				error = e.message || 'Failed to create text block';
 				viewMode = 'list';
 				currentBlockId = null;
 				isCreatingBlock = false;
@@ -1032,6 +1067,90 @@
 			toast.error(e.message || 'Failed to save block');
 		}
 	}
+	
+	// ============ TEXT BLOCK HANDLERS ============
+	
+	function handleTextBlockBack() {
+		viewMode = 'list';
+		currentBlockId = null;
+		currentBlockContent = null;
+	}
+	
+	let saveTextBlockTimeout: number | null = null;
+	
+	function handleTextBlockContentChange(event: CustomEvent<{ content: TextBlockContent }>) {
+		const { content } = event.detail;
+		currentBlockContent = content;
+		
+		// Update blocks store immediately for live preview
+		if (currentBlockId) {
+			blocks.update(currentBlocks => {
+				return currentBlocks.map(block => 
+					block.id === currentBlockId 
+						? { ...block, content: JSON.stringify(content) }
+						: block
+				);
+			});
+		}
+		
+		// Debounce auto-save
+		if (saveTextBlockTimeout) clearTimeout(saveTextBlockTimeout);
+		
+		saveTextBlockTimeout = window.setTimeout(async () => {
+			if (!currentBlockId) return;
+			
+			try {
+				await api.updateBlock(currentBlockId, {
+					content: JSON.stringify(content)
+				});
+			} catch (e: any) {
+				console.error('Failed to save block:', e);
+			}
+		}, 500);
+	}
+	
+	async function handleTextBlockSave(event: CustomEvent<{ content: TextBlockContent }>) {
+		const { content } = event.detail;
+		
+		if (!currentBlockId && !isCreatingBlock) return;
+		
+		// Wait for blockId if still creating
+		if (isCreatingBlock || currentBlockId === null) {
+			const maxWait = 5000;
+			const startTime = Date.now();
+			
+			while ((isCreatingBlock || currentBlockId === null) && Date.now() - startTime < maxWait) {
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+			
+			if (currentBlockId === null) {
+				toast.error('Failed to create block. Please try again.');
+				return;
+			}
+		}
+		
+		// Clear any pending debounced save
+		if (saveTextBlockTimeout) {
+			clearTimeout(saveTextBlockTimeout);
+			saveTextBlockTimeout = null;
+		}
+		
+		// Update block content
+		try {
+			await api.updateBlock(currentBlockId, {
+				content: JSON.stringify(content)
+			});
+			
+			// Update local state
+			currentBlockContent = content;
+			
+			// Reload data silently for preview
+			const data = await api.getEditorData(username);
+			loadEditorData(data);
+		} catch (e: any) {
+			toast.error(e.message || 'Failed to save block');
+		}
+	}
 </script>
 
 <div class="flex h-[calc(100vh-64px)]" style="background-color: #f6f1eb;">
@@ -1113,6 +1232,17 @@
 									on:delete={(e) => handleDeleteBlock(e.detail)}
 									on:toggleVisible={handleToggleBlockVisible}
 								/>
+							{:else if block.type === 'text'}
+								<TextBlockCard
+									{block}
+									isFirst={index === 0}
+									isLast={index === $blocks.length - 1}
+									on:click={(e) => handleEditBlock(e.detail)}
+									on:moveUp={(e) => handleMoveBlock(e.detail, 'up')}
+									on:moveDown={(e) => handleMoveBlock(e.detail, 'down')}
+									on:delete={(e) => handleDeleteBlock(e.detail)}
+									on:toggleVisible={handleToggleBlockVisible}
+								/>
 							{/if}
 						{/each}
 					</div>
@@ -1154,6 +1284,15 @@
 					on:back={handleVideoBlockBack}
 					on:contentChange={handleVideoBlockContentChange}
 					on:save={handleVideoBlockSave}
+				/>
+			{:else if viewMode === 'edit-text-block'}
+				<!-- Text Block Editor View -->
+				<TextBlockEditor
+					blockId={currentBlockId}
+					initialContent={currentBlockContent}
+					on:back={handleTextBlockBack}
+					on:contentChange={handleTextBlockContentChange}
+					on:save={handleTextBlockSave}
 				/>
 			{/if}
 			</div>
