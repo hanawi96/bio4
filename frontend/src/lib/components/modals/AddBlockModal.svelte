@@ -6,7 +6,6 @@
 	let isOpen = false;
 	let selectedCategory = 'link';
 	let searchQuery = '';
-	let recentlyUsed: string[] = ['link', 'text', 'image'];
 
 	export function open() {
 		isOpen = true;
@@ -75,12 +74,6 @@
 		}
 	];
 
-	const quickAddItems = [
-		{ id: 'link', name: 'Link', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>', shortcut: 'Ctrl+L' },
-		{ id: 'text', name: 'Text', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>', shortcut: 'Ctrl+T' },
-		{ id: 'image', name: 'Image', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>', shortcut: 'Ctrl+I' }
-	];
-
 	const layouts = {
 		link: [
 			{
@@ -147,24 +140,34 @@
 		],
 		video: [
 			{
-				id: 'column',
-				name: 'Column',
-				description: 'Vertical stack of videos',
-				badge: 'Recommended',
+				id: 'youtube',
+				name: 'YouTube',
+				description: 'Landscape videos (16:9)',
+				icon: '🔴',
+				badge: 'Popular',
+				badgeColor: 'bg-red-100 text-red-700'
+			},
+			{
+				id: 'tiktok',
+				name: 'TikTok',
+				description: 'Portrait videos (9:16)',
+				icon: '⚫',
+				badge: 'Trending',
 				badgeColor: 'bg-gray-100 text-gray-700'
 			},
 			{
-				id: 'carousel',
-				name: 'Carousel',
-				description: 'Horizontal swipeable videos',
+				id: 'instagram',
+				name: 'Instagram',
+				description: 'Reels & videos (9:16)',
+				icon: '📷',
 				badge: null
 			},
 			{
-				id: 'marquee',
-				name: 'Marquee',
-				description: 'Infinite scrolling videos',
-				badge: 'New',
-				badgeColor: 'bg-blue-100 text-blue-700'
+				id: 'vimeo',
+				name: 'Vimeo',
+				description: 'Professional videos (16:9)',
+				icon: '🎬',
+				badge: null
 			}
 		],
 		divider: [
@@ -191,34 +194,59 @@
 		]
 	};
 
+	// Platform-specific layouts for video
+	const videoPlatformLayouts = {
+		youtube: [
+			{ id: 'carousel', name: 'Carousel', description: 'Swipe horizontally', badge: 'Recommended', badgeColor: 'bg-gray-100 text-gray-700' },
+			{ id: 'column', name: 'Column', description: 'Vertical stack', badge: null },
+			{ id: 'marquee', name: 'Marquee', description: 'Auto-scrolling strip', badge: null }
+		],
+		tiktok: [
+			{ id: 'column', name: 'Feed', description: 'Vertical feed style', badge: 'Recommended', badgeColor: 'bg-gray-100 text-gray-700' },
+			{ id: 'carousel', name: 'Carousel', description: 'Swipe vertically', badge: null },
+			{ id: 'marquee', name: 'Marquee', description: 'Auto-scrolling', badge: null }
+		],
+		instagram: [
+			{ id: 'column', name: 'Feed', description: 'Instagram-style feed', badge: 'Recommended', badgeColor: 'bg-gray-100 text-gray-700' },
+			{ id: 'carousel', name: 'Carousel', description: 'Swipe through reels', badge: null }
+		],
+		vimeo: [
+			{ id: 'carousel', name: 'Carousel', description: 'Swipe horizontally', badge: 'Recommended', badgeColor: 'bg-gray-100 text-gray-700' },
+			{ id: 'column', name: 'Column', description: 'Vertical stack', badge: null }
+		]
+	};
+
+	let selectedVideoPlatform: string | null = null;
+
 	$: filteredCategories = categories.filter(cat => 
 		cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 		cat.description.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
-	$: recentCategories = categories.filter(cat => recentlyUsed.includes(cat.id));
-
 	function selectCategory(categoryId: string) {
 		selectedCategory = categoryId;
+		// Reset video platform when switching categories
+		if (categoryId !== 'video') {
+			selectedVideoPlatform = null;
+		}
+	}
+
+	function selectVideoPlatform(platform: string) {
+		selectedVideoPlatform = platform;
 	}
 
 	function selectLayout(layoutId: string) {
-		// Add to recently used
-		if (!recentlyUsed.includes(selectedCategory)) {
-			recentlyUsed = [selectedCategory, ...recentlyUsed.slice(0, 2)];
+		// For video, include platform info
+		if (selectedCategory === 'video' && selectedVideoPlatform) {
+			dispatch('select', { 
+				type: selectedCategory, 
+				layout: layoutId,
+				platform: selectedVideoPlatform 
+			});
+		} else {
+			dispatch('select', { type: selectedCategory, layout: layoutId });
 		}
-		
-		dispatch('select', { type: selectedCategory, layout: layoutId });
 		close();
-	}
-
-	function quickAdd(blockId: string) {
-		selectedCategory = blockId;
-		// Auto-select first layout
-		const firstLayout = layouts[blockId]?.[0];
-		if (firstLayout) {
-			selectLayout(firstLayout.id);
-		}
 	}
 </script>
 
@@ -264,48 +292,6 @@
 					<!-- Categories -->
 					<div class="flex-1 overflow-y-auto py-2">
 						{#if searchQuery === ''}
-							<!-- Quick Add -->
-							<div class="px-4 mb-4">
-								<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">Quick Add</h3>
-								<div class="space-y-1">
-									{#each quickAddItems as item}
-										<button
-											on:click={() => quickAdd(item.id)}
-											class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all hover:bg-white/60 group"
-										>
-											<span class="text-gray-600">{@html item.icon}</span>
-											<span class="text-sm font-medium text-gray-900">{item.name}</span>
-											<span class="ml-auto text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">{item.shortcut}</span>
-										</button>
-									{/each}
-								</div>
-							</div>
-
-							<!-- Recently Used -->
-							{#if recentCategories.length > 0}
-								<div class="px-4 mb-4">
-									<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">Recently Used</h3>
-									<div class="space-y-1">
-										{#each recentCategories as category}
-											<button
-												on:click={() => selectCategory(category.id)}
-												class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all {selectedCategory === category.id ? 'bg-white shadow-sm' : 'hover:bg-white/60'}"
-											>
-												<div class="w-8 h-8 rounded-lg {category.color} flex items-center justify-center text-white text-base shadow-sm">
-													{@html category.icon}
-												</div>
-												<div class="flex-1 text-left">
-													<div class="text-sm font-semibold text-gray-900">{category.name}</div>
-												</div>
-												<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-												</svg>
-											</button>
-										{/each}
-									</div>
-								</div>
-							{/if}
-
 							<!-- All Blocks -->
 							<div class="px-4 mb-4">
 								<h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-2">All Blocks</h3>
@@ -377,7 +363,78 @@
 
 					<!-- Layouts -->
 					<div class="flex-1 overflow-y-auto p-8 bg-white">
-						{#if layouts[selectedCategory] && layouts[selectedCategory].length > 0}
+						{#if selectedCategory === 'video' && !selectedVideoPlatform}
+							<!-- Video Platform Selection -->
+							<div class="grid grid-cols-2 gap-6">
+								{#each layouts.video as platform}
+									<button
+										on:click={() => selectVideoPlatform(platform.id)}
+										class="group relative rounded-2xl border-2 border-gray-200 hover:border-green-500 transition-all overflow-hidden bg-white hover:shadow-xl"
+									>
+										<div class="aspect-[4/3] bg-gradient-to-br from-gray-50 to-gray-100 p-8 flex flex-col items-center justify-center relative">
+											<div class="text-6xl mb-4">{platform.icon}</div>
+											<div class="text-2xl font-bold text-gray-900">{platform.name}</div>
+											{#if platform.badge}
+												<div class="absolute top-3 right-3 px-2 py-1 {platform.badgeColor} rounded-full text-xs font-semibold">
+													{platform.badge}
+												</div>
+											{/if}
+										</div>
+										<div class="px-4 py-4 bg-white border-t border-gray-100">
+											<p class="text-sm text-gray-500 text-center">{platform.description}</p>
+										</div>
+									</button>
+								{/each}
+							</div>
+						{:else if selectedCategory === 'video' && selectedVideoPlatform && videoPlatformLayouts[selectedVideoPlatform]}
+							<!-- Video Layout Selection (after platform chosen) -->
+							<div class="mb-6">
+								<button
+									on:click={() => selectedVideoPlatform = null}
+									class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+								>
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+									</svg>
+									Back to platforms
+								</button>
+							</div>
+							<div class="grid grid-cols-2 gap-6">
+								{#each videoPlatformLayouts[selectedVideoPlatform] as layout}
+									<button
+										on:click={() => selectLayout(layout.id)}
+										class="group relative rounded-2xl border-2 border-gray-200 hover:border-green-500 transition-all overflow-hidden bg-white hover:shadow-xl"
+									>
+										<div class="aspect-[4/3] bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex items-center justify-center relative">
+											{#if selectedVideoPlatform === 'youtube' || selectedVideoPlatform === 'vimeo'}
+												<!-- Landscape preview -->
+												<div class="w-full aspect-video bg-white rounded-xl shadow-sm flex items-center justify-center">
+													<svg class="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+														<path d="M8 5v14l11-7z"/>
+													</svg>
+												</div>
+											{:else}
+												<!-- Portrait preview -->
+												<div class="w-2/3 aspect-[9/16] bg-white rounded-xl shadow-sm flex items-center justify-center">
+													<svg class="w-8 h-8 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+														<path d="M8 5v14l11-7z"/>
+													</svg>
+												</div>
+											{/if}
+											{#if layout.badge}
+												<div class="absolute top-3 right-3 px-2 py-1 {layout.badgeColor || 'bg-green-100 text-green-700'} rounded-full text-xs font-semibold">
+													{layout.badge}
+												</div>
+											{/if}
+										</div>
+										<div class="px-4 py-4 bg-white border-t border-gray-100">
+											<p class="text-sm font-semibold text-gray-900 text-center mb-1">{layout.name}</p>
+											<p class="text-xs text-gray-500 text-center">{layout.description}</p>
+										</div>
+									</button>
+								{/each}
+							</div>
+						{:else if layouts[selectedCategory] && layouts[selectedCategory].length > 0}
 							{@const currentLayouts = layouts[selectedCategory]}
 							<div class="grid grid-cols-2 gap-6">
 								{#each currentLayouts as layout}

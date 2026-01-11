@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { toast } from '$lib/stores/toast';
 	import type { VideoBlockContent, VideoBlockItem } from '$lib/types';
-	import { parseVideoUrl, isValidVideoUrl } from '$lib/utils/videoUtils';
+	import { parseVideoUrl, validatePlatformUrl, getPlatformName, getValidationError, getVideoThumbnail, fetchVideoMetadata, type VideoPlatform } from '$lib/utils/videoUtils';
 	
 	export let blockId: number | null = null;
 	export let initialContent: VideoBlockContent | null = null;
@@ -10,13 +10,17 @@
 	
 	const dispatch = createEventDispatcher();
 	
+	// Get platform from content
+	$: platform = (initialContent?.platform || 'youtube') as VideoPlatform;
+	$: platformName = getPlatformName(platform);
+	
 	type TabType = 'videos' | 'layout';
 	let activeTab: TabType = 'videos';
 	
 	let videos: VideoBlockItem[] = initialContent?.videos || [];
 	let config: VideoBlockContent['config'] = initialContent?.config || {
 		spacing: 'comfortable',
-		aspectRatio: '16/9',
+		aspectRatio: platform === 'tiktok' || platform === 'instagram' ? '9/16' : '16/9',
 		autoplay: false,
 		interval: 3,
 		showDots: true,
@@ -24,7 +28,7 @@
 		direction: 'left',
 		speed: 'medium',
 		pauseOnHover: true,
-		videoHeight: 300
+		videoHeight: platform === 'tiktok' || platform === 'instagram' ? 500 : 300
 	};
 	let title: string = initialContent?.title || '';
 	let subtitle: string = initialContent?.subtitle || '';
@@ -33,7 +37,7 @@
 	let adding = false;
 	
 	function buildContent(): VideoBlockContent {
-		return { layout, videos, config, title, subtitle };
+		return { platform, layout, videos, config, title, subtitle };
 	}
 	
 	function generateId(): string {
@@ -46,29 +50,42 @@
 			return;
 		}
 		
-		if (!isValidVideoUrl(videoUrl)) {
-			toast.error('Invalid video URL. Please enter a YouTube video link.');
+		// Validate URL for specific platform
+		if (!validatePlatformUrl(videoUrl, platform)) {
+			toast.error(getValidationError(platform));
 			return;
 		}
 		
 		adding = true;
 		
 		try {
-			const parsed = parseVideoUrl(videoUrl);
+			const parsed = parseVideoUrl(videoUrl, platform);
 			
-			if (!parsed.platform || !parsed.videoId) {
+			if (!parsed) {
 				toast.error('Could not parse video URL');
 				return;
 			}
+			
+			// Fetch metadata (title, thumbnail) from platform
+			console.log('[VideoBlockEditor] Fetching metadata for:', parsed.platform, parsed.id);
+			const metadata = await fetchVideoMetadata(parsed.platform, parsed.id);
+			console.log('[VideoBlockEditor] Metadata fetched:', metadata);
+			
+			// Use fetched thumbnail or fallback to generated one
+			const thumbnail = metadata.thumbnail || getVideoThumbnail(parsed.platform, parsed.id);
 			
 			const newVideo: VideoBlockItem = {
 				id: generateId(),
 				url: videoUrl,
 				platform: parsed.platform,
-				videoId: parsed.videoId,
-				thumbnail: parsed.thumbnailUrl || undefined,
+				videoId: parsed.id,
+				embedUrl: parsed.embedUrl,
+				title: metadata.title,
+				thumbnail: thumbnail || undefined,
 				sort_order: videos.length
 			};
+			
+			console.log('[VideoBlockEditor] New video object:', newVideo);
 			
 			videos = [...videos, newVideo];
 			videoUrl = '';
@@ -510,13 +527,19 @@
 				
 				<!-- Add Video -->
 				<div class="mb-6 p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-					<label class="block text-sm font-semibold text-gray-900 mb-3">Add YouTube Video</label>
+					<label class="block text-sm font-semibold text-gray-900 mb-3">
+						Add {platformName} Video
+						<span class="ml-2 text-xs font-normal text-gray-500">({platform})</span>
+					</label>
 					<div class="flex gap-2">
 						<input
 							type="url"
 							bind:value={videoUrl}
 							on:keydown={(e) => e.key === 'Enter' && handleAddVideo()}
-							placeholder="https://www.youtube.com/watch?v=..."
+							placeholder={platform === 'youtube' ? 'https://www.youtube.com/watch?v=...' :
+								platform === 'tiktok' ? 'https://www.tiktok.com/@user/video/...' :
+								platform === 'instagram' ? 'https://www.instagram.com/p/...' :
+								'https://vimeo.com/...'}
 							class="input-ios flex-1"
 							disabled={adding}
 						/>
@@ -529,7 +552,7 @@
 							{adding ? 'Adding...' : 'Add'}
 						</button>
 					</div>
-					<p class="text-xs text-gray-500 mt-2">Paste a YouTube video URL</p>
+					<p class="text-xs text-gray-500 mt-2">Paste a {platformName} video URL</p>
 				</div>
 				
 				<!-- Video List -->
@@ -544,6 +567,7 @@
 				{:else}
 					<div class="space-y-3">
 						{#each videos as video, index (video.id)}
+							{@const thumbnailUrl = video.thumbnail || (video.platform === 'youtube' && video.videoId ? `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg` : null)}
 							<div class="card-ios p-3 flex items-center gap-3">
 								<!-- Move Buttons -->
 								<div class="flex flex-col gap-1">
@@ -572,8 +596,23 @@
 								</div>
 								
 								<!-- Thumbnail -->
-								{#if video.thumbnail}
-									<img src={video.thumbnail} alt="" class="w-24 h-16 object-cover rounded-lg flex-shrink-0" />
+								{#if thumbnailUrl}
+									<img 
+										src={thumbnailUrl} 
+										alt="" 
+										class="w-24 h-16 object-cover rounded-lg flex-shrink-0"
+										on:error={(e) => {
+											// Fallback if thumbnail fails to load
+											e.currentTarget.style.display = 'none';
+											e.currentTarget.nextElementSibling?.classList.remove('hidden');
+										}}
+									/>
+									<div class="w-24 h-16 bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg flex-shrink-0 items-center justify-center hidden">
+										<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+											<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+										</svg>
+									</div>
 								{:else}
 									<div class="w-24 h-16 bg-gradient-to-br from-gray-100 to-gray-50 rounded-lg flex-shrink-0 flex items-center justify-center">
 										<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -585,7 +624,9 @@
 								
 								<!-- Info -->
 								<div class="flex-1 min-w-0">
-									<p class="text-sm font-semibold text-gray-900 truncate capitalize">{video.platform} Video</p>
+									<p class="text-sm font-semibold text-gray-900 truncate">
+										{video.title || `${video.platform.charAt(0).toUpperCase() + video.platform.slice(1)} Video`}
+									</p>
 									<p class="text-xs text-gray-500 truncate mt-0.5">{video.url}</p>
 								</div>
 								

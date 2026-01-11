@@ -1,89 +1,184 @@
-// Video URL parsing utilities
+// Video platform utilities
 
-export interface ParsedVideo {
-	platform: 'youtube' | 'tiktok' | 'vimeo' | null;
-	videoId: string | null;
-	embedUrl: string | null;
-	thumbnailUrl: string | null;
+export type VideoPlatform = 'youtube' | 'tiktok' | 'instagram' | 'vimeo';
+
+interface VideoInfo {
+	platform: VideoPlatform;
+	id: string;
+	embedUrl: string;
+	aspectRatio: '16/9' | '9/16';
 }
 
+// Platform regex patterns
+const patterns = {
+	youtube: /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+	tiktok: /tiktok\.com\/@[\w.-]+\/video\/(\d+)/,
+	instagram: /instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/,
+	vimeo: /vimeo\.com\/(\d+)/
+};
+
 /**
- * Parse YouTube URL and extract video ID
- * Supports: youtube.com/watch?v=, youtu.be/, youtube.com/embed/, youtube.com/shorts/
+ * Detect platform from URL
  */
-function parseYouTubeUrl(url: string): string | null {
-	const patterns = [
-		/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-		/youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/
-	];
-	
-	for (const pattern of patterns) {
-		const match = url.match(pattern);
-		if (match) return match[1];
-	}
-	
+export function detectPlatform(url: string): VideoPlatform | null {
+	if (patterns.youtube.test(url)) return 'youtube';
+	if (patterns.tiktok.test(url)) return 'tiktok';
+	if (patterns.instagram.test(url)) return 'instagram';
+	if (patterns.vimeo.test(url)) return 'vimeo';
 	return null;
 }
 
 /**
- * Parse video URL and return platform info
+ * Validate URL for specific platform
  */
-export function parseVideoUrl(url: string): ParsedVideo {
-	const result: ParsedVideo = {
-		platform: null,
-		videoId: null,
-		embedUrl: null,
-		thumbnailUrl: null
+export function validatePlatformUrl(url: string, platform: VideoPlatform): boolean {
+	return patterns[platform].test(url);
+}
+
+/**
+ * Parse video URL and extract info
+ */
+export function parseVideoUrl(url: string, expectedPlatform?: VideoPlatform): VideoInfo | null {
+	const platform = detectPlatform(url);
+	if (!platform) return null;
+	
+	// If expected platform specified, validate it matches
+	if (expectedPlatform && platform !== expectedPlatform) return null;
+	
+	const match = url.match(patterns[platform]);
+	if (!match || !match[1]) return null;
+	
+	const id = match[1];
+	const aspectRatio = (platform === 'tiktok' || platform === 'instagram') ? '9/16' : '16/9';
+	
+	// Generate embed URL
+	let embedUrl = '';
+	switch (platform) {
+		case 'youtube':
+			embedUrl = `https://www.youtube.com/embed/${id}`;
+			break;
+		case 'tiktok':
+			embedUrl = `https://www.tiktok.com/embed/v2/${id}`;
+			break;
+		case 'instagram':
+			embedUrl = `https://www.instagram.com/p/${id}/embed`;
+			break;
+		case 'vimeo':
+			embedUrl = `https://player.vimeo.com/video/${id}`;
+			break;
+	}
+	
+	return { platform, id, embedUrl, aspectRatio };
+}
+
+/**
+ * Get platform display name
+ */
+export function getPlatformName(platform: VideoPlatform): string {
+	const names = {
+		youtube: 'YouTube',
+		tiktok: 'TikTok',
+		instagram: 'Instagram',
+		vimeo: 'Vimeo'
 	};
-	
-	// YouTube
-	if (url.includes('youtube.com') || url.includes('youtu.be')) {
-		const videoId = parseYouTubeUrl(url);
-		if (videoId) {
-			result.platform = 'youtube';
-			result.videoId = videoId;
-			result.embedUrl = `https://www.youtube.com/embed/${videoId}`;
-			result.thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+	return names[platform];
+}
+
+/**
+ * Get platform icon emoji
+ */
+export function getPlatformIcon(platform: VideoPlatform): string {
+	const icons = {
+		youtube: '🔴',
+		tiktok: '⚫',
+		instagram: '📷',
+		vimeo: '🎬'
+	};
+	return icons[platform];
+}
+
+/**
+ * Fetch video metadata (title, thumbnail) from platform
+ */
+export async function fetchVideoMetadata(platform: VideoPlatform, videoId: string): Promise<{ title?: string; thumbnail?: string }> {
+	try {
+		switch (platform) {
+			case 'youtube': {
+				// Use YouTube oEmbed API (no API key needed)
+				const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+				if (!response.ok) return {};
+				const data = await response.json();
+				return {
+					title: data.title,
+					thumbnail: data.thumbnail_url || getYouTubeThumbnail(videoId, 'hq')
+				};
+			}
+			case 'vimeo': {
+				// Use Vimeo oEmbed API
+				const response = await fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${videoId}`);
+				if (!response.ok) return {};
+				const data = await response.json();
+				return {
+					title: data.title,
+					thumbnail: data.thumbnail_url
+				};
+			}
+			case 'tiktok':
+			case 'instagram':
+				// These platforms don't have public oEmbed APIs
+				return {};
+			default:
+				return {};
 		}
+	} catch (error) {
+		console.error('Failed to fetch video metadata:', error);
+		return {};
 	}
-	
-	return result;
 }
 
 /**
- * Validate if URL is a supported video platform
+ * Get error message for invalid URL
  */
-export function isValidVideoUrl(url: string): boolean {
-	const parsed = parseVideoUrl(url);
-	return parsed.platform !== null && parsed.videoId !== null;
+export function getValidationError(platform: VideoPlatform): string {
+	const messages = {
+		youtube: 'Please enter a valid YouTube URL (e.g., youtube.com/watch?v=... or youtu.be/...)',
+		tiktok: 'Please enter a valid TikTok URL (e.g., tiktok.com/@user/video/...)',
+		instagram: 'Please enter a valid Instagram URL (e.g., instagram.com/p/... or instagram.com/reel/...)',
+		vimeo: 'Please enter a valid Vimeo URL (e.g., vimeo.com/...)'
+	};
+	return messages[platform];
 }
 
 /**
- * Get embed URL for video
+ * Get YouTube thumbnail URL
  */
-export function getVideoEmbedUrl(platform: string, videoId: string): string {
+export function getYouTubeThumbnail(videoId: string, quality: 'default' | 'hq' | 'mq' | 'sd' | 'maxres' = 'hq'): string {
+	return `https://img.youtube.com/vi/${videoId}/${quality}default.jpg`;
+}
+
+/**
+ * Get video thumbnail URL based on platform
+ */
+export function getVideoThumbnail(platform: VideoPlatform, videoId: string): string {
 	switch (platform) {
 		case 'youtube':
-			return `https://www.youtube.com/embed/${videoId}`;
+			return getYouTubeThumbnail(videoId, 'hq');
+		case 'tiktok':
+			// TikTok doesn't provide direct thumbnail URLs
+			return '';
+		case 'instagram':
+			// Instagram doesn't provide direct thumbnail URLs
+			return '';
+		case 'vimeo':
+			// Vimeo requires API call for thumbnail
+			return '';
 		default:
 			return '';
 	}
 }
 
 /**
- * Get thumbnail URL for video
- */
-export function getVideoThumbnail(platform: string, videoId: string): string {
-	switch (platform) {
-		case 'youtube':
-			return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-		default:
-			return '';
-	}
-}
-
-/**
- * Validate video file for background upload
+ * Validate video file (for background video upload)
  */
 export function validateVideoFile(file: File): { valid: boolean; error?: string } {
 	// Check file type
@@ -92,22 +187,16 @@ export function validateVideoFile(file: File): { valid: boolean; error?: string 
 	}
 	
 	// Check file size (max 50MB)
-	const maxSize = 50 * 1024 * 1024; // 50MB
+	const maxSize = 50 * 1024 * 1024;
 	if (file.size > maxSize) {
 		return { valid: false, error: 'Video must be less than 50MB' };
-	}
-	
-	// Check supported formats
-	const supportedFormats = ['video/mp4', 'video/webm', 'video/ogg'];
-	if (!supportedFormats.includes(file.type)) {
-		return { valid: false, error: 'Supported formats: MP4, WebM, OGG' };
 	}
 	
 	return { valid: true };
 }
 
 /**
- * Extract a frame from video file as thumbnail
+ * Extract frame from video file (for thumbnail)
  */
 export async function extractVideoFrame(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -116,7 +205,7 @@ export async function extractVideoFrame(file: File): Promise<string> {
 		const ctx = canvas.getContext('2d');
 		
 		if (!ctx) {
-			reject(new Error('Failed to get canvas context'));
+			reject(new Error('Could not get canvas context'));
 			return;
 		}
 		
@@ -125,37 +214,28 @@ export async function extractVideoFrame(file: File): Promise<string> {
 		video.playsInline = true;
 		
 		video.onloadedmetadata = () => {
-			// Seek to 1 second or 10% of video duration
+			// Seek to 1 second or 10% of video
 			video.currentTime = Math.min(1, video.duration * 0.1);
 		};
 		
 		video.onseeked = () => {
-			try {
-				// Set canvas size to video dimensions
-				canvas.width = video.videoWidth;
-				canvas.height = video.videoHeight;
-				
-				// Draw video frame to canvas
-				ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-				
-				// Convert to data URL
-				const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-				
-				// Cleanup
-				URL.revokeObjectURL(video.src);
-				
-				resolve(dataUrl);
-			} catch (e) {
-				reject(e);
-			}
+			canvas.width = video.videoWidth;
+			canvas.height = video.videoHeight;
+			ctx.drawImage(video, 0, 0);
+			
+			canvas.toBlob((blob) => {
+				if (blob) {
+					resolve(URL.createObjectURL(blob));
+				} else {
+					reject(new Error('Could not extract frame'));
+				}
+			}, 'image/jpeg', 0.8);
 		};
 		
 		video.onerror = () => {
-			URL.revokeObjectURL(video.src);
-			reject(new Error('Failed to load video'));
+			reject(new Error('Could not load video'));
 		};
 		
-		// Load video
 		video.src = URL.createObjectURL(file);
 	});
 }

@@ -436,6 +436,12 @@
 	// Visible groups and links
 	$: visibleGroups = $groups.filter(g => (g.is_visible ?? 1) === 1);
 	
+	// Merge and sort all items (groups + blocks) by sort_order
+	$: allItems = [
+		...visibleGroups.map(g => ({ type: 'group' as const, data: g, sort_order: g.sort_order })),
+		...$blocks.filter(b => b.is_visible === 1).map(b => ({ type: 'block' as const, data: b, sort_order: b.sort_order }))
+	].sort((a, b) => a.sort_order - b.sort_order);
+	
 	// Extract font name for Google Fonts
 	$: fontName = (() => {
 		const firstFont = titleFontFamily.split(',')[0].trim().replace(/['"]/g, '');
@@ -744,11 +750,6 @@
 			{/if}
 		{/if}
 
-		{@const allItems = [
-			...visibleGroups.map(g => ({ type: 'group', data: g, sort_order: g.sort_order })),
-			...$blocks.filter(b => b.is_visible === 1).map(b => ({ type: 'block', data: b, sort_order: b.sort_order }))
-		].sort((a, b) => a.sort_order - b.sort_order)}
-		
 		<!-- Links and Blocks (merged and sorted by sort_order) -->
 		<div class="flex flex-col" style="gap: {$publicAppearance?.page?.blockGap || 16}px; margin-top: 24px;">
 			{#each allItems as item}

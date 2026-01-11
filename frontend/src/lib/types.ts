@@ -104,6 +104,7 @@ export interface ImageBlockConfig {
 
 // Video Block Types
 export interface VideoBlockContent {
+	platform: 'youtube' | 'tiktok' | 'instagram' | 'vimeo'; // Platform for this block
 	layout: 'column' | 'carousel' | 'marquee';
 	videos: VideoBlockItem[];
 	config: VideoBlockConfig;
@@ -113,9 +114,10 @@ export interface VideoBlockContent {
 
 export interface VideoBlockItem {
 	id: string;
-	url: string; // Original URL (YouTube, etc)
-	platform: 'youtube' | 'tiktok' | 'vimeo';
+	url: string; // Original URL
+	platform: 'youtube' | 'tiktok' | 'instagram' | 'vimeo';
 	videoId: string; // Extracted video ID
+	embedUrl: string; // Embed URL for iframe
 	title?: string;
 	thumbnail?: string;
 	sort_order: number;

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { VideoBlockContent } from '$lib/types';
-	import { getVideoEmbedUrl } from '$lib/utils/videoUtils';
 	
 	export let content: VideoBlockContent;
 	export let textColor: string = '#18181b';
@@ -58,7 +57,7 @@
 					style="opacity: {index === currentIndex ? 1 : 0}; pointer-events: {index === currentIndex ? 'auto' : 'none'};"
 				>
 					<iframe
-						src={getVideoEmbedUrl(video.platform, video.videoId)}
+						src={video.embedUrl}
 						title={video.title || 'Video'}
 						frameborder="0"
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

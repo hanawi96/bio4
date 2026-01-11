@@ -268,6 +268,15 @@
 		}
 	}
 	
+	// Helper: Get next sort_order for new items
+	function getNextSortOrder(): number {
+		return Math.max(
+			...$blocks.map(b => b.sort_order),
+			...$groups.map(g => g.sort_order),
+			-1
+		) + 1;
+	}
+	
 	// Helper function to update store
 	function updateItemStore(item: { type: 'group' | 'block', data: any }) {
 		if (item.type === 'group') {
@@ -308,27 +317,28 @@
 		const currentItem = allItems[currentIndex];
 		const targetItem = allItems[targetIndex];
 		
-		// Swap sort_order
-		const tempSort = currentItem.data.sort_order;
-		currentItem.data.sort_order = targetItem.data.sort_order;
-		targetItem.data.sort_order = tempSort;
+		// Store old values for revert
+		const oldCurrentSort = currentItem.data.sort_order;
+		const oldTargetSort = targetItem.data.sort_order;
+		
+		// Create new objects with swapped sort_order (immutable update)
+		const updatedCurrent = { ...currentItem, data: { ...currentItem.data, sort_order: oldTargetSort } };
+		const updatedTarget = { ...targetItem, data: { ...targetItem.data, sort_order: oldCurrentSort } };
 		
 		// Update stores
-		updateItemStore(currentItem);
-		updateItemStore(targetItem);
+		updateItemStore(updatedCurrent);
+		updateItemStore(updatedTarget);
 		
 		// Update DB
 		try {
 			await Promise.all([
-				updateItemDB(currentItem),
-				updateItemDB(targetItem)
+				updateItemDB(updatedCurrent),
+				updateItemDB(updatedTarget)
 			]);
 		} catch (e: any) {
 			// Revert on error
-			currentItem.data.sort_order = targetItem.data.sort_order;
-			targetItem.data.sort_order = tempSort;
-			updateItemStore(currentItem);
-			updateItemStore(targetItem);
+			updateItemStore({ ...currentItem, data: { ...currentItem.data, sort_order: oldCurrentSort } });
+			updateItemStore({ ...targetItem, data: { ...targetItem.data, sort_order: oldTargetSort } });
 			toast.error(e.message || 'Failed to reorder');
 		}
 	}
@@ -372,7 +382,7 @@
 				const groupResult = await api.createGroup(username, {
 					title: groupName,
 					layout_type: layoutType,
-					sort_order: $groups.length
+					sort_order: getNextSortOrder()
 				});
 				
 				// Update with real groupId
@@ -427,7 +437,7 @@
 				const blockResult = await api.createBlock(username, {
 					type: 'image',
 					content: currentBlockContent,
-					sort_order: Math.max(...$blocks.map(b => b.sort_order), ...$groups.map(g => g.sort_order), -1) + 1
+					sort_order: getNextSortOrder()
 				});
 				
 				currentBlockId = blockResult.id;
@@ -443,21 +453,26 @@
 				isCreatingBlock = false;
 			}
 		} else if (blockType === 'video') {
-			// Handle video block
+			// Handle video block with platform
+			const platform = event.detail.platform || 'youtube'; // Default to youtube
 			const blockLayout: 'column' | 'carousel' | 'marquee' = 
 				layout === 'column' ? 'column' : 
 				layout === 'carousel' ? 'carousel' : 
 				'marquee';
 			
+			// Determine aspect ratio based on platform
+			const aspectRatio = (platform === 'tiktok' || platform === 'instagram') ? '9/16' : '16/9';
+			
 			// OPTIMISTIC UI: Show editor immediately
 			currentBlockId = null;
 			currentBlockLayout = blockLayout;
 			currentBlockContent = {
+				platform, // Store platform
 				layout: blockLayout,
 				videos: [],
 				config: {
 					spacing: 'comfortable',
-					aspectRatio: '16/9',
+					aspectRatio,
 					autoplay: false,
 					interval: 3,
 					showDots: true,
@@ -465,7 +480,7 @@
 					direction: 'left',
 					speed: 'medium',
 					pauseOnHover: true,
-					videoHeight: 300
+					videoHeight: aspectRatio === '9/16' ? 500 : 300
 				}
 			};
 			viewMode = 'edit-video-block';
@@ -476,7 +491,7 @@
 				const blockResult = await api.createBlock(username, {
 					type: 'video',
 					content: currentBlockContent,
-					sort_order: Math.max(...$blocks.map(b => b.sort_order), ...$groups.map(g => g.sort_order), -1) + 1
+					sort_order: getNextSortOrder()
 				});
 				
 				currentBlockId = blockResult.id;
@@ -507,7 +522,7 @@
 				const blockResult = await api.createBlock(username, {
 					type: 'text',
 					content: currentBlockContent,
-					sort_order: Math.max(...$blocks.map(b => b.sort_order), ...$groups.map(g => g.sort_order), -1) + 1
+					sort_order: getNextSortOrder()
 				});
 				
 				currentBlockId = blockResult.id;
