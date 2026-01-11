@@ -50,8 +50,10 @@
 	export let particlesBlur: 'none' | 'light' | 'medium' | 'heavy' = 'medium';
 	export let particlesOpacity: number = 60;
 	
-	// Check if avatar-cover is selected
+	// Check if avatar-cover or video-cover is selected
 	$: isAvatarCover = selectedHeaderPreset === 'avatar-cover';
+	$: isVideoCover = selectedHeaderPreset === 'video-cover';
+	$: isCoverPreset = isAvatarCover || isVideoCover;
 	
 	// Track previous bgType to detect when switching to pattern
 	let previousBgType = bgType;
@@ -89,36 +91,36 @@
 		<button
 			type="button"
 			on:click={() => bgType = 'gradient'}
-			disabled={isAvatarCover}
-			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'gradient' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
+			disabled={isCoverPreset}
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isCoverPreset ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'gradient' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			title={isCoverPreset ? 'Not available with Avatar/Video Cover preset' : ''}
 		>
 			Gradient
 		</button>
 		<button
 			type="button"
 			on:click={() => bgType = 'pattern'}
-			disabled={isAvatarCover}
-			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'pattern' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
+			disabled={isCoverPreset}
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isCoverPreset ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'pattern' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			title={isCoverPreset ? 'Not available with Avatar/Video Cover preset' : ''}
 		>
 			Pattern
 		</button>
 		<button
 			type="button"
 			on:click={() => bgType = 'image'}
-			disabled={isAvatarCover}
-			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'image' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
+			disabled={isCoverPreset}
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isCoverPreset ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'image' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			title={isCoverPreset ? 'Not available with Avatar/Video Cover preset' : ''}
 		>
 			Image
 		</button>
 		<button
 			type="button"
 			on:click={() => bgType = 'video'}
-			disabled={isAvatarCover}
-			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isAvatarCover ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'video' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
-			title={isAvatarCover ? 'Not available with Avatar Cover preset' : ''}
+			disabled={isCoverPreset}
+			class="px-4 py-2.5 rounded-lg text-sm font-medium transition-all {isCoverPreset ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : bgType === 'video' ? 'bg-[#00aa4f] text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}"
+			title={isCoverPreset ? 'Not available with Avatar/Video Cover preset' : ''}
 		>
 			Video
 		</button>

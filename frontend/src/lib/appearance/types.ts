@@ -161,8 +161,9 @@ export interface HeaderPreset {
 	// Cover settings
 	hasCover: boolean;
 	coverHeight?: 'sm' | 'md' | 'lg' | 'xl'; // 120px, 160px, 200px, 280px
-	coverType?: 'solid' | 'gradient' | 'image'; // Default cover type
-	coverValue?: string; // Default cover value (color, gradient CSS, or image URL)
+	coverType?: 'solid' | 'gradient' | 'image' | 'video'; // Default cover type
+	coverValue?: string; // Default cover value (color, gradient CSS, image URL, or video URL)
+	coverVideoPoster?: string; // Video thumbnail/poster image
 	
 	// Avatar settings
 	avatarSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full'; // 48px, 64px, 80px, 96px, 120px, 100%
@@ -196,8 +197,9 @@ export interface BlockPreset {
 export interface HeaderOverrides {
 	hasCover?: boolean;
 	coverHeight?: 'sm' | 'md' | 'lg' | 'xl';
-	coverType?: 'solid' | 'gradient' | 'image'; // Type of cover
-	coverValue?: string; // Color hex, gradient CSS, or image URL
+	coverType?: 'solid' | 'gradient' | 'image' | 'video'; // Type of cover
+	coverValue?: string; // Color hex, gradient CSS, image URL, or video URL
+	coverVideoPoster?: string; // Video thumbnail/poster image
 	avatarSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 	avatarShape?: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape';
 	avatarPosition?: 'center' | 'overlap';

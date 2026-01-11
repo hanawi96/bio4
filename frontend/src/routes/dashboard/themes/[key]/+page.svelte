@@ -131,6 +131,8 @@
 	let particlesOpacity = 60;
 	
 	let coverImageUrl = '';
+	let coverVideoUrl = '';
+	let coverVideoPoster = '';
 	let showShareButton = true;
 	let showSubscribeButton = true;
 	
@@ -420,8 +422,8 @@
 		bgGrayscale = 'none';
 	}
 
-	// Force solid black background when avatar-cover is selected
-	$: if (selectedHeaderPreset === 'avatar-cover') {
+	// Force solid black background when avatar-cover or video-cover is selected
+	$: if (selectedHeaderPreset === 'avatar-cover' || selectedHeaderPreset === 'video-cover') {
 		bgType = 'solid';
 		bgSolidColor = '#000000';
 		pageBgColor = '#000000';
@@ -608,7 +610,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || iconThumbnailColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || iconThumbnailColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || coverVideoUrl || coverVideoPoster || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 
@@ -655,6 +657,11 @@
 					'block.borderRadius': radiusValue,
 					'header.titleFontFamily': headingFontFamily || fontFamily,
 					...(coverImageUrl ? { 'header.coverValue': coverImageUrl } : {}),
+					...(coverVideoUrl ? { 
+						'header.coverType': 'video',
+						'header.coverValue': coverVideoUrl,
+						'header.coverVideoPoster': coverVideoPoster
+					} : {}),
 					'header.avatarSize': avatarSize,
 					'header.avatarShape': avatarShape,
 					'header.showBio': showBio,
@@ -822,6 +829,37 @@
 		}
 	}
 	
+	async function handleCoverVideoUpload(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		if (!file.type.startsWith('video/')) {
+			alert('Please upload a video file (MP4, WebM)');
+			return;
+		}
+
+		if (file.size > 10 * 1024 * 1024) {
+			alert('Video must be less than 10MB');
+			return;
+		}
+
+		uploading = true;
+
+		try {
+			const result = await api.uploadCoverVideo('demo', file);
+			coverVideoUrl = result.videoUrl;
+			coverVideoPoster = result.posterUrl;
+		} catch (e) {
+			console.error('Failed to upload cover video:', e);
+			alert('Failed to upload cover video. Please try again.');
+		} finally {
+			uploading = false;
+		}
+
+		input.value = '';
+	}
+	
 	async function handleVideoRemove() {
 		if (!confirm('Remove background video?')) return;
 		
@@ -883,7 +921,7 @@
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
 							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:blockTextColor bind:shadowColor bind:iconThumbnailColor />
-							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:socialIconSize bind:socialIconsEnabled bind:avatarGlowEnabled bind:avatarGlowColor bind:titleGlowEnabled bind:titleGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
+							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:coverVideoUrl bind:coverVideoPoster bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:socialIconSize bind:socialIconsEnabled bind:avatarGlowEnabled bind:avatarGlowColor bind:titleGlowEnabled bind:titleGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} on:videoUpload={(e) => handleCoverVideoUpload(e.detail.originalEvent)} />
 							<ThemeBackground 
 								bind:bgType 
 								bind:bgSolidColor 

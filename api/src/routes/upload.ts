@@ -356,6 +356,178 @@ app.delete('/cover/:username', async (c) => {
 	}
 });
 
+// POST /upload/cover-video/:username - Upload cover video
+app.post('/cover-video/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+		const formData = await c.req.formData();
+		const fileEntry = formData.get('file');
+
+		if (!fileEntry || typeof fileEntry === 'string') {
+			return c.json({ error: 'No file provided' }, 400);
+		}
+
+		const file = fileEntry as File;
+
+		// Validate video type
+		const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+		if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+			return c.json({ error: 'Invalid file type. Allowed: MP4, WebM' }, 400);
+		}
+
+		// Max 10MB for video
+		const MAX_VIDEO_SIZE = 10 * 1024 * 1024;
+		if (file.size > MAX_VIDEO_SIZE) {
+			return c.json({ error: 'File too large. Max 10MB' }, 400);
+		}
+
+		// Get page with draft_appearance
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete old video from R2 if exists
+		const oldVideoValue = draftAppearance.headerStyle?.overrides?.coverValue;
+		if (oldVideoValue && oldVideoValue.startsWith('http') && oldVideoValue.includes('/cover-videos/')) {
+			const urlParts = oldVideoValue.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+			try {
+				await c.env.STORAGE.delete(`cover-videos/${storageKey}`);
+			} catch (e) {
+				console.error('Failed to delete old video:', e);
+			}
+		}
+
+		// Delete old poster if exists
+		const oldPosterValue = draftAppearance.headerStyle?.overrides?.coverVideoPoster;
+		if (oldPosterValue && oldPosterValue.startsWith('http') && oldPosterValue.includes('/cover-posters/')) {
+			const urlParts = oldPosterValue.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+			try {
+				await c.env.STORAGE.delete(`cover-posters/${storageKey}`);
+			} catch (e) {
+				console.error('Failed to delete old poster:', e);
+			}
+		}
+
+		// Generate unique filename for video
+		const ext = file.name.split('.').pop() || 'mp4';
+		const videoStorageKey = `cover-videos/${username}-${Date.now()}.${ext}`;
+
+		// Upload video to R2
+		const arrayBuffer = await file.arrayBuffer();
+		await c.env.STORAGE.put(videoStorageKey, arrayBuffer, {
+			httpMetadata: {
+				contentType: file.type
+			}
+		});
+
+		// Build public URL for video
+		const videoUrl = `${c.env.R2_PUBLIC_URL}/${videoStorageKey}`;
+
+		// For poster, we'll use a placeholder for now (in production, extract first frame)
+		// Simple approach: use a default poster or let browser generate one
+		const posterUrl = ''; // Browser will generate poster from video
+
+		// Update draft_appearance with new video
+		if (!draftAppearance.headerStyle) {
+			draftAppearance.headerStyle = {};
+		}
+		if (!draftAppearance.headerStyle.overrides) {
+			draftAppearance.headerStyle.overrides = {};
+		}
+		
+		draftAppearance.headerStyle.overrides.coverType = 'video';
+		draftAppearance.headerStyle.overrides.coverValue = videoUrl;
+		draftAppearance.headerStyle.overrides.coverVideoPoster = posterUrl;
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ videoUrl, posterUrl, storage_key: videoStorageKey });
+	} catch (error) {
+		console.error('Video upload error:', error);
+		return c.json({ error: 'Video upload failed' }, 500);
+	}
+});
+
+// DELETE /upload/cover-video/:username - Remove cover video
+app.delete('/cover-video/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+
+		// Get page with draft_appearance
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete video from R2 if exists
+		const videoValue = draftAppearance.headerStyle?.overrides?.coverValue;
+		if (videoValue && videoValue.startsWith('http') && videoValue.includes('/cover-videos/')) {
+			const urlParts = videoValue.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+			try {
+				await c.env.STORAGE.delete(`cover-videos/${storageKey}`);
+			} catch (e) {
+				console.error('Failed to delete video:', e);
+			}
+		}
+
+		// Delete poster from R2 if exists
+		const posterValue = draftAppearance.headerStyle?.overrides?.coverVideoPoster;
+		if (posterValue && posterValue.startsWith('http') && posterValue.includes('/cover-posters/')) {
+			const urlParts = posterValue.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+			try {
+				await c.env.STORAGE.delete(`cover-posters/${storageKey}`);
+			} catch (e) {
+				console.error('Failed to delete poster:', e);
+			}
+		}
+
+		// Clear video values
+		if (draftAppearance.headerStyle?.overrides) {
+			delete draftAppearance.headerStyle.overrides.coverType;
+			delete draftAppearance.headerStyle.overrides.coverValue;
+			delete draftAppearance.headerStyle.overrides.coverVideoPoster;
+		}
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ success: true });
+	} catch (error) {
+		console.error('Video removal error:', error);
+		return c.json({ error: 'Video removal failed' }, 500);
+	}
+});
+
 // POST /upload/background/:username - Upload background image
 app.post('/background/:username', async (c) => {
 	try {

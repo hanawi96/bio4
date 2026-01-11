@@ -23,14 +23,29 @@
 
 	// Get all header presets
 	const presets = Object.values(HEADER_PRESETS);
+	
+	// Debug: Log số lượng presets
+	console.log('Total presets:', presets.length, presets.map(p => p.id));
 
 	// Derived from store
 	$: selectedPresetId = $appearanceState.headerPresetId || 'no-cover';
 	$: selectedPreset = HEADER_PRESETS[selectedPresetId];
 	
+	// Debug log
+	$: console.log('HeaderSection - selectedPresetId:', selectedPresetId);
+	$: console.log('HeaderSection - showVideoCoverOptions:', showVideoCoverOptions);
+	$: console.log('HeaderSection - coverType:', coverType);
+	$: console.log('HeaderSection - coverValue:', coverValue);
+	
 	// Get cover value from store
 	$: coverValue = ($appearanceState.overrides['header.coverValue'] as string) 
 		|| selectedPreset?.coverValue 
+		|| '';
+	$: coverType = ($appearanceState.overrides['header.coverType'] as string)
+		|| selectedPreset?.coverType
+		|| 'image';
+	$: coverVideoPoster = ($appearanceState.overrides['header.coverVideoPoster'] as string)
+		|| selectedPreset?.coverVideoPoster
 		|| '';
 	$: coverImageUrl = (() => {
 		// Kiểm tra nếu coverValue là URL ảnh hợp lệ
@@ -38,7 +53,8 @@
 		return isValidImageUrl ? coverValue : DEFAULT_COVER_IMAGE;
 	})();
 	$: isDefaultCover = coverImageUrl === DEFAULT_COVER_IMAGE;
-	$: showCoverOptions = selectedPreset?.hasCover && selectedPresetId !== 'avatar-cover';
+	$: showCoverOptions = selectedPreset?.hasCover && selectedPresetId !== 'avatar-cover' && selectedPresetId !== 'video-cover' && coverType !== 'video';
+	$: showVideoCoverOptions = selectedPresetId === 'video-cover' || coverType === 'video';
 
 	// Title Font options - all available fonts (no Default option)
 	import { AVAILABLE_FONTS } from '$lib/appearance/fontConstants';
@@ -118,9 +134,11 @@
 
 	// Select header preset
 	async function selectPreset(presetId: string) {
+		console.log('[HeaderSection] selectPreset called with:', presetId);
 		pendingSave = true;
 		try {
 			await changeHeaderPreset(presetId);
+			console.log('[HeaderSection] After changeHeaderPreset, selectedPresetId:', selectedPresetId);
 		} finally {
 			pendingSave = false;
 		}
@@ -243,9 +261,69 @@
 		}
 	}
 
+	// Video upload handlers
+	async function handleVideoUpload(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		// Validate
+		if (!file.type.startsWith('video/')) {
+			alert('Please upload a video file (MP4, WebM)');
+			return;
+		}
+
+		if (file.size > 10 * 1024 * 1024) {
+			alert('Video must be less than 10MB');
+			return;
+		}
+
+		uploading = true;
+
+		try {
+			// Upload video
+			const result = await api.uploadCoverVideo(username, file);
+
+			// Update appearance with video URL and poster
+			await updateAppearance('header.coverType', 'video');
+			await updateAppearance('header.coverValue', result.videoUrl);
+			await updateAppearance('header.coverVideoPoster', result.posterUrl);
+		} catch (e) {
+			console.error('Failed to upload video:', e);
+			alert('Failed to upload video. Please try again.');
+		} finally {
+			uploading = false;
+		}
+
+		// Reset input
+		input.value = '';
+	}
+
+	async function handleRemoveVideo() {
+		if (!confirm('Remove video cover?')) return;
+
+		uploading = true;
+		try {
+			await api.removeCoverVideo(username);
+
+			// Clear video values
+			await updateAppearance('header.coverType', null);
+			await updateAppearance('header.coverValue', null);
+			await updateAppearance('header.coverVideoPoster', null);
+		} catch (e) {
+			console.error('Failed to remove video:', e);
+			alert('Failed to remove video');
+		} finally {
+			uploading = false;
+		}
+	}
+
 	function getPresetPreview(preset: HeaderPreset) {
 		if (preset.id === 'avatar-cover') {
 			return 'avatar-cover';
+		}
+		if (preset.id === 'video-cover') {
+			return 'video-cover';
 		}
 		if (preset.hasCover) {
 			return 'with-cover';
@@ -276,6 +354,16 @@
 	</div>
 	
 	<div class="p-6">
+		<!-- Debug Panel -->
+		<div class="mb-4 p-4 bg-gray-100 rounded-lg text-xs space-y-1">
+			<p><strong>Debug Info:</strong></p>
+			<p>selectedPresetId: <strong>{selectedPresetId}</strong></p>
+			<p>showVideoCoverOptions: <strong>{showVideoCoverOptions}</strong></p>
+			<p>coverType: <strong>{coverType}</strong></p>
+			<p>Total presets: <strong>{presets.length}</strong></p>
+			<p>Preset IDs: {presets.map(p => p.id).join(', ')}</p>
+		</div>
+		
 		<!-- Header Presets Grid -->
 		<div class="grid grid-cols-4 gap-3">
 		{#each presets as preset}
@@ -289,6 +377,23 @@
 							<!-- Avatar Cover - Full screen avatar with text overlay -->
 							<div class="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400"></div>
 							<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+							
+							<div class="absolute bottom-6 left-0 right-0 z-10 text-center px-4">
+								<div class="h-3.5 bg-white/90 rounded-full w-28 mx-auto mb-2"></div>
+								<div class="h-2 bg-white/70 rounded-full w-36 mx-auto mb-1"></div>
+								<div class="h-2 bg-white/70 rounded-full w-32 mx-auto"></div>
+							</div>
+						{:else if getPresetPreview(preset) === 'video-cover'}
+							<!-- Video Cover - Full screen video with text overlay -->
+							<div class="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-400 to-red-400"></div>
+							<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+							
+							<!-- Video play icon indicator -->
+							<div class="absolute top-3 left-3 bg-black/40 backdrop-blur-sm rounded-full p-1.5">
+								<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+									<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+								</svg>
+							</div>
 							
 							<div class="absolute bottom-6 left-0 right-0 z-10 text-center px-4">
 								<div class="h-3.5 bg-white/90 rounded-full w-28 mx-auto mb-2"></div>
@@ -464,6 +569,125 @@
 							</div>
 						{/if}
 					</div>
+			</div>
+		{/if}
+
+		<!-- Video Cover Options -->
+		{#if showVideoCoverOptions}
+			<div class="mt-6 pt-6 border-t border-gray-200">
+				<h3 class="text-sm font-semibold text-gray-900 mb-4">Cover Video</h3>
+				
+				<!-- Debug info -->
+				<div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+					<p>Debug: Video Cover Options Active</p>
+					<p>selectedPresetId: {selectedPresetId}</p>
+					<p>coverType: {coverType}</p>
+					<p>coverValue: {coverValue || '(empty)'}</p>
+				</div>
+
+				<div class="space-y-3">
+					{#if coverValue && coverType === 'video'}
+						<!-- Video Preview -->
+						<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
+							<video
+								src={coverValue}
+								poster={coverVideoPoster}
+								class="w-full h-40 object-cover"
+								muted
+								loop
+								playsinline
+							/>
+							<div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2">
+								<label class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+									<input
+										type="file"
+										accept="video/mp4,video/webm"
+										on:change={handleVideoUpload}
+										disabled={uploading}
+										class="hidden"
+									/>
+									<div class="px-4 py-2 bg-white text-gray-900 rounded-lg font-medium text-sm shadow-lg hover:bg-gray-100 transition flex items-center gap-2">
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+										</svg>
+										Change
+									</div>
+								</label>
+								<button
+									on:click={handleRemoveVideo}
+									disabled={uploading}
+									class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm shadow-lg disabled:opacity-50 flex items-center gap-2"
+								>
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+									</svg>
+									Remove
+								</button>
+							</div>
+							{#if uploading}
+								<div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+									<div class="flex items-center gap-3 text-white">
+										<div class="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full"></div>
+										<span class="font-medium">Uploading...</span>
+									</div>
+								</div>
+							{/if}
+						</div>
+					{:else}
+						<!-- Video Upload -->
+						<label class="block cursor-pointer">
+							<input
+								type="file"
+								accept="video/mp4,video/webm"
+								on:change={handleVideoUpload}
+								disabled={uploading}
+								class="hidden"
+							/>
+							<div class="flex flex-col items-center justify-center gap-4 px-6 py-12 border-2 border-dashed rounded-xl transition-all bg-gradient-to-br from-gray-50 to-white border-gray-300 hover:border-purple-400 hover:bg-purple-50">
+								{#if uploading}
+									<div class="animate-spin w-10 h-10 border-3 border-purple-600 border-t-transparent rounded-full"></div>
+									<div class="text-center">
+										<p class="text-sm font-medium text-gray-900">Uploading video...</p>
+										<p class="text-xs text-gray-500 mt-1">Please wait</p>
+									</div>
+								{:else}
+									<div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
+										<svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+											<path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+										</svg>
+									</div>
+									<div class="text-center">
+										<p class="text-base font-semibold text-gray-900 mb-1">Upload Cover Video</p>
+										<p class="text-sm text-gray-600 mb-2">Click to browse</p>
+										<div class="flex items-center justify-center gap-4 text-xs text-gray-500">
+											<span class="flex items-center gap-1">
+												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+												</svg>
+												MP4, WebM
+											</span>
+											<span class="flex items-center gap-1">
+												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+												</svg>
+												Max 10MB
+											</span>
+										</div>
+									</div>
+								{/if}
+							</div>
+						</label>
+						<div class="flex items-start gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+							<svg class="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+							</svg>
+							<div class="flex-1">
+								<p class="text-sm font-medium text-purple-900">Best practices</p>
+								<p class="text-xs text-purple-700 mt-0.5">Keep video short (10-15s), use MP4 format for best compatibility</p>
+							</div>
+						</div>
+					{/if}
+				</div>
 			</div>
 		{/if}
 

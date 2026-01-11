@@ -215,8 +215,8 @@
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
 	$: coverHeight = (() => {
-		// For avatar-cover, use 350px (phone width) to maintain 1:1 aspect ratio
-		if (isAvatarCover) {
+		// For avatar-cover and video-cover, use 350px (phone width) to maintain 1:1 aspect ratio
+		if (isAvatarCover || isVideoCover) {
 			return 350;
 		}
 		return header?.coverHeight ? coverHeights[header.coverHeight] : 160;
@@ -230,10 +230,25 @@
 	}
 
 	$: coverStyle = (() => {
+		console.log('[ThemePreviewMockup] coverStyle - header:', header);
+		console.log('[ThemePreviewMockup] coverStyle - headerPresetId:', headerPresetId);
+		console.log('[ThemePreviewMockup] coverStyle - header.coverType:', header?.coverType);
+		console.log('[ThemePreviewMockup] coverStyle - header.coverValue:', header?.coverValue);
+		
 		if (!header?.hasCover) return '';
+		
+		// For video-cover preset, use black background (video element will overlay)
+		if (headerPresetId === 'video-cover' || header?.coverType === 'video') {
+			console.log('[ThemePreviewMockup] coverStyle - Using video cover, returning black background');
+			return 'background: #000000;';
+		}
+		
+		// For avatar-cover preset, use avatar as cover background
 		if (headerPresetId === 'avatar-cover' && $previewPage?.avatar_url) {
+			console.log('[ThemePreviewMockup] coverStyle - Using avatar cover:', $previewPage.avatar_url);
 			return `background: url('${$previewPage.avatar_url}') center/cover;`;
 		}
+		
 		const coverValue = header?.coverValue;
 		if (!coverValue) return 'background: linear-gradient(135deg, #667eea, #764ba2);';
 		if (coverValue.startsWith('http') || coverValue.startsWith('/')) {
@@ -243,6 +258,14 @@
 	})();
 	
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
+	$: isVideoCover = (headerPresetId === 'video-cover' || header?.coverType === 'video') && header?.coverValue;
+	
+	$: {
+		console.log('[ThemePreviewMockup] isVideoCover:', isVideoCover);
+		console.log('[ThemePreviewMockup] isVideoCover check - headerPresetId:', headerPresetId);
+		console.log('[ThemePreviewMockup] isVideoCover check - header?.coverType:', header?.coverType);
+		console.log('[ThemePreviewMockup] isVideoCover check - header?.coverValue:', header?.coverValue);
+	}
 	
 	// Convert background color to rgba gradient colors for mask (optimized - single parse)
 	$: maskGradientColors = (() => {
@@ -632,12 +655,28 @@
 				<div class="pt-10 pb-8" style="padding-left: {pagePadding}px; padding-right: {pagePadding}px; text-align: {textAlign};">
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
-						<div class="relative -mt-10 {isAvatarCover ? 'mb-0' : 'mb-3'} header-cover" style="margin-left: -{pagePadding}px; margin-right: -{pagePadding}px;">
+						<div class="relative -mt-10 {isAvatarCover || isVideoCover ? 'mb-0' : 'mb-3'} header-cover" style="margin-left: -{pagePadding}px; margin-right: -{pagePadding}px;">
 							<div 
 								class="w-full relative"
 								style="{coverStyle} height: {coverHeight}px;"
 							>
-								{#if isAvatarCover}
+								{#if isVideoCover}
+									<!-- Video Cover - similar to avatar-cover but with video -->
+									{console.log('[ThemePreviewMockup] Rendering video cover block')}
+									{console.log('[ThemePreviewMockup] Video src:', header.coverValue)}
+									{console.log('[ThemePreviewMockup] Video poster:', header.coverVideoPoster)}
+									<video
+										src={header.coverValue}
+										poster={header.coverVideoPoster}
+										class="absolute inset-0 w-full h-full object-cover"
+										autoplay
+										muted
+										loop
+										playsinline
+										preload="metadata"
+										on:loadeddata={() => console.log('[ThemePreviewMockup] Video loaded successfully')}
+										on:error={(e) => console.error('[ThemePreviewMockup] Video error:', e)}
+									></video>
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
 									<!-- Layer 2: Bottom fade mask - covers 50% of cover height for smooth transition -->
@@ -651,10 +690,29 @@
 											</p>
 										{/if}
 									</div>
+								{:else if isAvatarCover}
+									<!-- Avatar Cover -->
+									{console.log('[ThemePreviewMockup] Rendering avatar cover block')}
+									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
+									<!-- Layer 2: Bottom fade mask - covers 50% of cover height for smooth transition -->
+									<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 175px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
+									
+									<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
+										<h1 class="font-bold drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">{$previewPage?.title || 'Your Name'}</h1>
+										{#if header.showBio && $previewPage?.bio}
+											<p class="bio-text mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; line-height: 1.5; color: {mutedColor};">
+												{$previewPage.bio}
+											</p>
+										{/if}
+									</div>
+								{:else}
+									<!-- Regular cover (image/gradient) -->
+									{console.log('[ThemePreviewMockup] Rendering regular cover')}
 								{/if}
 							</div>
 							
-							{#if header.avatarPosition === 'overlap' && !isAvatarCover}
+							{#if header.avatarPosition === 'overlap' && !isAvatarCover && !isVideoCover}
 								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarOverlapOffset}px;">
 									{#if $previewPage?.avatar_url}
 										<img 
@@ -675,7 +733,7 @@
 							{/if}
 						</div>
 						
-						{#if !isAvatarCover}
+						{#if !isAvatarCover && !isVideoCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign};">
 								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow};">{$previewPage?.title || 'Your Name'}</h1>
 								{#if header.showBio && $previewPage?.bio}

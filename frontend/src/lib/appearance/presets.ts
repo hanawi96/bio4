@@ -102,6 +102,24 @@ export const HEADER_PRESETS: Record<string, HeaderPreset> = {
 		contentAlign: 'center',
 		showBio: true,
 		spacing: 'comfortable'
+	},
+
+	'video-cover': {
+		id: 'video-cover',
+		name: 'Video Cover',
+		description: 'Full-screen video with text overlay',
+		hasCover: true,
+		coverHeight: 'lg',
+		coverType: 'video',
+		coverValue: '', // Will be set by user
+		coverVideoPoster: '', // Will be set by user
+		avatarSize: 'sm',
+		avatarShape: 'circle',
+		avatarPosition: 'center',
+		avatarBorder: false,
+		contentAlign: 'center',
+		showBio: true,
+		spacing: 'comfortable'
 	}
 };
 

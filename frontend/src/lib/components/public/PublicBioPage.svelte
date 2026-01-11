@@ -318,18 +318,24 @@
 
 	// Cover
 	$: coverHeight = (() => {
-		// For avatar-cover, use maxWidth to maintain 1:1 aspect ratio (same as PhoneMockup)
-		if (isAvatarCover) {
+		// For avatar-cover and video-cover, use maxWidth to maintain 1:1 aspect ratio (same as PhoneMockup)
+		if (isAvatarCover || isVideoCover) {
 			return maxWidth;
 		}
 		const heights = { sm: 120, md: 160, lg: 200 };
 		return header?.coverHeight ? heights[header.coverHeight] : 160;
 	})();
 	$: isAvatarCover = header?.preset === 'avatar-cover';
+	$: isVideoCover = header?.preset === 'video-cover' || header?.coverType === 'video';
 	$: avatarOverlapOffset = avatarSize / 2;
 	
 	$: coverStyle = (() => {
 		if (!header?.hasCover) return '';
+		
+		// If video-cover preset, handle video separately (no inline style)
+		if (header?.preset === 'video-cover' || header?.coverType === 'video') {
+			return ''; // Video will be rendered as <video> element
+		}
 		
 		// If avatar-cover preset, use avatar as cover
 		if (isAvatarCover && $page?.avatar_url) {
@@ -366,9 +372,9 @@
 		? `0 0 30px ${header?.avatarGlowColor || tokens?.primaryColor || '#3b82f6'}80`
 		: 'none';
 
-	// Convert background color to rgba gradient colors for mask (for avatar-cover)
+	// Convert background color to rgba gradient colors for mask (for avatar-cover and video-cover)
 	$: maskGradientColors = (() => {
-		if (!isAvatarCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
+		if (!isAvatarCover && !isVideoCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
 		
 		// Get background color - try multiple sources in priority order
 		let bgColor: string | null = null;
@@ -563,19 +569,27 @@
 		<!-- Header with Cover -->
 		{#if header?.hasCover}
 			<div class="relative -mx-4 mb-6">
-				<!-- Cover Image/Gradient -->
-				<div 
-					class="w-full relative"
-					style="{coverStyle} height: {coverHeight}px; {isAvatarCover ? '' : 'border-radius: 5px;'}"
-				>
-					<!-- Text overlay for avatar-cover -->
-					{#if isAvatarCover}
+				<!-- Cover Image/Gradient/Video -->
+				{#if header?.coverType === 'video' && header?.coverValue}
+					<!-- Video Cover -->
+					<div class="w-full relative" style="height: {coverHeight}px;">
+						<video
+							class="absolute inset-0 w-full h-full object-cover"
+							src={header.coverValue}
+							poster={header.coverVideoPoster}
+							preload="metadata"
+							muted
+							autoplay
+							loop
+							playsinline
+						/>
+						
 						<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 						<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
 						<!-- Layer 2: Bottom fade mask - extend 2px below to prevent gap -->
 						<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
 						
-						<!-- Text overlay on avatar cover - z-20 to float above gradient mask -->
+						<!-- Text overlay on video cover - z-20 to float above gradient mask -->
 						<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
 							<h1 class="font-bold drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">
 								{$page?.title || 'Your Name'}
@@ -589,11 +603,40 @@
 								</p>
 							{/if}
 						</div>
-					{/if}
-				</div>
+					</div>
+				{:else}
+					<!-- Image/Gradient Cover -->
+					<div 
+						class="w-full relative"
+						style="{coverStyle} height: {coverHeight}px; {isAvatarCover ? '' : 'border-radius: 5px;'}"
+					>
+						<!-- Text overlay for avatar-cover -->
+						{#if isAvatarCover}
+							<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
+							<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
+							<!-- Layer 2: Bottom fade mask - extend 2px below to prevent gap -->
+							<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 102px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
+							
+							<!-- Text overlay on avatar cover - z-20 to float above gradient mask -->
+							<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
+								<h1 class="font-bold drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">
+									{$page?.title || 'Your Name'}
+								</h1>
+								{#if header.showBio && $page?.bio}
+									<p 
+										class="mt-2 drop-shadow-md"
+										style="font-size: {bioFontSizePx}px; line-height: 1.5; color: {mutedColor};"
+									>
+										{$page.bio}
+									</p>
+								{/if}
+							</div>
+						{/if}
+					</div>
+				{/if}
 				
-				<!-- Avatar (Overlapping) -->
-				{#if header.avatarPosition === 'overlap' && !isAvatarCover}
+				<!-- Avatar (Overlapping) - Only for non-video covers -->
+				{#if header.avatarPosition === 'overlap' && !isAvatarCover && header?.coverType !== 'video'}
 					<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarOverlapOffset}px;">
 						{#if $page?.avatar_url}
 							<img 
@@ -629,7 +672,7 @@
 			</div>
 			
 			<!-- Content below cover -->
-			{#if !isAvatarCover}
+			{#if !isAvatarCover && header?.coverType !== 'video'}
 				<div style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign || 'center'};">
 					<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">
 						{$page?.title || 'Your Name'}

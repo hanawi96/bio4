@@ -284,8 +284,8 @@
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
 	$: coverHeight = (() => {
-		// For avatar-cover, use 350px (phone width) to maintain 1:1 aspect ratio
-		if (isAvatarCover) {
+		// For avatar-cover and video-cover, use 350px (phone width) to maintain 1:1 aspect ratio
+		if (isAvatarCover || isVideoCover) {
 			return 350;
 		}
 		return header?.coverHeight ? coverHeights[header.coverHeight] : 160;
@@ -302,6 +302,11 @@
 	// Get cover background style from header preset + overrides
 	$: coverStyle = (() => {
 		if (!header?.hasCover) return '';
+		
+		// For video-cover preset, use black background (video element will overlay)
+		if (headerPresetId === 'video-cover' || header?.coverType === 'video') {
+			return 'background: #000000;';
+		}
 		
 		// If avatar-cover preset, use avatar as cover
 		if (headerPresetId === 'avatar-cover' && $page?.avatar_url) {
@@ -322,8 +327,9 @@
 		return `background: ${coverValue};`;
 	})();
 	
-	// Check if avatar-cover preset (hide avatar, show text overlay)
+	// Check if avatar-cover or video-cover preset (hide avatar, show text overlay)
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
+	$: isVideoCover = (headerPresetId === 'video-cover' || header?.coverType === 'video') && header?.coverValue;
 	
 	// Get block gap from appearance
 	$: blockGap = $appearance?.page?.blockGap ?? 16;
@@ -431,9 +437,9 @@
 		return 'none';
 	})();
 	
-	// Convert background color to rgba gradient colors for mask (for avatar-cover)
+	// Convert background color to rgba gradient colors for mask (for avatar-cover and video-cover)
 	$: maskGradientColors = (() => {
-		if (!isAvatarCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
+		if (!isAvatarCover && !isVideoCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
 		
 		// Read directly from overrides
 		const bgColor = $appearanceState.overrides['backgroundColor'];
@@ -741,13 +747,40 @@
 				<div class="pt-10 pb-8" style="padding-left: {pagePadding}px; padding-right: {pagePadding}px; text-align: {$appearance?.page?.textAlign || 'center'};">
 					<!-- Header with Cover -->
 					{#if header?.hasCover}
-						<div class="relative -mt-10 {isAvatarCover ? 'mb-0' : 'mb-3'} header-cover" style="margin-left: -{pagePadding}px; margin-right: -{pagePadding}px;">
-							<!-- Cover Image/Gradient with text overlay for avatar-cover -->
+						<div class="relative -mt-10 {isAvatarCover || isVideoCover ? 'mb-0' : 'mb-3'} header-cover" style="margin-left: -{pagePadding}px; margin-right: -{pagePadding}px;">
+							<!-- Cover Image/Gradient/Video with text overlay -->
 							<div 
 								class="w-full relative"
 								style="{coverStyle} height: {coverHeight}px;"
 							>
-								{#if isAvatarCover}
+								{#if isVideoCover}
+									<!-- Video Cover - similar to avatar-cover but with video -->
+									<video
+										src={header.coverValue}
+										poster={header.coverVideoPoster}
+										class="absolute inset-0 w-full h-full object-cover"
+										autoplay
+										muted
+										loop
+										playsinline
+										preload="metadata"
+									></video>
+									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
+									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
+									<!-- Layer 2: Bottom fade mask - covers 50% of cover height for smooth transition -->
+									<div class="absolute left-0 right-0 pointer-events-none" style="bottom: -2px; height: 175px; background: linear-gradient(to top, {maskGradientColors.solid} 0%, {maskGradientColors.dark} 30%, {maskGradientColors.medium} 60%, transparent 100%);"></div>
+									
+									<!-- Text overlay on video cover -->
+									<div class="absolute bottom-1 left-0 right-0 z-20 text-center px-4">
+										<h1 class="font-bold drop-shadow-lg" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">{$page?.title || 'Your Name'}</h1>
+										{#if header.showBio && $page?.bio}
+											<p class="bio-text mt-2 drop-shadow-md" style="font-size: {bioFontSizePx}px; line-height: 1.5; color: {mutedColor};">
+												{$page.bio}
+											</p>
+										{/if}
+									</div>
+								{:else if isAvatarCover}
+									<!-- Avatar Cover -->
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
 									<!-- Layer 2: Bottom fade mask - covers 50% of cover height for smooth transition -->
@@ -765,8 +798,8 @@
 								{/if}
 							</div>
 							
-							<!-- Avatar (Overlapping) - Hidden for avatar-cover -->
-							{#if header.avatarPosition === 'overlap' && !isAvatarCover}
+							<!-- Avatar (Overlapping) - Hidden for avatar-cover and video-cover -->
+							{#if header.avatarPosition === 'overlap' && !isAvatarCover && !isVideoCover}
 								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarOverlapOffset}px;">
 									{#if $page?.avatar_url}
 										<img 
@@ -799,8 +832,8 @@
 							{/if}
 						</div>
 						
-						<!-- Content below cover (only for non-avatar-cover) -->
-						{#if !isAvatarCover}
+						<!-- Content below cover (only for non-avatar-cover and non-video-cover) -->
+						{#if !isAvatarCover && !isVideoCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign};">
 								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">{$page?.title || 'Your Name'}</h1>
 								{#if header.showBio && $page?.bio}
@@ -925,7 +958,7 @@
 					<!-- Links - với negative margin cho avatar-cover -->
 					<div 
 						class="relative"
-						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover ? `margin-top: -80px; padding-top: 100px;` : 'margin-top: 24px;'}"
+						style="display: flex; flex-direction: column; gap: {blockGap}px; {isAvatarCover || isVideoCover ? `margin-top: -80px; padding-top: 100px;` : 'margin-top: 24px;'}"
 					>
 						{#each allItems as item}
 						{#if item.type === 'group'}
