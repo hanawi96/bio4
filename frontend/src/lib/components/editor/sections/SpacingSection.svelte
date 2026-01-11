@@ -31,9 +31,9 @@
 	}
 </script>
 
-<section class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-	<div class="px-6 py-4 border-b border-gray-100">
-		<h2 class="font-semibold text-gray-900">Block Spacing</h2>
+<section class="card-ios overflow-hidden">
+	<div class="section-header-ios">
+		<h2 class="section-title-ios">Block Spacing</h2>
 		<p class="text-sm text-gray-500 mt-1">Adjust space between elements</p>
 	</div>
 	

@@ -72,9 +72,9 @@
 
 <svelte:window on:click={handleClickOutside} />
 
-<section class="bg-white rounded-xl border border-gray-200">
-	<div class="px-6 py-4 border-b border-gray-100">
-		<h2 class="font-semibold text-gray-900">Typography</h2>
+<section class="card-ios">
+	<div class="section-header-ios">
+		<h2 class="section-title-ios">Typography</h2>
 		<p class="text-sm text-gray-500 mt-1">Customize fonts and text appearance</p>
 	</div>
 	

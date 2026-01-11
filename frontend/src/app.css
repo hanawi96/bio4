@@ -69,6 +69,157 @@
 		@apply flex items-center gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2;
 	}
 
+	/* Section/Card Header */
+	.section-header-ios {
+		@apply px-6 py-4 border-b border-gray-100 rounded-t-2xl;
+	}
+
+	.section-title-ios {
+		@apply font-semibold text-gray-900;
+	}
+
+	/* Stats Card */
+	.stats-card-ios {
+		@apply bg-white rounded-xl border border-gray-200 p-6;
+	}
+
+	/* Icon Badge (for stats, features) */
+	.icon-badge-ios {
+		@apply w-12 h-12 rounded-xl flex items-center justify-center;
+	}
+
+	/* Button variants */
+	.btn-ios-ghost {
+		@apply px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors;
+	}
+
+	.btn-ios-danger {
+		@apply px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors;
+	}
+
+	.btn-ios-icon {
+		@apply p-2 rounded-lg hover:bg-gray-100 transition-colors;
+	}
+
+	/* Selection Card (for theme picker, preset selector) */
+	.selection-card-ios {
+		@apply p-4 rounded-xl border-2 transition-all hover:scale-[1.02] cursor-pointer;
+	}
+
+	.selection-card-ios-active {
+		@apply border-[#00aa4f] ring-2 ring-[#00aa4f]/20 bg-[#e6f7ed];
+	}
+
+	.selection-card-ios-inactive {
+		@apply border-gray-200 hover:border-gray-300 bg-white hover:shadow-md;
+	}
+
+	/* Badge/Tag */
+	.badge-ios {
+		@apply px-3 py-1 text-xs font-medium rounded-full;
+	}
+
+	.badge-ios-success {
+		@apply bg-green-100 text-green-700;
+	}
+
+	.badge-ios-warning {
+		@apply bg-yellow-100 text-yellow-700;
+	}
+
+	.badge-ios-info {
+		@apply bg-blue-100 text-blue-700;
+	}
+
+	.badge-ios-gray {
+		@apply bg-gray-100 text-gray-700;
+	}
+
+	/* Divider */
+	.divider-ios {
+		@apply border-t border-gray-200 my-6;
+	}
+
+	/* Empty State */
+	.empty-state-ios {
+		@apply flex flex-col items-center justify-center py-12 text-center;
+	}
+
+	.empty-state-icon-ios {
+		@apply w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4;
+	}
+
+	/* Link/Action Text */
+	.link-ios {
+		@apply text-[#00aa4f] hover:text-[#008f42] font-medium transition-colors cursor-pointer;
+	}
+
+	/* Textarea */
+	.textarea-ios {
+		@apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm resize-y;
+		transition: all 0.2s;
+	}
+
+	.textarea-ios:focus {
+		@apply outline-none ring-2;
+		border-color: #00aa4f;
+		--tw-ring-color: #00aa4f;
+	}
+
+	/* Select/Dropdown */
+	.select-ios {
+		@apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm appearance-none cursor-pointer;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 0.75rem center;
+		background-size: 1.25rem;
+		padding-right: 2.5rem;
+		transition: all 0.2s;
+	}
+
+	.select-ios:focus {
+		@apply outline-none ring-2;
+		border-color: #00aa4f;
+		--tw-ring-color: #00aa4f;
+	}
+
+	/* Toggle/Switch Container */
+	.toggle-container-ios {
+		@apply flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors;
+	}
+
+	/* Loading Spinner */
+	.spinner-ios {
+		@apply animate-spin w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full;
+		border-top-color: #00aa4f;
+	}
+
+	/* Alert/Notice */
+	.alert-ios {
+		@apply p-4 rounded-xl border;
+	}
+
+	.alert-ios-info {
+		@apply bg-blue-50 border-blue-200 text-blue-700;
+	}
+
+	.alert-ios-success {
+		@apply bg-green-50 border-green-200 text-green-700;
+	}
+
+	.alert-ios-warning {
+		@apply bg-yellow-50 border-yellow-200 text-yellow-700;
+	}
+
+	.alert-ios-error {
+		@apply bg-red-50 border-red-200 text-red-700;
+	}
+
+	/* Skeleton Loader */
+	.skeleton-ios {
+		@apply bg-gray-200 rounded animate-pulse;
+	}
+
 	/* Confirm Modal Styles */
 	.modal-backdrop {
 		@apply fixed inset-0 bg-black/60 backdrop-blur-sm z-40;
@@ -193,6 +344,217 @@
 
 	.modal-btn-confirm-blue:hover {
 		background: #008f42;
+	}
+
+	/* Checkbox */
+	.checkbox-ios {
+		@apply w-4 h-4 rounded border-gray-300 text-[#00aa4f] focus:ring-[#00aa4f] cursor-pointer;
+	}
+
+	/* Radio */
+	.radio-ios {
+		@apply w-4 h-4 border-gray-300 text-[#00aa4f] focus:ring-[#00aa4f] cursor-pointer;
+	}
+
+	/* Toggle Switch */
+	.toggle-ios {
+		@apply relative inline-flex items-center cursor-pointer;
+	}
+
+	.toggle-ios input {
+		@apply sr-only;
+	}
+
+	.toggle-ios-track {
+		@apply w-11 h-6 bg-gray-200 rounded-full transition-colors;
+	}
+
+	.toggle-ios input:checked ~ .toggle-ios-track {
+		background: #00aa4f;
+	}
+
+	.toggle-ios-thumb {
+		@apply absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm;
+	}
+
+	.toggle-ios input:checked ~ .toggle-ios-track .toggle-ios-thumb {
+		@apply translate-x-5;
+	}
+
+	/* Tab Navigation */
+	.tabs-ios {
+		@apply flex gap-1 p-1 bg-gray-100 rounded-xl;
+	}
+
+	.tab-ios {
+		@apply flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer;
+	}
+
+	.tab-ios-active {
+		@apply bg-white text-gray-900 shadow-sm;
+	}
+
+	.tab-ios-inactive {
+		@apply text-gray-600 hover:text-gray-900;
+	}
+
+	/* Tooltip */
+	.tooltip-ios {
+		@apply absolute z-50 px-3 py-2 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-lg;
+		animation: fade-in 0.15s ease-out;
+	}
+
+	/* Dropdown Menu */
+	.dropdown-ios {
+		@apply absolute z-50 mt-2 bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden;
+		animation: scale-in 0.15s ease-out;
+	}
+
+	.dropdown-item-ios {
+		@apply px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-3;
+	}
+
+	.dropdown-divider-ios {
+		@apply border-t border-gray-200 my-1;
+	}
+
+	/* Progress Bar */
+	.progress-ios {
+		@apply w-full h-2 bg-gray-200 rounded-full overflow-hidden;
+	}
+
+	.progress-bar-ios {
+		@apply h-full bg-[#00aa4f] rounded-full transition-all duration-300;
+	}
+
+	/* Avatar */
+	.avatar-ios {
+		@apply rounded-full object-cover;
+	}
+
+	.avatar-ios-sm {
+		@apply w-8 h-8;
+	}
+
+	.avatar-ios-md {
+		@apply w-12 h-12;
+	}
+
+	.avatar-ios-lg {
+		@apply w-16 h-16;
+	}
+
+	.avatar-ios-xl {
+		@apply w-24 h-24;
+	}
+
+	/* List Item */
+	.list-item-ios {
+		@apply flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer;
+	}
+
+	.list-item-ios-border {
+		@apply border-b border-gray-200 last:border-b-0;
+	}
+
+	/* Breadcrumb */
+	.breadcrumb-ios {
+		@apply flex items-center gap-2 text-sm;
+	}
+
+	.breadcrumb-item-ios {
+		@apply text-gray-600 hover:text-gray-900 transition-colors;
+	}
+
+	.breadcrumb-separator-ios {
+		@apply text-gray-400;
+	}
+
+	/* Pagination */
+	.pagination-ios {
+		@apply flex items-center gap-2;
+	}
+
+	.pagination-btn-ios {
+		@apply px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors;
+	}
+
+	.pagination-btn-ios-active {
+		@apply bg-[#00aa4f] text-white border-[#00aa4f] hover:bg-[#008f42];
+	}
+
+	/* Code Block */
+	.code-ios {
+		@apply px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-mono;
+	}
+
+	.code-block-ios {
+		@apply p-4 bg-gray-900 text-gray-100 rounded-xl text-sm font-mono overflow-x-auto;
+	}
+
+	/* Brand Color Overrides - Apply globally */
+	.border-blue-500,
+	.border-blue-600 {
+		border-color: #00aa4f !important;
+	}
+
+	.bg-blue-50 {
+		background-color: #e6f7ed !important;
+	}
+
+	.bg-blue-100 {
+		background-color: #ccefdb !important;
+	}
+
+	.bg-blue-500,
+	.bg-blue-600,
+	.bg-blue-700 {
+		background-color: #00aa4f !important;
+	}
+
+	.bg-blue-600:hover,
+	.hover\:bg-blue-700:hover {
+		background-color: #008f42 !important;
+	}
+
+	.text-blue-500,
+	.text-blue-600,
+	.text-blue-700 {
+		color: #00aa4f !important;
+	}
+
+	.text-blue-600:hover,
+	.hover\:text-blue-700:hover {
+		color: #008f42 !important;
+	}
+
+	.text-blue-900 {
+		color: #006b32 !important;
+	}
+
+	.ring-blue-100,
+	.ring-blue-200 {
+		--tw-ring-color: rgba(0, 170, 79, 0.2) !important;
+	}
+
+	.ring-blue-500 {
+		--tw-ring-color: #00aa4f !important;
+	}
+
+	.border-blue-200 {
+		border-color: #b3e5cc !important;
+	}
+
+	.border-blue-300 {
+		border-color: #99ddbb !important;
+	}
+
+	.border-blue-400 {
+		border-color: #66cc99 !important;
+	}
+
+	.hover\:border-blue-400:hover {
+		border-color: #66cc99 !important;
 	}
 }
 

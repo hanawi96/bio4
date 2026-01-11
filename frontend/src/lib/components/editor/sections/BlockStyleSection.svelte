@@ -294,7 +294,7 @@
 						type="button"
 						on:click={() => selectShadow(shadowId)}
 						disabled={isDisabled}
-						class="px-3 py-2 rounded-lg text-sm font-medium transition-all {isDisabled ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-500' : isSelected ? 'bg-[#00aa4f] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}"
+						class="px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all {isDisabled ? 'opacity-40 cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500' : isSelected ? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}"
 					>
 						{getShadowStyleName(shadowId)}
 					</button>

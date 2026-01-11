@@ -256,11 +256,11 @@
 			<!-- Left: Content Area -->
 			<div class="w-full max-w-3xl">
 				{#if loading}
-					<div class="flex items-center justify-center py-20">
-						<div class="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+					<div class="empty-state-ios">
+						<div class="spinner-ios"></div>
 					</div>
 				{:else if error}
-					<div class="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
+					<div class="alert-ios alert-ios-error">{error}</div>
 				{:else}
 					<!-- Sections -->
 					<div class="space-y-8">
@@ -324,7 +324,7 @@
 							<!-- Copy Button -->
 							<button 
 								on:click={copyLink}
-								class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+								class="btn-ios-icon border border-gray-200"
 								title="Copy link"
 							>
 								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -335,7 +335,7 @@
 							<!-- External Link Button -->
 							<button 
 								on:click={openInNewTab}
-								class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white"
+								class="btn-ios-icon border border-gray-200"
 								title="Open in new tab"
 							>
 								<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +358,7 @@
 							{/if}
 
 							<!-- Share Button -->
-							<button class="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">
+							<button class="btn-ios-primary">
 								SHARE
 							</button>
 						</div>

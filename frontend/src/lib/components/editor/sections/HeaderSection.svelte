@@ -259,11 +259,11 @@
 
 <svelte:window on:click={handleClickOutside} />
 
-<section class="bg-white rounded-xl border border-gray-200 shadow-sm">
-	<div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+<section class="card-ios shadow-sm">
+	<div class="section-header-ios bg-gradient-to-r from-gray-50 to-white">
 		<div class="flex items-center justify-between">
 			<div>
-				<h2 class="font-semibold text-gray-900">Header Style</h2>
+				<h2 class="section-title-ios">Header Style</h2>
 				<p class="text-sm text-gray-500 mt-0.5">Choose your profile header layout</p>
 			</div>
 			{#if pendingSave}
@@ -548,8 +548,8 @@
 							type="button"
 							on:click={() => updateTitleSize(18)}
 							class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {currentTitleSize === 18
-								? 'border-blue-500 bg-blue-50 text-blue-600'
-								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+								? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+								: 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}"
 						>
 							<div class="font-semibold">LG</div>
 							<div class="text-[10px] opacity-60">18px</div>
@@ -558,8 +558,8 @@
 							type="button"
 							on:click={() => updateTitleSize(20)}
 							class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {currentTitleSize === 20
-								? 'border-blue-500 bg-blue-50 text-blue-600'
-								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+								? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+								: 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}"
 						>
 							<div class="font-semibold">XL</div>
 							<div class="text-[10px] opacity-60">20px</div>
@@ -568,8 +568,8 @@
 							type="button"
 							on:click={() => updateTitleSize(24)}
 							class="py-2 px-2 text-xs font-medium rounded-lg border-2 transition-all {currentTitleSize === 24
-								? 'border-blue-500 bg-blue-50 text-blue-600'
-								: 'border-gray-200 text-gray-600 hover:border-gray-300'}"
+								? 'border-[#00aa4f] bg-[#e6f7ed] text-[#00aa4f]'
+								: 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}"
 						>
 							<div class="font-semibold">2XL</div>
 							<div class="text-[10px] opacity-60">24px</div>

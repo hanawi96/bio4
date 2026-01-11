@@ -177,9 +177,9 @@
 	}
 </script>
 
-<section class="bg-white rounded-xl border border-gray-200">
-	<div class="px-6 py-4 border-b border-gray-100">
-		<h2 class="font-semibold text-gray-900">Theme</h2>
+<section class="card-ios">
+	<div class="section-header-ios">
+		<h2 class="section-title-ios">Theme</h2>
 		<p class="text-sm text-gray-500 mt-0.5">Choose a color scheme for your page</p>
 	</div>
 	
