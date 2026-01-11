@@ -2,10 +2,11 @@
 	export let primaryColor: string;
 	export let textColor: string;
 	export let borderColor: string;
-	export let mutedTextColor: string;
 	export let blockTextColor: string;
 	export let shadowColor: string;
 	export let iconThumbnailColor: string;
+	
+	// mutedTextColor is removed - now auto-calculated from textColor with 60% opacity
 </script>
 
 <section class="card-ios p-6">
@@ -55,30 +56,7 @@
 					placeholder="#18181b"
 				/>
 			</div>
-			<p class="text-xs text-gray-500 mt-1">Primary text color</p>
-		</div>
-		<div>
-			<label class="block text-sm font-medium text-gray-700 mb-2">Muted Text</label>
-			<div class="flex items-center gap-3">
-				<div class="relative flex-shrink-0">
-					<input
-						type="color"
-						bind:value={mutedTextColor}
-						class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-					/>
-					<div 
-						class="w-12 h-12 rounded-full cursor-pointer border-2 border-gray-300 hover:border-gray-400 transition-colors shadow-sm"
-						style="background-color: {mutedTextColor};"
-					></div>
-				</div>
-				<input
-					type="text"
-					bind:value={mutedTextColor}
-					class="flex-1 input-ios font-mono text-sm"
-					placeholder="#71717a"
-				/>
-			</div>
-			<p class="text-xs text-gray-500 mt-1">Secondary/muted text color</p>
+			<p class="text-xs text-gray-500 mt-1">Primary text color (muted text auto-calculated at 60% opacity)</p>
 		</div>
 		<div>
 			<label class="block text-sm font-medium text-gray-700 mb-2">Border Color</label>

@@ -75,10 +75,10 @@
 	let textColor = '#18181b';
 	let borderColor = '#e4e4e7';
 	let borderWidth: BorderWidthKey | number = 'default';
-	let mutedTextColor = '#71717a';
 	let blockTextColor = '#ffffff';
 	let shadowColor = '#000000';
 	let iconThumbnailColor = '#000000';
+	// mutedTextColor removed - auto-calculated from textColor
 	let pageBgColor = '#fafafa';
 	
 	let headingFontSize: 'lg' | 'xl' | '2xl' = '2xl';
@@ -307,7 +307,7 @@
 		const subtitleSize = resolveRef(theme.config.semantic?.typography?.subtitle?.fontSize);
 		subtitleFontSize = fontSizeToKey(subtitleSize, ['xs', '13', 'sm', '15', 'base']) as typeof subtitleFontSize;
 		
-		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
+		// mutedTextColor removed - auto-calculated from textColor
 		blockTextColor = resolveRef(theme.config.semantic?.color?.block?.text) || '#ffffff';
 		shadowColor = resolveRef(theme.config.semantic?.color?.shadow?.default) || '#000000';
 		iconThumbnailColor = resolveRef(theme.config.semantic?.color?.icon?.thumbnail) || textColor;
@@ -529,7 +529,7 @@
 			if (!config.semantic.typography.subtitle) config.semantic.typography.subtitle = {};
 			config.semantic.typography.subtitle.fontSize = `ref:tokens.typography.fontSize.${subtitleFontSize}`;
 			
-			config.semantic.color.text.muted = mutedTextColor;
+			// semantic.color.text.muted removed - muted text now auto-calculated from textColor
 			
 			if (!config.background) config.background = {};
 			
@@ -882,7 +882,7 @@
 					{:else}
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
-							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:mutedTextColor bind:blockTextColor bind:shadowColor bind:iconThumbnailColor />
+							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:blockTextColor bind:shadowColor bind:iconThumbnailColor />
 							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:socialIconSize bind:socialIconsEnabled bind:avatarGlowEnabled bind:avatarGlowColor bind:titleGlowEnabled bind:titleGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} />
 							<ThemeBackground 
 								bind:bgType 

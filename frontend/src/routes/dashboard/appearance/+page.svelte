@@ -14,6 +14,7 @@
 	import BackgroundSection from '$lib/components/editor/sections/BackgroundSection.svelte';
 	import BlockStyleSection from '$lib/components/editor/sections/BlockStyleSection.svelte';
 	import FontSection from '$lib/components/editor/sections/FontSection.svelte';
+	import ColorSection from '$lib/components/editor/sections/ColorSection.svelte';
 	import SpacingSection from '$lib/components/editor/sections/SpacingSection.svelte';
 	import PageSettingsSection from '$lib/components/editor/sections/PageSettingsSection.svelte';
 	import ResetThemeModal from '$lib/components/modals/ResetThemeModal.svelte';
@@ -277,6 +278,11 @@
 						<!-- Background Section -->
 						<section id="background" class="scroll-mt-6">
 							<BackgroundSection />
+						</section>
+
+						<!-- Color Section -->
+						<section id="colors" class="scroll-mt-6">
+							<ColorSection />
 						</section>
 
 						<!-- Block Style Section -->

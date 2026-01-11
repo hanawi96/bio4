@@ -89,15 +89,32 @@ export function buildPreviewAppearance(
 	const backgroundColor = resolveRef(semantic?.color?.surface?.page, config) || '#ffffff';
 	const primaryColor = resolveRef(semantic?.color?.primary, config) || '#3b82f6';
 	const textColor = resolveRef(semantic?.color?.text?.default, config) || '#000000';
-	const mutedTextColor = resolveRef(semantic?.color?.text?.muted, config) || '#71717a';
+	// mutedTextColor removed - auto-calculated from textColor with 60% opacity
 	const borderColor = resolveRef(semantic?.color?.border?.default, config) || '#e4e4e7';
 	const borderWidth = resolveBorderWidth(config.page?.defaults?.borderWidth);
 	const blockTextColor = resolveRef(semantic?.color?.block?.text, config) || '#ffffff';
 	const shadowColor = resolveRef(semantic?.color?.shadow?.default, config) || '#000000';
 	
-	// Typography colors - textColor is heading, mutedTextColor is muted
+	// Typography colors - auto-calculate muted from heading
 	const headingColor = textColor;
-	const mutedColor = mutedTextColor;
+	const mutedColor = (() => {
+		if (!textColor) return 'rgba(0, 0, 0, 0.6)';
+		if (textColor.startsWith('#')) {
+			const hex = textColor.replace('#', '');
+			const r = parseInt(hex.substring(0, 2), 16);
+			const g = parseInt(hex.substring(2, 4), 16);
+			const b = parseInt(hex.substring(4, 6), 16);
+			return `rgba(${r}, ${g}, ${b}, 0.6)`;
+		}
+		if (textColor.startsWith('rgb')) {
+			const match = textColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+			if (match) {
+				const [, r, g, b] = match;
+				return `rgba(${r}, ${g}, ${b}, 0.6)`;
+			}
+		}
+		return textColor;
+	})();
 
 	// Build block style from preset
 	const styleBuilder = BLOCK_STYLE_PRESETS[blockStylePreset] || BLOCK_STYLE_PRESETS.solid;
@@ -198,7 +215,7 @@ export function buildPreviewAppearance(
 			backgroundColor,
 			primaryColor,
 			textColor,
-			mutedTextColor,
+			mutedTextColor: mutedColor, // Auto-calculated
 			blockBase: primaryColor,
 			fontFamily: tokens?.typography?.fontFamily?.sans || 'Inter, sans-serif'
 		},
@@ -211,7 +228,7 @@ export function buildPreviewAppearance(
 			borderRadius: 12
 		},
 		textColor,
-		mutedTextColor,
+		mutedTextColor: mutedColor, // Auto-calculated
 		typography: {
 			headingColor,
 			mutedColor

@@ -198,9 +198,7 @@ export function getPresetValue(
         if (typographyKey === 'headingColor') {
             return preset.config?.semantic?.color?.text?.default;
         }
-        if (typographyKey === 'mutedColor') {
-            return preset.config?.semantic?.color?.text?.muted;
-        }
+        // mutedColor is auto-calculated, no longer stored in config
         
         return undefined;
     } else if (path.startsWith('tokens.')) {

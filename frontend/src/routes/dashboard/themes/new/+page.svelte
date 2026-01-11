@@ -103,9 +103,9 @@
 	let textColor = '#18181b';
 	let borderColor = '#e4e4e7';
 	let borderWidth: BorderWidthKey | number = 'default';
-	let mutedTextColor = '#71717a';
 	let blockTextColor = '#ffffff';
 	let shadowColor = '#000000';
+	// mutedTextColor removed - auto-calculated from textColor
 	let iconThumbnailColor = '#000000';
 	let pageBgColor = '#fafafa';
 	
@@ -372,7 +372,7 @@
 		subtitleFontSize = fontSizeToKey(subtitleSize, ['xs', '13', 'sm', '15', 'base']) as typeof subtitleFontSize;
 		
 		// Extract more colors
-		mutedTextColor = resolveRef(theme.config.semantic?.color?.text?.muted) || '#71717a';
+		// mutedTextColor removed - auto-calculated from textColor
 		blockTextColor = resolveRef(theme.config.semantic?.color?.block?.text) || '#ffffff';
 		shadowColor = resolveRef(theme.config.semantic?.color?.shadow?.default) || '#000000';
 		iconThumbnailColor = resolveRef(theme.config.semantic?.color?.icon?.thumbnail) || textColor;
@@ -633,8 +633,7 @@
 			if (!config.semantic.typography.subtitle) config.semantic.typography.subtitle = {};
 			config.semantic.typography.subtitle.fontSize = `ref:tokens.typography.fontSize.${subtitleFontSize}`;
 			
-			// Update more colors
-			config.semantic.color.text.muted = mutedTextColor;
+			// semantic.color.text.muted removed - muted text now auto-calculated from textColor
 			
 			// Update background - NEW STRUCTURE
 			if (!config.background) config.background = {};
@@ -1027,7 +1026,6 @@
 					bind:primaryColor
 					bind:textColor
 					bind:borderColor
-					bind:mutedTextColor
 					bind:blockTextColor
 					bind:shadowColor
 					bind:iconThumbnailColor

@@ -36,6 +36,9 @@ export function resolveToken(ref: string, tokens: ThemeTokens): string {
 	if (ref === 'transparent') return 'transparent';
 	if (ref === 'none') return 'none';
 	
+	// Handle direct hex colors (for glass effect)
+	if (ref.startsWith('#')) return ref;
+	
 	// Handle typography fontSize refs
 	if (ref.startsWith('ref:tokens.typography.fontSize.')) {
 		const fontSize = resolveFontSizeRef(ref);

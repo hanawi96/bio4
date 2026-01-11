@@ -76,6 +76,33 @@ function adjustColor(hex: string, percent: number): string {
 	return '#' + (0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1);
 }
 
+// Auto-calculate muted color from heading color (with reduced opacity)
+function calculateMutedColor(headingColor: string): string {
+	if (!headingColor) return 'rgba(0, 0, 0, 0.6)';
+	
+	// Handle hex colors
+	if (headingColor.startsWith('#')) {
+		const hex = headingColor.replace('#', '');
+		const r = parseInt(hex.substring(0, 2), 16);
+		const g = parseInt(hex.substring(2, 4), 16);
+		const b = parseInt(hex.substring(4, 6), 16);
+		return `rgba(${r}, ${g}, ${b}, 0.6)`; // 60% opacity
+	}
+	
+	// Handle rgb/rgba colors
+	if (headingColor.startsWith('rgb')) {
+		// Extract RGB values
+		const match = headingColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+		if (match) {
+			const [, r, g, b] = match;
+			return `rgba(${r}, ${g}, ${b}, 0.6)`;
+		}
+	}
+	
+	// Fallback
+	return headingColor;
+}
+
 // Resolve semantic token reference (v2 schema)
 function resolveSemanticToken(ref: string, config: any): string | null {
 	if (!ref || !ref.startsWith('ref:')) return ref;
@@ -166,7 +193,7 @@ function expandThemeTokens(config: any): ThemeTokens {
 		secondary: adjustColor(primary, -20),
 		textSecondary: adjustColor(text, isDark ? -30 : 30),
 		mutedTextColor: schemaVersion === 2 
-			? (resolveSemanticToken(semantic.color?.text?.muted, config) || text)
+			? adjustColor(text, isDark ? -30 : 30) // Auto-calculate, ignore semantic.color.text.muted
 			: (tokens.mutedTextColor || adjustColor(text, isDark ? -30 : 30)),
 		shadowLevel: (layout.pagePadding || 16) > 18 ? 'md' : 'sm',
 		backgroundColor,
@@ -304,11 +331,12 @@ function resolveBlockStyle(
 	
 	// Resolve fill color - check for override first
 	let fill: string;
-	if (overrides?.color) {
-		// Use override color
+	if (overrides?.color && recipe.fill !== 'transparent' && recipe.fill !== '#ffffff') {
+		// Only apply override color if recipe allows customization
+		// Skip for: outline (transparent) and glass (#ffffff)
 		fill = overrides.color;
 	} else {
-		// Use recipe fill
+		// Use recipe fill (transparent for outline, #ffffff for glass, etc.)
 		fill = resolveToken(recipe.fill, tokens);
 	}
 	
@@ -561,6 +589,16 @@ export function resolveAppearance(
 	// Merge user overrides - these always take priority
 	const finalHeader = { ...headerWithDefaults, ...headerOverrides };
 
+	// Resolve heading color first
+	const headingColor = (pageState.overrides?.['typography.headingColor'] as string)
+		?? themeConfig.semantic?.color?.text?.default
+		?? tokens.text
+		?? '#18181b';
+	
+	// Auto-calculate muted color from heading color (unless explicitly overridden)
+	const mutedColor = (pageState.overrides?.['typography.mutedColor'] as string)
+		?? calculateMutedColor(headingColor);
+
 	const result = {
 		theme: {
 			id: theme?.id || 0,
@@ -573,21 +611,11 @@ export function resolveAppearance(
 		page: pageLayout,
 		block: blockConfig,
 		blockStyle,
-		textColor: (pageState.overrides?.['textColor'] as string)
-			?? themeConfig.semantic?.color?.text?.default
-			?? tokens.text
-			?? '#18181b',
-		mutedTextColor: (pageState.overrides?.['mutedTextColor'] as string)
-			?? themeConfig.semantic?.color?.text?.muted
-			?? '#71717a',
+		textColor: headingColor,
+		mutedTextColor: mutedColor,
 		typography: {
-			headingColor: (pageState.overrides?.['typography.headingColor'] as string)
-				?? themeConfig.semantic?.color?.text?.default
-				?? tokens.text
-				?? '#18181b',
-			mutedColor: (pageState.overrides?.['typography.mutedColor'] as string)
-				?? themeConfig.semantic?.color?.text?.muted
-				?? '#71717a'
+			headingColor,
+			mutedColor
 		}
 	};
 	
