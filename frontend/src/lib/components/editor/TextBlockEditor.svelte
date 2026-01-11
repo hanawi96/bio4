@@ -19,6 +19,23 @@
 	let linkModalPosition = { top: 0, left: 0 };
 	let selectedTextForLink = { start: 0, end: 0, text: '' };
 	
+	// DEBUG
+	let debugLogs: Array<{time: string, action: string, data: any}> = [];
+	let showDebugPanel = true;
+	
+	function addDebugLog(action: string, data: any) {
+		const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+		debugLogs = [...debugLogs, { time, action, data }];
+		if (debugLogs.length > 20) debugLogs = debugLogs.slice(-20);
+	}
+	
+	$: if ($blocks || $groups) {
+		addDebugLog('STORE_CHANGE', {
+			groups: $groups.map(g => ({ id: g.id, title: g.title, sort: g.sort_order })),
+			blocks: $blocks.map(b => ({ id: b.id, type: b.type, sort: b.sort_order }))
+		});
+	}
+	
 	function buildContent(): TextBlockContent {
 		return { text, textAlign };
 	}

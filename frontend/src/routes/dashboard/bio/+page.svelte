@@ -86,6 +86,16 @@
 	let deleteGroupModal: DeleteGroupModal;
 	let renamingGroupId: number | null = null;
 	let deletingGroupId: number | null = null;
+	
+	// DEBUG PANEL
+	let debugLogs: Array<{time: string, action: string, data: any}> = [];
+	let showDebugPanel = true;
+	
+	function addDebugLog(action: string, data: any) {
+		const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 });
+		debugLogs = [...debugLogs, { time, action, data }];
+		if (debugLogs.length > 30) debugLogs = debugLogs.slice(-30);
+	}
 
 	onMount(async () => {
 		try {
@@ -197,32 +207,6 @@
 			error = e.message || 'Failed to rename group';
 		}
 	}
-
-	async function handleMoveGroup(groupId: number, direction: 'up' | 'down') {
-		const currentIndex = $groups.findIndex(g => g.id === groupId);
-		if (currentIndex === -1) return;
-
-		const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-		if (targetIndex < 0 || targetIndex >= $groups.length) return;
-
-		// OPTIMISTIC UI: Swap immediately
-		const newGroups = [...$groups];
-		[newGroups[currentIndex], newGroups[targetIndex]] = [newGroups[targetIndex], newGroups[currentIndex]];
-		groups.set(newGroups);
-
-		// Update sort_order in background (no reload needed - optimistic update is correct)
-		try {
-			await Promise.all([
-				api.updateGroup(newGroups[currentIndex].id, { sort_order: currentIndex }),
-				api.updateGroup(newGroups[targetIndex].id, { sort_order: targetIndex })
-			]);
-			// Success - no action needed, optimistic update is already correct
-		} catch (e: any) {
-			// Revert on error
-			groups.set($groups);
-			error = e.message || 'Failed to reorder groups';
-		}
-	}
 	
 	// ============ IMAGE BLOCK HANDLERS ============
 	
@@ -294,29 +278,120 @@
 		}
 	}
 	
-	async function handleMoveBlock(blockId: number, direction: 'up' | 'down') {
-		const currentIndex = $blocks.findIndex(b => b.id === blockId);
+	async function handleMoveItem(itemId: number, itemType: 'group' | 'block', direction: 'up' | 'down') {
+		addDebugLog('MOVE_ITEM_START', { itemId, itemType, direction });
+		
+		// Get all items sorted
+		const allItems = [
+			...$groups.map(g => ({ type: 'group' as const, data: g, sort_order: g.sort_order })),
+			...$blocks.map(b => ({ type: 'block' as const, data: b, sort_order: b.sort_order }))
+		].sort((a, b) => a.sort_order - b.sort_order);
+		
+		// Find current item index in merged array
+		const currentIndex = allItems.findIndex(item => 
+			item.type === itemType && item.data.id === itemId
+		);
+		
 		if (currentIndex === -1) return;
 		
 		const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-		if (targetIndex < 0 || targetIndex >= $blocks.length) return;
+		if (targetIndex < 0 || targetIndex >= allItems.length) return;
 		
-		// OPTIMISTIC UI: Swap immediately
-		const newBlocks = [...$blocks];
-		[newBlocks[currentIndex], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[currentIndex]];
-		blocks.set(newBlocks);
+		const currentItem = allItems[currentIndex];
+		const targetItem = allItems[targetIndex];
 		
-		// Update sort_order in background
-		try {
-			await Promise.all([
-				api.updateBlock(newBlocks[currentIndex].id, { sort_order: currentIndex }),
-				api.updateBlock(newBlocks[targetIndex].id, { sort_order: targetIndex })
-			]);
-		} catch (e: any) {
-			// Revert on error
-			blocks.set($blocks);
-			toast.error(e.message || 'Failed to reorder blocks');
+		addDebugLog('BEFORE_SWAP', {
+			current: { type: currentItem.type, id: currentItem.data.id, sort: currentItem.sort_order },
+			target: { type: targetItem.type, id: targetItem.data.id, sort: targetItem.sort_order }
+		});
+		
+		// Swap sort_order
+		const tempSort = currentItem.data.sort_order;
+		currentItem.data.sort_order = targetItem.data.sort_order;
+		targetItem.data.sort_order = tempSort;
+		
+		addDebugLog('AFTER_SWAP', {
+			current: { type: currentItem.type, id: currentItem.data.id, sort: currentItem.data.sort_order },
+			target: { type: targetItem.type, id: targetItem.data.id, sort: targetItem.data.sort_order }
+		});
+		
+		// Update stores
+		if (currentItem.type === 'group') {
+			groups.update(g => g.map(group => 
+				group.id === currentItem.data.id ? currentItem.data : group
+			));
+		} else {
+			blocks.update(b => b.map(block => 
+				block.id === currentItem.data.id ? currentItem.data : block
+			));
 		}
+		
+		if (targetItem.type === 'group') {
+			groups.update(g => g.map(group => 
+				group.id === targetItem.data.id ? targetItem.data : group
+			));
+		} else {
+			blocks.update(b => b.map(block => 
+				block.id === targetItem.data.id ? targetItem.data : block
+			));
+		}
+		
+		addDebugLog('STORES_UPDATED', { success: true });
+		
+		// Update DB
+		try {
+			const updates = [];
+			if (currentItem.type === 'group') {
+				updates.push(api.updateGroup(currentItem.data.id, { sort_order: currentItem.data.sort_order }));
+			} else {
+				updates.push(api.updateBlock(currentItem.data.id, { sort_order: currentItem.data.sort_order }));
+			}
+			
+			if (targetItem.type === 'group') {
+				updates.push(api.updateGroup(targetItem.data.id, { sort_order: targetItem.data.sort_order }));
+			} else {
+				updates.push(api.updateBlock(targetItem.data.id, { sort_order: targetItem.data.sort_order }));
+			}
+			
+			await Promise.all(updates);
+			addDebugLog('API_SUCCESS', { updated: [currentItem.data.id, targetItem.data.id] });
+		} catch (e: any) {
+			addDebugLog('API_FAILED', { error: e.message });
+			// Revert
+			currentItem.data.sort_order = targetItem.data.sort_order;
+			targetItem.data.sort_order = tempSort;
+			
+			if (currentItem.type === 'group') {
+				groups.update(g => g.map(group => 
+					group.id === currentItem.data.id ? currentItem.data : group
+				));
+			} else {
+				blocks.update(b => b.map(block => 
+					block.id === currentItem.data.id ? currentItem.data : block
+				));
+			}
+			
+			if (targetItem.type === 'group') {
+				groups.update(g => g.map(group => 
+					group.id === targetItem.data.id ? targetItem.data : group
+				));
+			} else {
+				blocks.update(b => b.map(block => 
+					block.id === targetItem.data.id ? targetItem.data : block
+				));
+			}
+			
+			toast.error(e.message || 'Failed to reorder');
+		}
+	}
+	
+	// Wrapper functions
+	async function handleMoveBlock(blockId: number, direction: 'up' | 'down') {
+		await handleMoveItem(blockId, 'block', direction);
+	}
+	
+	async function handleMoveGroup(groupId: number, direction: 'up' | 'down') {
+		await handleMoveItem(groupId, 'group', direction);
 	}
 
 
@@ -404,7 +479,7 @@
 				const blockResult = await api.createBlock(username, {
 					type: 'image',
 					content: currentBlockContent,
-					sort_order: 0
+					sort_order: Math.max(...$blocks.map(b => b.sort_order), ...$groups.map(g => g.sort_order), -1) + 1
 				});
 				
 				currentBlockId = blockResult.id;
@@ -453,7 +528,7 @@
 				const blockResult = await api.createBlock(username, {
 					type: 'video',
 					content: currentBlockContent,
-					sort_order: 0
+					sort_order: Math.max(...$blocks.map(b => b.sort_order), ...$groups.map(g => g.sort_order), -1) + 1
 				});
 				
 				currentBlockId = blockResult.id;
@@ -484,7 +559,7 @@
 				const blockResult = await api.createBlock(username, {
 					type: 'text',
 					content: currentBlockContent,
-					sort_order: 0
+					sort_order: Math.max(...$blocks.map(b => b.sort_order), ...$groups.map(g => g.sort_order), -1) + 1
 				});
 				
 				currentBlockId = blockResult.id;
@@ -1194,49 +1269,52 @@
 						</button>
 					</div>
 				{:else}
+					{@const allItems = [
+						...$groups.map(g => ({ type: 'group', data: g, sort_order: g.sort_order })),
+						...$blocks.map(b => ({ type: 'block', data: b, sort_order: b.sort_order }))
+					].sort((a, b) => a.sort_order - b.sort_order)}
+					
 					<div class="space-y-4">
-						{#each $groups as group, index (group.id)}
-							<BlockCard 
-								{group}
-								isFirst={index === 0}
-								isLast={index === $groups.length - 1}
-								on:click={(e) => handleEditGroup(e.detail)}
-								on:moveUp={(e) => handleMoveGroup(e.detail, 'up')}
-								on:moveDown={(e) => handleMoveGroup(e.detail, 'down')}
-								on:delete={(e) => handleDeleteGroup(e.detail)}
-								on:toggleVisible={handleToggleGroupVisible}
-								on:rename={(e) => handleRenameGroup(e.detail)}
-							/>
-						{/each}
-						
-						{#each $blocks as block, index (block.id)}
-							{#if block.type === 'image'}
+						{#each allItems as item, index (item.type === 'group' ? `group-${item.data.id}` : `block-${item.data.id}`)}
+							{#if item.type === 'group'}
+								<BlockCard 
+									group={item.data}
+									isFirst={index === 0}
+									isLast={index === allItems.length - 1}
+									on:click={(e) => handleEditGroup(e.detail)}
+									on:moveUp={(e) => handleMoveGroup(e.detail, 'up')}
+									on:moveDown={(e) => handleMoveGroup(e.detail, 'down')}
+									on:delete={(e) => handleDeleteGroup(e.detail)}
+									on:toggleVisible={handleToggleGroupVisible}
+									on:rename={(e) => handleRenameGroup(e.detail)}
+								/>
+							{:else if item.data.type === 'image'}
 								<ImageBlockCard
-									{block}
+									block={item.data}
 									isFirst={index === 0}
-									isLast={index === $blocks.length - 1}
+									isLast={index === allItems.length - 1}
 									on:click={(e) => handleEditBlock(e.detail)}
 									on:moveUp={(e) => handleMoveBlock(e.detail, 'up')}
 									on:moveDown={(e) => handleMoveBlock(e.detail, 'down')}
 									on:delete={(e) => handleDeleteBlock(e.detail)}
 									on:toggleVisible={handleToggleBlockVisible}
 								/>
-							{:else if block.type === 'video'}
+							{:else if item.data.type === 'video'}
 								<VideoBlockCard
-									{block}
+									block={item.data}
 									isFirst={index === 0}
-									isLast={index === $blocks.length - 1}
+									isLast={index === allItems.length - 1}
 									on:click={(e) => handleEditBlock(e.detail)}
 									on:moveUp={(e) => handleMoveBlock(e.detail, 'up')}
 									on:moveDown={(e) => handleMoveBlock(e.detail, 'down')}
 									on:delete={(e) => handleDeleteBlock(e.detail)}
 									on:toggleVisible={handleToggleBlockVisible}
 								/>
-							{:else if block.type === 'text'}
+							{:else if item.data.type === 'text'}
 								<TextBlockCard
-									{block}
+									block={item.data}
 									isFirst={index === 0}
-									isLast={index === $blocks.length - 1}
+									isLast={index === allItems.length - 1}
 									on:click={(e) => handleEditBlock(e.detail)}
 									on:moveUp={(e) => handleMoveBlock(e.detail, 'up')}
 									on:moveDown={(e) => handleMoveBlock(e.detail, 'down')}
@@ -1356,6 +1434,55 @@
 		</div>
 	</div>
 </div>
+
+<!-- DEBUG PANEL -->
+{#if showDebugPanel}
+	<div class="fixed bottom-4 right-4 w-96 max-h-96 bg-gray-900 text-white rounded-xl shadow-2xl overflow-hidden z-50">
+		<div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+			<div class="flex items-center gap-2">
+				<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+				<span class="text-sm font-semibold">Debug Timeline</span>
+			</div>
+			<button on:click={() => showDebugPanel = false} class="text-gray-400 hover:text-white">
+				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+		</div>
+		<div class="overflow-y-auto max-h-80 p-2 space-y-1 text-xs font-mono">
+			{#each debugLogs as log}
+				<div class="p-2 rounded bg-gray-800 border-l-2 {
+					log.action.includes('START') ? 'border-blue-500' :
+					log.action.includes('SWAP') ? 'border-yellow-500' :
+					log.action.includes('SUCCESS') ? 'border-green-500' :
+					log.action.includes('FAILED') ? 'border-red-500' :
+					'border-gray-600'
+				}">
+					<div class="flex items-center justify-between mb-1">
+						<span class="text-gray-400">{log.time}</span>
+						<span class="font-bold {
+							log.action.includes('START') ? 'text-blue-400' :
+							log.action.includes('SWAP') ? 'text-yellow-400' :
+							log.action.includes('SUCCESS') ? 'text-green-400' :
+							log.action.includes('FAILED') ? 'text-red-400' :
+							'text-gray-300'
+						}">{log.action}</span>
+					</div>
+					<pre class="text-gray-300 text-[10px] overflow-x-auto">{JSON.stringify(log.data, null, 2)}</pre>
+				</div>
+			{/each}
+		</div>
+	</div>
+{:else}
+	<button 
+		on:click={() => showDebugPanel = true}
+		class="fixed bottom-4 right-4 w-12 h-12 bg-gray-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-gray-800 z-50"
+	>
+		<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+		</svg>
+	</button>
+{/if}
 
 <!-- Modals -->
 <AddBlockModal bind:this={addBlockModal} on:select={handleBlockTypeSelect} />

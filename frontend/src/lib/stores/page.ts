@@ -97,8 +97,9 @@ export function loadEditorData(data: {
 	theme: ThemeConfig | null;
 }) {
 	page.set(data.page);
-	groups.set(data.groups);
-	blocks.set(data.blocks);
+	// Sort by sort_order on initial load
+	groups.set(data.groups.sort((a, b) => a.sort_order - b.sort_order));
+	blocks.set(data.blocks.sort((a, b) => a.sort_order - b.sort_order));
 	theme.set(data.theme);
 }
 

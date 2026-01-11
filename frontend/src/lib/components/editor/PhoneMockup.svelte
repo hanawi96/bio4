@@ -1219,8 +1219,8 @@
 							{/if}
 						{/each}
 						
-						<!-- Image Blocks -->
-						{#each $blocks.filter(b => b.is_visible === 1 && b.type === 'image') as block}
+						<!-- Blocks (sorted by sort_order) -->
+						{#each $blocks.filter(b => b.is_visible === 1).sort((a, b) => a.sort_order - b.sort_order) as block}
 							{@const content = (() => {
 								try {
 									return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
@@ -1229,48 +1229,26 @@
 								}
 							})()}
 							{#if content}
-								<ImageBlockRenderer 
-									{content}
-									blockStyle={$appearance?.blockStyle}
-									{blockBorderRadius}
-									textColor={$appearance?.textColor || '#18181b'}
-									mutedTextColor={$appearance?.mutedTextColor || '#71717a'}
-								/>
-							{/if}
-						{/each}
-						
-						<!-- Video Blocks -->
-						{#each $blocks.filter(b => b.is_visible === 1 && b.type === 'video') as block}
-							{@const content = (() => {
-								try {
-									return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
-								} catch {
-									return null;
-								}
-							})()}
-							{#if content}
-								<VideoBlockRenderer 
-									{content}
-									textColor={$appearance?.textColor || '#18181b'}
-									mutedTextColor={$appearance?.mutedTextColor || '#71717a'}
-								/>
-							{/if}
-						{/each}
-						
-						<!-- Text Blocks -->
-						{#each $blocks.filter(b => b.is_visible === 1 && b.type === 'text') as block}
-							{@const content = (() => {
-								try {
-									return typeof block.content === 'string' ? JSON.parse(block.content) : block.content;
-								} catch {
-									return null;
-								}
-							})()}
-							{#if content}
-								<TextBlockRenderer 
-									{content}
-									textColor={$appearance?.textColor || '#18181b'}
-								/>
+								{#if block.type === 'image'}
+									<ImageBlockRenderer 
+										{content}
+										blockStyle={$appearance?.blockStyle}
+										{blockBorderRadius}
+										textColor={$appearance?.textColor || '#18181b'}
+										mutedTextColor={$appearance?.mutedTextColor || '#71717a'}
+									/>
+								{:else if block.type === 'video'}
+									<VideoBlockRenderer 
+										{content}
+										textColor={$appearance?.textColor || '#18181b'}
+										mutedTextColor={$appearance?.mutedTextColor || '#71717a'}
+									/>
+								{:else if block.type === 'text'}
+									<TextBlockRenderer 
+										{content}
+										textColor={$appearance?.textColor || '#18181b'}
+									/>
+								{/if}
 							{/if}
 						{/each}
 						
