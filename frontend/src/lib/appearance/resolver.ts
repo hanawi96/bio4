@@ -213,20 +213,11 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 		// Map old keys to new structure
 		if (key === 'backgroundColor') {
 			// Check if it's a pattern (starts with "background:")
-			if (typeof value === 'string' && value.startsWith('background:')) {
-				// Pattern format - store as-is in tokens.bg
-				config.tokens.bg = { type: 'color', value };
-				return;
-			}
-
-			// Detect type from value
-			if (value.includes('gradient')) {
-				// Just store the full gradient string as-is
-				// The bgTokenToCSS function will handle it correctly
-				config.tokens.bg = { type: 'color', value };
-			} else {
-				config.tokens.bg = { type: 'color', value };
-			}
+			const isPattern = typeof value === 'string' && value.startsWith('background:');
+			const isGradient = typeof value === 'string' && value.includes('gradient');
+			
+			// Update tokens.bg
+			config.tokens.bg = { type: 'color', value };
 			
 			// IMPORTANT: Also update semantic.color.surface.page for schema v2 themes
 			const schemaVersion = config.meta?.schemaVersion || 1;
@@ -237,15 +228,23 @@ function applyOverrides(baseConfig: any, overrides: Record<string, any>): any {
 				config.semantic.color.surface.page = value;
 			}
 			
-			// CRITICAL: Also update background.value for PublicBioPage
+			// CRITICAL: Also update background config for PublicBioPage
 			if (!config.background) config.background = {};
-			config.background.type = value.includes('gradient') ? 'gradient' : 'solid';
+			config.background.type = isPattern ? 'pattern' : isGradient ? 'gradient' : 'solid';
 			config.background.value = value;
 			
 			return;
 		}
+		
 		if (key === 'backgroundVideo') {
+			// Store video URL in old format for backward compatibility
 			config.backgroundVideo = value;
+			
+			// CRITICAL: Also update background config for PublicBioPage
+			if (!config.background) config.background = {};
+			config.background.type = 'video';
+			config.background.value = value;
+			
 			return;
 		}
 
@@ -572,17 +571,20 @@ export function resolveAppearance(
 	const themeDefaults = themeConfig.page?.defaults || {};
 	const headerWithDefaults = { ...baseHeader, preset: headerPresetId };
 	
-	// Merge theme defaults - only if defined
-	if (themeDefaults.avatarSize !== undefined) headerWithDefaults.avatarSize = themeDefaults.avatarSize;
-	if (themeDefaults.avatarShape !== undefined) headerWithDefaults.avatarShape = themeDefaults.avatarShape;
-	if (themeDefaults.avatarBorderColor !== undefined) headerWithDefaults.avatarBorderColor = themeDefaults.avatarBorderColor;
-	if (themeDefaults.avatarBorderWidth !== undefined) headerWithDefaults.avatarBorderWidth = themeDefaults.avatarBorderWidth;
-	if (themeDefaults.avatarType !== undefined) headerWithDefaults.avatarType = themeDefaults.avatarType;
-	if (themeDefaults.avatarVideoUrl !== undefined) headerWithDefaults.avatarVideoUrl = themeDefaults.avatarVideoUrl;
-	if (themeDefaults.socialIconPosition !== undefined) headerWithDefaults.socialIconPosition = themeDefaults.socialIconPosition;
-	if (themeDefaults.socialIconColor !== undefined) headerWithDefaults.socialIconColor = themeDefaults.socialIconColor;
-	if (themeDefaults.socialIconSize !== undefined) headerWithDefaults.socialIconSize = themeDefaults.socialIconSize;
-	if (themeDefaults.socialIconsEnabled !== undefined) headerWithDefaults.socialIconsEnabled = themeDefaults.socialIconsEnabled;
+	// Merge theme defaults - only if defined (optimized with array iteration)
+	const defaultFields = [
+		'avatarSize', 'avatarShape', 'avatarBorderColor', 'avatarBorderWidth',
+		'avatarType', 'avatarVideoUrl',
+		'socialIconPosition', 'socialIconColor', 'socialIconSize', 'socialIconsEnabled'
+	];
+	
+	defaultFields.forEach(field => {
+		if (themeDefaults[field] !== undefined) {
+			headerWithDefaults[field] = themeDefaults[field];
+		}
+	});
+	
+	// Handle nested glow properties
 	if (themeDefaults.titleGlow?.enabled !== undefined) headerWithDefaults.titleGlowEnabled = themeDefaults.titleGlow.enabled;
 	if (themeDefaults.titleGlow?.color !== undefined) headerWithDefaults.titleGlowColor = themeDefaults.titleGlow.color;
 	if (themeDefaults.avatarGlow?.enabled !== undefined) headerWithDefaults.avatarGlowEnabled = themeDefaults.avatarGlow.enabled;

@@ -19,8 +19,9 @@
 	import { toast } from '$lib/stores/toast';
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
 
-	// Create video fade handler for avatar videos
-	const handleVideoTimeUpdate = createVideoFadeHandler();
+	// Create video fade handlers
+	const handleAvatarVideoTimeUpdate = createVideoFadeHandler();
+	const handleBgVideoTimeUpdate = createVideoFadeHandler();
 
 	// Lock modal state
 	let lockModalOpen = false;
@@ -477,7 +478,19 @@
 	"
 >
 	<!-- Background Layer (always separate for particles to work) -->
-	{#if bgType === 'image' && bgValue}
+	{#if bgType === 'video' && bgValue}
+		<!-- Video Background -->
+		<video
+			src={bgValue}
+			class="fixed inset-0 z-0 w-full h-full object-cover"
+			autoplay
+			loop
+			muted
+			playsinline
+			on:timeupdate={handleBgVideoTimeUpdate}
+			style="filter: {backgroundFilters};"
+		></video>
+	{:else if bgType === 'image' && bgValue}
 		<div 
 			class="fixed inset-0 z-0"
 			style="
@@ -571,7 +584,6 @@
 				<!-- Cover Image/Gradient/Video -->
 				{#if isVideoCover}
 					<!-- Video Cover (Avatar Video) -->
-					{console.log('✅ [PublicBioPage] Rendering VIDEO COVER')}
 					<div class="w-full relative" style="height: {coverHeight}px;">
 						<video
 							class="absolute inset-0 w-full h-full object-cover"
@@ -581,7 +593,7 @@
 							autoplay
 							loop
 							playsinline
-							on:timeupdate={handleVideoTimeUpdate}
+							on:timeupdate={handleAvatarVideoTimeUpdate}
 						/>
 						
 						<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
@@ -606,7 +618,6 @@
 					</div>
 				{:else if isAvatarCover}
 					<!-- Image Cover (Avatar Image) -->
-					{console.log('🖼️ [PublicBioPage] Rendering IMAGE COVER')}
 					<div 
 						class="w-full relative"
 						style="{coverStyle} height: {coverHeight}px;"
@@ -633,7 +644,6 @@
 					</div>
 				{:else}
 					<!-- Regular Cover (with-cover preset) -->
-					{console.log('📸 [PublicBioPage] Rendering REGULAR COVER')}
 					<div 
 						class="w-full relative"
 						style="{coverStyle} height: {coverHeight}px; border-radius: 5px;"
@@ -659,7 +669,7 @@
 								muted
 								loop
 								playsinline
-								on:timeupdate={handleVideoTimeUpdate}
+								on:timeupdate={handleAvatarVideoTimeUpdate}
 							></video>
 						{:else if $page?.avatar_url}
 							<img 
@@ -732,7 +742,7 @@
 						muted
 						loop
 						playsinline
-						on:timeupdate={handleVideoTimeUpdate}
+						on:timeupdate={handleAvatarVideoTimeUpdate}
 					></video>
 				{:else if $page?.avatar_url}
 					<img 
