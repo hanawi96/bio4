@@ -182,6 +182,8 @@
 			if (defaults.showBio !== undefined) merged.showBio = defaults.showBio;
 			if (defaults.avatarSize !== undefined) merged.avatarSize = defaults.avatarSize;
 			if (defaults.avatarShape !== undefined) merged.avatarShape = defaults.avatarShape;
+			if (defaults.avatarType !== undefined) merged.avatarType = defaults.avatarType;
+			if (defaults.avatarVideoUrl !== undefined) merged.avatarVideoUrl = defaults.avatarVideoUrl;
 		}
 		
 		// Apply overrides last (higher priority)
@@ -796,6 +798,7 @@
 									</div>
 								{:else}
 									<!-- Regular cover (with-cover preset) -->
+								{/if}
 							</div>
 							
 							<!-- Avatar (Overlapping) - Hidden for avatar-cover -->

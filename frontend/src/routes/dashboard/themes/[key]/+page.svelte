@@ -46,6 +46,8 @@
 	let showBio: boolean = true;
 	let avatarBorderColor = '#ffffff';
 	let avatarBorderWidth: AvatarBorderWidthKey | number = 'default';
+	let avatarType: 'image' | 'video' = 'image';
+	let avatarVideoUrl = '';
 	let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient' = 'solid';
 	let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' = 'none';
 	let blockOpacity: number = 100;
@@ -208,6 +210,8 @@
 		avatarShape = theme.config.page?.defaults?.avatarShape || 'circle';
 		avatarBorderColor = theme.config.page?.defaults?.avatarBorderColor || '#ffffff';
 		avatarBorderWidth = theme.config.page?.defaults?.avatarBorderWidth || 4;
+		avatarType = theme.config.page?.defaults?.avatarType || 'image';
+		avatarVideoUrl = theme.config.page?.defaults?.avatarVideoUrl || '';
 		selectedBlockStyle = theme.config.page?.defaults?.blockStylePreset || 'solid';
 		selectedShadowStyle = theme.config.page?.defaults?.shadowStyle || 'none';
 		blockOpacity = theme.config.page?.defaults?.blockOpacity || 100;
@@ -442,6 +446,10 @@
 			config.page.defaults.headerPresetId = selectedHeaderPreset;
 			config.page.defaults.avatarSize = avatarSize;
 			config.page.defaults.avatarShape = avatarShape;
+			config.page.defaults.avatarBorderColor = avatarBorderColor;
+			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
+			config.page.defaults.avatarType = avatarType;
+			config.page.defaults.avatarVideoUrl = avatarVideoUrl;
 			config.page.defaults.blockStylePreset = selectedBlockStyle;
 			if (oldDefaults.linkStyle !== undefined) config.page.defaults.linkStyle = oldDefaults.linkStyle;
 			config.page.defaults.linkGroupLayout = selectedLinkGroupLayout;
@@ -451,8 +459,6 @@
 			config.page.defaults.socialIconSize = socialIconSize;
 			config.page.defaults.socialIconsEnabled = socialIconsEnabled;
 			config.page.defaults.gradientPreset = selectedGradientPreset;
-			config.page.defaults.avatarBorderColor = avatarBorderColor;
-			config.page.defaults.avatarBorderWidth = avatarBorderWidth;
 			config.page.defaults.shadowStyle = selectedShadowStyle;
 			config.page.defaults.blockOpacity = blockOpacity;
 			config.page.defaults.borderRadius = blockBorderRadiusType;
@@ -610,7 +616,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || iconThumbnailColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || coverVideoUrl || coverVideoPoster || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || avatarType || avatarVideoUrl || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || iconThumbnailColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || coverVideoUrl || coverVideoPoster || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 
@@ -667,6 +673,8 @@
 					'header.showBio': showBio,
 					'header.avatarBorderColor': avatarBorderColor,
 					'header.avatarBorderWidth': avatarBorderWidth,
+					'header.avatarType': avatarType,
+					'header.avatarVideoUrl': avatarVideoUrl,
 					'backgroundColor': backgroundValue,
 					'backgroundVideo': bgType === 'video' && bgVideoUrl ? bgVideoUrl : undefined,
 					'backgroundBlur': bgBlur,
@@ -860,6 +868,38 @@
 		input.value = '';
 	}
 	
+	async function handleAvatarVideoUpload(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		
+		if (!file) return;
+
+		if (!file.type.startsWith('video/')) {
+			alert('Please upload a video file (MP4, WebM)');
+			return;
+		}
+
+		if (file.size > 10 * 1024 * 1024) {
+			alert('Video must be less than 10MB');
+			return;
+		}
+
+		uploading = true;
+
+		try {
+			const result = await api.uploadAvatarVideo('demo', file);
+			avatarVideoUrl = result.videoUrl;
+			avatarType = 'video';
+		} catch (e) {
+			console.error('Failed to upload avatar video:', e);
+			alert('Failed to upload avatar video. Please try again.');
+		} finally {
+			uploading = false;
+		}
+
+		input.value = '';
+	}
+	
 	async function handleVideoRemove() {
 		if (!confirm('Remove background video?')) return;
 		
@@ -921,7 +961,34 @@
 						<form on:submit|preventDefault={handleSubmit} class="space-y-6">
 							<ThemeBasicInfo bind:name bind:description bind:category bind:tier />
 							<ThemeColorPicker bind:primaryColor bind:textColor bind:borderColor bind:blockTextColor bind:shadowColor bind:iconThumbnailColor />
-							<HeaderStyleManager bind:selectedHeaderPreset bind:avatarSize bind:avatarShape bind:coverImageUrl bind:coverVideoUrl bind:coverVideoPoster bind:showBio bind:avatarBorderColor bind:avatarBorderWidth bind:socialIconPosition bind:socialIconColor bind:socialIconSize bind:socialIconsEnabled bind:avatarGlowEnabled bind:avatarGlowColor bind:titleGlowEnabled bind:titleGlowColor bind:headerPresets previewPage={$previewPage} {uploading} {primaryColor} on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} on:videoUpload={(e) => handleCoverVideoUpload(e.detail.originalEvent)} />
+							<HeaderStyleManager 
+								bind:selectedHeaderPreset 
+								bind:avatarSize 
+								bind:avatarShape 
+								bind:coverImageUrl 
+								bind:coverVideoUrl 
+								bind:coverVideoPoster 
+								bind:avatarType
+								bind:avatarVideoUrl
+								bind:showBio 
+								bind:avatarBorderColor 
+								bind:avatarBorderWidth 
+								bind:socialIconPosition 
+								bind:socialIconColor 
+								bind:socialIconSize 
+								bind:socialIconsEnabled 
+								bind:avatarGlowEnabled 
+								bind:avatarGlowColor 
+								bind:titleGlowEnabled 
+								bind:titleGlowColor 
+								bind:headerPresets 
+								previewPage={$previewPage} 
+								{uploading} 
+								{primaryColor} 
+								on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')} 
+								on:videoUpload={(e) => handleCoverVideoUpload(e.detail.originalEvent)}
+								on:avatarVideoUpload={(e) => handleAvatarVideoUpload(e.detail.originalEvent)}
+							/>
 							<ThemeBackground 
 								bind:bgType 
 								bind:bgSolidColor 

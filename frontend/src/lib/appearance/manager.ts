@@ -74,6 +74,14 @@ export function getPresetValue(
             return preset.config?.semantic?.typography?.heading?.fontFamily;
         }
         
+        // Special case: avatarType and avatarVideoUrl come from theme config
+        if (headerKey === 'avatarType') {
+            return preset.config?.page?.defaults?.avatarType || 'image';
+        }
+        if (headerKey === 'avatarVideoUrl') {
+            return preset.config?.page?.defaults?.avatarVideoUrl || '';
+        }
+        
         const currentHeaderId = headerPresetId || getDefaultHeaderPresetId(preset);
         const headerPreset = HEADER_PRESETS[currentHeaderId];
         return headerPreset?.[headerKey as keyof typeof headerPreset];
