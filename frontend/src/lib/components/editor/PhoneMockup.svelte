@@ -820,7 +820,6 @@
 											muted
 											loop
 											playsinline
-											on:timeupdate={handleAvatarVideoTimeUpdate}
 										></video>
 									{:else if $page?.avatar_url}
 										<img 
@@ -890,7 +889,6 @@
 									muted
 									loop
 									playsinline
-									on:timeupdate={handleAvatarVideoTimeUpdate}
 								></video>
 							{:else if $page?.avatar_url}
 								<img 
