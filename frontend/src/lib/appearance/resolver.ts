@@ -577,6 +577,8 @@ export function resolveAppearance(
 	if (themeDefaults.avatarShape !== undefined) headerWithDefaults.avatarShape = themeDefaults.avatarShape;
 	if (themeDefaults.avatarBorderColor !== undefined) headerWithDefaults.avatarBorderColor = themeDefaults.avatarBorderColor;
 	if (themeDefaults.avatarBorderWidth !== undefined) headerWithDefaults.avatarBorderWidth = themeDefaults.avatarBorderWidth;
+	if (themeDefaults.avatarType !== undefined) headerWithDefaults.avatarType = themeDefaults.avatarType;
+	if (themeDefaults.avatarVideoUrl !== undefined) headerWithDefaults.avatarVideoUrl = themeDefaults.avatarVideoUrl;
 	if (themeDefaults.socialIconPosition !== undefined) headerWithDefaults.socialIconPosition = themeDefaults.socialIconPosition;
 	if (themeDefaults.socialIconColor !== undefined) headerWithDefaults.socialIconColor = themeDefaults.socialIconColor;
 	if (themeDefaults.socialIconSize !== undefined) headerWithDefaults.socialIconSize = themeDefaults.socialIconSize;

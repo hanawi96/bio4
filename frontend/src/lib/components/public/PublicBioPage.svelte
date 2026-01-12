@@ -17,6 +17,10 @@
 	import { isFuture, formatCountdownWithLabels } from '$lib/utils/dateUtils';
 	import { onDestroy, onMount } from 'svelte';
 	import { toast } from '$lib/stores/toast';
+	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
+
+	// Create video fade handler for avatar videos
+	const handleVideoTimeUpdate = createVideoFadeHandler();
 
 	// Lock modal state
 	let lockModalOpen = false;
@@ -567,6 +571,7 @@
 				<!-- Cover Image/Gradient/Video -->
 				{#if isVideoCover}
 					<!-- Video Cover (Avatar Video) -->
+					{console.log('✅ [PublicBioPage] Rendering VIDEO COVER')}
 					<div class="w-full relative" style="height: {coverHeight}px;">
 						<video
 							class="absolute inset-0 w-full h-full object-cover"
@@ -576,6 +581,7 @@
 							autoplay
 							loop
 							playsinline
+							on:timeupdate={handleVideoTimeUpdate}
 						/>
 						
 						<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
@@ -600,6 +606,7 @@
 					</div>
 				{:else if isAvatarCover}
 					<!-- Image Cover (Avatar Image) -->
+					{console.log('🖼️ [PublicBioPage] Rendering IMAGE COVER')}
 					<div 
 						class="w-full relative"
 						style="{coverStyle} height: {coverHeight}px;"
@@ -626,6 +633,7 @@
 					</div>
 				{:else}
 					<!-- Regular Cover (with-cover preset) -->
+					{console.log('📸 [PublicBioPage] Rendering REGULAR COVER')}
 					<div 
 						class="w-full relative"
 						style="{coverStyle} height: {coverHeight}px; border-radius: 5px;"
@@ -651,6 +659,7 @@
 								muted
 								loop
 								playsinline
+								on:timeupdate={handleVideoTimeUpdate}
 							></video>
 						{:else if $page?.avatar_url}
 							<img 
@@ -723,6 +732,7 @@
 						muted
 						loop
 						playsinline
+						on:timeupdate={handleVideoTimeUpdate}
 					></video>
 				{:else if $page?.avatar_url}
 					<img 

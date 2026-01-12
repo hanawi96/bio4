@@ -10,8 +10,9 @@
 	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
 	import { getIconUrl, getIconClasses } from '$lib/utils/iconUtils';
 
-	// Create video fade handler
-	const handleVideoTimeUpdate = createVideoFadeHandler();
+	// Create video fade handlers
+	const handleBgVideoTimeUpdate = createVideoFadeHandler();
+	const handleAvatarVideoTimeUpdate = createVideoFadeHandler();
 	// Use preview stores instead of main stores
 	$: tokens = $previewAppearance?.tokens;
 	$: headerPresetId = $previewAppearanceState.headerPresetId || 'no-cover';
@@ -549,7 +550,7 @@
 						loop
 						muted
 						playsinline
-						on:timeupdate={handleVideoTimeUpdate}
+						on:timeupdate={handleBgVideoTimeUpdate}
 						style="filter: blur({bgBlur}px) brightness({bgBrightness / 100}) grayscale({bgGrayscale / 100});"
 					></video>
 				{:else if isBackgroundImage}
@@ -657,6 +658,7 @@
 										loop
 										playsinline
 										preload="metadata"
+										on:timeupdate={handleAvatarVideoTimeUpdate}
 									></video>
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
@@ -702,6 +704,7 @@
 											muted
 											loop
 											playsinline
+											on:timeupdate={handleAvatarVideoTimeUpdate}
 										></video>
 									{:else if $previewPage?.avatar_url}
 										<img 
@@ -744,6 +747,7 @@
 									muted
 									loop
 									playsinline
+									on:timeupdate={handleAvatarVideoTimeUpdate}
 								></video>
 							{:else if $previewPage?.avatar_url}
 								<img 

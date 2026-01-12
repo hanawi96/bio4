@@ -26,8 +26,9 @@
 		video.src = DEFAULT_VIDEO;
 	});
 
-	// Create video fade handler
-	const handleVideoTimeUpdate = createVideoFadeHandler();
+	// Create video fade handlers
+	const handleBgVideoTimeUpdate = createVideoFadeHandler();
+	const handleAvatarVideoTimeUpdate = createVideoFadeHandler();
 	
 	// Get background with override priority (NEW structure)
 	$: resolvedBackground = (() => {
@@ -644,7 +645,7 @@
 					loop 
 					muted 
 					playsinline
-					on:timeupdate={handleVideoTimeUpdate}
+					on:timeupdate={handleBgVideoTimeUpdate}
 				></video>
 			{:else if resolvedBackground && resolvedBackground.includes('url(')}
 				<!-- Background Image Layer -->
@@ -765,6 +766,7 @@
 										loop
 										playsinline
 										preload="metadata"
+										on:timeupdate={handleAvatarVideoTimeUpdate}
 									></video>
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
@@ -818,6 +820,7 @@
 											muted
 											loop
 											playsinline
+											on:timeupdate={handleAvatarVideoTimeUpdate}
 										></video>
 									{:else if $page?.avatar_url}
 										<img 
@@ -887,6 +890,7 @@
 									muted
 									loop
 									playsinline
+									on:timeupdate={handleAvatarVideoTimeUpdate}
 								></video>
 							{:else if $page?.avatar_url}
 								<img 

@@ -1,42 +1,49 @@
 /**
  * Seamless video loop with smooth fade transitions
- * Uses event-based approach for reliability
+ * Uses event-based approach with optimized state management
  */
 export function createVideoFadeHandler() {
 	const FADE_DURATION = 1.5; // 1.5 seconds fade
+	const DEBOUNCE_MS = 100; // Prevent rapid triggers
+	const FADE_START_OFFSET = 0.5; // Start fade 0.5s before end
+	const FADE_IN_THRESHOLD = 0.5; // Fade in during first 0.5s
+	
 	let lastFadeTime = 0;
 	let isNearEnd = false;
 
 	return function handleVideoTimeUpdate(event: Event) {
 		const video = event.target as HTMLVideoElement;
+		
+		// Early return for invalid video state
 		if (!video.duration || isNaN(video.duration)) return;
 
 		const currentTime = video.currentTime;
 		const duration = video.duration;
 		const remaining = duration - currentTime;
-
-		// Prevent multiple triggers in same cycle
 		const now = Date.now();
-		if (now - lastFadeTime < 100) return;
 
-		// Near end: start fade out (last 2 seconds)
-		if (remaining <= FADE_DURATION + 0.5 && !isNearEnd) {
+		// Debounce: prevent multiple triggers in same cycle
+		if (now - lastFadeTime < DEBOUNCE_MS) return;
+
+		// Fade out: near end of video
+		if (remaining <= FADE_DURATION + FADE_START_OFFSET && !isNearEnd) {
 			isNearEnd = true;
 			lastFadeTime = now;
 			video.style.transition = `opacity ${FADE_DURATION}s ease-out`;
 			video.style.opacity = '0';
+			return;
 		}
 
-		// After loop: fade back in (first 0.5 seconds)
-		if (currentTime < 0.5 && isNearEnd) {
+		// Fade in: after loop restart
+		if (currentTime < FADE_IN_THRESHOLD && isNearEnd) {
 			isNearEnd = false;
 			lastFadeTime = now;
 			
-			// Immediate reset without transition
+			// Reset opacity immediately without transition
 			video.style.transition = 'none';
 			video.style.opacity = '0';
 			
-			// Fade in after a frame
+			// Fade in on next frame (ensures smooth transition)
 			requestAnimationFrame(() => {
 				video.style.transition = `opacity ${FADE_DURATION}s ease-in`;
 				video.style.opacity = '1';

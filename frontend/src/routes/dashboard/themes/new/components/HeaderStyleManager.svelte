@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { AVATAR_BORDER_WIDTH_PRESETS, SOCIAL_ICON_SIZE_PRESETS, type AvatarBorderWidthKey, type SocialIconSizeKey } from '$lib/appearance/spacingTokens';
 	import { HEADER_PRESETS, DEFAULT_COVER_IMAGE } from '$lib/appearance/presets';
+	import { createVideoFadeHandler } from '$lib/utils/videoFadeLoop';
 
 	export let headerPresets: any[];
 	export let selectedHeaderPreset: string;
@@ -33,6 +34,9 @@
 	export let avatarVideoPreviewUrl: string = ''; // Local preview URL
 
 	const dispatch = createEventDispatcher();
+	
+	// Create video fade handler for preview
+	const handleVideoTimeUpdate = createVideoFadeHandler();
 	
 	// Avatar border enabled state (derived from width)
 	$: avatarBorderEnabled = avatarBorderWidth !== 'none' && avatarBorderWidth !== 0;
@@ -209,6 +213,7 @@
 								muted
 								loop
 								playsinline
+								on:timeupdate={handleVideoTimeUpdate}
 							></video>
 							<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
 								<button
@@ -216,7 +221,6 @@
 									on:click={() => {
 										avatarVideoUrl = '';
 										avatarVideoPreviewUrl = '';
-										avatarVideoFile = null;
 										avatarType = 'image';
 									}}
 									class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
