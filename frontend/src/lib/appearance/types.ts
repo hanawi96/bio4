@@ -200,6 +200,8 @@ export interface HeaderOverrides {
 	coverType?: 'solid' | 'gradient' | 'image' | 'video'; // Type of cover
 	coverValue?: string; // Color hex, gradient CSS, image URL, or video URL
 	coverVideoPoster?: string; // Video thumbnail/poster image
+	avatarType?: 'image' | 'video'; // Avatar type
+	avatarVideoUrl?: string; // Avatar video URL
 	avatarSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 	avatarShape?: 'circle' | 'rounded' | 'square' | 'oval' | 'portrait' | 'landscape';
 	avatarPosition?: 'center' | 'overlap';

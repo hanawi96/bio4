@@ -44,8 +44,8 @@
 		return isValidImageUrl ? coverValue : DEFAULT_COVER_IMAGE;
 	})();
 	$: isDefaultCover = coverImageUrl === DEFAULT_COVER_IMAGE;
-	$: showCoverOptions = selectedPreset?.hasCover && selectedPresetId !== 'avatar-cover' && selectedPresetId !== 'video-cover' && coverType !== 'video';
-	$: showVideoCoverOptions = selectedPresetId === 'video-cover' || coverType === 'video';
+	$: showCoverOptions = selectedPreset?.hasCover && selectedPresetId !== 'avatar-cover';
+	$: showVideoCoverOptions = false; // Removed video-cover preset
 
 	// Title Font options - all available fonts (no Default option)
 	import { AVAILABLE_FONTS } from '$lib/appearance/fontConstants';
@@ -262,8 +262,8 @@
 			return;
 		}
 
-		if (file.size > 10 * 1024 * 1024) {
-			alert('Video must be less than 10MB');
+		if (file.size > 20 * 1024 * 1024) {
+			alert('Video must be less than 20MB');
 			return;
 		}
 
@@ -311,9 +311,6 @@
 		if (preset.id === 'avatar-cover') {
 			return 'avatar-cover';
 		}
-		if (preset.id === 'video-cover') {
-			return 'video-cover';
-		}
 		if (preset.hasCover) {
 			return 'with-cover';
 		}
@@ -356,23 +353,6 @@
 							<!-- Avatar Cover - Full screen avatar with text overlay -->
 							<div class="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400"></div>
 							<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-							
-							<div class="absolute bottom-6 left-0 right-0 z-10 text-center px-4">
-								<div class="h-3.5 bg-white/90 rounded-full w-28 mx-auto mb-2"></div>
-								<div class="h-2 bg-white/70 rounded-full w-36 mx-auto mb-1"></div>
-								<div class="h-2 bg-white/70 rounded-full w-32 mx-auto"></div>
-							</div>
-						{:else if getPresetPreview(preset) === 'video-cover'}
-							<!-- Video Cover - Full screen video with text overlay -->
-							<div class="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-400 to-red-400"></div>
-							<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-							
-							<!-- Video play icon indicator -->
-							<div class="absolute top-3 left-3 bg-black/40 backdrop-blur-sm rounded-full p-1.5">
-								<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-									<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-								</svg>
-							</div>
 							
 							<div class="absolute bottom-6 left-0 right-0 z-10 text-center px-4">
 								<div class="h-3.5 bg-white/90 rounded-full w-28 mx-auto mb-2"></div>

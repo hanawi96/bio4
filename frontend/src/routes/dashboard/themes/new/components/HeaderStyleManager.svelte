@@ -26,6 +26,10 @@
 	// Video cover props
 	export let coverVideoUrl: string = '';
 	export let coverVideoPoster: string = '';
+	
+	// Avatar video props
+	export let avatarType: 'image' | 'video' = 'image';
+	export let avatarVideoUrl: string = '';
 
 	const dispatch = createEventDispatcher();
 	
@@ -65,7 +69,6 @@
 	// Check if selected preset has cover
 	$: selectedPreset = allPresets.find((p) => p.key === selectedHeaderPreset);
 	$: isAvatarCover = selectedHeaderPreset === 'avatar-cover';
-	$: isVideoCover = selectedHeaderPreset === 'video-cover';
 	$: hasCover = selectedHeaderPreset === 'with-cover' || isAvatarCover;
 	$: hasAvatarBorder = !isAvatarCover;
 
@@ -132,27 +135,6 @@
 										<div class="w-28 h-1 bg-white/80 rounded-full"></div>
 									</div>
 								</div>
-							{:else if preset.key === 'video-cover'}
-								<!-- Video Cover: Full background with video indicator -->
-								<div class="absolute inset-0">
-									<!-- Video background simulation -->
-									<div class="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-400 to-red-400"></div>
-									<div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
-									
-									<!-- Video play icon -->
-									<div class="absolute top-2 left-2 bg-black/40 backdrop-blur-sm rounded-full p-1">
-										<svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-											<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-										</svg>
-									</div>
-									
-									<!-- Content at bottom -->
-									<div class="absolute bottom-8 left-0 right-0 flex flex-col items-center px-4">
-										<div class="w-24 h-2.5 bg-white rounded-full mb-1.5"></div>
-										<div class="w-32 h-1 bg-white/90 rounded-full mb-0.5"></div>
-										<div class="w-28 h-1 bg-white/80 rounded-full"></div>
-									</div>
-								</div>
 							{:else}
 								<!-- No Cover: Simple centered layout -->
 								<div class="absolute inset-0 flex flex-col items-center justify-center px-4 bg-white">
@@ -188,6 +170,83 @@
 					</button>
 				{/each}
 			</div>
+		</div>
+
+		<!-- Video Avatar Toggle -->
+		<div class="border-t border-gray-200 pt-4">
+			<div class="flex items-center justify-between mb-3">
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Use Video Avatar</label>
+					<p class="text-xs text-gray-500 mt-0.5">Upload video instead of image</p>
+				</div>
+				<button
+					type="button"
+					on:click={() => {
+						avatarType = avatarType === 'video' ? 'image' : 'video';
+						if (avatarType === 'image') {
+							avatarVideoUrl = '';
+						}
+					}}
+					class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {avatarType === 'video' ? 'bg-[#00aa4f]' : 'bg-gray-200'}"
+				>
+					<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {avatarType === 'video' ? 'translate-x-6' : 'translate-x-1'}"></span>
+				</button>
+			</div>
+			
+			{#if avatarType === 'video'}
+				<div class="mt-3">
+					{#if avatarVideoUrl}
+						<!-- Video Preview -->
+						<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200 mb-3">
+							<video
+								src={avatarVideoUrl}
+								class="w-full h-32 object-cover"
+								autoplay
+								muted
+								loop
+								playsinline
+							></video>
+							<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+								<button
+									type="button"
+									on:click={() => {
+										avatarVideoUrl = '';
+										avatarType = 'image';
+									}}
+									class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
+								>
+									Remove Video
+								</button>
+							</div>
+						</div>
+					{:else}
+						<!-- Upload Button -->
+						<label class="block relative">
+							<input
+								type="file"
+								accept="video/mp4,video/webm"
+								class="hidden"
+								on:change={(e) => dispatch('avatarVideoUpload', { originalEvent: e })}
+								disabled={uploading}
+							/>
+							<div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#00aa4f] hover:bg-[#f0fdf4] transition-all {uploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}">
+								{#if uploading}
+									<div class="flex flex-col items-center gap-2">
+										<div class="animate-spin w-6 h-6 border-2 border-[#00aa4f] border-t-transparent rounded-full"></div>
+										<p class="text-sm font-medium text-gray-700">Uploading...</p>
+									</div>
+								{:else}
+									<svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+									</svg>
+									<p class="text-sm font-medium text-gray-700">Upload Avatar Video</p>
+									<p class="text-xs text-gray-500 mt-1">MP4 or WebM (max 10MB)</p>
+								{/if}
+							</div>
+						</label>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		<!-- Cover Image Upload (show first when with-cover is selected) -->
@@ -288,180 +347,7 @@
 				{/if}
 			</div>
 		{:else if isAvatarCover}
-			<div class="border-t border-gray-200 pt-4">
-				<label class="block text-sm font-medium text-gray-700 mb-2">Avatar Preview</label>
-				{#if previewPage?.avatar_url}
-					<div class="rounded-xl overflow-hidden border-2 border-gray-200 aspect-square">
-						<img src={previewPage.avatar_url} alt="Avatar" class="w-full h-full object-cover" />
-					</div>
-					<p class="text-xs text-gray-500 mt-2">
-						This avatar will be used as your cover background.
-						<a href="/dashboard/profile" class="text-[#00aa4f] hover:text-[#008f42] font-medium"
-							>Change avatar</a
-						>
-					</p>
-				{:else}
-					<div
-						class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50"
-					>
-						<div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-							<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-								/>
-							</svg>
-						</div>
-						<div class="text-center">
-							<p class="text-sm font-medium text-gray-900">No Avatar Set</p>
-							<p class="text-xs text-gray-500 mt-1">
-								<a href="/dashboard/profile" class="text-[#00aa4f] hover:text-[#008f42] font-medium"
-									>Upload an avatar</a
-								> to use as cover
-							</p>
-						</div>
-					</div>
-				{/if}
-			</div>
-		{:else if isVideoCover}
-			<div class="border-t border-gray-200 pt-4">
-				<label class="block text-sm font-medium text-gray-700 mb-2">Cover Video</label>
-				
-				{#if coverVideoUrl}
-					<!-- Video Preview -->
-					<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200">
-						<video
-							src={coverVideoUrl}
-							poster={coverVideoPoster}
-							class="w-full h-32 object-cover"
-							muted
-							loop
-							playsinline
-						/>
-						<div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2">
-							<label class="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-								<input
-									type="file"
-									accept="video/mp4,video/webm"
-									on:change={handleVideoUpload}
-									disabled={uploading}
-									class="hidden"
-								/>
-								<div class="px-4 py-2 bg-white text-gray-900 rounded-lg font-medium text-sm shadow-lg hover:bg-gray-100 transition flex items-center gap-2">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-									</svg>
-									Change Video
-								</div>
-							</label>
-							<button
-								on:click={() => {
-									coverVideoUrl = '';
-									coverVideoPoster = '';
-								}}
-								disabled={uploading}
-								class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm shadow-lg disabled:opacity-50 flex items-center gap-2"
-							>
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-								</svg>
-								Remove
-							</button>
-						</div>
-						{#if uploading}
-							<div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-								<div class="flex items-center gap-3 text-white">
-									<div class="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full"></div>
-									<span class="font-medium">Uploading...</span>
-								</div>
-							</div>
-						{/if}
-					</div>
-					<p class="text-xs text-gray-500 mt-2">Cover video for header background</p>
-				{:else}
-					<!-- Video Upload -->
-					<label class="block cursor-pointer">
-						<input
-							type="file"
-							accept="video/mp4,video/webm"
-							on:change={handleVideoUpload}
-							disabled={uploading}
-							class="hidden"
-						/>
-						<div class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-purple-300 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all bg-white">
-							{#if uploading}
-								<div class="animate-spin w-10 h-10 border-3 border-purple-600 border-t-transparent rounded-full"></div>
-								<div class="text-center">
-									<p class="text-sm font-medium text-gray-900">Uploading video...</p>
-									<p class="text-xs text-gray-500 mt-1">Please wait</p>
-								</div>
-							{:else}
-								<div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-									<svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-										<path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
-									</svg>
-								</div>
-								<div class="text-center">
-									<p class="text-sm font-medium text-gray-900">Upload Cover Video</p>
-									<p class="text-xs text-gray-500 mt-1">MP4 or WebM (max 10MB)</p>
-								</div>
-								<div class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">
-									Choose Video
-								</div>
-							{/if}
-						</div>
-					</label>
-					<div class="flex items-start gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg mt-2">
-						<svg class="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-							<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-						</svg>
-						<div class="flex-1">
-							<p class="text-sm font-medium text-purple-900">Best practices</p>
-							<p class="text-xs text-purple-700 mt-0.5">Keep video short (10-15s), use MP4 format for best compatibility</p>
-						</div>
-					</div>
-				{/if}
-			</div>
-		{:else if isAvatarCover}
-			<div class="border-t border-gray-200 pt-4">
-				<label class="block text-sm font-medium text-gray-700 mb-2">Avatar Preview</label>
-				{#if previewPage?.avatar_url}
-					<div class="rounded-xl overflow-hidden border-2 border-gray-200 aspect-square">
-						<img src={previewPage.avatar_url} alt="Avatar" class="w-full h-full object-cover" />
-					</div>
-					<p class="text-xs text-gray-500 mt-2">
-						This avatar will be used as your cover background.
-						<a href="/dashboard/profile" class="text-[#00aa4f] hover:text-[#008f42] font-medium"
-							>Change avatar</a
-						>
-					</p>
-				{:else}
-					<div
-						class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50"
-					>
-						<div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-							<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-								/>
-							</svg>
-						</div>
-						<div class="text-center">
-							<p class="text-sm font-medium text-gray-900">No Avatar Set</p>
-							<p class="text-xs text-gray-500 mt-1">
-								<a href="/dashboard/profile" class="text-[#00aa4f] hover:text-[#008f42] font-medium"
-									>Upload an avatar</a
-								> to use as cover
-							</p>
-						</div>
-					</div>
-				{/if}
-			</div>
+			<!-- No additional upload needed for avatar-cover - uses avatar from profile -->
 		{/if}
 
 		<!-- Avatar Settings (hide for avatar-cover preset) -->

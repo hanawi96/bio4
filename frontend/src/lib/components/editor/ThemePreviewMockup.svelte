@@ -215,7 +215,7 @@
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
 	$: coverHeight = (() => {
-		// For avatar-cover and video-cover, use 350px (phone width) to maintain 1:1 aspect ratio
+		// For avatar-cover with video, use 350px (phone width) to maintain 1:1 aspect ratio
 		if (isAvatarCover || isVideoCover) {
 			return 350;
 		}
@@ -232,16 +232,17 @@
 	$: coverStyle = (() => {
 		if (!header?.hasCover) return '';
 		
-		// For video-cover preset, use black background (video element will overlay)
-		if (headerPresetId === 'video-cover' || header?.coverType === 'video') {
+		// For avatar-cover with video, use black background (video element will overlay)
+		if (isVideoCover) {
 			return 'background: #000000;';
 		}
 		
-		// For avatar-cover preset, use avatar as cover background
-		if (headerPresetId === 'avatar-cover' && $previewPage?.avatar_url) {
+		// For avatar-cover with image, use avatar as cover background
+		if (isAvatarCover && $previewPage?.avatar_url) {
 			return `background: url('${$previewPage.avatar_url}') center/cover;`;
 		}
 		
+		// For with-cover preset
 		const coverValue = header?.coverValue;
 		if (!coverValue) return 'background: linear-gradient(135deg, #667eea, #764ba2);';
 		if (coverValue.startsWith('http') || coverValue.startsWith('/')) {
@@ -251,7 +252,7 @@
 	})();
 	
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
-	$: isVideoCover = (headerPresetId === 'video-cover' || header?.coverType === 'video') && header?.coverValue;
+	$: isVideoCover = headerPresetId === 'avatar-cover' && header?.avatarType === 'video' && header?.avatarVideoUrl;
 	
 	// Convert background color to rgba gradient colors for mask (optimized - single parse)
 	$: maskGradientColors = (() => {
@@ -647,18 +648,15 @@
 								style="{coverStyle} height: {coverHeight}px;"
 							>
 								{#if isVideoCover}
-									<!-- Video Cover - similar to avatar-cover but with video -->
+									<!-- Video Cover (Avatar Video) -->
 									<video
-										src={header.coverValue}
-										poster={header.coverVideoPoster}
+										src={header.avatarVideoUrl}
 										class="absolute inset-0 w-full h-full object-cover"
 										autoplay
 										muted
 										loop
 										playsinline
 										preload="metadata"
-										on:loadeddata={() => console.log('[ThemePreviewMockup] Video loaded successfully')}
-										on:error={(e) => console.error('[ThemePreviewMockup] Video error:', e)}
 									></video>
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
@@ -674,7 +672,7 @@
 										{/if}
 									</div>
 								{:else if isAvatarCover}
-									<!-- Avatar Cover -->
+									<!-- Avatar Cover (Image) -->
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
 									<!-- Layer 2: Bottom fade mask - covers 50% of cover height for smooth transition -->
@@ -689,13 +687,23 @@
 										{/if}
 									</div>
 								{:else}
-									<!-- Regular cover (image/gradient) -->
+									<!-- Regular cover (with-cover preset) -->
 								{/if}
 							</div>
 							
 							{#if header.avatarPosition === 'overlap' && !isAvatarCover && !isVideoCover}
 								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarOverlapOffset}px;">
-									{#if $previewPage?.avatar_url}
+									{#if header?.avatarType === 'video' && header?.avatarVideoUrl}
+										<video
+											src={header.avatarVideoUrl}
+											class="header-avatar object-cover {isFullSizeAvatar ? 'w-full' : ''}"
+											style="{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`} {header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header.avatarShape)}; box-shadow: {avatarGlow};"
+											autoplay
+											muted
+											loop
+											playsinline
+										></video>
+									{:else if $previewPage?.avatar_url}
 										<img 
 											src={$previewPage.avatar_url} 
 											alt="Avatar" 
@@ -727,7 +735,17 @@
 					{:else}
 						<!-- No Cover - Center Layout -->
 						<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
-							{#if $previewPage?.avatar_url}
+							{#if header?.avatarType === 'video' && header?.avatarVideoUrl}
+								<video
+									src={header.avatarVideoUrl}
+									class="header-avatar object-cover mb-2 {isFullSizeAvatar ? 'w-full' : ''}"
+									style="{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`} {header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''} border-radius: {getAvatarBorderRadius(header?.avatarShape)}; box-shadow: {avatarGlow};"
+									autoplay
+									muted
+									loop
+									playsinline
+								></video>
+							{:else if $previewPage?.avatar_url}
 								<img 
 									src={$previewPage.avatar_url} 
 									alt="Avatar" 

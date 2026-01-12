@@ -284,7 +284,7 @@
 	// Cover height mapping
 	const coverHeights = { sm: 120, md: 160, lg: 200 };
 	$: coverHeight = (() => {
-		// For avatar-cover and video-cover, use 350px (phone width) to maintain 1:1 aspect ratio
+		// For avatar-cover with video, use 350px (phone width) to maintain 1:1 aspect ratio
 		if (isAvatarCover || isVideoCover) {
 			return 350;
 		}
@@ -303,17 +303,17 @@
 	$: coverStyle = (() => {
 		if (!header?.hasCover) return '';
 		
-		// For video-cover preset, use black background (video element will overlay)
-		if (headerPresetId === 'video-cover' || header?.coverType === 'video') {
+		// For avatar-cover with video, use black background (video element will overlay)
+		if (isVideoCover) {
 			return 'background: #000000;';
 		}
 		
-		// If avatar-cover preset, use avatar as cover
-		if (headerPresetId === 'avatar-cover' && $page?.avatar_url) {
+		// For avatar-cover with image, use avatar as cover
+		if (isAvatarCover && $page?.avatar_url) {
 			return `background: url('${$page.avatar_url}') center/cover;`;
 		}
 		
-		// Get coverValue from header (already merged with overrides)
+		// For with-cover preset - get coverValue from header (already merged with overrides)
 		const coverValue = header?.coverValue;
 		
 		if (!coverValue) {
@@ -327,9 +327,9 @@
 		return `background: ${coverValue};`;
 	})();
 	
-	// Check if avatar-cover or video-cover preset (hide avatar, show text overlay)
+	// Check if avatar-cover preset (with video or image)
 	$: isAvatarCover = headerPresetId === 'avatar-cover';
-	$: isVideoCover = (headerPresetId === 'video-cover' || header?.coverType === 'video') && header?.coverValue;
+	$: isVideoCover = headerPresetId === 'avatar-cover' && header?.avatarType === 'video' && header?.avatarVideoUrl;
 	
 	// Get block gap from appearance
 	$: blockGap = $appearance?.page?.blockGap ?? 16;
@@ -437,7 +437,7 @@
 		return 'none';
 	})();
 	
-	// Convert background color to rgba gradient colors for mask (for avatar-cover and video-cover)
+	// Convert background color to rgba gradient colors for mask (for avatar-cover)
 	$: maskGradientColors = (() => {
 		if (!isAvatarCover && !isVideoCover) return { solid: 'rgba(0,0,0,1)', dark: 'rgba(0,0,0,0.8)', medium: 'rgba(0,0,0,0.4)' };
 		
@@ -754,10 +754,9 @@
 								style="{coverStyle} height: {coverHeight}px;"
 							>
 								{#if isVideoCover}
-									<!-- Video Cover - similar to avatar-cover but with video -->
+									<!-- Video Cover (Avatar Video) -->
 									<video
-										src={header.coverValue}
-										poster={header.coverVideoPoster}
+										src={header.avatarVideoUrl}
 										class="absolute inset-0 w-full h-full object-cover"
 										autoplay
 										muted
@@ -780,7 +779,7 @@
 										{/if}
 									</div>
 								{:else if isAvatarCover}
-									<!-- Avatar Cover -->
+									<!-- Avatar Cover (Image) -->
 									<!-- Layer 1: Subtle gradient overlay - lighter for better visibility -->
 									<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.5) 100%);"></div>
 									<!-- Layer 2: Bottom fade mask - covers 50% of cover height for smooth transition -->
@@ -795,13 +794,29 @@
 											</p>
 										{/if}
 									</div>
-								{/if}
+								{:else}
+									<!-- Regular cover (with-cover preset) -->
 							</div>
 							
-							<!-- Avatar (Overlapping) - Hidden for avatar-cover and video-cover -->
+							<!-- Avatar (Overlapping) - Hidden for avatar-cover -->
 							{#if header.avatarPosition === 'overlap' && !isAvatarCover && !isVideoCover}
 								<div class="absolute left-1/2 -translate-x-1/2" style="bottom: -{avatarOverlapOffset}px;">
-									{#if $page?.avatar_url}
+									{#if header?.avatarType === 'video' && header?.avatarVideoUrl}
+										<video
+											src={header.avatarVideoUrl}
+											class="header-avatar object-cover {isFullSizeAvatar ? 'w-full' : ''}"
+											style="
+												{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
+												{header.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header.avatarBorderColor || '#ffffff'};` : ''}
+												border-radius: {getAvatarBorderRadius(header.avatarShape)};
+												box-shadow: {avatarGlow};
+											"
+											autoplay
+											muted
+											loop
+											playsinline
+										></video>
+									{:else if $page?.avatar_url}
 										<img 
 											src={$page.avatar_url} 
 											alt="Avatar" 
@@ -832,7 +847,7 @@
 							{/if}
 						</div>
 						
-						<!-- Content below cover (only for non-avatar-cover and non-video-cover) -->
+						<!-- Content below cover (only for non-avatar-cover) -->
 						{#if !isAvatarCover && !isVideoCover}
 							<div class="header-content" style="margin-top: {header.avatarPosition === 'overlap' ? avatarOverlapOffset + 8 : 0}px; text-align: {header.contentAlign};">
 								<h1 class="font-bold" style="font-size: {titleFontSize}px; font-family: {titleFontFamily}; line-height: 1.2; text-shadow: {titleGlow}; color: {headingColor};">{$page?.title || 'Your Name'}</h1>
@@ -855,7 +870,22 @@
 					{:else}
 						<!-- No Cover - Center Layout -->
 						<div class="header-content" style="display: flex; flex-direction: column; align-items: {header?.contentAlign === 'left' ? 'flex-start' : 'center'}; text-align: {header?.contentAlign || 'center'};">
-							{#if $page?.avatar_url}
+							{#if header?.avatarType === 'video' && header?.avatarVideoUrl}
+								<video
+									src={header.avatarVideoUrl}
+									class="header-avatar object-cover mb-2 {isFullSizeAvatar ? 'w-full' : ''}"
+									style="
+										{isFullSizeAvatar ? `width: 100%; aspect-ratio: ${fullSizeAspectRatio};` : `width: ${avatarWidth}px; height: ${avatarHeight}px;`}
+										{header?.avatarBorder !== false ? `border: ${avatarBorderWidth}px solid ${header?.avatarBorderColor || '#ffffff'};` : ''}
+										border-radius: {getAvatarBorderRadius(header?.avatarShape)};
+										box-shadow: {avatarGlow};
+									"
+									autoplay
+									muted
+									loop
+									playsinline
+								></video>
+							{:else if $page?.avatar_url}
 								<img 
 									src={$page.avatar_url} 
 									alt="Avatar" 

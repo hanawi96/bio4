@@ -50,10 +50,9 @@
 	export let particlesBlur: 'none' | 'light' | 'medium' | 'heavy' = 'medium';
 	export let particlesOpacity: number = 60;
 	
-	// Check if avatar-cover or video-cover is selected
+	// Check if avatar-cover is selected
 	$: isAvatarCover = selectedHeaderPreset === 'avatar-cover';
-	$: isVideoCover = selectedHeaderPreset === 'video-cover';
-	$: isCoverPreset = isAvatarCover || isVideoCover;
+	$: isCoverPreset = isAvatarCover;
 	
 	// Track previous bgType to detect when switching to pattern
 	let previousBgType = bgType;

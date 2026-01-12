@@ -163,6 +163,10 @@
 	let coverVideoUrl = '';
 	let coverVideoPoster = '';
 	
+	// Avatar video fields
+	let avatarType: 'image' | 'video' = 'image';
+	let avatarVideoUrl = '';
+	
 	// Page settings
 	let showShareButton = true;
 	let showSubscribeButton = true;
@@ -511,8 +515,8 @@
 		bgGrayscale = 'none';
 	}
 
-	// Force solid black background when avatar-cover or video-cover is selected
-	$: if (selectedHeaderPreset === 'avatar-cover' || selectedHeaderPreset === 'video-cover') {
+	// Force solid black background when avatar-cover is selected
+	$: if (selectedHeaderPreset === 'avatar-cover') {
 		bgType = 'solid';
 		bgSolidColor = '#000000';
 		pageBgColor = '#000000';
@@ -737,7 +741,7 @@
 		}
 	}
 
-	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || iconThumbnailColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || coverVideoUrl || coverVideoPoster || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
+	$: if (selectedHeaderPreset || avatarSize || avatarShape || showBio || avatarBorderColor || avatarBorderWidth || selectedBlockStyle || selectedShadowStyle || blockOpacity || shadowCustom || selectedLinkIconShape || selectedLinkGroupLayout || gridConfig || cardConfig || listConfig || socialIconPosition || socialIconColor || socialIconSize || socialIconsEnabled || selectedGradientPreset || fontFamily || headingFontFamily || maxWidth || pagePadding || blockGapPreset || blockPaddingX || blockPaddingY || textAlign || blockBorderRadiusType || primaryColor || textColor || borderColor || borderWidth || mutedTextColor || blockTextColor || shadowColor || iconThumbnailColor || pageBgColor || headingFontSize || linkFontSize || bioFontSize || subtitleFontSize || bgType || bgSolidColor || bgGradientType || bgGradientFrom || bgGradientTo || bgGradientMiddle || bgGradientMiddleEnabled || bgGradientDirection || bgRadialShape || bgRadialPosition || bgImageUrl || bgVideoUrl || bgBlur || bgBrightness || bgGrayscale || selectedPattern || patternColor || patternBgColor || coverImageUrl || coverVideoUrl || coverVideoPoster || avatarType || avatarVideoUrl || showShareButton || showSubscribeButton || titleGlowEnabled || titleGlowColor || avatarGlowEnabled || avatarGlowColor || bgAnimationEnabled || bgAnimationVariant || bgAnimationSpeed || particlesEnabled || particlesCount || particlesSize || particlesColor || particlesSpeed || particlesVariant || particlesBlur || particlesOpacity) {
 		updateConfig();
 	}
 	
@@ -792,6 +796,10 @@
 						'header.coverType': 'video',
 						'header.coverValue': coverVideoUrl,
 						'header.coverVideoPoster': coverVideoPoster
+					} : {}),
+					...(avatarType === 'video' && avatarVideoUrl ? {
+						'header.avatarType': 'video',
+						'header.avatarVideoUrl': avatarVideoUrl
 					} : {}),
 					'header.avatarSize': avatarSize,
 					'header.avatarShape': avatarShape,
@@ -962,8 +970,8 @@
 			return;
 		}
 
-		if (file.size > 10 * 1024 * 1024) {
-			alert('Video must be less than 10MB');
+		if (file.size > 20 * 1024 * 1024) {
+			alert('Video must be less than 20MB');
 			return;
 		}
 
@@ -976,6 +984,37 @@
 		} catch (e) {
 			console.error('Failed to upload cover video:', e);
 			alert('Failed to upload cover video. Please try again.');
+		} finally {
+			uploading = false;
+		}
+
+		input.value = '';
+	}
+	
+	async function handleAvatarVideoUpload(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		if (!file.type.startsWith('video/')) {
+			alert('Please upload a video file (MP4, WebM)');
+			return;
+		}
+
+		if (file.size > 10 * 1024 * 1024) {
+			alert('Video must be less than 10MB');
+			return;
+		}
+
+		uploading = true;
+
+		try {
+			const result = await api.uploadAvatarVideo('demo', file);
+			avatarVideoUrl = result.videoUrl;
+			avatarType = 'video';
+		} catch (e) {
+			console.error('Failed to upload avatar video:', e);
+			alert('Failed to upload avatar video. Please try again.');
 		} finally {
 			uploading = false;
 		}
@@ -1079,6 +1118,8 @@
 					bind:coverImageUrl
 					bind:coverVideoUrl
 					bind:coverVideoPoster
+					bind:avatarType
+					bind:avatarVideoUrl
 					bind:showBio
 					bind:avatarBorderColor
 					bind:avatarBorderWidth
@@ -1096,6 +1137,7 @@
 					{primaryColor}
 					on:coverUpload={(e) => handleImageUpload(e.detail.originalEvent, 'cover')}
 					on:videoUpload={(e) => handleCoverVideoUpload(e.detail.originalEvent)}
+					on:avatarVideoUpload={(e) => handleAvatarVideoUpload(e.detail.originalEvent)}
 				/>
 
 				<!-- Page Background -->

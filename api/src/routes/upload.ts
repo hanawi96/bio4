@@ -375,10 +375,10 @@ app.post('/cover-video/:username', async (c) => {
 			return c.json({ error: 'Invalid file type. Allowed: MP4, WebM' }, 400);
 		}
 
-		// Max 10MB for video
-		const MAX_VIDEO_SIZE = 10 * 1024 * 1024;
+		// Max 20MB for video
+		const MAX_VIDEO_SIZE = 20 * 1024 * 1024;
 		if (file.size > MAX_VIDEO_SIZE) {
-			return c.json({ error: 'File too large. Max 10MB' }, 400);
+			return c.json({ error: 'File too large. Max 20MB' }, 400);
 		}
 
 		// Get page with draft_appearance
@@ -899,6 +899,141 @@ app.delete('/background-video/:username', async (c) => {
 	} catch (error) {
 		console.error('Background video remove error:', error);
 		return c.json({ error: 'Background video remove failed' }, 500);
+	}
+});
+
+// POST /upload/avatar-video/:username - Upload avatar video
+app.post('/avatar-video/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+		const formData = await c.req.formData();
+		const fileEntry = formData.get('file');
+
+		if (!fileEntry || typeof fileEntry === 'string') {
+			return c.json({ error: 'No file provided' }, 400);
+		}
+
+		const file = fileEntry as File;
+
+		// Validate video type
+		const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+		if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+			return c.json({ error: 'Invalid file type. Allowed: MP4, WebM' }, 400);
+		}
+
+		// Max 10MB for avatar video
+		const MAX_VIDEO_SIZE = 10 * 1024 * 1024;
+		if (file.size > MAX_VIDEO_SIZE) {
+			return c.json({ error: 'File too large. Max 10MB' }, 400);
+		}
+
+		// Get page
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		// Parse draft appearance
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete old avatar video if exists
+		const oldVideoUrl = draftAppearance.headerStyle?.overrides?.avatarVideoUrl;
+		if (oldVideoUrl && oldVideoUrl.startsWith('http') && oldVideoUrl.includes('/avatar-videos/')) {
+			const urlParts = oldVideoUrl.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+			try {
+				await c.env.STORAGE.delete(`avatar-videos/${storageKey}`);
+			} catch (e) {
+				console.error('Failed to delete old avatar video:', e);
+			}
+		}
+
+		// Generate unique filename
+		const ext = file.name.split('.').pop() || 'mp4';
+		const videoStorageKey = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+		// Upload video to R2
+		const arrayBuffer = await file.arrayBuffer();
+		await c.env.STORAGE.put(`avatar-videos/${videoStorageKey}`, arrayBuffer, {
+			httpMetadata: {
+				contentType: file.type
+			}
+		});
+
+		const videoUrl = `${c.env.R2_PUBLIC_URL}/avatar-videos/${videoStorageKey}`;
+
+		// Update draft appearance
+		if (!draftAppearance.headerStyle) draftAppearance.headerStyle = {};
+		if (!draftAppearance.headerStyle.overrides) draftAppearance.headerStyle.overrides = {};
+		
+		draftAppearance.headerStyle.overrides.avatarType = 'video';
+		draftAppearance.headerStyle.overrides.avatarVideoUrl = videoUrl;
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ videoUrl, storage_key: videoStorageKey });
+	} catch (error) {
+		console.error('Avatar video upload error:', error);
+		return c.json({ error: 'Avatar video upload failed' }, 500);
+	}
+});
+
+// DELETE /upload/avatar-video/:username - Remove avatar video
+app.delete('/avatar-video/:username', async (c) => {
+	try {
+		const username = c.req.param('username');
+
+		const page = await c.env.DB.prepare(
+			'SELECT id, draft_appearance FROM bio_pages WHERE username = ?'
+		).bind(username).first() as { id: number; draft_appearance: string } | null;
+
+		if (!page) {
+			return c.json({ error: 'Page not found' }, 404);
+		}
+
+		let draftAppearance: any = {};
+		try {
+			draftAppearance = JSON.parse(page.draft_appearance || '{}');
+		} catch (e) {
+			console.error('Failed to parse draft_appearance:', e);
+		}
+
+		// Delete video from R2
+		const videoUrl = draftAppearance.headerStyle?.overrides?.avatarVideoUrl;
+		if (videoUrl && videoUrl.startsWith('http') && videoUrl.includes('/avatar-videos/')) {
+			const urlParts = videoUrl.split('/');
+			const storageKey = urlParts[urlParts.length - 1];
+			try {
+				await c.env.STORAGE.delete(`avatar-videos/${storageKey}`);
+			} catch (e) {
+				console.error('Failed to delete avatar video:', e);
+			}
+		}
+
+		// Clear avatar video values
+		if (draftAppearance.headerStyle?.overrides) {
+			delete draftAppearance.headerStyle.overrides.avatarType;
+			delete draftAppearance.headerStyle.overrides.avatarVideoUrl;
+		}
+
+		await c.env.DB.prepare(
+			'UPDATE bio_pages SET draft_appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+		).bind(JSON.stringify(draftAppearance), page.id).run();
+
+		return c.json({ success: true });
+	} catch (error) {
+		console.error('Avatar video removal error:', error);
+		return c.json({ error: 'Avatar video removal failed' }, 500);
 	}
 });
 

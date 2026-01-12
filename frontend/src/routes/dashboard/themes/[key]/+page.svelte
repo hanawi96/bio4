@@ -422,8 +422,8 @@
 		bgGrayscale = 'none';
 	}
 
-	// Force solid black background when avatar-cover or video-cover is selected
-	$: if (selectedHeaderPreset === 'avatar-cover' || selectedHeaderPreset === 'video-cover') {
+	// Force solid black background when avatar-cover is selected
+	$: if (selectedHeaderPreset === 'avatar-cover') {
 		bgType = 'solid';
 		bgSolidColor = '#000000';
 		pageBgColor = '#000000';
@@ -839,8 +839,8 @@
 			return;
 		}
 
-		if (file.size > 10 * 1024 * 1024) {
-			alert('Video must be less than 10MB');
+		if (file.size > 20 * 1024 * 1024) {
+			alert('Video must be less than 20MB');
 			return;
 		}
 
