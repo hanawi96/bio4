@@ -3,7 +3,7 @@
  * Uses event-based approach with optimized state management
  */
 export function createVideoFadeHandler() {
-	const FADE_DURATION = 1.5; // 1.5 seconds fade
+	const FADE_DURATION = 1.0; // 1 second fade
 	const DEBOUNCE_MS = 100; // Prevent rapid triggers
 	const FADE_START_OFFSET = 0.5; // Start fade 0.5s before end
 	const FADE_IN_THRESHOLD = 0.5; // Fade in during first 0.5s
