@@ -183,10 +183,30 @@ export function getPresetValue(
         if (bgType === 'gradient' && bgValue) {
             return bgValue;
         }
+        if (bgType === 'pattern' && bgValue) {
+            return bgValue;
+        }
+        if (bgType === 'image' && bgValue) {
+            return `url('${bgValue}')`;
+        }
+        if (bgType === 'video' && bgValue) {
+            // For video background, backgroundColor is fallback color (usually #000000)
+            return '#000000';
+        }
         
         // Fallback to old token structure
         const bgToken = preset.config.tokens?.bg;
         return bgTokenToCss(bgToken);
+    } else if (path === 'backgroundVideo') {
+        // Background video URL from theme config
+        const bgType = preset.config?.background?.type;
+        const bgValue = preset.config?.background?.value;
+        
+        if (bgType === 'video' && bgValue) {
+            return bgValue;
+        }
+        
+        return undefined;
     } else if (path.startsWith('background')) {
         // Background effects
         if (path === 'backgroundBlur') {
@@ -407,10 +427,20 @@ export function setAppearance(
     const presetValue = getPresetValue(themesMap, state.presetKey, path, state.headerPresetId);
     const newOverrides = { ...state.overrides };
 
-    // Remove override if value matches preset or is null
-    if (value === null || value === undefined || deepEqual(value, presetValue)) {
+    // Special handling for null/undefined values
+    if (value === null || value === undefined) {
+        // If preset also has null/undefined, remove override (back to default)
+        if (presetValue === null || presetValue === undefined) {
+            delete newOverrides[path];
+        } else {
+            // Preset has a value, but user wants null → Keep as override
+            newOverrides[path] = value;
+        }
+    } else if (deepEqual(value, presetValue)) {
+        // Value matches preset → Remove override
         delete newOverrides[path];
     } else {
+        // Value differs from preset → Add/update override
         newOverrides[path] = value;
     }
 

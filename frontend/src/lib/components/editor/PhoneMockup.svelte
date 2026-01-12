@@ -210,8 +210,21 @@
 		if ($page?.draft_appearance) {
 			try {
 				const appearance = JSON.parse($page.draft_appearance);
-				const videoUrl = appearance.customTheme?.backgroundVideo || appearance.overrides?.backgroundVideo;
-				if (videoUrl && videoUrl.trim()) return videoUrl;
+				
+				// Check if backgroundVideo override exists (even if null)
+				const hasVideoOverride = appearance.overrides && 'backgroundVideo' in appearance.overrides;
+				
+				if (hasVideoOverride) {
+					// User has explicitly set/cleared video - use override value
+					const videoUrl = appearance.overrides.backgroundVideo;
+					return videoUrl && videoUrl.trim() ? videoUrl : null;
+				}
+				
+				// Legacy: Check customTheme.backgroundVideo
+				if (appearance.customTheme?.backgroundVideo) {
+					const videoUrl = appearance.customTheme.backgroundVideo;
+					if (videoUrl && videoUrl.trim()) return videoUrl;
+				}
 			} catch {
 				// Continue to check theme config
 			}

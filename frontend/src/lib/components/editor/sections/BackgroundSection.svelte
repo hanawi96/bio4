@@ -64,14 +64,34 @@
 	$: {
 		// Force re-detection when theme changes (even if color value is same)
 		const _themeKey = $appearanceState.presetKey;
+		const _hasOverrides = Object.keys($appearanceState.overrides).length > 0;
 		
-		// Always detect from resolved values (override + theme merged)
-		if (themesLoaded && (resolvedBgColor || resolvedBgVideo)) {
+		// Reset manual selection flag when theme changes OR overrides cleared
+		if (lastSyncedThemeKey && _themeKey !== lastSyncedThemeKey) {
+			isManualSelection = false;
+		}
+		// Also reset when overrides cleared (user clicked Reset button)
+		if (lastHadOverrides && !_hasOverrides) {
+			isManualSelection = false;
+		}
+		
+		// Only auto-detect if NOT manual selection (user hasn't clicked a type button)
+		if (!isManualSelection && themesLoaded && (resolvedBgColor || resolvedBgVideo)) {
+			// Priority 1: Check if video exists (from override or theme)
 			if (resolvedBgVideo) {
 				selectedType = 'video';
 				backgroundVideoUrl = resolvedBgVideo;
 				currentBgColor = resolvedBgColor;
-			} else if (resolvedBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
+			}
+			// Priority 2: Check theme config background type directly (BEFORE checking color value)
+			// This ensures video type is detected even when resolvedBgColor is #000000 (fallback)
+			else if (themeConfig?.background?.type === 'video' && themeConfig?.background?.value) {
+				selectedType = 'video';
+				backgroundVideoUrl = themeConfig.background.value;
+				currentBgColor = '#000000'; // Fallback color for display
+			}
+			// Priority 3: Detect from color value
+			else if (resolvedBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
 				selectedType = 'solid';
 				currentBgColor = resolvedBgColor;
 			} else if (resolvedBgColor.includes('gradient') && !resolvedBgColor.startsWith('background:')) {
@@ -145,6 +165,7 @@
 	let selectedType = 'solid';
 	let currentBgColor = '#ffffff';
 	let lastSyncedThemeKey = '';
+	let isManualSelection = false; // Flag to prevent auto-detection during user interaction
 	
 	// Update solid color
 	function updateSolidColor(color: string) {
@@ -257,6 +278,9 @@
 		const overridesCleared = lastHadOverrides && !hasOverrides;
 		
 		if ((themeChanged || overridesCleared) && !isAvatarCoverMode) {
+			// Reset manual selection flag to allow auto-detection
+			isManualSelection = false;
+			
 			lastSyncedThemeKey = currentThemeKey;
 			lastHadOverrides = hasOverrides;
 			
@@ -291,6 +315,9 @@
 	}
 	
 	function selectType(type: string) {
+		// Mark as manual selection to prevent auto-detection
+		isManualSelection = true;
+		
 		// Save current state to history based on type
 		if (selectedType === 'solid' && currentBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
 			backgroundHistory.solid = currentBgColor;

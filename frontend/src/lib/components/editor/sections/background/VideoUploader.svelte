@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { DEFAULT_VIDEO_BG } from '$lib/utils/background/backgroundConstants';
 	import { updateAppearance, appearanceState } from '$lib/stores/appearanceManager';
+	import { themes } from '$lib/stores/themes';
+	import { FALLBACK_THEME } from '$lib/appearance/presets';
 	import { api } from '$lib/api.client';
 	import ImageCropModal from '$lib/components/modals/ImageCropModal.svelte';
 	import { createEventDispatcher } from 'svelte';
@@ -33,14 +35,21 @@
 	let activeFilter: 'blur' | 'brightness' | 'grayscale' | null = null;
 	let videoElement: HTMLVideoElement;
 
-	// Get current filter values from appearanceState
-	$: currentBlur = ($appearanceState.overrides['backgroundBlur'] ?? 'none') as BlurKey | number;
-	$: currentBrightness = ($appearanceState.overrides['backgroundBrightness'] ?? 'normal') as
-		| BrightnessKey
-		| number;
-	$: currentGrayscale = ($appearanceState.overrides['backgroundGrayscale'] ?? 'none') as
-		| GrayscaleKey
-		| number;
+	// Get theme config for default filter values
+	$: themesMap = Object.keys($themes).length > 0 ? $themes : { minimal: FALLBACK_THEME };
+	$: currentTheme = themesMap[$appearanceState.presetKey] || FALLBACK_THEME;
+	$: themeConfig = currentTheme.config;
+	
+	// Get current filter values: override > theme config > hardcoded default
+	$: currentBlur = ($appearanceState.overrides['backgroundBlur'] 
+		?? themeConfig?.background?.effects?.blur 
+		?? 'none') as BlurKey | number;
+	$: currentBrightness = ($appearanceState.overrides['backgroundBrightness'] 
+		?? themeConfig?.background?.effects?.brightness 
+		?? 'normal') as BrightnessKey | number;
+	$: currentGrayscale = ($appearanceState.overrides['backgroundGrayscale'] 
+		?? themeConfig?.background?.effects?.grayscale 
+		?? 'none') as GrayscaleKey | number;
 
 	// Resolve filter values to numbers for preview
 	$: resolvedBlur = resolveBlur(currentBlur);
