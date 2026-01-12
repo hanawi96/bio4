@@ -30,6 +30,7 @@
 	// Avatar video props
 	export let avatarType: 'image' | 'video' = 'image';
 	export let avatarVideoUrl: string = '';
+	export let avatarVideoPreviewUrl: string = ''; // Local preview URL
 
 	const dispatch = createEventDispatcher();
 	
@@ -182,9 +183,12 @@
 				<button
 					type="button"
 					on:click={() => {
-						avatarType = avatarType === 'video' ? 'image' : 'video';
-						if (avatarType === 'image') {
-							avatarVideoUrl = '';
+						const newType = avatarType === 'video' ? 'image' : 'video';
+						avatarType = newType;
+						
+						// Set demo video when enabling video avatar (if no video exists)
+						if (newType === 'video' && !avatarVideoUrl && !avatarVideoPreviewUrl) {
+							avatarVideoUrl = 'https://pub-8dcc050a5a504e70a6d4626c63886201.r2.dev/cover-videos/demo-1768147322515.mp4';
 						}
 					}}
 					class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {avatarType === 'video' ? 'bg-[#00aa4f]' : 'bg-gray-200'}"
@@ -195,11 +199,11 @@
 			
 			{#if avatarType === 'video'}
 				<div class="mt-3">
-					{#if avatarVideoUrl}
+					{#if avatarVideoPreviewUrl || avatarVideoUrl}
 						<!-- Video Preview -->
 						<div class="relative group rounded-xl overflow-hidden border-2 border-gray-200 mb-3">
 							<video
-								src={avatarVideoUrl}
+								src={avatarVideoPreviewUrl || avatarVideoUrl}
 								class="w-full h-32 object-cover"
 								autoplay
 								muted
@@ -211,6 +215,8 @@
 									type="button"
 									on:click={() => {
 										avatarVideoUrl = '';
+										avatarVideoPreviewUrl = '';
+										avatarVideoFile = null;
 										avatarType = 'image';
 									}}
 									class="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"

@@ -166,6 +166,8 @@
 	// Avatar video fields
 	let avatarType: 'image' | 'video' = 'image';
 	let avatarVideoUrl = '';
+	let avatarVideoFile: File | null = null; // Store file for upload on submit
+	let avatarVideoPreviewUrl = ''; // Local preview URL
 	
 	// Page settings
 	let showShareButton = true;
@@ -219,6 +221,11 @@
 	
 	onDestroy(() => {
 		themeEditor.deactivate();
+		
+		// Cleanup preview URL
+		if (avatarVideoPreviewUrl) {
+			URL.revokeObjectURL(avatarVideoPreviewUrl);
+		}
 	});
 
 	function loadBaseTheme(key: string) {
@@ -252,6 +259,14 @@
 		showBio = theme.config.page?.defaults?.showBio ?? true;
 		avatarBorderColor = theme.config.page?.defaults?.avatarBorderColor || '#ffffff';
 		avatarBorderWidth = theme.config.page?.defaults?.avatarBorderWidth || 4;
+		avatarType = theme.config.page?.defaults?.avatarType || 'image';
+		avatarVideoUrl = theme.config.page?.defaults?.avatarVideoUrl || '';
+		// Reset local preview when loading new theme
+		avatarVideoFile = null;
+		if (avatarVideoPreviewUrl) {
+			URL.revokeObjectURL(avatarVideoPreviewUrl);
+			avatarVideoPreviewUrl = '';
+		}
 		selectedBlockStyle = theme.config.page?.defaults?.blockStylePreset || 'solid';
 		selectedShadowStyle = theme.config.page?.defaults?.shadowStyle || 'none';
 		blockOpacity = theme.config.page?.defaults?.blockOpacity || 100;
@@ -797,9 +812,9 @@
 						'header.coverValue': coverVideoUrl,
 						'header.coverVideoPoster': coverVideoPoster
 					} : {}),
-					...(avatarType === 'video' && avatarVideoUrl ? {
+					...(avatarType === 'video' && (avatarVideoPreviewUrl || avatarVideoUrl) ? {
 						'header.avatarType': 'video',
-						'header.avatarVideoUrl': avatarVideoUrl
+						'header.avatarVideoUrl': avatarVideoPreviewUrl || avatarVideoUrl
 					} : {}),
 					'header.avatarSize': avatarSize,
 					'header.avatarShape': avatarShape,
@@ -871,8 +886,31 @@
 		error = '';
 
 		try {
+			// Upload avatar video if exists
+			if (avatarVideoFile) {
+				console.log('📤 [handleSubmit] Uploading avatar video...');
+				const result = await api.uploadAvatarVideo('demo', avatarVideoFile);
+				avatarVideoUrl = result.videoUrl;
+				
+				// Update config with uploaded URL
+				if (!config.page) config.page = {};
+				if (!config.page.defaults) config.page.defaults = {};
+				config.page.defaults.avatarVideoUrl = avatarVideoUrl;
+				config.page.defaults.avatarType = 'video';
+				
+				// Update configJson to reflect the change
+				configJson = JSON.stringify(config, null, 2);
+				
+				console.log('✅ [handleSubmit] Avatar video uploaded:', avatarVideoUrl);
+			}
+			
 			const result = await api.createTheme({ key, name, config, description, category, tier });
 			console.log('✅ [handleSubmit] Theme created successfully:', result);
+			
+			// Cleanup preview URL
+			if (avatarVideoPreviewUrl) {
+				URL.revokeObjectURL(avatarVideoPreviewUrl);
+			}
 			
 			// Reload themes to include the new theme in cache
 			await themesStore.load();
@@ -1006,18 +1044,17 @@
 			return;
 		}
 
-		uploading = true;
-
-		try {
-			const result = await api.uploadAvatarVideo('demo', file);
-			avatarVideoUrl = result.videoUrl;
-			avatarType = 'video';
-		} catch (e) {
-			console.error('Failed to upload avatar video:', e);
-			alert('Failed to upload avatar video. Please try again.');
-		} finally {
-			uploading = false;
+		// Store file for later upload
+		avatarVideoFile = file;
+		
+		// Create local preview URL
+		if (avatarVideoPreviewUrl) {
+			URL.revokeObjectURL(avatarVideoPreviewUrl);
 		}
+		avatarVideoPreviewUrl = URL.createObjectURL(file);
+		
+		// Set type to video
+		avatarType = 'video';
 
 		input.value = '';
 	}
@@ -1120,6 +1157,7 @@
 					bind:coverVideoPoster
 					bind:avatarType
 					bind:avatarVideoUrl
+					avatarVideoPreviewUrl={avatarVideoPreviewUrl}
 					bind:showBio
 					bind:avatarBorderColor
 					bind:avatarBorderWidth

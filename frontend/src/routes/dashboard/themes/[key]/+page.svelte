@@ -48,6 +48,8 @@
 	let avatarBorderWidth: AvatarBorderWidthKey | number = 'default';
 	let avatarType: 'image' | 'video' = 'image';
 	let avatarVideoUrl = '';
+	let avatarVideoFile: File | null = null; // Store file for upload on save
+	let avatarVideoPreviewUrl = ''; // Local preview URL
 	let selectedBlockStyle: 'solid' | 'outline' | 'glass' | 'neon' | 'brutal' | 'gradient' = 'solid';
 	let selectedShadowStyle: 'none' | 'soft' | 'medium' | 'hard' | 'brutal' = 'none';
 	let blockOpacity: number = 100;
@@ -176,6 +178,11 @@
 	
 	onDestroy(() => {
 		themeEditor.deactivate();
+		
+		// Cleanup preview URL
+		if (avatarVideoPreviewUrl) {
+			URL.revokeObjectURL(avatarVideoPreviewUrl);
+		}
 	});
 
 	function handleReset() {
@@ -674,7 +681,7 @@
 					'header.avatarBorderColor': avatarBorderColor,
 					'header.avatarBorderWidth': avatarBorderWidth,
 					'header.avatarType': avatarType,
-					'header.avatarVideoUrl': avatarVideoUrl,
+					'header.avatarVideoUrl': avatarVideoPreviewUrl || avatarVideoUrl,
 					'backgroundColor': backgroundValue,
 					'backgroundVideo': bgType === 'video' && bgVideoUrl ? bgVideoUrl : undefined,
 					'backgroundBlur': bgBlur,
@@ -727,7 +734,30 @@
 		error = '';
 
 		try {
+			// Upload avatar video if exists
+			if (avatarVideoFile) {
+				console.log('📤 [handleSubmit] Uploading avatar video...');
+				const result = await api.uploadAvatarVideo('demo', avatarVideoFile);
+				avatarVideoUrl = result.videoUrl;
+				
+				// Update config with uploaded URL
+				if (!config.page) config.page = {};
+				if (!config.page.defaults) config.page.defaults = {};
+				config.page.defaults.avatarVideoUrl = avatarVideoUrl;
+				config.page.defaults.avatarType = 'video';
+				
+				// Update configJson to reflect the change
+				configJson = JSON.stringify(config, null, 2);
+				
+				console.log('✅ [handleSubmit] Avatar video uploaded:', avatarVideoUrl);
+			}
+			
 			await api.updateTheme(themeKey, { name, config, description, category, tier });
+			
+			// Cleanup preview URL
+			if (avatarVideoPreviewUrl) {
+				URL.revokeObjectURL(avatarVideoPreviewUrl);
+			}
 			
 			// Update theme in cache to ensure appearance page gets fresh data
 			const updatedTheme = {
@@ -884,18 +914,17 @@
 			return;
 		}
 
-		uploading = true;
-
-		try {
-			const result = await api.uploadAvatarVideo('demo', file);
-			avatarVideoUrl = result.videoUrl;
-			avatarType = 'video';
-		} catch (e) {
-			console.error('Failed to upload avatar video:', e);
-			alert('Failed to upload avatar video. Please try again.');
-		} finally {
-			uploading = false;
+		// Store file for later upload
+		avatarVideoFile = file;
+		
+		// Create local preview URL
+		if (avatarVideoPreviewUrl) {
+			URL.revokeObjectURL(avatarVideoPreviewUrl);
 		}
+		avatarVideoPreviewUrl = URL.createObjectURL(file);
+		
+		// Set type to video
+		avatarType = 'video';
 
 		input.value = '';
 	}
@@ -970,6 +999,7 @@
 								bind:coverVideoPoster 
 								bind:avatarType
 								bind:avatarVideoUrl
+								avatarVideoPreviewUrl={avatarVideoPreviewUrl}
 								bind:showBio 
 								bind:avatarBorderColor 
 								bind:avatarBorderWidth 
