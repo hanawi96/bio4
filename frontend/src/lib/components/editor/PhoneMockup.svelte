@@ -34,9 +34,7 @@
 	$: resolvedBackground = (() => {
 		// Check override first for immediate update
 		const override = $appearanceState.overrides?.['backgroundColor'];
-		if (override) {
-			return override;
-		}
+		if (override) return override;
 		
 		// Fallback to theme config (NEW structure)
 		const themeConfig = $appearance?.theme?.config;
@@ -44,31 +42,32 @@
 		const bgValue = themeConfig?.background?.value;
 		
 		if (bgType && bgValue) {
-			if (bgType === 'solid') {
-				return bgValue;
-			} else if (bgType === 'gradient') {
-				return bgValue;
-			} else if (bgType === 'pattern') {
-				return bgValue; // pattern CSS string
-			} else if (bgType === 'image') {
-				return `url('${bgValue}')`;
-			} else if (bgType === 'video') {
-				return '#000000'; // fallback for video
-			}
+			if (bgType === 'solid' || bgType === 'gradient' || bgType === 'pattern') return bgValue;
+			if (bgType === 'image') return `url('${bgValue}')`;
+			if (bgType === 'video') return '#000000';
 		}
 		
 		// Final fallback
 		return tokens?.backgroundColor || '#ffffff';
 	})();
 	
-	// Get animation settings and build class
-	$: bgAnimation = (() => {
-		const themeConfig = $appearance?.theme?.config;
-		const animation = themeConfig?.background?.animation;
-		return animation;
-	})();
+	// Get animation settings
+	$: bgAnimation = $appearance?.theme?.config?.background?.animation;
 	
-	$: bgType = $appearance?.theme?.config?.background?.type;
+	$: bgType = (() => {
+		// Priority 1: Detect from override backgroundColor
+		const override = $appearanceState.overrides?.['backgroundColor'];
+		
+		if (override) {
+			if (override.startsWith('background:')) return 'pattern';
+			if (override.startsWith('linear-gradient') || override.startsWith('radial-gradient')) return 'gradient';
+			if (override.startsWith('url(')) return 'image';
+			if (override.match(/^#[0-9a-fA-F]{6}$/)) return 'solid';
+		}
+		
+		// Priority 2: From theme config
+		return $appearance?.theme?.config?.background?.type || 'solid';
+	})();
 	
 	$: bgGradientDirection = (() => {
 		const themeConfig = $appearance?.theme?.config;
@@ -100,10 +99,7 @@
 	})();
 	
 	// Get particles settings
-	$: particles = (() => {
-		const themeConfig = $appearance?.theme?.config;
-		return themeConfig?.background?.particles;
-	})();
+	$: particles = $appearance?.theme?.config?.background?.particles;
 	
 	// Get global iconShape from appearance (resolved from theme config)
 	$: globalIconShape = $appearance?.page?.linkIconShape || 'rounded';
@@ -660,7 +656,7 @@
 					playsinline
 					on:timeupdate={handleBgVideoTimeUpdate}
 				></video>
-			{:else if resolvedBackground && resolvedBackground.includes('url(')}
+			{:else if bgType === 'image' && resolvedBackground && resolvedBackground.includes('url(')}
 				<!-- Background Image Layer -->
 				<div 
 					class="absolute inset-0 z-0 w-full h-full"
