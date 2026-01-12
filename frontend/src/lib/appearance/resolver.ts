@@ -78,7 +78,7 @@ function adjustColor(hex: string, percent: number): string {
 
 // Auto-calculate muted color from heading color (with reduced opacity)
 function calculateMutedColor(headingColor: string): string {
-	if (!headingColor) return 'rgba(0, 0, 0, 0.6)';
+	if (!headingColor) return 'rgba(0, 0, 0, 0.85)';
 	
 	// Handle hex colors
 	if (headingColor.startsWith('#')) {
@@ -86,7 +86,7 @@ function calculateMutedColor(headingColor: string): string {
 		const r = parseInt(hex.substring(0, 2), 16);
 		const g = parseInt(hex.substring(2, 4), 16);
 		const b = parseInt(hex.substring(4, 6), 16);
-		return `rgba(${r}, ${g}, ${b}, 0.6)`; // 60% opacity
+		return `rgba(${r}, ${g}, ${b}, 0.85)`; // 85% opacity
 	}
 	
 	// Handle rgb/rgba colors
@@ -95,7 +95,7 @@ function calculateMutedColor(headingColor: string): string {
 		const match = headingColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
 		if (match) {
 			const [, r, g, b] = match;
-			return `rgba(${r}, ${g}, ${b}, 0.6)`;
+			return `rgba(${r}, ${g}, ${b}, 0.85)`;
 		}
 	}
 	

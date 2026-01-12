@@ -98,19 +98,19 @@ export function buildPreviewAppearance(
 	// Typography colors - auto-calculate muted from heading
 	const headingColor = textColor;
 	const mutedColor = (() => {
-		if (!textColor) return 'rgba(0, 0, 0, 0.6)';
+		if (!textColor) return 'rgba(0, 0, 0, 0.85)';
 		if (textColor.startsWith('#')) {
 			const hex = textColor.replace('#', '');
 			const r = parseInt(hex.substring(0, 2), 16);
 			const g = parseInt(hex.substring(2, 4), 16);
 			const b = parseInt(hex.substring(4, 6), 16);
-			return `rgba(${r}, ${g}, ${b}, 0.6)`;
+			return `rgba(${r}, ${g}, ${b}, 0.85)`;
 		}
 		if (textColor.startsWith('rgb')) {
 			const match = textColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
 			if (match) {
 				const [, r, g, b] = match;
-				return `rgba(${r}, ${g}, ${b}, 0.6)`;
+				return `rgba(${r}, ${g}, ${b}, 0.85)`;
 			}
 		}
 		return textColor;
