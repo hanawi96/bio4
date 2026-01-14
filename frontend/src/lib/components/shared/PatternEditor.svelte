@@ -30,7 +30,7 @@
 				<button
 					type="button"
 					on:click={() => handlePatternSelect(pattern.id)}
-					class="relative aspect-square rounded-lg border-2 transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-200'}"
+					class="relative aspect-square rounded-lg border transition-all hover:scale-105 overflow-hidden {selectedPattern === pattern.id ? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20' : 'border-gray-200'}"
 					title={pattern.name}
 				>
 					<div 
@@ -64,9 +64,9 @@
 						on:input={handleColorChange}
 						class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 					/>
-					<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
+					<div class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
 						<div 
-							class="w-8 h-8 rounded border-2 border-white shadow-sm"
+							class="w-8 h-8 rounded border border-gray-200"
 							style="background-color: {patternColor};"
 						></div>
 						<p class="text-xs font-mono text-gray-900">{patternColor}</p>
@@ -84,9 +84,9 @@
 						on:input={handleColorChange}
 						class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 					/>
-					<div class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
+					<div class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
 						<div 
-							class="w-8 h-8 rounded border-2 border-white shadow-sm"
+							class="w-8 h-8 rounded border border-gray-200"
 							style="background-color: {patternBgColor};"
 						></div>
 						<p class="text-xs font-mono text-gray-900">{patternBgColor}</p>

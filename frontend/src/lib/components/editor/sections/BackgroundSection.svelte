@@ -23,7 +23,7 @@
 		generateSmartGradient,
 		getPatternStyle 
 	} from '$lib/utils/background/backgroundUtils';
-	import { DEFAULT_IMAGE_BG, DEFAULT_VIDEO_BG } from '$lib/utils/background/backgroundConstants';
+	import { solidColors, DEFAULT_IMAGE_BG, DEFAULT_VIDEO_BG } from '$lib/utils/background/backgroundConstants';
 	import { extractVideoFrame, validateVideoFile } from '$lib/utils/videoUtils';
 
 	const username = 'demo';
@@ -60,6 +60,10 @@
 	$: resolvedBgColor = $appearanceState.overrides['backgroundColor'] ?? presetBgValue;
 	$: resolvedBgVideo = $appearanceState.overrides['backgroundVideo'] ?? (themeConfig?.background?.type === 'video' ? themeConfig?.background?.value : undefined);
 	
+	// Base color state
+	let baseColor = '#ffffff';
+	let previousSelectedType = '';
+	
 	// Detect background type from theme config or overrides (reactive - runs on theme change)
 	$: {
 		// Force re-detection when theme changes (even if color value is same)
@@ -82,6 +86,7 @@
 				selectedType = 'video';
 				backgroundVideoUrl = resolvedBgVideo;
 				currentBgColor = resolvedBgColor;
+				baseColor = extractSolidColorFromCurrent(resolvedBgColor);
 			}
 			// Priority 2: Check theme config background type directly (BEFORE checking color value)
 			// This ensures video type is detected even when resolvedBgColor is #000000 (fallback)
@@ -89,11 +94,13 @@
 				selectedType = 'video';
 				backgroundVideoUrl = themeConfig.background.value;
 				currentBgColor = '#000000'; // Fallback color for display
+				baseColor = '#000000';
 			}
 			// Priority 3: Detect from color value
 			else if (resolvedBgColor.match(/^#[0-9a-fA-F]{6}$/)) {
 				selectedType = 'solid';
 				currentBgColor = resolvedBgColor;
+				baseColor = resolvedBgColor;
 			} else if (resolvedBgColor.includes('gradient') && !resolvedBgColor.startsWith('background:')) {
 				selectedType = 'gradient';
 				currentBgColor = resolvedBgColor;
@@ -103,6 +110,7 @@
 					gradientToColor = parsed.to;
 					gradientDirection = parsed.direction;
 					gradientType = parsed.type;
+					baseColor = parsed.from; // Use gradient start color as base
 				}
 			} else if (resolvedBgColor.startsWith('background:')) {
 				selectedType = 'pattern';
@@ -114,6 +122,7 @@
 					patternColor = colorMatches[0];
 					patternBgColor = colorMatches[colorMatches.length - 1];
 					basePatternBgColor = patternBgColor;
+					baseColor = patternBgColor; // Use pattern bg color as base
 				}
 				
 				// Try to detect pattern ID from the string
@@ -133,6 +142,7 @@
 				if (urlMatch && urlMatch[1]) {
 					backgroundImageUrl = urlMatch[1];
 				}
+				baseColor = extractSolidColorFromCurrent(resolvedBgColor);
 			}
 		}
 	}
@@ -150,6 +160,7 @@
 		// Switch to solid type
 		selectedType = 'solid';
 		currentBgColor = solidColor;
+		baseColor = solidColor;
 		backgroundHistory.solid = solidColor;
 		
 		// Update appearance with solid color
@@ -159,6 +170,30 @@
 		updateAppearance('backgroundVideo', null);
 	}
 	
+	// Apply base color to current type (unified color picker logic)
+	function applyBaseColor(color: string) {
+		baseColor = color;
+		isManualSelection = true;
+		
+		if (selectedType === 'solid') {
+			updateSolidColor(color);
+		} else if (selectedType === 'gradient') {
+			const smartGrad = generateSmartGradient(color, false); // Always 2-color for now
+			updateGradientColor(smartGrad.gradient, smartGrad.from, smartGrad.to, smartGrad.direction, 'linear');
+		} else if (selectedType === 'pattern') {
+			const colors = generatePatternColors(color, selectedPattern);
+			updatePatternColor(selectedPattern, colors.inkColor, colors.bgColor);
+		}
+		// Image/Video types don't use base color
+	}
+	
+	// Auto-apply base color when switching types
+	$: if (selectedType !== previousSelectedType && previousSelectedType !== '') {
+		applyBaseColor(baseColor);
+		previousSelectedType = selectedType;
+	} else if (previousSelectedType === '') {
+		previousSelectedType = selectedType;
+	}
 
 
 
@@ -562,13 +597,55 @@
 	}
 </script>
 
-<section class="card-ios overflow-hidden">
-	<div class="section-header-ios">
-		<h2 class="section-title-ios">Background</h2>
-		<p class="text-sm text-gray-500 mt-1">Customize your page background</p>
+<section class="card-ios p-6 space-y-6">
+	<div>
+		<h2 class="text-2xl font-bold text-gray-900">Background</h2>
+		<p class="text-sm text-gray-600 mt-1">Customize your page background</p>
 	</div>
 	
-	<div class="p-6 space-y-6">
+	<div class="space-y-4">
+		<!-- Base Color Selection -->
+		{#if selectedType === 'solid' || selectedType === 'gradient' || selectedType === 'pattern'}
+			<div class="py-2">
+				<div class="flex items-center justify-between mb-4">
+					<div>
+						<h3 class="text-sm font-semibold text-gray-900">Base Color</h3>
+						<p class="text-xs text-gray-500 mt-0.5">Choose a color that adapts to all types</p>
+					</div>
+					<div class="relative">
+						<input 
+							type="color" 
+							value={baseColor}
+							on:input={(e) => applyBaseColor(e.currentTarget.value)}
+							class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+						/>
+						<div 
+							class="w-11 h-11 rounded-xl cursor-pointer hover:scale-105 transition-transform border border-gray-200"
+							style="background-color: {baseColor};"
+						></div>
+					</div>
+				</div>
+				
+				<div class="grid grid-cols-8 gap-2">
+					{#each solidColors as color}
+						<button
+							type="button"
+							on:click={() => applyBaseColor(color.color)}
+							class="relative aspect-square rounded-lg transition-all hover:scale-105 border {baseColor === color.color ? 'border-[#00aa4f] ring-2 ring-[#00aa4f]/20' : 'border-gray-200'}"
+							style="background: {color.color};"
+							title={color.name}
+						>
+							{#if baseColor === color.color}
+								<svg class="absolute inset-0 m-auto w-3.5 h-3.5 {color.color === '#ffffff' || color.color === '#f3f4f6' ? 'text-gray-900' : 'text-white'}" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+								</svg>
+							{/if}
+						</button>
+					{/each}
+				</div>
+			</div>
+		{/if}
+		
 		<!-- Background Type Selector -->
 		<BackgroundTypeSelector 
 			{selectedType} 

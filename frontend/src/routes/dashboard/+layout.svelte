@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { page } from '$app/stores';
+	import { page, navigating } from '$app/stores';
 	import { page as bioPage } from '$lib/stores/page';
 	import { themes } from '$lib/stores/themes';
 	import { loadHeaderPresets } from '$lib/stores/headerPresets';
@@ -144,6 +144,7 @@
 
 			<a 
 				href="/dashboard" 
+				data-sveltekit-preload-data="hover"
 				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Overview' : ''}
 			>
@@ -157,6 +158,7 @@
 
 			<a 
 				href="/dashboard/profile" 
+				data-sveltekit-preload-data="hover"
 				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/profile' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Profile' : ''}
 			>
@@ -170,6 +172,7 @@
 
 			<a 
 				href="/dashboard/bio" 
+				data-sveltekit-preload-data="hover"
 				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/bio' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'My Bio' : ''}
 			>
@@ -183,6 +186,7 @@
 
 			<a 
 				href="/dashboard/appearance" 
+				data-sveltekit-preload-data="hover"
 				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/appearance' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Appearance' : ''}
 			>
@@ -196,6 +200,7 @@
 
 			<a 
 				href="/dashboard/themes" 
+				data-sveltekit-preload-data="hover"
 				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/themes' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Themes' : ''}
 			>
@@ -209,6 +214,7 @@
 
 			<a 
 				href="/dashboard/analytics" 
+				data-sveltekit-preload-data="hover"
 				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/analytics' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Analytics' : ''}
 			>
@@ -222,6 +228,7 @@
 
 			<a 
 				href="/dashboard/subscribers" 
+				data-sveltekit-preload-data="hover"
 				class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/subscribers' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 				title={sidebarCollapsed ? 'Subscribers' : ''}
 			>
@@ -236,6 +243,7 @@
 			<div class="pt-4 mt-4 border-t border-gray-200">
 				<a 
 					href="/dashboard/settings" 
+					data-sveltekit-preload-data="hover"
 					class="flex items-center {sidebarCollapsed ? 'justify-center' : 'gap-3'} px-3 py-2 rounded-lg text-sm transition-colors {currentPath === '/dashboard/settings' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}"
 					title={sidebarCollapsed ? 'Settings' : ''}
 				>
@@ -432,6 +440,16 @@
 
 		<!-- Page Content -->
 		<main style="background-color: #f6f1eb; min-height: calc(100vh - 64px);">
+			<!-- Global Loading Spinner -->
+			{#if $navigating}
+				<div class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+					<div class="bg-white rounded-2xl p-6 shadow-2xl flex flex-col items-center gap-3">
+						<div class="spinner-ios"></div>
+						<p class="text-sm font-medium text-gray-700">Loading...</p>
+					</div>
+				</div>
+			{/if}
+			
 			<slot />
 		</main>
 	</div>

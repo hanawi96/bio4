@@ -2,7 +2,7 @@ import { pbkdf2 } from '@noble/hashes/pbkdf2';
 import { sha256 } from '@noble/hashes/sha256';
 import { SignJWT, jwtVerify } from 'jose';
 
-const PBKDF2_ITERATIONS = 100000;
+const PBKDF2_ITERATIONS = 10000; // Reduced for Cloudflare Workers CPU limits
 const SALT_LENGTH = 16;
 const HASH_LENGTH = 32;
 
